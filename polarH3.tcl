@@ -1,12 +1,13 @@
 
  package require pbctools
- set UTILS "~/Bending/scripts/" 
- set QWRAP "~/qwrap/"
+ set UTILS "/utilities/" 
+ set QWRAP "~/qwrap-master/"
  
 source $UTILS/BinTools.tcl
 source $UTILS/leaflet_sorter_scripts.tcl
 
 load ${QWRAP}/qwrap.so
+load ~/utilities/vecexpr/vecexpr.so
 
 
 
