@@ -349,11 +349,12 @@ proc polarHeightByShell {outfile} {
     set Rrange [expr $Rmax - $Rmin]
     set dr 4
     set Ntheta 30
-    set sample_frame 100
+    set sample_frame 200
     set dt 1
     set nframes [molinfo top get numframes]
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
-
+    set counter 0
+    set nm "PO4"
     #calculate dtheta from number of theta bins
     set dtheta [expr 360/$Ntheta]
     
@@ -372,67 +373,105 @@ proc polarHeightByShell {outfile} {
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
 
     #outfiles setup
-    set memb_up [open "${outfile}.up.height.dat" w]
-    set memb_down [open "${outfile}.lw.height.dat" w]
-
+    set heights_up [open "${outfile}.up.height.dat" w]
+    set heights_down [open "${outfile}.lw.height.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
-    set lipids [atomselect top "name PO4 and chain U"]
-    set x_vals [$lipids get x]
-    set y_vals [$lipids get y]
-    set z_vals [$lipids get z]
+    set lipids [atomselect top "name PO4"]
+    leaflet_flip_check_new $sample_frame $nm
 
-    #get theta values for all x,y pairs
-    set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
-
-    #atan2 gives values from -180 to 180; shifting to 0 to 360                            
-    for {set i 0} {$i<[llength $theta_vals]} {incr i} {                                         
-        if {[lindex $theta_vals $i] < 0} {                                                      
-            set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+    #start frame looping here
+    for {set frm $sample_frame} {$frm < $nframes} {set frm [expr $frm + $dt]} {
+        set counter [expr $counter + 1]
+        if {[expr $counter % 50] == 0} {
+            leaflet_flip_check_new $frm $nm
         }
-    }
 
-    #turn into bin numbers rather than theta values
-    vecexpr [vecexpr $theta_vals $dtheta div] floor &theta_bins
-    
-    #calculate distance from origin for all x,y pairs
-    set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
-    
-    #turn into bin numbers rather than r values
-    vecexpr [vecexpr $r_vals $dr div] floor &r_bins
+        $lipids frame $frm
+        $lipids update
 
-    #initialize arrays to zeros
-    for {set m 0} {$m <= $Nr} {incr m} {
-        for {set n 0} {$n <= $Ntheta} {incr n} {
-            set totals($m,$n) 0
-            set counts($m,$n) 0
-        }
-    }
+        set x_vals [$lipids get x]
+        set y_vals [$lipids get y]
+        set z_vals [$lipids get z]
+        set chains [$lipids get chain]
 
+        #get theta values for all x,y pairs
+        set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
 
-    #fill in arrays with z sum and count sum
-    for {set i 0} {$i < [llength $r_vals]} {incr i} {
-        set m [lindex $r_bins $i]
-        set n [lindex $theta_bins $i]
-        if {$m <= $Nr} {
-            set totals($m,$n) [expr {$totals($m,$n) + [lindex $z_vals $i]}]
-            set counts($m,$n) [expr {$counts($m,$n) + 1}]
-        }
-    }    
-
-    #turn the z sum into a z avg
-    for {set m 0} {$m <= $Nr} {incr m} {
-        for {set n 0} {$n <= $Ntheta} {incr n} {
-            if {$counts($m,$n) != 0} {
-                set totals($m,$n) [expr $totals($m,$n) / $counts($m,$n)]
+        #atan2 gives values from -180 to 180; shifting to 0 to 360                            
+        for {set i 0} {$i<[llength $theta_vals]} {incr i} {                                         
+            if {[lindex $theta_vals $i] < 0} {                                                      
+                set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
             }
         }
+
+        #turn into bin numbers rather than theta values
+        vecexpr [vecexpr $theta_vals $dtheta div] floor &theta_bins
+        
+        #calculate distance from origin for all x,y pairs
+        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+        
+        #turn into bin numbers rather than r values
+        vecexpr [vecexpr $r_vals $dr div] floor &r_bins
+
+        #initialize arrays to zeros
+        for {set m 0} {$m <= $Nr} {incr m} {
+            for {set n 0} {$n <= $Ntheta} {incr n} {
+                set totals_up($m,$n) 0
+                set counts_up($m,$n) 0
+                set totals_down($m,$n) 0
+                set counts_down($m,$n) 0
+            }
+        }
+
+        #fill in arrays with z sum and count sum
+        for {set i 0} {$i < [llength $r_vals]} {incr i} {
+            set m [lindex $r_bins $i]
+            set n [lindex $theta_bins $i]
+            if {$m <= $Nr} {
+                if {[lindex $chains $i] == "U"} {
+                    set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
+                    set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
+                } elseif {[lindex $chains $i] == "L"} {
+                    set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
+                    set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
+                }
+            }
+        }    
+
+        #turn the z sum into a z avg
+        for {set m 0} {$m <= $Nr} {incr m} {
+            for {set n 0} {$n <= $Ntheta} {incr n} {
+                if {$counts_up($m,$n) != 0} {
+                    set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
+                } else {
+                    set totals_up($m,$n) "nan"
+                }
+                if {$counts_down($m,$n) != 0} {
+                    set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
+                } else {
+                    set totals_down($m,$n) "nan"
+                }
+            }
+        }
+        
+
+        #output to files
+        for {set m 0} {$m <= $Nr} {incr m} {
+            puts -nonewline $heights_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+            puts -nonewline $heights_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+            for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
+                puts -nonewline $heights_up " $totals_up($m,$n)" 
+                puts -nonewline $heights_down " $totals_down($m,$n)" 
+            }
+            puts $heights_up " $totals_up($m,[expr $Ntheta-1])"
+            puts $heights_down " $totals_down($m,[expr $Ntheta-1])"
+        } 
+        puts $frm
     }
 
-
-
-    $lipids delete
+    
     #puts $theta_vals
     #puts $r_vals
 	#for {set ri $Rmin} { $ri<=${Rmax}} { set ri [expr $ri + $dr]} {
@@ -449,6 +488,8 @@ proc polarHeightByShell {outfile} {
 		#output_bins $memb_down $ri $rf $shell_down
 		#puts "loop $ri done"
 	#}
-	close $memb_up
-	close $memb_down
+
+    close $heights_up
+    close $heights_down
+    $lipids delete
 }
