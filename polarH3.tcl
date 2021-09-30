@@ -354,7 +354,7 @@ proc polarHeightByShell {outfile} {
     set nframes [molinfo top get numframes]
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set counter 0
-    set nm "PO4"
+    set nm "C1A C1B"
     #calculate dtheta from number of theta bins
     set dtheta [expr 360/$Ntheta]
     
@@ -372,13 +372,19 @@ proc polarHeightByShell {outfile} {
     Protein_Position   ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
 
+    #find top of protein for pbc crossing event
+    set sel [atomselect top "name BB"]
+    set prot_z [$sel get z]
+    $sel delete
+    set protein_top [::tcl::mathfunc::max {*}$prot_z]
+
     #outfiles setup
     set heights_up [open "${outfile}.up.height.dat" w]
     set heights_down [open "${outfile}.lw.height.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
-    set lipids [atomselect top "name PO4"]
+    set lipids [atomselect top "name $nm"]
     leaflet_flip_check_new $sample_frame $nm
 
     #start frame looping here
@@ -390,6 +396,7 @@ proc polarHeightByShell {outfile} {
 
         $lipids frame $frm
         $lipids update
+        set box_height [molinfo top get c]
 
         set x_vals [$lipids get x]
         set y_vals [$lipids get y]
@@ -429,6 +436,9 @@ proc polarHeightByShell {outfile} {
         for {set i 0} {$i < [llength $r_vals]} {incr i} {
             set m [lindex $r_bins $i]
             set n [lindex $theta_bins $i]
+            if {[lindex $z_vals $i] > [expr $protein_top + 10]} {
+                set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
+            }
             if {$m <= $Nr} {
                 if {[lindex $chains $i] == "U"} {
                     set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
