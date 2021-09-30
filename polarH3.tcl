@@ -1,7 +1,7 @@
 
  package require pbctools
- set UTILS "/utilities/" 
- set QWRAP "~/qwrap-master/"
+ set UTILS "utilities" 
+ set QWRAP "~/qwrap-master"
  
 source $UTILS/BinTools.tcl
 source $UTILS/leaflet_sorter_scripts.tcl
@@ -69,7 +69,7 @@ proc Protein_Position {} {
     set zed [z_mid 0 20]
     puts $zed
     foreach eq {"<" ">"} eqtxt {"lwr" "upr"} {
-	set fout [open "~/Bending/newanalysis/5x29_coords_${eqtxt}.dat" w]
+	set fout [open "5x29_coords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm}) and (name BB) and (occupancy 3) and (z ${eq} $zed)" frame 0]
@@ -346,36 +346,109 @@ proc polarHeightByShell {outfile} {
 
     set Rmin 0
     set Rmax 69
+    set Rrange [expr $Rmax - $Rmin]
     set dr 4
     set Ntheta 30
+    set sample_frame 100
+    set dt 1
+    set nframes [molinfo top get numframes]
+    set delta_frame [expr ($nframes - $sample_frame) / $dt]
 
+    #calculate dtheta from number of theta bins
+    set dtheta [expr 360/$Ntheta]
+    
+    #calculate number of r bins from dr and Rrange
+    if {[expr $Rrange % $dr] == 0} {
+        set Nr [expr $Rrange / $dr - 1]
+    } else {
+        set Nr [expr $Rrange / $dr]
+    }
+
+    #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "occupancy 1 to 3 and name BB"
     Align "occupancy 1 to 3 and name BB"
     Protein_Position   ;#outputs a file that contains the location of the TMD helix of each monomer
-    leaflet_sorter
-    set dt 1
-    set nframes [molinfo top get numframes]
+    leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
 
+    #outfiles setup
     set memb_up [open "${outfile}.up.height.dat" w]
     set memb_down [open "${outfile}.lw.height.dat" w]
-    set sample_frame 100
-    set delta_frame [expr ($nframes - $sample_frame) / $dt]
-    puts "starting outer loop now"	
-	for {set ri $Rmin} { $ri<=${Rmax}} { set ri [expr $ri + $dr]} {
+
+
+    puts "Helper scripts complete. Starting analysis now."	
+
+    set lipids [atomselect top "name PO4 and chain U"]
+    set x_vals [$lipids get x]
+    set y_vals [$lipids get y]
+    set z_vals [$lipids get z]
+
+    #get theta values for all x,y pairs
+    set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
+
+    #atan2 gives values from -180 to 180; shifting to 0 to 360                            
+    for {set i 0} {$i<[llength $theta_vals]} {incr i} {                                         
+        if {[lindex $theta_vals $i] < 0} {                                                      
+            set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+        }
+    }
+
+    #turn into bin numbers rather than theta values
+    vecexpr [vecexpr $theta_vals $dtheta div] floor &theta_bins
+    
+    #calculate distance from origin for all x,y pairs
+    set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+    
+    #turn into bin numbers rather than r values
+    vecexpr [vecexpr $r_vals $dr div] floor &r_bins
+
+    #initialize arrays to zeros
+    for {set m 0} {$m <= $Nr} {incr m} {
+        for {set n 0} {$n <= $Ntheta} {incr n} {
+            set totals($m,$n) 0
+            set counts($m,$n) 0
+        }
+    }
+
+
+    #fill in arrays with z sum and count sum
+    for {set i 0} {$i < [llength $r_vals]} {incr i} {
+        set m [lindex $r_bins $i]
+        set n [lindex $theta_bins $i]
+        if {$m <= $Nr} {
+            set totals($m,$n) [expr {$totals($m,$n) + [lindex $z_vals $i]}]
+            set counts($m,$n) [expr {$counts($m,$n) + 1}]
+        }
+    }    
+
+    #turn the z sum into a z avg
+    for {set m 0} {$m <= $Nr} {incr m} {
+        for {set n 0} {$n <= $Ntheta} {incr n} {
+            if {$counts($m,$n) != 0} {
+                set totals($m,$n) [expr $totals($m,$n) / $counts($m,$n)]
+            }
+        }
+    }
+
+
+
+    $lipids delete
+    #puts $theta_vals
+    #puts $r_vals
+	#for {set ri $Rmin} { $ri<=${Rmax}} { set ri [expr $ri + $dr]} {
 		#loop over shells
-		puts "loop $ri"
-		set rf [expr $ri + $dr]
-		set rf2 [expr $rf*$rf]
-		set ri2 [expr $ri*$ri]
-		set shell "(name PO4) and ((x*x + y*y < $rf2) and (x*x + y*y > $ri2))"
-        	set shell_bin [shell_over_frames $shell $sample_frame $nframes $dt]
-		set shell_up [lindex $shell_bin 0]
-		set shell_down [lindex $shell_bin 1]
-        	output_bins $memb_up $ri $rf $shell_up
-		output_bins $memb_down $ri $rf $shell_down
-		puts "loop $ri done"
-	}
+		#puts "loop $ri"
+		#set rf [expr $ri + $dr]
+		#set rf2 [expr $rf*$rf]
+		#set ri2 [expr $ri*$ri]
+		#set shell "(name PO4) and ((x*x + y*y < $rf2) and (x*x + y*y > $ri2))"
+        #set shell_bin [shell_over_frames $shell $sample_frame $nframes $dt]
+		#set shell_up [lindex $shell_bin 0]
+		#set shell_down [lindex $shell_bin 1]
+        #output_bins $memb_up $ri $rf $shell_up
+		#output_bins $memb_down $ri $rf $shell_down
+		#puts "loop $ri done"
+	#}
 	close $memb_up
 	close $memb_down
 }
