@@ -104,3 +104,40 @@ proc leaflet_flip_check_Height_binning {nframe shell} {
         }
     }
 }
+
+proc leaflet_flip_check_new {nframe beadname} {
+    set lipidsel {(not resname W ION "NA+" "CL-") and (not name BB SC1 to SC4) and (name $beadname)}
+    set chains {"U" "L"}
+    foreach chn_nm $chains {
+        set sel [atomselect top "$lipidsel and (chain $chn_nm)" frame $nframe]
+        set indexs [$sel get index] 
+        $sel delete
+        if {[llength $indexs] != 0} {
+            foreach indx $indexs {
+                if {$chn_nm == "U"} {
+                    set sel [atomselect top "$lipidsel and (pbwithin 18 of index $indx)" frame $nframe]
+                    set chns [$sel get chain]
+                    set check1 [lsearch -all $chns "L"]
+                    set check2 [lsearch -all $chns "U"]
+                    if {[llength $check1] > [llength $check2]} {
+                        set change_chain [atomselect top "index $indx"]
+                        $change_chain set chain "L"
+                        puts "$indx"
+                    }
+                    $sel delete
+                } elseif {$chn_nm == "L"} {
+                    set sel [atomselect top "$lipidsel and (pbwithin 18 of index $indx)" frame $nframe]
+                    set chns [$sel get chain]
+                    set check1 [lsearch -all $chns "U"]
+                    set check2 [lsearch -all $chns "L"]
+                    if {[llength $check1] > [llength $check2]} {
+                        set change_chain [atomselect top "index $indx"]
+                        $change_chain set chain "U"
+                        puts "$indx"
+                    }
+                    $sel delete
+                }
+            }
+        }
+    }
+}
