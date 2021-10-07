@@ -60,33 +60,33 @@ curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
 curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
 
 #if a bin is empty, you can't measure its curvature
-curvature_test = np.isnan(curvature_inputs)
+nan_test = np.isnan(curvature_inputs)
 
 #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-curvature_test2 = np.array(curvature_test, copy=True)
+nan_test2 = np.array(nan_test, copy=True)
 for frm in range(Nframes):
   for row in range(1,N_r_bins-1):
     for col in range(1,Ntheta+1):
-      if curvature_test2[row-1,col,frm] == True:
-        curvature_test[row,col,frm] = True
-      elif curvature_test2[row+1,col,frm] == True:
-        curvature_test[row,col,frm] = True
-      elif curvature_test2[row,col-1,frm] == True:
-        curvature_test[row,col,frm] = True
-      elif curvature_test2[row,col+1,frm] == True:
-        curvature_test[row,col,frm] = True
+      if nan_test2[row-1,col,frm] == True:
+        nan_test[row,col,frm] = True
+      elif nan_test2[row+1,col,frm] == True:
+        nan_test[row,col,frm] = True
+      elif nan_test2[row,col-1,frm] == True:
+        nan_test[row,col,frm] = True
+      elif nan_test2[row,col+1,frm] == True:
+        nan_test[row,col,frm] = True
 
-curvature_test[0,:,:] = True
-curvature_test[N_r_bins-1,:,:] = True
-curvature_test[:,0,:] = True
-curvature_test[:,Ntheta+1,:] = True
+nan_test[0,:,:] = True
+nan_test[N_r_bins-1,:,:] = True
+nan_test[:,0,:] = True
+nan_test[:,Ntheta+1,:] = True
 
 #polar laplacian = d2h/dr2 + 1/r dh/dr + 1/r^2 d2h/dtheta2
 
 for frm in range(Nframes):
   for row in range(N_r_bins):
     for col in range(Ntheta+2):
-      if curvature_test[row,col,frm] == False:
+      if nan_test[row,col,frm] == False:
         
         #calculate d2h/dr2
         del2r = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
