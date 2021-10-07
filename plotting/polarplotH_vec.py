@@ -31,10 +31,7 @@ while(flag==True):
     flag = False
   else:
     counter = counter+1
-
 N_r_bins = counter
-
-#figure out dr
 dr = read_in_data[0,1] - read_in_data[0,0]
 
 #figure out how many azimuthal bins there are
@@ -49,11 +46,9 @@ newdata = np.zeros((N_r_bins, Ntheta, Nframes))
 for x in range(Nframes):
   newdata[:,:,x] = read_in_data[x*N_r_bins:(x+1)*N_r_bins,2:]
 
-#take the average over all frames
+#take the average height over all frames
 avgHeight=np.nanmean(newdata, axis=2)
 avgHeight = avgHeight + 5.69 ;# unique value for each simulation
-
-
 
 #create arrays for storing curvature data
 curvature_inputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
@@ -119,6 +114,7 @@ curvature = curvature_outputs[:,1:Ntheta+1,:]
 avgcurvature=np.nanmean(curvature, axis=2)
 
 
+#prepare to plot
 rad = read_in_data[0:N_r_bins,0]
 rad = np.append(rad, read_in_data[N_r_bins-1,1])
 the = np.linspace(0,2*np.pi,Ntheta+1)
@@ -126,7 +122,7 @@ radius,theta=np.meshgrid(rad, the, indexing='ij')
 
 
 
-
+#plotting section
 fig = plt.figure(figsize = (5,5))
 ax = plt.subplot(projection="polar")
 c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0)
