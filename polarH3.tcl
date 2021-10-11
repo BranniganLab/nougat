@@ -481,25 +481,20 @@ proc polarHeightByShell {outfile} {
         puts $frm
     }
 
-    
-    #puts $theta_vals
-    #puts $r_vals
-	#for {set ri $Rmin} { $ri<=${Rmax}} { set ri [expr $ri + $dr]} {
-		#loop over shells
-		#puts "loop $ri"
-		#set rf [expr $ri + $dr]
-		#set rf2 [expr $rf*$rf]
-		#set ri2 [expr $ri*$ri]
-		#set shell "(name PO4) and ((x*x + y*y < $rf2) and (x*x + y*y > $ri2))"
-        #set shell_bin [shell_over_frames $shell $sample_frame $nframes $dt]
-		#set shell_up [lindex $shell_bin 0]
-		#set shell_down [lindex $shell_bin 1]
-        #output_bins $memb_up $ri $rf $shell_up
-		#output_bins $memb_down $ri $rf $shell_down
-		#puts "loop $ri done"
-	#}
-
     close $heights_up
     close $heights_down
     $lipids delete
+}
+
+proc run_mult {list_of_systems} {
+    foreach item $list_of_systems {
+        set gro "/u1/home/js2746/Bending/${item}.gro"
+        set xtc "/u1/home/js2746/Bending/${item}.xtc"
+        mol new $gro
+        mol addfile $xtc waitfor all
+        puts $gro
+        puts $xtc
+        polarHeightByShell $item
+        mol delete top
+    }
 }

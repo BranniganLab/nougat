@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from findiff import FinDiff, Coefficient, Laplacian
+
 
 protein = np.loadtxt("../5x29_coords_upr.dat",skiprows=1)
 chain_up = []
@@ -48,7 +48,10 @@ for x in range(Nframes):
 
 #take the average height over all frames
 avgHeight=np.nanmean(newdata, axis=2)
-avgHeight = avgHeight + 5.69 ;# unique value for each simulation
+#avgHeight = avgHeight + 5.69 ;# unique value for each simulation
+
+#save as file
+np.save('DL.lw.avgheight.npy', avgHeight)
 
 #create arrays for storing curvature data
 curvature_inputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
@@ -113,6 +116,7 @@ for frm in range(Nframes):
 curvature = curvature_outputs[:,1:Ntheta+1,:]
 avgcurvature=np.nanmean(curvature, axis=2)
 
+np.save('DL.lw.avgcurvature.npy',avgcurvature)
 
 #prepare to plot
 rad = read_in_data[0:N_r_bins,0]
@@ -130,7 +134,7 @@ c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0)
 cbar = plt.colorbar(c)
 #cbar.ax.set_title('Enrichment',fontdict=newfont)
 #cbar.ax.set_xlabel('Depletion',fontdict=newfont,labelpad=14.0)
-cbar.ax.set_ylabel('Time-averaged Deformation (A)',fontdict=newfont,labelpad=20)
+#cbar.ax.set_ylabel('Time-averaged Deformation (A)',fontdict=newfont,labelpad=20)
 for i in range(0,10,2):
   plt.scatter(np.deg2rad(chain_lw[i+1]),chain_lw[i],c="black",linewidth=4,zorder=2)
 plt.axis('off')
