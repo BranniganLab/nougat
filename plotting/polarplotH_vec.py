@@ -86,6 +86,7 @@ for name in name_list:
         fig.set_size_inches(6,6)
         plt.savefig(name+"_"+leaflet+"_avgHeight.png", dpi = 700)
         plt.clf()
+        plt.close()
 
         print(name+" height done!")
 
@@ -184,4 +185,5 @@ for name in name_list:
         fig.set_size_inches(6,6)
         plt.savefig(name+"_"+leaflet+"_curvature.png", dpi = 700)
         plt.clf()
+        plt.close()
         print(name+" curvature done!")
