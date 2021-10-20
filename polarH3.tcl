@@ -64,12 +64,12 @@ proc z_mid {init_frm nframes} {
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
 
-proc Protein_Position {} {
+proc Protein_Position {name} {
     set chain_names [list "A" "B" "C" "D" "E"]
     set zed [z_mid 0 20]
     puts $zed
     foreach eq {"<" ">"} eqtxt {"lwr" "upr"} {
-	set fout [open "5x29_coords_${eqtxt}.dat" w]
+	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm}) and (name BB) and (occupancy 3) and (z ${eq} $zed)" frame 0]
@@ -355,6 +355,9 @@ proc polarHeightByShell {outfile} {
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set counter 0
     set nm "C1A C1B"
+
+
+    
     #calculate dtheta from number of theta bins
     set dtheta [expr 360/$Ntheta]
     
@@ -369,7 +372,7 @@ proc polarHeightByShell {outfile} {
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "occupancy 1 to 3 and name BB"
     Align "occupancy 1 to 3 and name BB"
-    Protein_Position   ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $outfile  ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
 
     #find top of protein for pbc crossing event
@@ -377,6 +380,14 @@ proc polarHeightByShell {outfile} {
     set prot_z [$sel get z]
     $sel delete
     set protein_top [::tcl::mathfunc::max {*}$prot_z]
+
+    #need to calculate heights relative to some point on the protein
+    #for 5x29 we chose the juncture between TMD and protein cap
+    #because this corresponds to height zero in our elastic simulations
+    set ref_bead [atomselect top "name BB and resid 15"]
+    set ref_height [$ref_bead get z]
+    $ref_bead delete
+    set ref_height [expr [vecexpr $ref_height sum]/5.0]
 
     #outfiles setup
     set heights_up [open "${outfile}.up.height.dat" w]
@@ -400,7 +411,7 @@ proc polarHeightByShell {outfile} {
 
         set x_vals [$lipids get x]
         set y_vals [$lipids get y]
-        set z_vals [$lipids get z]
+        set z_vals [vecexpr [$lipids get z] $ref_height sub]
         set chains [$lipids get chain]
 
         #get theta values for all x,y pairs
