@@ -167,7 +167,7 @@ for name in name_list:
         #plotting section
         fig = plt.figure()
         ax = plt.subplot(projection="polar")
-        c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0,vmax=1,vmin=-2)
+        c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0,vmax=.1,vmin=-.1)
         #c = plt.pcolormesh(theta,radius,height,cmap="RdBu_r",zorder=0)
         cbar = plt.colorbar(c)
         for i in range(0,10,2):
