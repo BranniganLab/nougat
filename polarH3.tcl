@@ -340,6 +340,30 @@ proc avgHlower {} {
     set tot [expr $tot/$divisor]
     puts $tot
 }
+
+proc tail_analyzer { tails } {
+    set heads "PC"
+    set species $tails$heads
+    set sel [atomselect top "resname $species"]
+    set res [$sel get resid]
+    $sel delete
+    set sel [atomselect top "resname $species and resid [lindex $res 0]"]
+    set names [$sel get name]
+    $sel delete
+    
+    set tail_one []
+    set tail_two []
+
+    foreach nm $names {
+        if {[string match ??A $nm]} {
+            lappend tail_one $nm
+        } elseif {[string match ??B $nm]} {
+            lappend tail_two $nm
+        }
+    }   
+    return [list $tail_one $tail_two]
+}
+
 ;########################################################################################
 ;# polarHeight Function
 
@@ -375,6 +399,7 @@ proc polarHeightByShell {outfile} {
     Align "occupancy 1 to 3 and name BB"
     Protein_Position $outfile  ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    set tail_names [tail_analyzer $outfile]
 
     #find top of protein for pbc crossing event
     set sel [atomselect top "name BB"]
