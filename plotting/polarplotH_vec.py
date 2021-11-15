@@ -7,9 +7,9 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-#name_list = ["DL"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
-leaflet_list = ["lw", "up"]
+name_list = ["PO.NA"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
+leaflet_list = ["up"]
 
 
 
@@ -17,7 +17,8 @@ for name in name_list:
   for leaflet in leaflet_list:
 
     #read in protein helix coordinates
-    protein = np.loadtxt(name+"_helcoords_"+leaflet+"r.dat",skiprows=1)
+    name2 = name[:-3]
+    protein = np.loadtxt(name2+"_helcoords_"+leaflet+"r.dat",skiprows=1)
     chain = []
     for i in range(10):
     	chain.append(protein[i])

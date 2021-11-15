@@ -4,6 +4,7 @@
  set QWRAP "~/qwrap-master"
  
 source $UTILS/BinTools.tcl
+source $UTILS/assign_tilts.tcl
 source $UTILS/leaflet_sorter_scripts.tcl
 
 load ${QWRAP}/qwrap.so
@@ -362,8 +363,8 @@ proc polarHeightByShell {outfile} {
     set dtheta [expr 360/$Ntheta]
     
     #calculate number of r bins from dr and Rrange
-    if {[expr $Rrange % $dr] == 0} {
-        set Nr [expr $Rrange / $dr - 1]
+    if {[expr $Rrange % $dr] == 0} { 
+        set Nr [expr $Rrange / $dr - 1] 
     } else {
         set Nr [expr $Rrange / $dr]
     }
@@ -409,7 +410,7 @@ proc polarHeightByShell {outfile} {
         $lipids update
         set box_height [molinfo top get c]
 
-        set x_vals [$lipids get x]
+        set x_vals [$lipids get x] 
         set y_vals [$lipids get y]
         set z_vals [vecexpr [$lipids get z] $ref_height sub]
         set chains [$lipids get chain]
@@ -489,7 +490,6 @@ proc polarHeightByShell {outfile} {
             puts $heights_up " $totals_up($m,[expr $Ntheta-1])"
             puts $heights_down " $totals_down($m,[expr $Ntheta-1])"
         } 
-        puts $frm
     }
 
     close $heights_up
