@@ -100,9 +100,9 @@ proc lsq { x } {
   #puts $xtot
   return $xtot
 }
-  
+
 #  least squares procedure from above, optimized for use with vecexpr
-proc lsq_vec { tail_length list_of_tail_coords } {
+proc lsq_vecexpr { tail_length list_of_tail_coords } {
   set d [expr {0.5*($tail_length-1)}]
   set i_list []
   for {set i 0} {$i<$tail_length} {incr i} {
