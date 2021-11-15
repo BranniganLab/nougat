@@ -111,7 +111,7 @@ proc lsq_vec { tail_length list_of_tail_coords } {
   vecexpr $i_list $d sub >multiplier
   set vector_list []
   foreach tail $list_of_tail_coords {
-    set vector [vecnorm [vecexpr [vecexpr $tail $multiplier mult] sum]]
+    set vector [vecexpr [vecexpr $tail $multiplier mult] sum]
     lappend vector_list $vector
   }
   return $vector_list
