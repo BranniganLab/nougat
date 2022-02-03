@@ -390,6 +390,7 @@ proc polarHeightByShell {outfile} {
     set heads [list "PC" "PG"]
     
     #create list of lipids used
+    #will need to make this less breakable
     set tails $outfile
     set species ""
     foreach head $heads {
@@ -412,6 +413,10 @@ proc polarHeightByShell {outfile} {
     Align "occupancy 1 to 3 and name BB"
     Protein_Position $outfile  ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+
+    #will need to make this less breakable
+    #only works for tails of equal length
+    #only works for lipids of all same tail type
     set tail_names [tail_analyzer $species]
     set tail_one [lindex $tail_names 0]
     set tail_two [lindex $tail_names 1]
@@ -438,10 +443,12 @@ proc polarHeightByShell {outfile} {
 
     puts "Helper scripts complete. Starting analysis now."	
 
+    #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
+    #position 0 is used for z1, z2, and zplus; position end is used for z_zero
     foreach pos {0 end} {
         set nm1 [lindex $tail_one $pos]
         set nm2 [lindex $tail_two $pos] 
-        set nm "$nm1 nm2"
+        set nm "$nm1 $nm2"
         set lipids [atomselect top "name $nm"]
         leaflet_flip_check_new $sample_frame $nm
 
