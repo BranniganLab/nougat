@@ -7,24 +7,23 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-name_list = ["PO.NA"]
+name_list = ["DB"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
-leaflet_list = ["up"]
+field_list = ["zone","ztwo","zplus","zzero"]
 
 
 
 for name in name_list:
-  for leaflet in leaflet_list:
+  for field in field_list:
 
     #read in protein helix coordinates
-    name2 = name[:-3]
-    protein = np.loadtxt(name2+"_helcoords_"+leaflet+"r.dat",skiprows=1)
+    protein = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
     chain = []
     for i in range(10):
     	chain.append(protein[i])
 
     #read in heights from VMD traj
-    read_in_data = np.genfromtxt(name+'.'+leaflet+'.height.dat',missing_values='nan')
+    read_in_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan')
 
     #figure out how many radial bins there are
     counter = 1
@@ -50,7 +49,7 @@ for name in name_list:
     for x in range(Nframes):
       newdata[:,:,x] = read_in_data[x*N_r_bins:(x+1)*N_r_bins,2:]
 
-
+    #produce avgheight, avglaplacian, and avggausscurv
     for dtype in range(2):
       if dtype == 0:
         #take the average height over all frames
@@ -59,7 +58,7 @@ for name in name_list:
           avgHeight=np.nanmean(newdata, axis=2)
 
         #save as file
-        np.save(name+'.'+leaflet+'.avgheight.npy', avgHeight)
+        np.save(name+'.'+field+'.avgheight.npy', avgHeight)
 
         #prepare to plot
         rad = read_in_data[0:N_r_bins,0]
@@ -77,7 +76,7 @@ for name in name_list:
         plt.axis('off')
 
         circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
-        if leaflet == "up":
+        if field == "zone":
           ax.add_artist(circle1)
 
         ax.set_xticklabels([])
@@ -85,11 +84,11 @@ for name in name_list:
 
         #figure = plt.gcf()
         fig.set_size_inches(6,6)
-        plt.savefig(name+"_"+leaflet+"_avgHeight.png", dpi = 700)
+        plt.savefig(name+"_"+field+"_avgHeight.png", dpi = 700)
         plt.clf()
         plt.close()
 
-        print(name+" height done!")
+        print(name+" "+field+" height done!")
 
       elif dtype == 1:
         #create arrays for storing curvature data
@@ -157,7 +156,7 @@ for name in name_list:
           warnings.simplefilter("ignore", category=RuntimeWarning)
           avgcurvature=np.nanmean(curvature, axis=2)
 
-        np.save(name+'.'+leaflet+'.avgcurvature.npy',avgcurvature)
+        np.save(name+'.'+field+'.avgcurvature.npy',avgcurvature)
 
         #prepare to plot
         rad = read_in_data[0:N_r_bins,0]
@@ -176,7 +175,7 @@ for name in name_list:
         plt.axis('off')
 
         circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
-        if leaflet == "up":
+        if field == "zone":
           ax.add_artist(circle1)
 
         ax.set_xticklabels([])
@@ -184,7 +183,7 @@ for name in name_list:
 
         #figure = plt.gcf()
         fig.set_size_inches(6,6)
-        plt.savefig(name+"_"+leaflet+"_curvature.png", dpi = 700)
+        plt.savefig(name+"_"+field+"_curvature.png", dpi = 700)
         plt.clf()
         plt.close()
-        print(name+" curvature done!")
+        print(name+" "+field+" curvature done!")
