@@ -34,29 +34,33 @@ proc get_theta {x y} {
     return [RtoD $theta]
 }
 
-proc z_mid {init_frm nframes} {
-    set z_list {}
-    for {set frm ${init_frm}} {${frm} < ${nframes}} {incr frm} {
-        set mid [atomselect top "name PO4 ROH C3 PO41" frame $frm]
-        lappend z_list [lindex [measure center $mid weight mass] 2]
-        $mid delete
-    }
-    return [expr 1.0*[vecsum $z_list]/([llength $z_list]) ]
-}
-
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
 
-proc Protein_Position {name} {
+proc Protein_Position {name nframes hnames tnames} {
     set chain_names [list "A" "B" "C" "D" "E"]
-    set zed [z_mid 0 20]
-    puts $zed
-    foreach eq {"<" ">"} eqtxt {"ztwo" "zone"} {
+
+    set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
+    set zone_zvals [$zone_sel get z]
+    set zone_Ht [vecexpr $zone_zvals mean]
+    $zone_sel delete
+
+    set ztwo_sel [atomselect top "(name $hnames and chain L) and within 6 of name BB"]
+    set ztwo_zvals [$ztwo_sel get z]
+    set ztwo_Ht [vecexpr $ztwo_zvals mean]
+    $ztwo_sel delete
+
+    set zmid_sel [atomselect top "name $tnames and within 6 of name BB"]
+    set zmid_zvals [$zmid_sel get z]
+    set zmid_Ht [vecexpr $zmid_zvals mean]
+    $zmid_sel delete
+
+    foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
 	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
-                set sel [atomselect top "(chain ${chnm}) and (name BB) and (occupancy 3) and (z ${eq} $zed)" frame 0]
+                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 3) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $nframes]
                 set com [measure center $sel weight mass]
                 $sel delete
                 set x [lindex $com 0]
@@ -256,20 +260,28 @@ proc polarHeightByShell {outfile} {
     } else {
         set Nr [expr $Rrange / $dr]
     }
+    
+    #will need to make this less breakable
+    #only works for two tails of equal length
+    #only works for lipids of all same tail type
+    set acyl_names [tail_analyzer $species]
+    set tail_one [lindex $acyl_names 0]
+    set tail_two [lindex $acyl_names 1]
+
+    set t1H [lindex $tail_one 0]
+    set t2H [lindex $tail_two 0]
+    set t1T [lindex $tail_one end]
+    set t1T [lindex $tail_two end]
+
+    set headnames "$t1H $t2H"
+    set tailnames "$t1T $t2T"
 
     #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "occupancy 1 to 3 and name BB"
     Align "occupancy 1 to 3 and name BB"
-    Protein_Position $outfile  ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-
-    #will need to make this less breakable
-    #only works for tails of equal length
-    #only works for lipids of all same tail type
-    set tail_names [tail_analyzer $species]
-    set tail_one [lindex $tail_names 0]
-    set tail_two [lindex $tail_names 1]
 
     #find top of protein for pbc crossing event
     set sel [atomselect top "name BB"]
@@ -295,15 +307,8 @@ proc polarHeightByShell {outfile} {
 
     #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
-    
-    set nm1 [lindex $tail_one 0]
-    set nm2 [lindex $tail_two 0] 
-    set nm "$nm1 $nm2"
-    set heads [atomselect top "name $nm"]
-    set nm1 [lindex $tail_one end]
-    set nm2 [lindex $tail_two end] 
-    set nm "$nm1 $nm2"
-    set tails [atomselect top "((name $nm and chain U) and within 6 of (name $nm and chain L)) or ((name $nm and chain L) and within 6 of (name $nm and chain U))"]
+    set heads [atomselect top "name $headnames"]
+    set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
         
     leaflet_flip_check_new $sample_frame $nm
 
