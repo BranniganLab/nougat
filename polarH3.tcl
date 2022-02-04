@@ -399,7 +399,13 @@ proc polarHeightByShell {outfile} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
                             if {$counts_up($m,$n) != 0} {
                                 set midpoint($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
+                            } else {
+                                set midpoint($m,$n) "nan"
                             }
+                        } else {
+                            set totals_down($m,$n) "nan"
+                            set midpoint($m,$n) "nan"
+                        }
                     } elseif {$bead_counter == 1} {
                         set totals_down($m,$n) "nan"
                         set midpoint($m,$n) "nan"
