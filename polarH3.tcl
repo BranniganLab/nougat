@@ -271,7 +271,7 @@ proc polarHeightByShell {outfile} {
     set t1H [lindex $tail_one 0]
     set t2H [lindex $tail_two 0]
     set t1T [lindex $tail_one end]
-    set t1T [lindex $tail_two end]
+    set t2T [lindex $tail_two end]
 
     set headnames "$t1H $t2H"
     set tailnames "$t1T $t2T"
@@ -310,14 +310,14 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
         
-    leaflet_flip_check_new $sample_frame $nm
+    leaflet_flip_check_new $sample_frame "PO4"
 
     #start frame looping here
     for {set frm $sample_frame} {$frm < $nframes} {set frm [expr $frm + $dt]} {
         puts $frm
         set counter [expr $counter + 1]
         if {[expr $counter % 50] == 0} {
-            leaflet_flip_check_new $frm $nm
+            leaflet_flip_check_new $frm "PO4"
         }
 
         set box_height [molinfo top get c]
