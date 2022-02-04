@@ -388,6 +388,7 @@ proc polarHeightByShell {outfile} {
     set counter 0
     set num_subunits 5.0
     set heads [list "PC" "PG"]
+    set min_angle 0                    ;# the cutoff angle for determining whether a tail is at the interface
     
     #create list of lipids used
     #will need to make this less breakable
@@ -532,7 +533,7 @@ proc polarHeightByShell {outfile} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
-                    } elseif {[lindex $angle_vals $i] > 0} {
+                    } elseif {[lindex $angle_vals $i] > $min_angle} {
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                     }
