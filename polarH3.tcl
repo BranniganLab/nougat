@@ -18,25 +18,10 @@ source $UTILS/leaflet_sorter_scripts.tcl
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
 
-
-
-proc lcount {list} {
-    foreach x $list {lappend arr($x) {}}
-    set res1 {}
-    set res2 {}
-    foreach name [array names arr] {
-	lappend res1 $name
-	lappend res2 [llength $arr($name)]
-    }
-    set res [list $res1 $res2]
-    return $res
- }
- 
  proc RtoD {r} {
     set pi 3.14159265358979323846
     return [expr $r*180.0/$pi]
 }
-
 
 proc get_theta {x y} {
     set pi 3.14159265358979323846
@@ -49,14 +34,6 @@ proc get_theta {x y} {
     return [RtoD $theta]
 }
 
-proc Sum_list {list_in} {
-    set list_out 0
-    foreach li $list_in {
-        set list_out [expr 1.0*$list_out+$li]
-    }
-    return $list_out
-}
-
 proc z_mid {init_frm nframes} {
     set z_list {}
     for {set frm ${init_frm}} {${frm} < ${nframes}} {incr frm} {
@@ -66,8 +43,6 @@ proc z_mid {init_frm nframes} {
     }
     return [expr 1.0*[vecsum $z_list]/([llength $z_list]) ]
 }
-
-
 
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
@@ -137,118 +112,6 @@ proc Center_System {inpt} {
     puts "Center_System finished!"
 }
 
-proc output_bins {fl ri rf bins} {
-    puts -nonewline $fl "[format {%0.2f} $ri]  [format {%0.2f} $rf]  " 
-    puts $fl "$bins" 
-}
-
-proc shell_over_frames {shell sample_frame nframes dt} {
-    set singleFrame_upper []
-    set singleFrame_lower []
-    for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
-        #loop over frames
-        if {[expr $frm % 50] == 0} {
-            leaflet_flip_check_Height_binning $frm $shell
-        }
-    	set singleFrame_coords [shell_frame $shell $frm]
-    	if {$singleFrame_coords!=""} {
-    	    if {[lindex $singleFrame_coords 0]!=""} {
-                lappend singleFrame_upper [lindex $singleFrame_coords 0] 
-    	    }
-            if {[lindex $singleFrame_coords 1]!=""} {
-                lappend singleFrame_lower [lindex $singleFrame_coords 1] 
-            }
-        }
-    }
-    set newlower []
-    set newupper []
-    if {$singleFrame_lower != ""} { 
-    	for {set indx 0} {$indx < [llength $singleFrame_lower]} {incr indx} {
-    	    for {set indx2 0} {$indx2 < [llength [lindex $singleFrame_lower $indx]]} {incr indx2} {
-    	        lappend newlower [lindex [lindex $singleFrame_lower $indx] $indx2]
-    	    }
-    	}
-    }
-    if {$singleFrame_upper != ""} {
-        for {set indx 0} {$indx < [llength $singleFrame_upper]} {incr indx} {
-    	    for {set indx2 0} {$indx2 < [llength [lindex $singleFrame_upper $indx]]} {incr indx2} {
-                    lappend newupper [lindex [lindex $singleFrame_upper $indx] $indx2]
-    	    }
-        }
-    }
-    set theta_bin_high [theta_height_avg $newupper]
-    set theta_bin_low [theta_height_avg $newlower]
-    return [list $theta_bin_high $theta_bin_low]
-}
-
-
-proc theta_height_avg {input} {   
-    set theta_list []
-    set height_list []
-    if {$input != ""} {
-        set len [llength $input]
-        for {set t 0} {$t<$len} {incr t} {
-	    lappend theta_list [lindex [lindex $input $t] 0]
-	    lappend height_list [lindex [lindex $input $t] 1]
-        }
-    
-    }
-    set out_list []
-    for {set ti 0} {$ti<30} {incr ti 1} {
-        set tindex [lsearch -all $theta_list $ti] 
-	if {$tindex != ""} {
-            set divisor [expr 1.0*[llength $tindex]]
-            set sum 0
-            foreach indx $tindex {
-                set newnum [lindex $height_list $indx]
-                set sum [expr $sum+$newnum]
-            }
-            set avg [expr $sum/$divisor]
-            lappend out_list $avg 
-        } else {
-            lappend out_list "np.nan"
-        }
-    }
-    return $out_list
-}
-
-;# captures polar coords and z values over a shell in a single frame
-proc shell_frame {shell frm} {
-    set theta_high_out []
-    set shell_sel [atomselect top $shell frame $frm]
-    set theta_low_out []
-    set nshell [$shell_sel num]
-    set box_height [molinfo top get c]
-    if {$nshell != 0} {
-        set indexs [$shell_sel get index]
-	$shell_sel delete
-	foreach indx $indexs {
-            set thisPO4 [atomselect top "index $indx" frame $frm]
-            set coordx [$thisPO4 get x]
-	    set coordy [$thisPO4 get y]
-            set coordz [$thisPO4 get z]
-            if {$coordz > 30} {
-		   set coordz [expr $coordz - $box_height]
-	    }
-	    set tpchain [$thisPO4 get chain]
-            $thisPO4 delete
-            set theta [get_theta $coordx $coordy]
-            set ti [expr int($theta/12)]
-            if {$tpchain == "L"} {
-                lappend theta_low_out [list $ti $coordz]
-            } elseif {$tpchain == "U"} {
-                lappend theta_high_out [list $ti $coordz]
-            } else {
-                puts "shell_frame is broken"
-		exit
-            }
-        }
-	return [list $theta_high_out $theta_low_out] 
-    } else {
-	$shell_sel delete    
-	return
-    }
-}
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -325,29 +188,6 @@ proc leaflet_sorter {} {
         $lipid delete
         $po4 delete
     }
-}
-
-proc avgHlower {} {
-    set sel [atomselect top "name BB and resid 1"]
-    set nframes [molinfo top get numframes]
-
-
-    set tot 0
-    set divisor 0
-    
-    for {set frm 100} {$frm < $nframes} {incr frm} {
-        $sel frame $frm
-        $sel update
-        set zs [$sel get z]
-        foreach item $zs {
-            set tot [expr $tot + $item]
-        }
-        set divisor [expr $divisor + 1]
-    }
-    puts $divisor
-    set divisor [expr $divisor*5]
-    set tot [expr $tot/$divisor]
-    puts $tot
 }
 
 proc tail_analyzer { species } {
