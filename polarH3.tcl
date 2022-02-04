@@ -1,14 +1,22 @@
 
- package require pbctools
- set UTILS "utilities" 
- set QWRAP "~/qwrap-master"
- 
+package require pbctools
+
+#locations on JS home computer
+set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
+set QWRAP "~/qwrap"
+set VEC "~/vecexpr"
+
+#locations on Belenus
+#set UTILS "~/utilities"
+#set QWRAP "~/qwrap-master"
+#set VEC "~/utilities/vecexpr"
+
 source $UTILS/BinTools.tcl
 source $UTILS/assign_tilts.tcl
 source $UTILS/leaflet_sorter_scripts.tcl
 
 load ${QWRAP}/qwrap.so
-load ~/utilities/vecexpr/vecexpr.so
+load ${VEC}/vecexpr.so
 
 
 
@@ -69,7 +77,7 @@ proc Protein_Position {name} {
     set chain_names [list "A" "B" "C" "D" "E"]
     set zed [z_mid 0 20]
     puts $zed
-    foreach eq {"<" ">"} eqtxt {"lwr" "upr"} {
+    foreach eq {"<" ">"} eqtxt {"ztwo" "zone"} {
 	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
@@ -244,50 +252,51 @@ proc shell_frame {shell frm} {
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
-  set sel [atomselect $molid "type BB or type SC1 to SC4"]
-  set residuelist [$sel get residue]
-  set resmax [::tcl::mathfunc::max {*}$residuelist]
-  $sel delete
+    set sel [atomselect $molid "name BB SC1 to SC4"]
+    set residuelist [$sel get residue]
+    set resmax [::tcl::mathfunc::max {*}$residuelist]
+    $sel delete
 
-  set list1 0
+    set list1 0
 
-  for {set i 0} {$i < $resmax} {incr i} {
-     set sel1 [atomselect $molid "residue $i"]
-     set sel2 [atomselect $molid "residue [expr $i+1]"]
+    for {set i 0} {$i < $resmax} {incr i} {
+        set sel1 [atomselect $molid "residue $i"]
+        set sel2 [atomselect $molid "residue [expr $i+1]"]
 
-     set loc1 [lindex [$sel1 get {x y z}] 0]
-     set loc2 [lindex [$sel2 get {x y z}] 0]
+        set loc1 [lindex [$sel1 get {x y z}] 0]
+        set loc2 [lindex [$sel2 get {x y z}] 0]
 
-     set dist [vecdist $loc1 $loc2]
+        set dist [vecdist $loc1 $loc2]
 
-     if {$dist > 10} {
-        lappend list1 $i
-        lappend list1 [expr $i+1]
-     }
-     $sel1 delete
-     $sel2 delete
-  }
+            if {$dist > 20} {
+                lappend list1 $i
+                lappend list1 [expr $i+1]
+            }
+        $sel1 delete
+        $sel2 delete
+    }
 
-  set chars "A B C D E"
-  set k 0
-  lappend list1 $resmax
+    set chars [list A B C D E]
+    set k 0
+    lappend list1 $resmax
 
-  foreach {i j} $list1 {
-     set sel [atomselect $molid "residue $i to $j"]
-     $sel set chain [lindex $chars $k]
-     set k [expr $k+1]
-     $sel delete
-  }
+    foreach {i j} $list1 {
+        set sel [atomselect $molid "residue $i to $j"]
+        $sel set chain [lindex $chars $k]
+        $sel delete
+        set k [expr $k+1]
+    }
 
-  set sel [atomselect $molid "resid 0 to 39"]
-  $sel set occupancy 3
-  $sel delete
-  set sel [atomselect $molid "resid 40 to 51"]
-  $sel set occupancy 2
-  $sel delete
-  set sel [atomselect $molid "resid 52 to 65"]
-  $sel set occupancy 1
-  $sel delete
+    set sel [atomselect $molid "resid 0 to 39"]
+    $sel set occupancy 3
+    $sel delete
+    set sel [atomselect $molid "resid 40 to 51"]
+    $sel set occupancy 2
+    $sel delete
+    set sel [atomselect $molid "resid 52 to 65"]
+    $sel set occupancy 1
+    $sel delete
+
 }
 
 
@@ -376,6 +385,7 @@ proc tail_analyzer { species } {
 
 proc polarHeightByShell {outfile} {
 
+
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
@@ -387,14 +397,13 @@ proc polarHeightByShell {outfile} {
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set counter 0
     set num_subunits 5.0
-    set heads [list "PC" "PG"]
-    set min_angle 0                    ;# the cutoff angle for determining whether a tail is at the interface
+    set headgrps [list "PC" "PG"]
     
     #create list of lipids used
     #will need to make this less breakable
     set tails $outfile
     set species ""
-    foreach head $heads {
+    foreach head $headgrps {
         set species "$species$tails$head "
     }
     
@@ -446,46 +455,38 @@ proc polarHeightByShell {outfile} {
 
     #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
-    foreach pos {0 end} {
-        set nm1 [lindex $tail_one $pos]
-        set nm2 [lindex $tail_two $pos] 
-        set nm "$nm1 $nm2"
-        set lipids [atomselect top "name $nm"]
-        leaflet_flip_check_new $sample_frame $nm
+    
+    set nm1 [lindex $tail_one 0]
+    set nm2 [lindex $tail_two 0] 
+    set nm "$nm1 $nm2"
+    set heads [atomselect top "name $nm"]
+    set nm1 [lindex $tail_one end]
+    set nm2 [lindex $tail_two end] 
+    set nm "$nm1 $nm2"
+    set tails [atomselect top "((name $nm and chain U) and within 6 of (name $nm and chain L)) or ((name $nm and chain L) and within 6 of (name $nm and chain U))"]
+        
+    leaflet_flip_check_new $sample_frame $nm
 
-        #start frame looping here
-        for {set frm $sample_frame} {$frm < $nframes} {set frm [expr $frm + $dt]} {
-            puts $frm
-            set counter [expr $counter + 1]
-            if {[expr $counter % 50] == 0} {
-                leaflet_flip_check_new $frm $nm
-            }
+    #start frame looping here
+    for {set frm $sample_frame} {$frm < $nframes} {set frm [expr $frm + $dt]} {
+        puts $frm
+        set counter [expr $counter + 1]
+        if {[expr $counter % 50] == 0} {
+            leaflet_flip_check_new $frm $nm
+        }
 
-            $lipids frame $frm
-            $lipids update
-            set box_height [molinfo top get c]
+        set box_height [molinfo top get c]
+        set bead_counter 0
 
-            set x_vals [$lipids get x] 
-            set y_vals [$lipids get y]
-            set z_vals [vecexpr [$lipids get z] $ref_height sub]
-            set chains [$lipids get chain]
-            set resids [$lipids get resid]
-            set tail_nums [$lipids get user]
+        foreach bead [list $heads $tails] {
+            $bead frame frm 
+            $bead update
 
-            if {$pos != 0} {
-                set angle_vals []
-                set rescount 0
-                foreach resd $resids {
-                    set sel [atomselect top "resname $species and user [lindex $tail_nums $rescount] and resid $resd"]
-                    set x_vec [$sel get x]
-                    set y_vec [$sel get y]
-                    set z_vec [$sel get z]
-                    set fitvec [vecnorm [list [lsq $x_vec] [lsq $y_vec] [lsq $z_vec]]]
-                    lappend angle_vals $fitvec
-                    $sel delete
-                    set rescount [expr $rescount + 1]
-                }
-            }
+            set x_vals [$bead get x] 
+            set y_vals [$bead get y]
+            set z_vals [vecexpr [$bead get z] $ref_height sub]
+            set chains [$bead get chain]
+            set resids [$bead get resid]
 
             #get theta values for all x,y pairs
             set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
@@ -525,7 +526,7 @@ proc polarHeightByShell {outfile} {
                     set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
                 }
                 if {$m <= $Nr} {
-                    if {$pos == 0} {
+                    if {$bead_counter == 0} {
                         if {[lindex $chains $i] == "U"} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
@@ -533,7 +534,7 @@ proc polarHeightByShell {outfile} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
-                    } elseif {[lindex $angle_vals $i] > $min_angle} {
+                    } elseif {$bead_counter == 1} {
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                     }
@@ -548,13 +549,13 @@ proc polarHeightByShell {outfile} {
                     } else {
                         set totals_up($m,$n) "nan"
                     }
-                    if {$pos == 0} {
+                    if {$bead_counter == 0} {
                         if {$counts_down($m,$n) != 0} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
                             if {$counts_up($m,$n) != 0} {
                                 set midpoint($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
                             }
-                        } else {
+                        } elseif {$bead_counter == 1} {
                             set totals_down($m,$n) "nan"
                             set midpoint($m,$n) "nan"
                         }
@@ -563,7 +564,7 @@ proc polarHeightByShell {outfile} {
             }
 
             #output to files
-            if { $pos == 0 } {
+            if { $bead_counter == 0 } {
                 for {set m 0} {$m <= $Nr} {incr m} {
                     puts -nonewline $heights_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     puts -nonewline $heights_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
@@ -577,7 +578,7 @@ proc polarHeightByShell {outfile} {
                     puts $heights_down " $totals_down($m,[expr $Ntheta-1])"
                     puts $heights_zplus " $midpoint($m,[expr $Ntheta-1])"
                 } 
-            } else {
+            } elseif {$bead_counter == 1} {
                 for {set m 0} {$m <= $Nr} {incr m} {
                     puts -nonewline $heights_zzero "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
@@ -586,13 +587,16 @@ proc polarHeightByShell {outfile} {
                     puts $heights_zzero " $totals_up($m,[expr $Ntheta-1])"
                 }
             }
+            set bead_counter 1
         }
     }
+
     close $heights_up
     close $heights_down
     close $heights_zplus
     close $heights_zzero
-    $lipids delete
+    $heads delete
+    $tails delete
 }
 
 proc run_mult {list_of_systems} {
