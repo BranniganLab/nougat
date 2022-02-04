@@ -120,7 +120,7 @@ proc leaflet_flip_check_new {nframe beadname} {
                     set check1 [lsearch -all $chns "L"]
                     set check2 [lsearch -all $chns "U"]
                     if {[llength $check1] > [llength $check2]} {
-                        set change_chain [atomselect top "index $indx"]
+                        set change_chain [atomselect top "same resid as index $indx"]
                         $change_chain set chain "L"
                         puts "$indx"
                         $change_chain delete
@@ -132,7 +132,7 @@ proc leaflet_flip_check_new {nframe beadname} {
                     set check1 [lsearch -all $chns "U"]
                     set check2 [lsearch -all $chns "L"]
                     if {[llength $check1] > [llength $check2]} {
-                        set change_chain [atomselect top "index $indx"]
+                        set change_chain [atomselect top "same resid as index $indx"]
                         $change_chain set chain "U"
                         puts "$indx"
                         $change_chain delete
