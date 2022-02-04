@@ -123,6 +123,7 @@ proc leaflet_flip_check_new {nframe beadname} {
                         set change_chain [atomselect top "index $indx"]
                         $change_chain set chain "L"
                         puts "$indx"
+                        $change_chain delete
                     }
                     $sel delete
                 } elseif {$chn_nm == "L"} {
@@ -134,6 +135,7 @@ proc leaflet_flip_check_new {nframe beadname} {
                         set change_chain [atomselect top "index $indx"]
                         $change_chain set chain "U"
                         puts "$indx"
+                        $change_chain delete
                     }
                     $sel delete
                 }
