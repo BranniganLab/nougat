@@ -233,7 +233,7 @@ proc polarHeightByShell {outfile} {
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
-    set dr 4
+    set dr 2
     set Ntheta 30
     set sample_frame 200
     set dt 1
@@ -245,10 +245,10 @@ proc polarHeightByShell {outfile} {
     
     #create list of lipids used
     #will need to make this less breakable
-    set tails $outfile
+    set tailnms $outfile
     set species ""
     foreach head $headgrps {
-        set species "$species$tails$head "
+        set species "$species$tailnms$head "
     }
     
     #calculate dtheta from number of theta bins
@@ -280,8 +280,8 @@ proc polarHeightByShell {outfile} {
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "occupancy 1 to 3 and name BB"
     Align "occupancy 1 to 3 and name BB"
-    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
     #find top of protein for pbc crossing event
     set sel [atomselect top "name BB"]
@@ -310,21 +310,23 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
         
-    leaflet_flip_check_new $sample_frame "PO4"
+    leaflet_flip_check_new $sample_frame "C1A C1B"
 
     #start frame looping here
-    for {set frm $sample_frame} {$frm < $nframes} {set frm [expr $frm + $dt]} {
+    for {set frm $sample_frame} {$frm <= $nframes} {set frm [expr $frm + $dt]} {
         puts $frm
         set counter [expr $counter + 1]
         if {[expr $counter % 50] == 0} {
-            leaflet_flip_check_new $frm "PO4"
+            leaflet_flip_check_new $frm "C1A C1B"
         }
 
         set box_height [molinfo top get c]
         set bead_counter 0
 
-        foreach bead [list $heads $tails] {
-            $bead frame frm 
+        set blist [list $heads $tails]
+
+        foreach bead $blist {
+            $bead frame $frm 
             $bead update
 
             set x_vals [$bead get x] 
@@ -332,6 +334,7 @@ proc polarHeightByShell {outfile} {
             set z_vals [vecexpr [$bead get z] $ref_height sub]
             set chains [$bead get chain]
             set resids [$bead get resid]
+            set indexs [$bead get index]
 
             #get theta values for all x,y pairs
             set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
