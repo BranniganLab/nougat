@@ -7,7 +7,7 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-name_list = ["DB"]
+name_list = ["PO"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
 field_list = ["zone","ztwo","zplus","zzero"]
 
@@ -129,30 +129,31 @@ for name in name_list:
           for row in range(N_r_bins):
             for col in range(Ntheta+2):
               if nan_test[row,col,frm] == False:
-                
+
                 #calculate d2h/dr2
                 del2r = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
                 del2r = del2r / dr**2
 
                 #calculate dh/dr
-                delr = (curvature_inputs[row-1,col,frm] - curvature_inputs[row+1,col,frm])/(2*dr)
+                delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*dr)
                 
                 #calculate d2h/drdtheta
-                delrdeltheta = (delr[row,col-1,frm] - delr[row,col+1,frm])/(2*dtheta)
+                delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm])
+                delrdeltheta = delrdeltheta/(4*dr*dtheta)
 
                 #calculate dh/dtheta
-                deltheta = (curvature_inputs[row,col-1,frm] - curvature_inputs[row,col+1,frm])/(2*dtheta)
+                deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*dtheta)
 
                 #calculate d2h/dtheta2
                 del2theta = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
                 del2theta = del2theta / dtheta**2
 
                 #calculate coefficients
-                rad = (row*dr) + (dr/2)
-                c1 = 1 / rad
-                c2 = 1 / rad**2
-                c3 = 1 / rad**3
-                c4 = 1 / rad**4
+                r = (row*dr) + (dr/2)
+                c1 = 1 / r
+                c2 = 1 / r**2
+                c3 = 1 / r**3
+                c4 = 1 / r**4
 
                 #calculate polar laplacian
                 curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta

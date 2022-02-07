@@ -2,14 +2,14 @@
 package require pbctools
 
 #locations on JS home computer
-set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
-set QWRAP "~/qwrap"
-set VEC "~/vecexpr"
+#set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
+#set QWRAP "~/qwrap"
+#set VEC "~/vecexpr"
 
 #locations on Belenus
-#set UTILS "~/utilities"
-#set QWRAP "~/qwrap-master"
-#set VEC "~/utilities/vecexpr"
+set UTILS "~/PolarHeightBinning/utilities"
+set QWRAP "~/qwrap-master"
+set VEC "~/utilities/vecexpr"
 
 source $UTILS/BinTools.tcl
 source $UTILS/assign_tilts.tcl
@@ -233,7 +233,7 @@ proc polarHeightByShell {outfile} {
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
-    set dr 2
+    set dr 4
     set Ntheta 30
     set sample_frame 200
     set dt 1
