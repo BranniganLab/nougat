@@ -94,6 +94,7 @@ for name in name_list:
         #create arrays for storing curvature data
         curvature_inputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
         curvature_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
+        kgauss_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
 
         #wrap the inputs in the theta direction for calculating curvature
         curvature_inputs[:,1:31,:] = newdata
@@ -134,29 +135,43 @@ for name in name_list:
                 del2r = del2r / dr**2
 
                 #calculate dh/dr
-                delr = curvature_inputs[row-1,col,frm] - curvature_inputs[row+1,col,frm]/(2*dr)
+                delr = (curvature_inputs[row-1,col,frm] - curvature_inputs[row+1,col,frm])/(2*dr)
                 
+                #calculate d2h/drdtheta
+                delrdeltheta = (delr[row,col-1,frm] - delr[row,col+1,frm])/(2*dtheta)
+
+                #calculate dh/dtheta
+                deltheta = (curvature_inputs[row,col-1,frm] - curvature_inputs[row,col+1,frm])/(2*dtheta)
+
                 #calculate d2h/dtheta2
                 del2theta = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
-                del2theta = del2theta / dr**2
+                del2theta = del2theta / dtheta**2
 
                 #calculate coefficients
                 rad = (row*dr) + (dr/2)
                 c1 = 1 / rad
                 c2 = 1 / rad**2
+                c3 = 1 / rad**3
+                c4 = 1 / rad**4
 
                 #calculate polar laplacian
                 curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
+                kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
 
               else:
                 curvature_outputs[row,col,frm] = np.nan
+                kgauss_outputs[row,col,frm] = np.nan 
 
-        curvature = curvature_outputs[:,1:Ntheta+1,:]
+        meancurvature = curvature_outputs[:,1:Ntheta+1,:]
+        kcurvature = kgauss_outputs[:,1:Ntheta+1,:]
+
         with warnings.catch_warnings():
           warnings.simplefilter("ignore", category=RuntimeWarning)
-          avgcurvature=np.nanmean(curvature, axis=2)
+          avgcurvature=np.nanmean(meancurvature, axis=2)
+          avgkcurvature=np.nanmean(kcurvature, axis=2)
 
         np.save(name+'.'+field+'.avgcurvature.npy',avgcurvature)
+        np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
 
         #prepare to plot
         rad = read_in_data[0:N_r_bins,0]
@@ -164,7 +179,7 @@ for name in name_list:
         the = np.linspace(0,2*np.pi,Ntheta+1)
         radius,theta=np.meshgrid(rad, the, indexing='ij')
 
-        #plotting section
+        #laplacian plotting section
         fig = plt.figure()
         ax = plt.subplot(projection="polar")
         c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0,vmax=.1,vmin=-.1)
@@ -186,4 +201,27 @@ for name in name_list:
         plt.savefig(name+"_"+field+"_curvature.png", dpi = 700)
         plt.clf()
         plt.close()
-        print(name+" "+field+" curvature done!")
+
+        #gaussian plotting section
+        fig = plt.figure()
+        ax = plt.subplot(projection="polar")
+        c = plt.pcolormesh(theta,radius,avgkcurvature,cmap="RdBu_r",zorder=0,vmax=.1,vmin=-.1)
+        #c = plt.pcolormesh(theta,radius,height,cmap="RdBu_r",zorder=0)
+        cbar = plt.colorbar(c)
+        for i in range(0,10,2):
+          plt.scatter(np.deg2rad(chain[i+1]),chain[i],c="black",linewidth=4,zorder=2)
+        plt.axis('off')
+
+        circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
+        if field == "zone":
+          ax.add_artist(circle1)
+
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+
+        #figure = plt.gcf()
+        fig.set_size_inches(6,6)
+        plt.savefig(name+"_"+field+"_gausscurvature.png", dpi = 700)
+        plt.clf()
+        plt.close()
+        print(name+" "+field+" curvatures done!")
