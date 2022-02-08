@@ -7,7 +7,7 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-name_list = ["PO"]
+name_list = ["DB"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
 field_list = ["zone","ztwo","zplus","zzero"]
 
@@ -52,6 +52,14 @@ for name in name_list:
     #produce avgheight, avglaplacian, and avggausscurv
     for dtype in range(2):
       if dtype == 0:
+
+        #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+        for row in range(N_r_bins):
+          for col in range(Ntheta):
+            count = np.count_nonzero(np.isnan(newdata[row,col,:]))
+            if count/Nframes >= .9:
+              newdata[row,col,:] = np.nan
+
         #take the average height over all frames
         with warnings.catch_warnings():
           warnings.simplefilter("ignore", category=RuntimeWarning)
