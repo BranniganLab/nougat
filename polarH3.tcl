@@ -233,7 +233,7 @@ proc polarHeightByShell {outfile} {
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
-    set dr 4
+    set dr 2
     set Ntheta 30
     set sample_frame 200
     set dt 1
@@ -283,12 +283,6 @@ proc polarHeightByShell {outfile} {
     leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
-    #find top of protein for pbc crossing event
-    set sel [atomselect top "name BB"]
-    set prot_z [$sel get z]
-    $sel delete
-    set protein_top [::tcl::mathfunc::max {*}$prot_z]
-
     #need to calculate heights relative to some point on the protein
     #for 5x29 we chose the juncture between TMD and protein cap
     #because this corresponds to height zero in our elastic simulations
@@ -296,6 +290,13 @@ proc polarHeightByShell {outfile} {
     set ref_height [$ref_bead get z]
     $ref_bead delete
     set ref_height [expr [vecexpr $ref_height sum]/$num_subunits]
+
+    #find top of protein for pbc crossing event
+    set sel [atomselect top "name BB"]
+    set prot_z [$sel get z]
+    $sel delete
+    set protein_top [::tcl::mathfunc::max {*}$prot_z]
+    set protein_top [expr $protein_top - $ref_height]
 
     #outfiles setup
     set heights_up [open "${outfile}.zone.height.dat" w]
@@ -370,7 +371,7 @@ proc polarHeightByShell {outfile} {
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
                 set m [lindex $r_bins $i]
                 set n [lindex $theta_bins $i]
-                if {[lindex $z_vals $i] > [expr $protein_top + 10]} {
+                if {[lindex $z_vals $i] > [expr $protein_top + 5]} {
                     set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
                 }
                 if {$m <= $Nr} {
@@ -454,13 +455,15 @@ proc polarHeightByShell {outfile} {
 
 proc run_mult {list_of_systems} {
     foreach item $list_of_systems {
-        set gro "/u1/home/js2746/Bending/${item}.gro"
-        set xtc "/u1/home/js2746/Bending/${item}.xtc"
+        set gro "/u1/home/js2746/Bending/PC/${item}.gro"
+        set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
         mol new $gro
         mol addfile $xtc waitfor all
         puts $gro
         puts $xtc
         polarHeightByShell $item
+        #set nframes [molinfo top get numframes]
+        #puts "$item has $nframes frames"
         mol delete top
     }
 }
