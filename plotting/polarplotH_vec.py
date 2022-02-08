@@ -7,8 +7,8 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-name_list = ["DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB"]
+name_list = ["DG"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB", "DO", "DP"]
 field_list = ["zone","ztwo","zplus","zzero"]
 
 
@@ -56,8 +56,9 @@ for name in name_list:
         #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
         for row in range(N_r_bins):
           for col in range(Ntheta):
+            zerocount = np.count_nonzero(newdata[row,col,:])
             count = np.count_nonzero(np.isnan(newdata[row,col,:]))
-            if count/Nframes >= .9:
+            if (count-zerocount)/Nframes >= .9:
               newdata[row,col,:] = np.nan
 
         #take the average height over all frames
