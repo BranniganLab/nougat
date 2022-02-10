@@ -167,31 +167,36 @@ proc set_occupancy {molid} {
 }
 
 
-proc leaflet_sorter {} {
-
-    set sel [atomselect top "name PO4" frame 1]
+proc leaflet_sorter {species tailnames} {
+    puts "Starting leaflet sorting"
+    set nframes [molinfo top get numframes]
+    set sel [atomselect top "name PO4" frame 0]
     set resids [$sel get resid]
     set indexs [$sel get index]
     $sel delete
     foreach resd $resids indx $indexs {
-        set lipid [atomselect top "(not name BB SC1 to SC4 W and not resname ION) and (resid $resd)" frame 1]
-        set po4 [atomselect top "index $indx" frame 1]
+        set lipid [atomselect top "resname $species and resid $resd" frame 0]
+        set po4 [atomselect top "index $indx" frame 0]
         set lipid_com [measure center $lipid weight mass]
         set lipid_com_z [lindex $lipid_com 2]
         set po4_z [$po4 get z]
-        set dist [expr abs($po4_z-$lipid_com_z)] 
-        if {$dist > 40} {
-            $lipid set chain L
+        if {$po4_z > $lipid_com_z} {
+            $lipid set chain U
+            $lipid set user 1
         } else {
-            if {$po4_z > $lipid_com_z} {
-                $lipid set chain U
-            } else {
-                $lipid set chain L
-            }
+            $lipid set chain L
+            $lipid set user 0
         }
         $lipid delete
         $po4 delete
     }
+    for {set i 0} {$i < $nframes} {incr i} {
+        leaflet_check $i $species "PO4" $tailnames
+        if {[expr $i % 1000] == 0} {
+            puts "frame $i"
+        }
+    }
+    puts "Leaflet sorting complete!"
 }
 
 proc tail_analyzer { species } {
@@ -224,6 +229,39 @@ proc tail_analyzer { species } {
     return [list $tail_one $tail_two]
 }
 
+proc cell_prep {outfile} {
+    set nframes [molinfo top get numframes]
+    set headgrps [list "PC" "PG"]
+
+    set tailnms $outfile
+    set species ""
+    foreach head $headgrps {
+        set species "$species$tailnms$head "
+    }
+
+    set acyl_names [tail_analyzer $species]
+    set tail_one [lindex $acyl_names 0]
+    set tail_two [lindex $acyl_names 1]
+
+    set t1H [lindex $tail_one 0]
+    set t2H [lindex $tail_two 0]
+    set t1T [lindex $tail_one end]
+    set t2T [lindex $tail_two end]
+
+    set headnames "$t1H $t2H"
+    set tailnames "$t1T $t2T"
+
+    set_occupancy top ;#formats 5x29 to have separable chains and occupancies
+    Center_System "resname $species"
+    Align "occupancy 1 to 3 and name BB"
+    leaflet_sorter $species $tailnames    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+
+    set sel [atomselect top all]
+    $sel writepdb $outfile.pdb
+    $sel delete
+}
+
 ;########################################################################################
 ;# polarHeight Function
 
@@ -238,6 +276,7 @@ proc polarHeightByShell {outfile} {
     set sample_frame 200
     set dt 1
     set nframes [molinfo top get numframes]
+    #set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set counter 0
     set num_subunits 5.0
@@ -278,9 +317,9 @@ proc polarHeightByShell {outfile} {
 
     #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
-    Center_System "occupancy 1 to 3 and name BB"
+    Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
-    leaflet_sorter     ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    leaflet_sorter $species $tailnames    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
     #need to calculate heights relative to some point on the protein
@@ -311,15 +350,15 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
         
-    leaflet_flip_check_new $sample_frame "C1A C1B"
-
+    #leaflet_check $sample_frame $species "PO4" $tailnames
+    
     #start frame looping here
-    for {set frm $sample_frame} {$frm <= $nframes} {set frm [expr $frm + $dt]} {
+    for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} {
         puts $frm
         set counter [expr $counter + 1]
-        if {[expr $counter % 50] == 0} {
-            leaflet_flip_check_new $frm "C1A C1B"
-        }
+        #if {[expr $counter % 50] == 0} {
+        #    leaflet_check $frm $species "PO4" $tailnames
+        #}
 
         set box_height [molinfo top get c]
         set bead_counter 0
@@ -333,7 +372,7 @@ proc polarHeightByShell {outfile} {
             set x_vals [$bead get x] 
             set y_vals [$bead get y]
             set z_vals [vecexpr [$bead get z] $ref_height sub]
-            set chains [$bead get chain]
+            set chains [$bead get user]
             set resids [$bead get resid]
             set indexs [$bead get index]
 
@@ -376,10 +415,10 @@ proc polarHeightByShell {outfile} {
                 }
                 if {$m <= $Nr} {
                     if {$bead_counter == 0} {
-                        if {[lindex $chains $i] == "U"} {
+                        if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                        } elseif {[lindex $chains $i] == "L"} {
+                        } elseif {[lindex $chains $i] == 0} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
@@ -461,9 +500,22 @@ proc run_mult {list_of_systems} {
         mol addfile $xtc waitfor all
         puts $gro
         puts $xtc
+        animate delete beg 0 end 0 skip 0 top
         polarHeightByShell $item
-        #set nframes [molinfo top get numframes]
-        #puts "$item has $nframes frames"
+        mol delete top
+    }
+}
+
+proc run_prep {list_of_systems} {
+    foreach item $list_of_systems {
+        set gro "/u1/home/js2746/Bending/PC/${item}.gro"
+        set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
+        mol new $gro
+        mol addfile $xtc waitfor all
+        puts $gro
+        puts $xtc
+        animate delete beg 0 end 0 skip 0 top
+        cell_prep $item
         mol delete top
     }
 }
