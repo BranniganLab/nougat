@@ -105,41 +105,108 @@ proc leaflet_flip_check_Height_binning {nframe shell} {
     }
 }
 
-proc leaflet_flip_check_new {nframe beadname} {
-    set lipidsel {(not resname W ION "NA+" "CL-") and (not name BB SC1 to SC4) and (name $beadname)}
-    set chains {"U" "L"}
-    foreach chn_nm $chains {
-        set sel [atomselect top "$lipidsel and (chain $chn_nm)" frame $nframe]
-        set indexs [$sel get index] 
-        $sel delete
-        if {[llength $indexs] != 0} {
-            foreach indx $indexs {
-                if {$chn_nm == "U"} {
-                    set sel [atomselect top "$lipidsel and (pbwithin 18 of index $indx)" frame $nframe]
-                    set chns [$sel get chain]
-                    set check1 [lsearch -all $chns "L"]
-                    set check2 [lsearch -all $chns "U"]
-                    if {[llength $check1] > [llength $check2]} {
-                        set change_chain [atomselect top "same resid as index $indx"]
-                        $change_chain set chain "L"
-                        puts "$indx flipped"
-                        $change_chain delete
-                    }
-                    $sel delete
-                } elseif {$chn_nm == "L"} {
-                    set sel [atomselect top "$lipidsel and (pbwithin 18 of index $indx)" frame $nframe]
-                    set chns [$sel get chain]
-                    set check1 [lsearch -all $chns "U"]
-                    set check2 [lsearch -all $chns "L"]
-                    if {[llength $check1] > [llength $check2]} {
-                        set change_chain [atomselect top "same resid as index $indx"]
-                        $change_chain set chain "U"
-                        puts "$indx flipped"
-                        $change_chain delete
-                    }
-                    $sel delete
+proc leaflet_flip_check_new {species nframe beadname} {
+    set lipidsel "resname $species and name $beadname"
+    set sel [atomselect top $lipidsel frame $nframe]
+    set indexs [$sel get index] 
+    $sel delete
+    set inner {}
+    set outer {}
+    if {[llength $indexs] != 0} {
+        foreach indx $indexs {
+            set change_chain [atomselect top "same resid as index $indx" frame $nframe]
+            set leaf [lindex [$change_chain get user] 0]
+            set sel [atomselect top "$lipidsel and (pbwithin 18 of index $indx)" frame $nframe]
+            if {$leaf == 1} {
+                set chns [$sel get user]
+                set check1 [lsearch -all $chns 0]
+                set check2 [lsearch -all $chns 1]
+                if {[llength $check1] > [llength $check2]} {
+                    lappend inner $indx
+                    puts "$indx flipped"
+                } else {
+                    lappend outer $indx
                 }
+            } elseif {$leaf == 0} {
+                set chns [$sel get user]
+                set check1 [lsearch -all $chns 1]
+                set check2 [lsearch -all $chns 0]
+                if {[llength $check1] > [llength $check2]} {
+                    lappend outer $indx
+                    puts "$indx flipped"
+                } else {
+                    lappend inner $indx
+                }
+            } else {
+                puts "something unintended happened"
             }
+            $change_chain delete
+            $sel delete
         }
+        set outersel [atomselect top "same resid as index $outer" frame $nframe]
+        $outersel set user 1
+        $outersel frame [expr $nframe + 1]
+        $outersel update
+        $outersel set user 1
+        set innersel [atomselect top "same resid as index $inner" frame $nframe]
+        $innersel set user 0
+        $innersel frame [expr $nframe + 1]
+        $innersel update
+        $innersel set user 0
+        $outersel delete
+        $innersel delete
+    } else {
+        puts "something broke"
     }
+}
+
+#written in 2022 to be fast and dirty
+proc leaflet_check {frm species headname tailname} {
+    set headsel [atomselect top "resname $species and name $headname" frame $frm]
+    set head_ht [$headsel get z]
+    set resids [$headsel get resid]
+    set chains [$headsel get chain]
+    $headsel delete
+    set tail_hts [lrepeat [llength $head_ht] 0]
+    foreach bead $tailname {
+        set tailsel [atomselect top "resname $species and name $bead" frame $frm]
+        set tail_ht [$tailsel get z]
+        set tail_hts [vecexpr $tail_hts $tail_ht add]
+        $tailsel delete
+    }
+    set avg_tail_ht [vecexpr $tail_hts [llength $tailname] div]
+
+    set test [vecexpr $head_ht $avg_tail_ht sub]
+    for {set i 0} {$i < [llength $test]} {incr i} {
+        if {[expr abs([lindex $test $i])] > 40} {
+            set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+            $sel set chain "U"
+            $sel delete
+        } elseif {[expr abs([lindex $test $i])] < 5} {
+            set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+            $sel set chain "Z"
+            $sel delete
+        } else {
+            if {[lindex $test $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
+                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                $sel set chain "U"
+                $sel delete
+                #puts "resid [lindex $resids $i] switched to upper leaflet"
+            } elseif {[lindex $test $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
+                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                $sel set chain "L"
+                $sel delete
+                #puts "resid [lindex $resids $i] switched to lower leaflet"
+            }
+        }   
+    }
+    set upper [atomselect top "chain U" frame $frm]
+    $upper set user 1
+    $upper delete
+    set lower [atomselect top "chain L" frame $frm]
+    $lower set user 0
+    $lower delete
+    set bad_chains [atomselect top "chain Z" frame $frm]
+    $bad_chains set user 2
+    $bad_chains delete
 }
