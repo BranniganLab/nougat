@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import warnings
 
@@ -7,7 +8,7 @@ newfont = {'fontsize':'large',
  'color':'black',
  'verticalalignment': 'baseline'}
 
-#name_list = ["DG"]
+#name_list = ["PO"]
 name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB", "DO", "DP"]
 field_list = ["zone","ztwo","zplus","zzero"]
 
@@ -30,10 +31,13 @@ for name in name_list:
     flag = True
     match_value = read_in_data[0,0]
     while(flag==True):
-      if read_in_data[counter,0] == match_value:
+      try:
+        if read_in_data[counter,0] == match_value:
+          flag = False
+        else:
+          counter = counter+1
+      except IndexError:
         flag = False
-      else:
-        counter = counter+1
     N_r_bins = counter
     dr = read_in_data[0,1] - read_in_data[0,0]
 
@@ -48,6 +52,38 @@ for name in name_list:
     newdata = np.zeros((N_r_bins, Ntheta, Nframes))
     for x in range(Nframes):
       newdata[:,:,x] = read_in_data[x*N_r_bins:(x+1)*N_r_bins,2:]
+
+    #create arrays for storing curvature data
+    curvature_inputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
+    curvature_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
+    kgauss_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
+
+    #wrap the inputs in the theta direction for calculating curvature
+    curvature_inputs[:,1:31,:] = newdata
+    curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
+    curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
+
+    #if a bin is empty, you can't measure its curvature
+    nan_test = np.isnan(curvature_inputs)
+
+    #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
+    nan_test2 = np.array(nan_test, copy=True)
+    for frm in range(Nframes):
+      for row in range(1,N_r_bins-1):
+        for col in range(1,Ntheta+1):
+          if nan_test2[row-1,col,frm] == True:
+            nan_test[row,col,frm] = True
+          elif nan_test2[row+1,col,frm] == True:
+            nan_test[row,col,frm] = True
+          elif nan_test2[row,col-1,frm] == True:
+            nan_test[row,col,frm] = True
+          elif nan_test2[row,col+1,frm] == True:
+            nan_test[row,col,frm] = True
+
+    nan_test[0,:,:] = True
+    nan_test[N_r_bins-1,:,:] = True
+    nan_test[:,0,:] = True
+    nan_test[:,Ntheta+1,:] = True
 
     #produce avgheight, avglaplacian, and avggausscurv
     for dtype in range(2):
@@ -79,6 +115,8 @@ for name in name_list:
         fig = plt.figure()
         ax = plt.subplot(projection="polar")
         c = plt.pcolormesh(theta,radius,avgHeight,cmap="RdBu_r",zorder=0,vmax=0,vmin=-45)
+        current_cmap = matplotlib.cm.get_cmap().copy()
+        current_cmap.set_bad(color='green')
         cbar = plt.colorbar(c)
         for i in range(0,10,2):
           plt.scatter(np.deg2rad(chain[i+1]),chain[i],c="black",linewidth=4,zorder=2)
@@ -100,38 +138,6 @@ for name in name_list:
         print(name+" "+field+" height done!")
 
       elif dtype == 1:
-        #create arrays for storing curvature data
-        curvature_inputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
-        curvature_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
-        kgauss_outputs = np.zeros((N_r_bins, Ntheta+2, Nframes))
-
-        #wrap the inputs in the theta direction for calculating curvature
-        curvature_inputs[:,1:31,:] = newdata
-        curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
-        curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
-
-        #if a bin is empty, you can't measure its curvature
-        nan_test = np.isnan(curvature_inputs)
-
-        #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-        nan_test2 = np.array(nan_test, copy=True)
-        for frm in range(Nframes):
-          for row in range(1,N_r_bins-1):
-            for col in range(1,Ntheta+1):
-              if nan_test2[row-1,col,frm] == True:
-                nan_test[row,col,frm] = True
-              elif nan_test2[row+1,col,frm] == True:
-                nan_test[row,col,frm] = True
-              elif nan_test2[row,col-1,frm] == True:
-                nan_test[row,col,frm] = True
-              elif nan_test2[row,col+1,frm] == True:
-                nan_test[row,col,frm] = True
-
-        nan_test[0,:,:] = True
-        nan_test[N_r_bins-1,:,:] = True
-        nan_test[:,0,:] = True
-        nan_test[:,Ntheta+1,:] = True
-
         #polar laplacian = d2h/dr2 + 1/r dh/dr + 1/r^2 d2h/dtheta2
 
         for frm in range(Nframes):
@@ -164,7 +170,7 @@ for name in name_list:
                 c3 = 1 / r**3
                 c4 = 1 / r**4
 
-                #calculate polar laplacian
+                #calculate polar laplacian and gaussian curvature
                 curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
                 kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
 
@@ -194,6 +200,8 @@ for name in name_list:
         ax = plt.subplot(projection="polar")
         c = plt.pcolormesh(theta,radius,avgcurvature,cmap="RdBu_r",zorder=0,vmax=.1,vmin=-.1)
         #c = plt.pcolormesh(theta,radius,height,cmap="RdBu_r",zorder=0)
+        current_cmap = matplotlib.cm.get_cmap().copy()
+        current_cmap.set_bad(color='green')
         cbar = plt.colorbar(c)
         for i in range(0,10,2):
           plt.scatter(np.deg2rad(chain[i+1]),chain[i],c="black",linewidth=4,zorder=2)
@@ -217,6 +225,8 @@ for name in name_list:
         ax = plt.subplot(projection="polar")
         c = plt.pcolormesh(theta,radius,avgkcurvature,cmap="RdBu_r",zorder=0,vmax=.1,vmin=-.1)
         #c = plt.pcolormesh(theta,radius,height,cmap="RdBu_r",zorder=0)
+        current_cmap = matplotlib.cm.get_cmap().copy()
+        current_cmap.set_bad(color='green')
         cbar = plt.colorbar(c)
         for i in range(0,10,2):
           plt.scatter(np.deg2rad(chain[i+1]),chain[i],c="black",linewidth=4,zorder=2)
