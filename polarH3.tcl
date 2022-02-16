@@ -350,15 +350,16 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
         
-    #leaflet_check $sample_frame $species "PO4" $tailnames
+    ;#leaflet_check $sample_frame $species "PO4" $tailnames
     
-    #start frame looping here
-    for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} {
+    ;#start frame looping here
+    ;#for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} 
+    for {set frm 0} {$frm < 1} {incr frm $dt} {
         puts $frm
         set counter [expr $counter + 1]
-        #if {[expr $counter % 50] == 0} {
-        #    leaflet_check $frm $species "PO4" $tailnames
-        #}
+        ;#if {[expr $counter % 50] == 0} {
+        ;#    leaflet_check $frm $species "PO4" $tailnames
+        ;#}
 
         set box_height [molinfo top get c]
         set bead_counter 0
@@ -376,26 +377,26 @@ proc polarHeightByShell {outfile} {
             set resids [$bead get resid]
             set indexs [$bead get index]
 
-            #get theta values for all x,y pairs
+            ;#get theta values for all x,y pairs
             set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
 
-            #atan2 gives values from -180 to 180; shifting to 0 to 360                            
+            ;#atan2 gives values from -180 to 180; shifting to 0 to 360                            
             for {set i 0} {$i<[llength $theta_vals]} {incr i} {                                         
                 if {[lindex $theta_vals $i] < 0} {                                                      
                     set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
                 }
             }
 
-            #turn into bin numbers rather than theta values
+            ;#turn into bin numbers rather than theta values
             vecexpr [vecexpr $theta_vals $dtheta div] floor &theta_bins
             
-            #calculate distance from origin for all x,y pairs
+            ;#calculate distance from origin for all x,y pairs
             set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
             
-            #turn into bin numbers rather than r values
+            ;#turn into bin numbers rather than r values
             vecexpr [vecexpr $r_vals $dr div] floor &r_bins
 
-            #initialize arrays to zeros
+            ;#initialize arrays to zeros
             for {set m 0} {$m <= $Nr} {incr m} {
                 for {set n 0} {$n <= $Ntheta} {incr n} {
                     set totals_up($m,$n) 0
@@ -406,7 +407,7 @@ proc polarHeightByShell {outfile} {
                 }
             }
 
-            #fill in arrays with z sum and count sum
+            ;#fill in arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
                 set m [lindex $r_bins $i]
                 set n [lindex $theta_bins $i]
@@ -429,7 +430,7 @@ proc polarHeightByShell {outfile} {
                 }
             }    
 
-            #turn the z sum into a z avg
+            ;#turn the z sum into a z avg
             for {set m 0} {$m <= $Nr} {incr m} {
                 for {set n 0} {$n <= $Ntheta} {incr n} {
                     if {$counts_up($m,$n) != 0} {
@@ -456,7 +457,7 @@ proc polarHeightByShell {outfile} {
                 }
             }
 
-            #output to files
+            ;#output to files
             if { $bead_counter == 0 } {
                 for {set m 0} {$m <= $Nr} {incr m} {
                     puts -nonewline $heights_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
