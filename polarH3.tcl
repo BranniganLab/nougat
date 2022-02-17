@@ -167,7 +167,7 @@ proc set_occupancy {molid} {
 }
 
 
-proc leaflet_sorter {species tailnames} {
+proc leaflet_sorter {species tailnames sample_frame} {
     puts "Starting leaflet sorting"
     set nframes [molinfo top get numframes]
     set sel [atomselect top "name PO4" frame 0]
@@ -185,14 +185,14 @@ proc leaflet_sorter {species tailnames} {
             $lipid set user 1
         } else {
             $lipid set chain L
-            $lipid set user 0
+            $lipid set user 2
         }
         $lipid delete
         $po4 delete
     }
-    for {set i 0} {$i < $nframes} {incr i} {
+    for {set i 0} {$i <= $sample_frame} {incr i} {
         leaflet_check $i $species "PO4" $tailnames
-        if {[expr $i % 1000] == 0} {
+        if {[expr $i % 100] == 0} {
             puts "frame $i"
         }
     }
@@ -220,11 +220,11 @@ proc tail_analyzer { species } {
     }  
 
     set sel [atomselect top "resname $species and name $tail_one"] 
-    $sel set user 1
+    $sel set user2 1
     $sel delete
 
     set sel [atomselect top "resname $species and name $tail_two"]
-    $sel set user 2
+    $sel set user2 2
     $sel delete 
     return [list $tail_one $tail_two]
 }
@@ -319,7 +319,7 @@ proc polarHeightByShell {outfile} {
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
-    leaflet_sorter $species $tailnames    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
     #need to calculate heights relative to some point on the protein
@@ -354,9 +354,10 @@ proc polarHeightByShell {outfile} {
     
     ;#start frame looping here
     ;#for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} 
-    for {set frm 0} {$frm < 1} {incr frm $dt} {
+    for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
         puts $frm
         set counter [expr $counter + 1]
+        leaflet_check $frm $species "PO4" $tailnames
         ;#if {[expr $counter % 50] == 0} {
         ;#    leaflet_check $frm $species "PO4" $tailnames
         ;#}
@@ -419,7 +420,7 @@ proc polarHeightByShell {outfile} {
                         if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                        } elseif {[lindex $chains $i] == 0} {
+                        } elseif {[lindex $chains $i] == 2} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
