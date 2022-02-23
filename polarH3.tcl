@@ -297,6 +297,8 @@ proc polarHeightByShell {outfile} {
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set num_subunits 5.0 ;# pentamer = 5 subunits
     
+    ;#figure out which lipids are in the system
+    ;#if there are other mols in your system, add them as exceptions here!
     set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
     set species [lsort -unique [$sel get resname]]
     $sel delete
