@@ -123,9 +123,9 @@ proc print_line_init {file number dr Rmin} {
 
 ;# adds a value to the print file
 proc print_value {file value end_line} {
-    if {end_line == 0} {
+    if {$end_line == 0} {
         puts -nonewline $file " $value" 
-    } elseif {end_line == 1} {
+    } elseif {$end_line == 1} {
         puts $file " $value"
     } else {
         puts "Something went wrong - end_line should have value of 0 or 1 only"
@@ -207,12 +207,7 @@ proc leaflet_sorter {species tailnames sample_frame} {
         $lipid delete
         $po4 delete
     }
-    for {set i 0} {$i <= $sample_frame} {incr i} {
-        leaflet_check $i $species "PO4" $tailnames
-        if {[expr $i % 100] == 0} {
-            puts "frame $i"
-        }
-    }
+    
     puts "Leaflet sorting complete!"
 }
 
