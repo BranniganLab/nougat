@@ -133,6 +133,11 @@ proc print_value {file value end_line} {
     }
 }
 
+;# need to get some info on beads for density normalization
+proc density_info {} {
+
+}
+
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -290,16 +295,11 @@ proc polarHeightByShell {outfile} {
     #set nframes [molinfo top get numframes]
     set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
-    set num_subunits 5.0
-    set headgrps [list "PC" "PG"]
+    set num_subunits 5.0 ;# pentamer = 5 subunits
     
-    #create list of lipids used
-    #will need to make this less breakable
-    set tailnms $outfile
-    set species ""
-    foreach head $headgrps {
-        set species "$species$tailnms$head "
-    }
+    set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
+    set species [lsort -unique [$sel get resname]]
+    $sel delete
     
     #calculate dtheta from number of theta bins
     set dtheta [expr 360/$Ntheta]
