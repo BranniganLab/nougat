@@ -511,9 +511,11 @@ proc polarHeightByShell {outfile} {
                     print_line_init $heights_zzero $m $dr $Rmin
                     print_line_init $density_zzero $m $dr $Rmin
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
-                        puts -nonewline $heights_zzero " $totals_up($m,$n)"
+                        print_value $heights_zzero $totals_up($m,$n) 0
+                        print_value $density_zzero $counts_up($m,$n) 0
                     }
-                    puts $heights_zzero " $totals_up($m,[expr $Ntheta-1])"
+                    print_value $heights_zzero $totals_up($m,[expr $Ntheta-1]) 1
+                    print_value $density_zzero $counts_up($m,[expr $Ntheta-1]) 1
                 }
             }
             set meas_z_zero 1
