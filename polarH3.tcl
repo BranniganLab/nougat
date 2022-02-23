@@ -496,7 +496,7 @@ proc polarHeightByShell {outfile} {
                         print_value $heights_zplus $totals_zplus($m,$n) 0
                         print_value $density_up $counts_up($m,$n) 0
                         print_value $density_down $counts_down($m,$n) 0
-                        print_value $density_zplus $counts_zzero($m,$n) 0
+                        print_value $density_zplus $counts_zplus($m,$n) 0
                     }
                     ;# adds final value and starts new line in outfile
                     print_value $heights_up $totals_up($m,[expr $Ntheta-1]) 1
@@ -504,7 +504,7 @@ proc polarHeightByShell {outfile} {
                     print_value $heights_zplus $totals_zplus($m,[expr $Ntheta-1]) 1
                     print_value $density_up $counts_up($m,[expr $Ntheta-1]) 1
                     print_value $density_down $counts_down($m,[expr $Ntheta-1]) 1
-                    print_value $density_zzero $counts_zzero($m,[expr $Ntheta-1]) 1
+                    print_value $density_zplus $counts_zplus($m,[expr $Ntheta-1]) 1
                 } 
             } elseif {$meas_z_zero == 1} {
                 for {set m 0} {$m <= $Nr} {incr m} {
