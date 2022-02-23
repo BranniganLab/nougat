@@ -292,10 +292,9 @@ proc polarHeightByShell {outfile} {
     set Ntheta 30
     set sample_frame 200
     set dt 1
-    set nframes [molinfo top get numframes]
-    #set nframes 450
+    #set nframes [molinfo top get numframes]
+    set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
-    set counter 0
     set num_subunits 5.0
     set headgrps [list "PC" "PG"]
     
@@ -369,7 +368,7 @@ proc polarHeightByShell {outfile} {
     #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
     set heads [atomselect top "name $headnames"]
-    set tails [atomselect top "((name $tailnames and chain U) and within 6 of (name $tailnames and chain L)) or ((name $tailnames and chain L) and within 6 of (name $tailnames and chain U))"]
+    set tails [atomselect top "((name $tailnames and user 1) and within 6 of (name $tailnames and user 2)) or ((name $tailnames and user 2) and within 6 of (name $tailnames and user 1))"]
         
     ;#leaflet_check $sample_frame $species "PO4" $tailnames
     
@@ -377,13 +376,11 @@ proc polarHeightByShell {outfile} {
     ;#for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} 
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
         puts $frm
-        set counter [expr $counter + 1]
+
         leaflet_check $frm $species "PO4" $tailnames
-        ;#if {[expr $counter % 50] == 0} {
-        ;#    leaflet_check $frm $species "PO4" $tailnames
-        ;#}
 
         set box_height [molinfo top get c]
+        
         set meas_z_zero 0
 
         set blist [list $heads $tails]
@@ -426,6 +423,7 @@ proc polarHeightByShell {outfile} {
                     set totals_down($m,$n) 0
                     set counts_down($m,$n) 0
                     set totals_zplus($m,$n) 0
+                    set counts_zplus($m,$n) 0
                 }
             }
 
@@ -465,6 +463,7 @@ proc polarHeightByShell {outfile} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
                             if {$counts_up($m,$n) != 0} {
                                 set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
+                                set counts_zplus($m,$n) [expr $counts_up($m,$n) + $counts_down($m,$n)]
                             } else {
                                 set totals_zplus($m,$n) "nan"
                             }
@@ -499,12 +498,13 @@ proc polarHeightByShell {outfile} {
                         print_value $density_zplus $counts_zplus($m,$n) 0
                     }
                     ;# adds final value and starts new line in outfile
-                    print_value $heights_up $totals_up($m,[expr $Ntheta-1]) 1
-                    print_value $heights_down $totals_down($m,[expr $Ntheta-1]) 1
-                    print_value $heights_zplus $totals_zplus($m,[expr $Ntheta-1]) 1
-                    print_value $density_up $counts_up($m,[expr $Ntheta-1]) 1
-                    print_value $density_down $counts_down($m,[expr $Ntheta-1]) 1
-                    print_value $density_zplus $counts_zplus($m,[expr $Ntheta-1]) 1
+                    set final_ndx [expr $Ntheta-1]
+                    print_value $heights_up $totals_up($m,$final_ndx) 1
+                    print_value $heights_down $totals_down($m,$final_ndx) 1
+                    print_value $heights_zplus $totals_zplus($m,$final_ndx) 1
+                    print_value $density_up $counts_up($m,$final_ndx) 1
+                    print_value $density_down $counts_down($m,$final_ndx) 1
+                    print_value $density_zplus $counts_zplus($m,$final_ndx) 1
                 } 
             } elseif {$meas_z_zero == 1} {
                 for {set m 0} {$m <= $Nr} {incr m} {
