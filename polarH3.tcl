@@ -296,7 +296,8 @@ proc polarHeightByShell {outfile} {
     set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set num_subunits 5.0 ;# pentamer = 5 subunits
-    
+    set headnames "C1A C1B"
+
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
     set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
@@ -319,13 +320,8 @@ proc polarHeightByShell {outfile} {
     set acyl_names [tail_analyzer $species]
     set tail_one [lindex $acyl_names 0]
     set tail_two [lindex $acyl_names 1]
-
-    set t1H [lindex $tail_one 0]
-    set t2H [lindex $tail_two 0]
     set t1T [lindex $tail_one end]
     set t2T [lindex $tail_two end]
-
-    set headnames "$t1H $t2H"
     set tailnames "$t1T $t2T"
 
     #Helper scripts
@@ -370,7 +366,6 @@ proc polarHeightByShell {outfile} {
     ;#leaflet_check $sample_frame $species "PO4" $tailnames
     
     ;#start frame looping here
-    ;#for {set frm $sample_frame} {$frm <= $nframes} {incr frm $dt} 
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
         puts $frm
 
