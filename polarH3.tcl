@@ -116,6 +116,23 @@ proc Center_System {inpt} {
     puts "Center_System finished!"
 }
 
+;# starts a new line in the print file that has the min/max r value for the bin
+proc print_line_init {file number dr Rmin} {
+    puts -nonewline $file "[format {%0.2f} [expr $number * $dr + $Rmin]]  [format {%0.2f} [expr ($number+1) * $dr + $Rmin]]  "
+}
+
+;# adds a value to the print file
+proc print_value {file value end_line} {
+    if {end_line == 0} {
+        puts -nonewline $file " $value" 
+    } elseif {end_line == 1} {
+        puts $file " $value"
+    } else {
+        puts "Something went wrong - end_line should have value of 0 or 1 only"
+        break
+    }
+}
+
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -344,6 +361,8 @@ proc polarHeightByShell {outfile} {
     set heights_zzero [open "${outfile}.zzero.height.dat" w]
     set density_up [open "${outfile}.zone.density.dat" w]
     set density_down [open "${outfile}.ztwo.density.dat" w]
+    set density_zplus [open "${outfile}.zplus.density.dat" w]
+    set density_zzero [open "${outfile}.zzero.density.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
@@ -463,28 +482,34 @@ proc polarHeightByShell {outfile} {
             ;#output to files
             if { $meas_z_zero == 0 } {
                 for {set m 0} {$m <= $Nr} {incr m} {
-                    puts -nonewline $heights_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
-                    puts -nonewline $heights_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
-                    puts -nonewline $heights_zplus "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
-                    puts -nonewline $density_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
-                    puts -nonewline $density_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
-                    puts -nonewline $density_zplus "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+                    ;# starts new line in outfile with radial bin values
+                    print_line_init $heights_up $m $dr $Rmin
+                    print_line_init $heights_down $m $dr $Rmin
+                    print_line_init $heights_zplus $m $dr $Rmin
+                    print_line_init $density_up $m $dr $Rmin
+                    print_line_init $density_down $m $dr $Rmin
+                    print_line_init $density_zplus $m $dr $Rmin
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
-                        puts -nonewline $heights_up " $totals_up($m,$n)" 
-                        puts -nonewline $heights_down " $totals_down($m,$n)"
-                        puts -nonewline $heights_zplus " $totals_zplus($m,$n)"
-                        puts -nonewline $density_up " $counts_up($m,$n)" 
-                        puts -nonewline $density_down " $counts_down($m,$n)"
+                        ;# adds bin values through penultimate value in one line
+                        print_value $heights_up $totals_up($m,$n) 0 
+                        print_value $heights_down $totals_down($m,$n) 0
+                        print_value $heights_zplus $totals_zplus($m,$n) 0
+                        print_value $density_up $counts_up($m,$n) 0
+                        print_value $density_down $counts_down($m,$n) 0
+                        print_value $density_zplus $counts_zzero($m,$n) 0
                     }
-                    puts $heights_up " $totals_up($m,[expr $Ntheta-1])"
-                    puts $heights_down " $totals_down($m,[expr $Ntheta-1])"
-                    puts $heights_zplus " $totals_zplus($m,[expr $Ntheta-1])"
-                    puts $density_up " $totals_up($m,[expr $Ntheta-1])"
-                    puts $density_down " $totals_down($m,[expr $Ntheta-1])"
+                    ;# adds final value and starts new line in outfile
+                    print_value $heights_up $totals_up($m,[expr $Ntheta-1]) 1
+                    print_value $heights_down $totals_down($m,[expr $Ntheta-1]) 1
+                    print_value $heights_zplus $totals_zplus($m,[expr $Ntheta-1]) 1
+                    print_value $density_up $counts_up($m,[expr $Ntheta-1]) 1
+                    print_value $density_down $counts_down($m,[expr $Ntheta-1]) 1
+                    print_value $density_zzero $counts_zzero($m,[expr $Ntheta-1]) 1
                 } 
             } elseif {$meas_z_zero == 1} {
                 for {set m 0} {$m <= $Nr} {incr m} {
-                    puts -nonewline $heights_zzero "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+                    print_line_init $heights_zzero $m $dr $Rmin
+                    print_line_init $density_zzero $m $dr $Rmin
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
                         puts -nonewline $heights_zzero " $totals_up($m,$n)"
                     }
@@ -501,6 +526,8 @@ proc polarHeightByShell {outfile} {
     close $heights_zzero
     close $density_up
     close $density_down
+    close $density_zplus
+    close $density_zzero
     $heads delete
     $tails delete
 }
