@@ -204,9 +204,9 @@ proc leaflet_check {frm species headname tailname} {
     $upper set user 1
     $upper delete
     set lower [atomselect top "chain L" frame $frm]
-    $lower set user 0
+    $lower set user 2
     $lower delete
     set bad_chains [atomselect top "chain Z" frame $frm]
-    $bad_chains set user 2
+    $bad_chains set user 3
     $bad_chains delete
 }

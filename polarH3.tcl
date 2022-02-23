@@ -342,6 +342,8 @@ proc polarHeightByShell {outfile} {
     set heights_down [open "${outfile}.ztwo.height.dat" w]
     set heights_zplus [open "${outfile}.zplus.height.dat" w]
     set heights_zzero [open "${outfile}.zzero.height.dat" w]
+    set density_up [open "${outfile}.zone.density.dat" w]
+    set density_down [open "${outfile}.ztwo.density.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
@@ -363,7 +365,7 @@ proc polarHeightByShell {outfile} {
         ;#}
 
         set box_height [molinfo top get c]
-        set bead_counter 0
+        set meas_z_zero 0
 
         set blist [list $heads $tails]
 
@@ -404,7 +406,7 @@ proc polarHeightByShell {outfile} {
                     set counts_up($m,$n) 0
                     set totals_down($m,$n) 0
                     set counts_down($m,$n) 0
-                    set midpoint($m,$n) 0
+                    set totals_zplus($m,$n) 0
                 }
             }
 
@@ -416,7 +418,7 @@ proc polarHeightByShell {outfile} {
                     set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
                 }
                 if {$m <= $Nr} {
-                    if {$bead_counter == 0} {
+                    if {$meas_z_zero == 0} {
                         if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
@@ -424,7 +426,7 @@ proc polarHeightByShell {outfile} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
-                    } elseif {$bead_counter == 1} {
+                    } elseif {$meas_z_zero == 1} {
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                     }
@@ -439,41 +441,48 @@ proc polarHeightByShell {outfile} {
                     } else {
                         set totals_up($m,$n) "nan"
                     }
-                    if {$bead_counter == 0} {
+                    if {$meas_z_zero == 0} {
                         if {$counts_down($m,$n) != 0} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
                             if {$counts_up($m,$n) != 0} {
-                                set midpoint($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
+                                set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
                             } else {
-                                set midpoint($m,$n) "nan"
+                                set totals_zplus($m,$n) "nan"
                             }
                         } else {
                             set totals_down($m,$n) "nan"
-                            set midpoint($m,$n) "nan"
+                            set totals_zplus($m,$n) "nan"
                         }
-                    } elseif {$bead_counter == 1} {
+                    } elseif {$meas_z_zero == 1} {
                         set totals_down($m,$n) "nan"
-                        set midpoint($m,$n) "nan"
+                        set totals_zplus($m,$n) "nan"
                     }
                 }
             }
 
             ;#output to files
-            if { $bead_counter == 0 } {
+            if { $meas_z_zero == 0 } {
                 for {set m 0} {$m <= $Nr} {incr m} {
                     puts -nonewline $heights_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     puts -nonewline $heights_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     puts -nonewline $heights_zplus "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+                    puts -nonewline $density_up "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+                    puts -nonewline $density_down "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
+                    puts -nonewline $density_zplus "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
                         puts -nonewline $heights_up " $totals_up($m,$n)" 
                         puts -nonewline $heights_down " $totals_down($m,$n)"
-                        puts -nonewline $heights_zplus " $midpoint($m,$n)"
+                        puts -nonewline $heights_zplus " $totals_zplus($m,$n)"
+                        puts -nonewline $density_up " $counts_up($m,$n)" 
+                        puts -nonewline $density_down " $counts_down($m,$n)"
                     }
                     puts $heights_up " $totals_up($m,[expr $Ntheta-1])"
                     puts $heights_down " $totals_down($m,[expr $Ntheta-1])"
-                    puts $heights_zplus " $midpoint($m,[expr $Ntheta-1])"
+                    puts $heights_zplus " $totals_zplus($m,[expr $Ntheta-1])"
+                    puts $density_up " $totals_up($m,[expr $Ntheta-1])"
+                    puts $density_down " $totals_down($m,[expr $Ntheta-1])"
                 } 
-            } elseif {$bead_counter == 1} {
+            } elseif {$meas_z_zero == 1} {
                 for {set m 0} {$m <= $Nr} {incr m} {
                     puts -nonewline $heights_zzero "[format {%0.2f} [expr $m * $dr + $Rmin]]  [format {%0.2f} [expr ($m+1) * $dr + $Rmin]]  "
                     for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
@@ -482,7 +491,7 @@ proc polarHeightByShell {outfile} {
                     puts $heights_zzero " $totals_up($m,[expr $Ntheta-1])"
                 }
             }
-            set bead_counter 1
+            set meas_z_zero 1
         }
     }
 
@@ -490,6 +499,8 @@ proc polarHeightByShell {outfile} {
     close $heights_down
     close $heights_zplus
     close $heights_zzero
+    close $density_up
+    close $density_down
     $heads delete
     $tails delete
 }
