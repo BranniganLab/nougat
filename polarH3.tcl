@@ -133,10 +133,26 @@ proc print_value {file value end_line} {
     }
 }
 
-;# need to get some info on beads for density normalization
-proc density_info {} {
 
+;#print an entire array (usually 1 frame) to file
+proc print_frame {Nr file dr Rmin Ntheta data} {
+    
+    #needed in order to make the proc understand this is array data
+    array set data_copy $data
+
+    ;# starts new line in outfile with radial bin values
+    for {set m 0} {$m <= $Nr} {incr m} {
+        print_line_init $file $m $dr $Rmin
+        ;# adds bin values through penultimate value in one line
+        for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
+            print_value $file $data_copy($m,$n) 0
+        }
+        ;# adds final value and starts new line in outfile
+        set final_ndx [expr $Ntheta-1]
+        print_value $file $data_copy($m,$final_ndx) 1
+    }
 }
+
 
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
@@ -288,7 +304,7 @@ proc polarHeightByShell {outfile} {
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
-    set dr 2
+    set dr 6
     set Ntheta 30
     set sample_frame 200
     set dt 1
@@ -296,7 +312,7 @@ proc polarHeightByShell {outfile} {
     set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set num_subunits 5.0 ;# pentamer = 5 subunits
-    set headnames "C1A C1B"
+    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
 
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
@@ -436,6 +452,7 @@ proc polarHeightByShell {outfile} {
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                         }
                     } elseif {$meas_z_zero == 1} {
+                        ;# reuse the up arrays for zzero
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                     }
@@ -472,43 +489,11 @@ proc polarHeightByShell {outfile} {
 
             ;#output to files
             if { $meas_z_zero == 0 } {
-                for {set m 0} {$m <= $Nr} {incr m} {
-                    ;# starts new line in outfile with radial bin values
-                    print_line_init $heights_up $m $dr $Rmin
-                    print_line_init $heights_down $m $dr $Rmin
-                    print_line_init $heights_zplus $m $dr $Rmin
-                    print_line_init $density_up $m $dr $Rmin
-                    print_line_init $density_down $m $dr $Rmin
-                    print_line_init $density_zplus $m $dr $Rmin
-                    for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
-                        ;# adds bin values through penultimate value in one line
-                        print_value $heights_up $totals_up($m,$n) 0 
-                        print_value $heights_down $totals_down($m,$n) 0
-                        print_value $heights_zplus $totals_zplus($m,$n) 0
-                        print_value $density_up $counts_up($m,$n) 0
-                        print_value $density_down $counts_down($m,$n) 0
-                        print_value $density_zplus $counts_zplus($m,$n) 0
-                    }
-                    ;# adds final value and starts new line in outfile
-                    set final_ndx [expr $Ntheta-1]
-                    print_value $heights_up $totals_up($m,$final_ndx) 1
-                    print_value $heights_down $totals_down($m,$final_ndx) 1
-                    print_value $heights_zplus $totals_zplus($m,$final_ndx) 1
-                    print_value $density_up $counts_up($m,$final_ndx) 1
-                    print_value $density_down $counts_down($m,$final_ndx) 1
-                    print_value $density_zplus $counts_zplus($m,$final_ndx) 1
-                } 
+                print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
+                print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
+                print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
             } elseif {$meas_z_zero == 1} {
-                for {set m 0} {$m <= $Nr} {incr m} {
-                    print_line_init $heights_zzero $m $dr $Rmin
-                    print_line_init $density_zzero $m $dr $Rmin
-                    for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
-                        print_value $heights_zzero $totals_up($m,$n) 0
-                        print_value $density_zzero $counts_up($m,$n) 0
-                    }
-                    print_value $heights_zzero $totals_up($m,[expr $Ntheta-1]) 1
-                    print_value $density_zzero $counts_up($m,[expr $Ntheta-1]) 1
-                }
+                print_frame $Nr $heights_zzero $dr $Rmin $Ntheta [array get totals_up]
             }
             set meas_z_zero 1
         }
