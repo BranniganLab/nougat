@@ -166,6 +166,40 @@ proc initialize_array {Nr Ntheta} {
     return [array get data]
 }
 
+
+;# calculate bin density
+proc calculate_density {data Rmin dr dtheta Nr Ntheta totfrms} {
+    
+    array set data_copy $data
+    for {set m 0} {$m <= $Nr} {incr m} {
+        set rval [expr $m * $dr + $Rmin + [expr 0.5 * $dr]]
+        set area [expr $rval * $dr * $dtheta]
+        for {set n 0} {$n <= $Ntheta} {incr n} {
+            set data_copy($m,$n) [expr $data_copy($m,$n) / [expr $totfrms * $area]]
+        }
+    }
+
+    return [array get data_copy]
+}
+
+
+;# normalize bin density to get enrichment
+proc normalize_density {data Nr Ntheta normfactor numbeads} {
+    
+    array set data_copy $data
+
+    set normfactor [expr $normfactor * $numbeads]
+
+    for {set m 0} {$m <= $Nr} {incr m} {
+        for {set n 0} {$n <= $Ntheta} {incr n} {
+            set data_copy($m,$n) [expr $data_copy($m,$n) / $normfactor]
+        }
+    }
+
+    return [array get data_copy]
+}
+
+
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -320,12 +354,13 @@ proc polarHeightByShell {outfile} {
     set dr 6
     set Ntheta 30
     set sample_frame 200
-    set dt 1
+    set dt 1                ;# need to fix this if you want to use it
     #set nframes [molinfo top get numframes]
     set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set num_subunits 5.0 ;# pentamer = 5 subunits
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
+    set boxarea []
 
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
@@ -334,7 +369,9 @@ proc polarHeightByShell {outfile} {
     $sel delete
     
     #calculate dtheta from number of theta bins
-    set dtheta [expr 360/$Ntheta]
+    set dthetadeg [expr 360/$Ntheta]
+    set pi 3.1415926535897931
+    set dtheta [expr 2 * $pi / $Ntheta]
     
     #calculate number of r bins from dr and Rrange
     if {[expr $Rrange % $dr] == 0} { 
@@ -380,10 +417,10 @@ proc polarHeightByShell {outfile} {
     set heights_down [open "${outfile}.ztwo.height.dat" w]
     set heights_zplus [open "${outfile}.zplus.height.dat" w]
     set heights_zzero [open "${outfile}.zzero.height.dat" w]
-    set density_up [open "${outfile}.zone.density.dat" w]
-    set density_down [open "${outfile}.ztwo.density.dat" w]
-    set density_zplus [open "${outfile}.zplus.density.dat" w]
-    set density_zzero [open "${outfile}.zzero.density.dat" w]
+    set dens_up [open "${outfile}.zone.density.dat" w]
+    set dens_down [open "${outfile}.ztwo.density.dat" w]
+    set dens_zplus [open "${outfile}.zplus.density.dat" w]
+    set dens_zzero [open "${outfile}.zzero.density.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
@@ -392,7 +429,10 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and user 1) and within 6 of (name $tailnames and user 2)) or ((name $tailnames and user 2) and within 6 of (name $tailnames and user 1))"]
         
-    
+    array set density_up [initialize_array $Nr $Ntheta]
+    array set density_down [initialize_array $Nr $Ntheta]
+    array set density_zplus [initialize_array $Nr $Ntheta]
+    array set density_zzero [initialize_array $Nr $Ntheta]
     
     ;#start frame looping here
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
@@ -402,6 +442,9 @@ proc polarHeightByShell {outfile} {
 
         set box_height [molinfo top get c]
         
+        set box_area_per_frame [expr [molinfo top get a] * [molinfo top get a]]
+        lappend boxarea $box_area_per_frame
+
         set meas_z_zero 0
 
         set blist [list $heads $tails]
@@ -428,7 +471,7 @@ proc polarHeightByShell {outfile} {
             }
 
             ;#turn into bin numbers rather than theta values
-            vecexpr [vecexpr $theta_vals $dtheta div] floor &theta_bins
+            vecexpr [vecexpr $theta_vals $dthetadeg div] floor &theta_bins
             
             ;#calculate distance from origin for all x,y pairs
             set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
@@ -456,14 +499,17 @@ proc polarHeightByShell {outfile} {
                         if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
+                            set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
                         } elseif {[lindex $chains $i] == 2} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
+                            set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
                         }
                     } elseif {$meas_z_zero == 1} {
                         ;# reuse the up arrays for zzero
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
+                        set density_zzero($m,$n) [expr {$density_zzero($m,$n) + 1}]
                     }
                 }
             }    
@@ -496,7 +542,7 @@ proc polarHeightByShell {outfile} {
                 }
             }
 
-            ;#output to files
+            ;#output heights to files
             if { $meas_z_zero == 0 } {
                 print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
                 print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
@@ -508,14 +554,51 @@ proc polarHeightByShell {outfile} {
         }
     }
 
+    ;# calculate density
+    set totfrms [expr $nframes - $sample_frame]
+
+    array set density_up [calculate_density [array get density_up] $Rmin $dr $dtheta $Nr $Ntheta $totfrms]
+    array set density_down [calculate_density [array get density_down] $Rmin $dr $dtheta $Nr $Ntheta $totfrms]
+    array set density_zplus [calculate_density [array get density_zplus] $Rmin $dr $dtheta $Nr $Ntheta $totfrms]
+    array set density_zzero [calculate_density [array get density_zzero] $Rmin $dr $dtheta $Nr $Ntheta $totfrms]
+
+    ;# prepare to normalize density
+    set avg_area [vecexpr $boxarea mean]
+    
+    ;# x_B * N_L = N_B
+    set lipidnum []
+    foreach leaflet "1 2" {
+        set lipidsel [atomselect top "resname $species and user $leaflet" frame [expr $nframes -1]]
+        set lipidres [lsort -unique [$lipidsel get resid]]
+        lappend lipidnum [llength $lipidres]
+        $lipidsel delete
+    }
+    
+    set up_normfactor [expr [lindex $lipidnum 0] / $avg_area]
+    set down_normfactor [expr [lindex $lipidnum 1] / $avg_area]
+    set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 2 * $avg_area]]
+
+    ;# calculate normalized density
+    array set density_up [normalize_density [array get density_up] $Nr $Ntheta $up_normfactor [llength $headnames]]
+    array set density_down [normalize_density [array get density_down] $Nr $Ntheta $down_normfactor [llength $headnames]]
+    array set density_zplus [normalize_density [array get density_zplus] $Nr $Ntheta $combined_normfactor [expr [llength $headnames] * 2.0]]
+    array set density_zzero [normalize_density [array get density_zzero] $Nr $Ntheta $combined_normfactor [expr [llength $tailnames] * 2.0]]  
+
+    ;# output densities to files
+    print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up]
+    print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down]
+    print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus]
+    print_frame $Nr $dens_zzero $dr $Rmin $Ntheta [array get density_zzero]
+
+    ;#clean up
     close $heights_up
     close $heights_down
     close $heights_zplus
     close $heights_zzero
-    close $density_up
-    close $density_down
-    close $density_zplus
-    close $density_zzero
+    close $dens_up
+    close $dens_down
+    close $dens_zplus
+    close $dens_zzero
     $heads delete
     $tails delete
 }
