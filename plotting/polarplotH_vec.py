@@ -177,6 +177,7 @@ def main():
 
       #read in heights from VMD traj
       read_in_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+      density_data = np.genfromtxt(name+'.'+field+'.density.dat')
 
       #get bin info
       N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(read_in_data)
@@ -187,7 +188,7 @@ def main():
         rawdata[:,:,x] = read_in_data[x*N_r_bins:(x+1)*N_r_bins,2:]
 
       #create arrays for storing curvature data
-      curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+      curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))rmalize_density [
       curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
       kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
 
@@ -250,6 +251,12 @@ def main():
           #gaussian plotting section
           plot_maker(radius, theta, avgkcurvature, name, field, .1, -.1, protein, "gausscurvature")
           print(name+" "+field+" gaussian curvature done!")
+
+        elif dtype == 2:
+
+          #save as file for debuggging / analysis
+
+          #plot and save
 
 
 
