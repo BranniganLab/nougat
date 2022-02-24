@@ -154,6 +154,18 @@ proc print_frame {Nr file dr Rmin Ntheta data} {
 }
 
 
+;# sets all values of array to zero
+proc initialize_array {Nr Ntheta} {
+
+    for {set m 0} {$m <= $Nr} {incr m} {
+        for {set n 0} {$n <= $Ntheta} {incr n} {
+            set data($m,$n) 0
+        }
+    }
+
+    return [array get data]
+}
+
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -228,6 +240,10 @@ proc leaflet_sorter {species tailnames sample_frame} {
         $lipid delete
         $po4 delete
     }
+
+    for {set frm 0} {$frm <= $sample_frame} {incr frm} {
+        leaflet_check $frm $species "PO4" $tailnames
+    }
     
     puts "Leaflet sorting complete!"
 }
@@ -262,6 +278,7 @@ proc tail_analyzer { species } {
     return [list $tail_one $tail_two]
 }
 
+;# NEED TO UPDATE
 proc cell_prep {outfile} {
     set nframes [molinfo top get numframes]
     set headgrps [list "PC" "PG"]
@@ -289,10 +306,6 @@ proc cell_prep {outfile} {
     Align "occupancy 1 to 3 and name BB"
     leaflet_sorter $species $tailnames    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
-
-    set sel [atomselect top all]
-    $sel writepdb $outfile.pdb
-    $sel delete
 }
 
 ;########################################################################################
@@ -379,7 +392,7 @@ proc polarHeightByShell {outfile} {
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "((name $tailnames and user 1) and within 6 of (name $tailnames and user 2)) or ((name $tailnames and user 2) and within 6 of (name $tailnames and user 1))"]
         
-    ;#leaflet_check $sample_frame $species "PO4" $tailnames
+    
     
     ;#start frame looping here
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
@@ -424,16 +437,12 @@ proc polarHeightByShell {outfile} {
             vecexpr [vecexpr $r_vals $dr div] floor &r_bins
 
             ;#initialize arrays to zeros
-            for {set m 0} {$m <= $Nr} {incr m} {
-                for {set n 0} {$n <= $Ntheta} {incr n} {
-                    set totals_up($m,$n) 0
-                    set counts_up($m,$n) 0
-                    set totals_down($m,$n) 0
-                    set counts_down($m,$n) 0
-                    set totals_zplus($m,$n) 0
-                    set counts_zplus($m,$n) 0
-                }
-            }
+            array set totals_up [initialize_array $Nr $Ntheta]
+            array set counts_up [initialize_array $Nr $Ntheta]
+            array set totals_down [initialize_array $Nr $Ntheta]
+            array set counts_down [initialize_array $Nr $Ntheta]
+            array set totals_zplus [initialize_array $Nr $Ntheta]
+            array set counts_plus [initialize_array $Nr $Ntheta]
 
             ;#fill in arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
