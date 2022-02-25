@@ -2,14 +2,14 @@
 package require pbctools
 
 #locations on JS home computer
-#set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
-#set QWRAP "~/qwrap"
-#set VEC "~/vecexpr"
+set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
+set QWRAP "~/qwrap"
+set VEC "~/vecexpr"
 
 #locations on Belenus
-set UTILS "~/PolarHeightBinning/utilities"
-set QWRAP "~/qwrap-master"
-set VEC "~/utilities/vecexpr"
+#set UTILS "~/PolarHeightBinning/utilities"
+#set QWRAP "~/qwrap-master"
+#set VEC "~/utilities/vecexpr"
 
 source $UTILS/BinTools.tcl
 source $UTILS/assign_tilts.tcl
@@ -355,8 +355,8 @@ proc polarHeightByShell {outfile} {
     set Ntheta 30
     set sample_frame 200
     set dt 1                ;# need to fix this if you want to use it
-    #set nframes [molinfo top get numframes]
-    set nframes 450
+    set nframes [molinfo top get numframes]
+    #set nframes 450
     set delta_frame [expr ($nframes - $sample_frame) / $dt]
     set num_subunits 5.0 ;# pentamer = 5 subunits
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
@@ -605,8 +605,10 @@ proc polarHeightByShell {outfile} {
 
 proc run_mult {list_of_systems} {
     foreach item $list_of_systems {
-        set gro "/u1/home/js2746/Bending/PC/${item}.gro"
-        set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
+        #set gro "/u1/home/js2746/Bending/PC/${item}.gro"
+        #set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
+        set gro "/home/jesse/Bending/sims/${item}.gro"
+        set xtc "/home/jesse/Bending/sims/${item}.xtc"
         mol new $gro
         mol addfile $xtc waitfor all
         puts $gro
