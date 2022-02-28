@@ -182,7 +182,7 @@ proc leaflet_check {frm species headname tailname} {
             set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
             $sel set chain "U"
             $sel delete
-        } elseif {[expr abs([lindex $test $i])] < 5} {
+        } elseif {[expr abs([lindex $test $i])] < 2} {
             set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
             $sel set chain "Z"
             $sel delete
@@ -209,4 +209,29 @@ proc leaflet_check {frm species headname tailname} {
     set bad_chains [atomselect top "chain Z" frame $frm]
     $bad_chains set user 3
     $bad_chains delete
+}
+
+
+proc rmv_outliers {frm species headnames lipidlength} {
+    set change_list []
+
+    set sel [atomselect top "name $headnames and user 1" frame $frm]
+    set ids [$sel get resid]
+    set z_vals [$sel get z]
+
+    set avgz [vecexpr $z_vals mean]
+
+    set cutoff [expr $avgz + $lipidlength]
+    for {set ndx 0} {$ndx <= [llength $z_vals]} {incr ndx} {
+        if {[lindex $z_vals $ndx] > $cutoff} {
+            lappend change_list [lindex $ids $ndx]
+        }
+    }
+
+    $sel delete        
+    if {[llength $change_list] > 0} {
+        set sel [atomselect top "resname $species and resid $change_list" frame $frm]
+        $sel set user 4
+        $sel delete
+    }
 }

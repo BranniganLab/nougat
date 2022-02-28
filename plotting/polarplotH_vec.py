@@ -3,8 +3,8 @@ import matplotlib
 import numpy as np
 import warnings
 
-name_list = ["DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DY", "DB", "DO", "DP"]
+name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
