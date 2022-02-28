@@ -219,7 +219,7 @@ proc set_occupancy {molid} {
 
         set dist [vecdist $loc1 $loc2]
 
-            if {$dist > 20} {
+            if {$dist > 15} {
                 lappend list1 $i
                 lappend list1 [expr $i+1]
             }
@@ -314,31 +314,53 @@ proc tail_analyzer { species } {
 
 ;# NEED TO UPDATE
 proc cell_prep {outfile} {
+    set Rmin 0
+    set Rmax 69
+    set Rrange [expr $Rmax - $Rmin]
+    set dr 6
+    set Ntheta 30
+    set sample_frame 200
+    set dt 1                ;# need to fix this if you want to use it
     set nframes [molinfo top get numframes]
-    set headgrps [list "PC" "PG"]
+    #set nframes 450
+    set delta_frame [expr ($nframes - $sample_frame) / $dt]
+    set num_subunits 5.0 ;# pentamer = 5 subunits
+    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
+    set boxarea []
 
-    set tailnms $outfile
-    set species ""
-    foreach head $headgrps {
-        set species "$species$tailnms$head "
+    ;#figure out which lipids are in the system
+    ;#if there are other mols in your system, add them as exceptions here!
+    set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
+    set species [lsort -unique [$sel get resname]]
+    $sel delete
+    
+    #calculate dtheta from number of theta bins
+    set dthetadeg [expr 360/$Ntheta]
+    set pi 3.1415926535897931
+    set dtheta [expr 2 * $pi / $Ntheta]
+    
+    #calculate number of r bins from dr and Rrange
+    if {[expr $Rrange % $dr] == 0} { 
+        set Nr [expr $Rrange / $dr - 1] 
+    } else {
+        set Nr [expr $Rrange / $dr]
     }
-
+    
+    #will need to make this less breakable
+    #only works for two tails of equal length
+    #only works for lipids of all same tail type
     set acyl_names [tail_analyzer $species]
     set tail_one [lindex $acyl_names 0]
     set tail_two [lindex $acyl_names 1]
-
-    set t1H [lindex $tail_one 0]
-    set t2H [lindex $tail_two 0]
     set t1T [lindex $tail_one end]
     set t2T [lindex $tail_two end]
-
-    set headnames "$t1H $t2H"
     set tailnames "$t1T $t2T"
 
+    #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
-    leaflet_sorter $species $tailnames    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 }
 
@@ -439,6 +461,7 @@ proc polarHeightByShell {outfile} {
         puts $frm
 
         leaflet_check $frm $species "PO4" $tailnames
+        ;#rmv_outliers $frm $species "PO4" 15
 
         set box_height [molinfo top get c]
         
@@ -607,8 +630,8 @@ proc run_mult {list_of_systems} {
     foreach item $list_of_systems {
         #set gro "/u1/home/js2746/Bending/PC/${item}.gro"
         #set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
-        set gro "/home/jesse/Bending/sims/${item}.gro"
-        set xtc "/home/jesse/Bending/sims/${item}.xtc"
+        set gro "/home/jesse/Bending/sims/PG/${item}.gro"
+        set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
         mol new $gro
         mol addfile $xtc waitfor all
         puts $gro
