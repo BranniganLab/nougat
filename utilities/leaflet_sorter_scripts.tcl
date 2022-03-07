@@ -161,6 +161,7 @@ proc leaflet_flip_check_new {species nframe beadname} {
 }
 
 #written in 2022 to be fast and dirty
+#should rewrite at some point to use only user values and not chains
 proc leaflet_check {frm species headname tailname} {
     set headsel [atomselect top "resname $species and name $headname" frame $frm]
     set head_ht [$headsel get z]
@@ -182,24 +183,30 @@ proc leaflet_check {frm species headname tailname} {
             set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
             $sel set chain "U"
             $sel delete
-        } elseif {[expr abs([lindex $test $i])] < 2} {
-            set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-            $sel set chain "Z"
-            $sel delete
         } else {
             if {[lindex $test $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
                 set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
                 $sel set chain "U"
                 $sel delete
-                #puts "resid [lindex $resids $i] switched to upper leaflet"
             } elseif {[lindex $test $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
                 set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
                 $sel set chain "L"
                 $sel delete
-                #puts "resid [lindex $resids $i] switched to lower leaflet"
             }
-        }   
+        }
     }
+
+    #remove pore lipids
+    #rewrite to make protein position passable value
+    set sel [atomselect top "name BB and resid 30" frame $frm]
+    set com [measure center $sel]
+    set x [lindex $com 0]
+    set y [lindex $com 1]
+    $sel delete
+    set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
+    $porelipids set chain "Z"
+    $porelipids delete
+
     set upper [atomselect top "chain U" frame $frm]
     $upper set user 1
     $upper delete
@@ -211,7 +218,7 @@ proc leaflet_check {frm species headname tailname} {
     $bad_chains delete
 }
 
-
+#experimental - didn't work
 proc rmv_outliers {frm species headnames lipidlength} {
     set change_list []
 

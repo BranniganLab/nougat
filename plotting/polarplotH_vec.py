@@ -3,8 +3,8 @@ import matplotlib
 import numpy as np
 import warnings
 
-name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
+#name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
+name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -256,11 +256,11 @@ def main():
           np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
 
           #laplacian plotting section
-          plot_maker(radius, theta, avgcurvature, name, field, .1, -.1, protein, "curvature")
+          plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature")
           print(name+" "+field+" laplacian done!")
 
           #gaussian plotting section
-          plot_maker(radius, theta, avgkcurvature, name, field, .1, -.1, protein, "gausscurvature")
+          plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature")
           print(name+" "+field+" gaussian curvature done!")
 
         elif dtype == 2:

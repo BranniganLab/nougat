@@ -2,14 +2,14 @@
 package require pbctools
 
 #locations on JS home computer
-set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
-set QWRAP "~/qwrap"
-set VEC "~/vecexpr"
+#set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
+#set QWRAP "~/qwrap"
+#set VEC "~/vecexpr"
 
 #locations on Belenus
-#set UTILS "~/PolarHeightBinning/utilities"
-#set QWRAP "~/qwrap-master"
-#set VEC "~/utilities/vecexpr"
+set UTILS "~/PolarHeightBinning/utilities"
+set QWRAP "~/qwrap-master"
+set VEC "~/utilities/vecexpr"
 
 source $UTILS/BinTools.tcl
 source $UTILS/assign_tilts.tcl
@@ -360,7 +360,7 @@ proc cell_prep {outfile} {
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
-    leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 }
 
@@ -628,10 +628,10 @@ proc polarHeightByFrame {outfile} {
 
 proc run_mult {list_of_systems} {
     foreach item $list_of_systems {
-        #set gro "/u1/home/js2746/Bending/PC/${item}.gro"
-        #set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
-        set gro "/home/jesse/Bending/sims/PG/${item}.gro"
-        set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
+        set gro "/u1/home/js2746/Bending/PC/${item}.gro"
+        set xtc "/u1/home/js2746/Bending/PC/${item}.xtc"
+        #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
+        #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
         mol new $gro
         mol addfile $xtc waitfor all
         puts $gro
