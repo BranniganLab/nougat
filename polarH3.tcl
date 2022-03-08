@@ -367,7 +367,7 @@ proc cell_prep {outfile} {
 ;########################################################################################
 ;# polarHeight Function
 
-proc polarHeightByFrame {outfile} {
+proc polarHeightByField {outfile} {
 
 
     set Rmin 0
@@ -637,7 +637,7 @@ proc run_mult {list_of_systems} {
         puts $gro
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
-        polarHeightByFrame $item
+        polarHeightByField $item
         mol delete top
     }
 }
