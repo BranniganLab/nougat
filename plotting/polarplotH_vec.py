@@ -5,8 +5,20 @@ import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
 name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
+#name_list = []
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
+bead_dict = {
+  "DT" : ['C2A.C2B'],
+  "DL" : ['C2A.C2B', 'C3A.C3B'],
+  "DY" : ['D2A.D2B', 'C3A.C3B'],
+  "DO" : ['D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
+  "PO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DP" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DB" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
+  "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
+  "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
+}
 
 
 def dimensions_analyzer(data):
@@ -76,7 +88,7 @@ def empty_neighbor_test(data, Nframes, N_r_bins, N_theta_bins):
   return nan_test, knan_test
 
 
-def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname):
+def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, bead):
   fig = plt.figure()
   ax = plt.subplot(projection="polar")
   c = plt.pcolormesh(theta,radius,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
@@ -93,7 +105,10 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname):
   ax.set_yticklabels([])
 
   fig.set_size_inches(6,6)
-  plt.savefig(name+"_"+field+"_"+dataname+".png", dpi = 700)
+  if bead is False:
+    plt.savefig(name+"_"+field+"_"+dataname+".png", dpi = 700)
+  else:
+    plt.savefig(name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
   plt.clf()
   plt.close()
 
@@ -165,7 +180,140 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
 
 #---------------------------------------------------------------------#
 
-def main():
+def output_analysis(name, field, protein, data_opt, bead):
+
+  #read in heights from VMD traj
+  if bead is False:
+    height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+field+'.density.dat')
+  else:
+    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.density.dat')
+
+  #strip r values from density info
+  density = density_data[:,2:]
+
+  #get bin info
+  N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
+
+  #create a new array that has each frame in a different array level
+  height = np.zeros((N_r_bins, N_theta_bins, Nframes))
+  for x in range(Nframes):
+    height[:,:,x] = height_data[x*N_r_bins:(x+1)*N_r_bins,2:]
+
+  #create arrays for storing curvature data
+  curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+  curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+  kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+
+  #wrap the inputs in the theta direction for calculating curvature
+  curvature_inputs[:,1:31,:] = height
+  curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
+  curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
+
+  #prep plot dimensions
+  rad = height_data[0:N_r_bins,0]
+  rad = np.append(rad, height_data[N_r_bins-1,1])
+  the = np.linspace(0,2*np.pi,N_theta_bins+1)
+  radius,theta=np.meshgrid(rad, the, indexing='ij')
+
+  #produce average height (dtype == 0) and curvature (dtype == 1) plots
+  for dtype in range(data_opt):
+    if dtype == 0:
+
+      #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+      for row in range(N_r_bins):
+        for col in range(N_theta_bins):
+          zerocount = np.count_nonzero(height[row,col,:])
+          count = np.count_nonzero(np.isnan(height[row,col,:]))
+          if (zerocount-count)/Nframes <= .1:
+            height[row,col,:] = np.nan
+
+      #take the average height over all frames
+      with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        avgHeight=np.nanmean(height, axis=2)
+
+      if bead is False: 
+        #save as file for debugging / analysis
+        np.save(name+'.'+field+'.avgheight.npy', avgHeight)
+
+        #plot and save
+        plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", False)
+        print(name+" "+field+" height done!")
+      else:
+        #save as file for debugging / analysis
+        np.save(name+'.'+bead+'.'+field+'.avgheight.npy', avgHeight)
+
+        #plot and save
+        plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", bead)
+        print(name+' '+bead+' '+field+" height done!")
+
+    elif dtype == 1:
+      #if a bin is empty, you can't measure its curvature
+      nan_test = np.isnan(curvature_inputs)
+
+      #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
+      nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N_r_bins, N_theta_bins)
+
+      #measure the laplacian and gaussian curvatures
+      curvature_outputs, kgauss_outputs = measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, dr, dtheta)
+
+      #unwrap along theta direction
+      meancurvature = curvature_outputs[:,1:N_theta_bins+1,:]
+      kcurvature = kgauss_outputs[:,1:N_theta_bins+1,:]
+
+      #take the average curvatures over all frames
+      with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        avgcurvature=np.nanmean(meancurvature, axis=2)
+        avgkcurvature=np.nanmean(kcurvature, axis=2)
+
+      if bead is False: 
+        #save as file for debugging / analysis
+        np.save(name+'.'+field+'.avgcurvature.npy',avgcurvature)
+        np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
+
+        #laplacian plotting section
+        plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", False)
+        print(name+" "+field+" laplacian done!")
+
+        #gaussian plotting section
+        plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature", False)
+        print(name+" "+field+" gaussian curvature done!")
+      else:
+        #save as file for debugging / analysis
+        np.save(name+'.'+bead+'.'+field+'.avgcurvature.npy',avgcurvature)
+        np.save(name+'.'+bead+'.'+field+'.avgKcurvature.npy',avgkcurvature)
+
+        #laplacian plotting section
+        plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
+        print(name+' '+bead+' '+field+" laplacian done!")
+
+        #gaussian plotting section
+        plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature", bead)
+        print(name+' '+bead+' '+field+" gaussian curvature done!")
+
+    elif dtype == 2:
+      if bead is False:
+        #save as file for debuggging / analysis
+        np.save(name+'.'+field+'.avgdensity.npy',density)
+
+        #plot and save
+        plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", False)
+        print(name+" "+field+" density done!")
+      else:
+        #save as file for debuggging / analysis
+        np.save(name+'.'+bead+'.'+field+'.avgdensity.npy',density)
+
+        #plot and save
+        plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", bead)
+        print(name+' '+bead+' '+field+" density done!")
+
+
+
+if __name__ == "__main__": 
+  readbeads = 1
   for name in name_list:
     for field in field_list:
 
@@ -173,106 +321,11 @@ def main():
       protein_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
       protein = []
       for i in range(10):
-      	protein.append(protein_coords[i])
+        protein.append(protein_coords[i])
 
-      #read in heights from VMD traj
-      height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-      density_data = np.genfromtxt(name+'.'+field+'.density.dat')
-
-      #strip r values from density info
-      density = density_data[:,2:]
-
-      #get bin info
-      N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
-
-      #create a new array that has each frame in a different array level
-      height = np.zeros((N_r_bins, N_theta_bins, Nframes))
-      for x in range(Nframes):
-        height[:,:,x] = height_data[x*N_r_bins:(x+1)*N_r_bins,2:]
-
-      #create arrays for storing curvature data
-      curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-      curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-      kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-
-      #wrap the inputs in the theta direction for calculating curvature
-      curvature_inputs[:,1:31,:] = height
-      curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
-      curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
-
-      #if a bin is empty, you can't measure its curvature
-      nan_test = np.isnan(curvature_inputs)
-
-      #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-      nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N_r_bins, N_theta_bins)
-
-      #prep plot dimensions
-      rad = height_data[0:N_r_bins,0]
-      rad = np.append(rad, height_data[N_r_bins-1,1])
-      the = np.linspace(0,2*np.pi,N_theta_bins+1)
-      radius,theta=np.meshgrid(rad, the, indexing='ij')
-
-      #produce average height (dtype == 0) and curvature (dtype == 1) plots
-      for dtype in range(3):
-        if dtype == 0:
-
-          #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
-          for row in range(N_r_bins):
-            for col in range(N_theta_bins):
-              zerocount = np.count_nonzero(height[row,col,:])
-              count = np.count_nonzero(np.isnan(height[row,col,:]))
-              if (zerocount-count)/Nframes <= .1:
-                height[row,col,:] = np.nan
-
-          #take the average height over all frames
-          with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            avgHeight=np.nanmean(height, axis=2)
-
-          #save as file for debugging / analysis
-          np.save(name+'.'+field+'.avgheight.npy', avgHeight)
-
-          #plot and save
-          plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight")
-          print(name+" "+field+" height done!")
-
-        elif dtype == 1:
-
-          #measure the laplacian and gaussian curvatures
-          curvature_outputs, kgauss_outputs = measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, dr, dtheta)
-
-          #unwrap along theta direction
-          meancurvature = curvature_outputs[:,1:N_theta_bins+1,:]
-          kcurvature = kgauss_outputs[:,1:N_theta_bins+1,:]
-
-          #take the average curvatures over all frames
-          with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            avgcurvature=np.nanmean(meancurvature, axis=2)
-            avgkcurvature=np.nanmean(kcurvature, axis=2)
-
-          #save as file for debugging / analysis
-          np.save(name+'.'+field+'.avgcurvature.npy',avgcurvature)
-          np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
-
-          #laplacian plotting section
-          plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature")
-          print(name+" "+field+" laplacian done!")
-
-          #gaussian plotting section
-          plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature")
-          print(name+" "+field+" gaussian curvature done!")
-
-        elif dtype == 2:
-
-          #save as file for debuggging / analysis
-          np.save(name+'.'+field+'.avgdensity.npy',density)
-
-          #plot and save
-          plot_maker(radius, theta, density, name, field, 0, 2, protein, "density")
-          print(name+" "+field+" density done!")
-
-
-
-if __name__ == "__main__": 
-  main()
+      if readbeads == 0:
+        output_analysis(name, field, protein, 3, False)
+      elif readbeads == 1:
+        if field != "zzero":
+          for bead in bead_dict[name]:
+            output_analysis(name, field, protein, 1, bead)
