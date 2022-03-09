@@ -439,7 +439,7 @@ proc polarHeightByField {system} {
     #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
     set heads [atomselect top "name $headnames"]
-    set tails [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1"]
+    set tails [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
         
     array set density_up [initialize_array $Nr $Ntheta]
     array set density_down [initialize_array $Nr $Ntheta]
