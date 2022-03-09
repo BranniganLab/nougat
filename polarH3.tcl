@@ -306,7 +306,7 @@ proc tail_analyzer { species } {
 }
 
 ;# NEED TO UPDATE
-proc cell_prep {outfile} {
+proc cell_prep {system} {
     set Rmin 0
     set Rmax 69
     set Rrange [expr $Rmax - $Rmin]
@@ -353,13 +353,13 @@ proc cell_prep {outfile} {
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
     leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 }
 
 ;########################################################################################
 ;# polarHeight Functions
 
-proc polarHeightByField {outfile} {
+proc polarHeightByField {system} {
 
 
     set Rmin 0
@@ -407,7 +407,7 @@ proc polarHeightByField {outfile} {
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
     leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
     #need to calculate heights relative to some point on the protein
     #for 5x29 we chose the juncture between TMD and protein cap
@@ -425,14 +425,14 @@ proc polarHeightByField {outfile} {
     set protein_top [expr $protein_top - $ref_height]
 
     #outfiles setup
-    set heights_up [open "${outfile}.zone.height.dat" w]
-    set heights_down [open "${outfile}.ztwo.height.dat" w]
-    set heights_zplus [open "${outfile}.zplus.height.dat" w]
-    set heights_zzero [open "${outfile}.zzero.height.dat" w]
-    set dens_up [open "${outfile}.zone.density.dat" w]
-    set dens_down [open "${outfile}.ztwo.density.dat" w]
-    set dens_zplus [open "${outfile}.zplus.density.dat" w]
-    set dens_zzero [open "${outfile}.zzero.density.dat" w]
+    set heights_up [open "${system}.zone.height.dat" w]
+    set heights_down [open "${system}.ztwo.height.dat" w]
+    set heights_zplus [open "${system}.zplus.height.dat" w]
+    set heights_zzero [open "${system}.zzero.height.dat" w]
+    set dens_up [open "${system}.zone.density.dat" w]
+    set dens_down [open "${system}.ztwo.density.dat" w]
+    set dens_zplus [open "${system}.zplus.density.dat" w]
+    set dens_zzero [open "${system}.zzero.density.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
@@ -448,7 +448,7 @@ proc polarHeightByField {outfile} {
     
     ;#start frame looping here
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
-        puts $frm
+        puts "$system $frm"
 
         leaflet_check $frm $species "PO4" $tailnames
         ;#rmv_outliers $frm $species "PO4" 15
@@ -498,7 +498,7 @@ proc polarHeightByField {outfile} {
             array set totals_down [initialize_array $Nr $Ntheta]
             array set counts_down [initialize_array $Nr $Ntheta]
             array set totals_zplus [initialize_array $Nr $Ntheta]
-            array set counts_plus [initialize_array $Nr $Ntheta]
+            array set counts_zplus [initialize_array $Nr $Ntheta]
 
             ;#fill in arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
@@ -623,10 +623,10 @@ proc polarHeightByBead {system} {
     set Ntheta 30
     set sample_frame 200
     set dt 1                ;# need to fix this if you want to use it
-    set nframes [molinfo top get numframes]
-    #set nframes 450
+    #set nframes [molinfo top get numframes]
+    set nframes 450
     set num_subunits 5.0 ;# pentamer = 5 subunits
-    #set headnames "PO4" ;# which beads define the surface of your membrane if not C1A C1B?
+    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
 
     ;#figure out which lipids are in the system
@@ -673,7 +673,7 @@ proc polarHeightByBead {system} {
     Center_System "resname $species"
     Align "occupancy 1 to 3 and name BB"
     leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $outfile $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
     #need to calculate heights relative to some point on the protein
     #for 5x29 we chose the juncture between TMD and protein cap
@@ -690,45 +690,39 @@ proc polarHeightByBead {system} {
     set protein_top [::tcl::mathfunc::max {*}$prot_z]
     set protein_top [expr $protein_top - $ref_height]
 
-    #outfiles setup
-    set heights_up [open "${outfile}.zone.height.dat" w]
-    set heights_down [open "${outfile}.ztwo.height.dat" w]
-    set heights_zplus [open "${outfile}.zplus.height.dat" w]
-    set heights_zzero [open "${outfile}.zzero.height.dat" w]
-    set dens_up [open "${outfile}.zone.density.dat" w]
-    set dens_down [open "${outfile}.ztwo.density.dat" w]
-    set dens_zplus [open "${outfile}.zplus.density.dat" w]
-    set dens_zzero [open "${outfile}.zzero.density.dat" w]
-
     puts "Helper scripts complete. Starting analysis now."  
 
-    #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
-    #position 0 is used for z1, z2, and zplus; position end is used for z_zero
-    set heads [atomselect top "name $headnames"]
-    set tails [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1"]
-        
-    array set density_up [initialize_array $Nr $Ntheta]
-    array set density_down [initialize_array $Nr $Ntheta]
-    array set density_zplus [initialize_array $Nr $Ntheta]
-    array set density_zzero [initialize_array $Nr $Ntheta]
-    
-    ;#start frame looping here
-    for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
-        puts $frm
+    foreach beadpair $tail_list {
+        set name1 [lindex $beadpair 0]
+        set name2 [lindex $beadpair 1]
+        set condensed_name "${name1}.${name2}"
 
-        leaflet_check $frm $species "PO4" $tailnames
-        ;#rmv_outliers $frm $species "PO4" 15
+        #outfiles setup
+        set heights_up [open "${system}.${condensed_name}.zone.height.dat" w]
+        set heights_down [open "${system}.${condensed_name}.ztwo.height.dat" w]
+        set heights_zplus [open "${system}.${condensed_name}.zplus.height.dat" w]
+        set dens_up [open "${system}.${condensed_name}.zone.density.dat" w]
+        set dens_down [open "${system}.${condensed_name}.ztwo.density.dat" w]
+        set dens_zplus [open "${system}.${condensed_name}.zplus.density.dat" w]
 
-        set box_height [molinfo top get c]
-        
-        set box_area_per_frame [expr [molinfo top get a] * [molinfo top get a]]
-        lappend boxarea $box_area_per_frame
+        set bead [atomselect top "name $beadpair"]
 
-        set meas_z_zero 0
+        array set density_up [initialize_array $Nr $Ntheta]
+        array set density_down [initialize_array $Nr $Ntheta]
+        array set density_zplus [initialize_array $Nr $Ntheta]
 
-        set blist [list $heads $tails]
+        ;#start frame looping here
+        for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
+            puts "$system $beadpair $frm"
 
-        foreach bead $blist {
+            leaflet_check $frm $species "PO4" $tailnames
+            ;#rmv_outliers $frm $species "PO4" 15
+
+            set box_height [molinfo top get c]
+            
+            set box_area_per_frame [expr [molinfo top get a] * [molinfo top get a]]
+            lappend boxarea $box_area_per_frame
+
             $bead frame $frm 
             $bead update
 
@@ -764,7 +758,7 @@ proc polarHeightByBead {system} {
             array set totals_down [initialize_array $Nr $Ntheta]
             array set counts_down [initialize_array $Nr $Ntheta]
             array set totals_zplus [initialize_array $Nr $Ntheta]
-            array set counts_plus [initialize_array $Nr $Ntheta]
+            array set counts_zplus [initialize_array $Nr $Ntheta]
 
             ;#fill in arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
@@ -774,21 +768,14 @@ proc polarHeightByBead {system} {
                     set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
                 }
                 if {$m <= $Nr} {
-                    if {$meas_z_zero == 0} {
-                        if {[lindex $chains $i] == 1} {
-                            set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
-                            set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                            set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
-                        } elseif {[lindex $chains $i] == 2} {
-                            set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
-                            set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
-                            set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
-                        }
-                    } elseif {$meas_z_zero == 1} {
-                        ;# reuse the up arrays for zzero
+                    if {[lindex $chains $i] == 1} {
                         set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                        set density_zzero($m,$n) [expr {$density_zzero($m,$n) + 1}]
+                        set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
+                    } elseif {[lindex $chains $i] == 2} {
+                        set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
+                        set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
+                        set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
                     }
                 }
             }    
@@ -801,20 +788,15 @@ proc polarHeightByBead {system} {
                     } else {
                         set totals_up($m,$n) "nan"
                     }
-                    if {$meas_z_zero == 0} {
-                        if {$counts_down($m,$n) != 0} {
-                            set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
-                            if {$counts_up($m,$n) != 0} {
-                                set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
-                                set counts_zplus($m,$n) [expr $counts_up($m,$n) + $counts_down($m,$n)]
-                            } else {
-                                set totals_zplus($m,$n) "nan"
-                            }
+                    if {$counts_down($m,$n) != 0} {
+                        set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
+                        if {$counts_up($m,$n) != 0} {
+                            set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
+                            set counts_zplus($m,$n) [expr $counts_up($m,$n) + $counts_down($m,$n)]
                         } else {
-                            set totals_down($m,$n) "nan"
                             set totals_zplus($m,$n) "nan"
                         }
-                    } elseif {$meas_z_zero == 1} {
+                    } else {
                         set totals_down($m,$n) "nan"
                         set totals_zplus($m,$n) "nan"
                     }
@@ -822,63 +804,51 @@ proc polarHeightByBead {system} {
             }
 
             ;#output heights to files
-            if { $meas_z_zero == 0 } {
-                print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
-                print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
-                print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
-            } elseif {$meas_z_zero == 1} {
-                print_frame $Nr $heights_zzero $dr $Rmin $Ntheta [array get totals_up]
-            }
-            set meas_z_zero 1
+            print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
+            print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
+            print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
         }
-    }
+        ;# calculate density
+        set delta_frame [expr ($nframes - $sample_frame) / $dt]
+        array set density_up [calculate_density [array get density_up] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
+        array set density_down [calculate_density [array get density_down] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
+        array set density_zplus [calculate_density [array get density_zplus] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
 
-    ;# calculate density
-    set delta_frame [expr ($nframes - $sample_frame) / $dt]
-    array set density_up [calculate_density [array get density_up] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_down [calculate_density [array get density_down] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_zplus [calculate_density [array get density_zplus] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_zzero [calculate_density [array get density_zzero] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
+        ;# prepare to normalize density
+        set avg_area [vecexpr $boxarea mean]
+        
+        ;# x_B * N_L = N_B
+        set lipidnum []
+        foreach leaflet "1 2" {
+            set lipidsel [atomselect top "resname $species and user $leaflet" frame [expr $nframes -1]]
+            set lipidres [lsort -unique [$lipidsel get resid]]
+            lappend lipidnum [llength $lipidres]
+            $lipidsel delete
+        }
+        
+        set up_normfactor [expr [lindex $lipidnum 0] / [expr 2 * $avg_area]]
+        set down_normfactor [expr [lindex $lipidnum 1] / [expr 2 * $avg_area]]
+        set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 4 * $avg_area]]
 
-    ;# prepare to normalize density
-    set avg_area [vecexpr $boxarea mean]
-    
-    ;# x_B * N_L = N_B
-    set lipidnum []
-    foreach leaflet "1 2" {
-        set lipidsel [atomselect top "resname $species and user $leaflet" frame [expr $nframes -1]]
-        set lipidres [lsort -unique [$lipidsel get resid]]
-        lappend lipidnum [llength $lipidres]
-        $lipidsel delete
-    }
-    
-    set up_normfactor [expr [lindex $lipidnum 0] / $avg_area]
-    set down_normfactor [expr [lindex $lipidnum 1] / $avg_area]
-    set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 2 * $avg_area]]
+        ;# calculate normalized density
+        array set density_up [normalize_density [array get density_up] $Nr $Ntheta $up_normfactor [llength $headnames]]
+        array set density_down [normalize_density [array get density_down] $Nr $Ntheta $down_normfactor [llength $headnames]]
+        array set density_zplus [normalize_density [array get density_zplus] $Nr $Ntheta $combined_normfactor [expr [llength $headnames] * 2.0]]
 
-    ;# calculate normalized density
-    array set density_up [normalize_density [array get density_up] $Nr $Ntheta $up_normfactor [llength $headnames]]
-    array set density_down [normalize_density [array get density_down] $Nr $Ntheta $down_normfactor [llength $headnames]]
-    array set density_zplus [normalize_density [array get density_zplus] $Nr $Ntheta $combined_normfactor [expr [llength $headnames] * 2.0]]
-    array set density_zzero [normalize_density [array get density_zzero] $Nr $Ntheta $combined_normfactor [expr [llength $tailnames] * 2.0]]  
+        ;# output densities to files
+        print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up]
+        print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down]
+        print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus]
 
-    ;# output densities to files
-    print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up]
-    print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down]
-    print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus]
-    print_frame $Nr $dens_zzero $dr $Rmin $Ntheta [array get density_zzero]
-
-    ;#clean up
-    close $heights_up
-    close $heights_down
-    close $heights_zplus
-    close $heights_zzero
-    close $dens_up
-    close $dens_down
-    close $dens_zplus
-    close $dens_zzero
-    $heads delete
-    $tails delete
+        ;#clean up
+        close $heights_up
+        close $heights_down
+        close $heights_zplus
+        close $dens_up
+        close $dens_down
+        close $dens_zplus
+        $bead delete
+    }  
 }
 
 proc run_field_mult {list_of_systems} {
