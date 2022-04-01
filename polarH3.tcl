@@ -363,7 +363,7 @@ proc polarHeightByField {system} {
 
 
     set Rmin 0
-    set Rmax 69
+    set Rmax 195
     set Rrange [expr $Rmax - $Rmin]
     set dr 6
     set Ntheta 30
@@ -409,20 +409,13 @@ proc polarHeightByField {system} {
     leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
-    #need to calculate heights relative to some point on the protein
-    #for 5x29 we chose the juncture between TMD and protein cap
+    #need to calculate heights relative to some point on the protein:
+    #For 5x29 we chose the juncture between TMD and protein cap
     #because this corresponds to height zero in our elastic simulations
     set ref_bead [atomselect top "name BB and resid 15"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
     set ref_height [expr [vecexpr $ref_height sum]/$num_subunits]
-
-    #find top of protein for pbc crossing event
-    set sel [atomselect top "name BB"]
-    set prot_z [$sel get z]
-    $sel delete
-    set protein_top [::tcl::mathfunc::max {*}$prot_z]
-    set protein_top [expr $protein_top - $ref_height]
 
     #outfiles setup
     set heights_up [open "${system}.zone.height.dat" w]
@@ -504,9 +497,6 @@ proc polarHeightByField {system} {
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
                 set m [lindex $r_bins $i]
                 set n [lindex $theta_bins $i]
-                if {[lindex $z_vals $i] > [expr $protein_top + 5]} {
-                    set [lindex $z_vals $i] [expr [lindex $z_vals $i] - $box_height]
-                }
                 if {$m <= $Nr} {
                     if {$meas_z_zero == 0} {
                         if {[lindex $chains $i] == 1} {

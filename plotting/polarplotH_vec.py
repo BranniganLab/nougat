@@ -4,10 +4,11 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-#name_list = []
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
+name_list = ["lgPO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
+'''
 bead_dict = {
   "DT" : ['C2A.C2B'],
   "DL" : ['C2A.C2B', 'C3A.C3B'],
@@ -19,7 +20,7 @@ bead_dict = {
   "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
   "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
-
+'''
 
 def dimensions_analyzer(data):
   #figure out how many radial bins there are
@@ -176,6 +177,43 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
   return curvature_outputs, kgauss_outputs
 
 
+def coord_format(value):
+  rounded = round(value,3)
+  leftside,rightside = str(rounded).split('.')
+  if len(rightside) < 3:
+    rightside = rightside+(' '*(3-len(rightside)))
+  if len(leftside) < 4:
+    leftside = (' '*(4-len(leftside)))+leftside
+  final_value = leftside+'.'+rightside
+  return final_value
+
+  
+
+def Make_surface_PDB(name,field,dr,dtheta):
+  data = np.load(name+"."+field+".avgheight.npy")
+  serial = 1
+  resseqnum = 1
+  atom_name = 'SURF'
+  resname = 'SURF'
+  chain = 'X'
+  row,col = data.shape
+
+  with open(name+'.'+field+'.avgheight.pdb', 'w') as f:
+    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
+    for rbin in range(row):
+      for thetabin in range(col):
+        if str(data[rbin][thetabin]) != "nan":
+          seriallen = 5-(len(str(serial)))
+          resseqlen = seriallen - 1
+          x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
+          x = coord_format(x)
+          y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
+          y = coord_format(y)
+          z = coord_format(data[rbin][thetabin])
+          print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+resname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00              ',file=f)
+          serial += 1
+          resseqnum +=1
+    print('END', file=f)
 
 
 #---------------------------------------------------------------------#
@@ -239,7 +277,7 @@ def output_analysis(name, field, protein, data_opt, bead):
         np.save(name+'.'+field+'.avgheight.npy', avgHeight)
 
         #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", False)
+        plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
@@ -275,11 +313,11 @@ def output_analysis(name, field, protein, data_opt, bead):
         np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
 
         #laplacian plotting section
-        plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", False)
+        plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
         print(name+" "+field+" laplacian done!")
 
         #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature", False)
+        plot_maker(radius, theta, avgkcurvature, name, field, 0, -.005, protein, "gausscurvature", False)
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
@@ -300,7 +338,7 @@ def output_analysis(name, field, protein, data_opt, bead):
         np.save(name+'.'+field+'.avgdensity.npy',density)
 
         #plot and save
-        plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", False)
+        plot_maker(radius, theta, density, name, field, 0.75, 1.25, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
@@ -313,7 +351,7 @@ def output_analysis(name, field, protein, data_opt, bead):
 
 
 if __name__ == "__main__": 
-  readbeads = 1
+  readbeads = 0
   for name in name_list:
     for field in field_list:
 
