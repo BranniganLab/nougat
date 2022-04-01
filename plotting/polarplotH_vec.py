@@ -5,7 +5,7 @@ import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-name_list = ["lgPO"]
+name_list = ["PO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 '''
@@ -189,8 +189,7 @@ def coord_format(value):
 
   
 
-def Make_surface_PDB(name,field,dr,dtheta):
-  data = np.load(name+"."+field+".avgheight.npy")
+def Make_surface_PDB(data,name,field,dr,dtheta,f):
   serial = 1
   resseqnum = 1
   atom_name = 'SURF'
@@ -198,27 +197,26 @@ def Make_surface_PDB(name,field,dr,dtheta):
   chain = 'X'
   row,col = data.shape
 
-  with open(name+'.'+field+'.avgheight.pdb', 'w') as f:
-    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
-    for rbin in range(row):
-      for thetabin in range(col):
-        if str(data[rbin][thetabin]) != "nan":
-          seriallen = 5-(len(str(serial)))
-          resseqlen = seriallen - 1
-          x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
-          x = coord_format(x)
-          y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
-          y = coord_format(y)
-          z = coord_format(data[rbin][thetabin])
-          print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+resname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00              ',file=f)
-          serial += 1
-          resseqnum +=1
-    print('END', file=f)
+  print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
+  for rbin in range(row):
+    for thetabin in range(col):
+      if str(data[rbin][thetabin]) != "nan":
+        seriallen = 5-(len(str(serial)))
+        resseqlen = seriallen - 1
+        x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
+        x = coord_format(x)
+        y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
+        y = coord_format(y)
+        z = coord_format(data[rbin][thetabin])
+        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+field[:4]+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00      '+field[:4]+'  ',file=f)
+        serial += 1
+        resseqnum +=1
+  print('END', file=f)
 
 
 #---------------------------------------------------------------------#
 
-def output_analysis(name, field, protein, data_opt, bead):
+def output_analysis(name, field, protein, data_opt, bead, surffile):
 
   #read in heights from VMD traj
   if bead is False:
@@ -278,6 +276,7 @@ def output_analysis(name, field, protein, data_opt, bead):
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
+        Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile)
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
@@ -353,6 +352,7 @@ def output_analysis(name, field, protein, data_opt, bead):
 if __name__ == "__main__": 
   readbeads = 0
   for name in name_list:
+    f = open(name+".avgheight.pdb","w")
     for field in field_list:
 
       #read in protein helix coordinates
@@ -362,8 +362,10 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        output_analysis(name, field, protein, 3, False)
+        output_analysis(name, field, protein, 3, False, f)
       elif readbeads == 1:
         if field != "zzero":
           for bead in bead_dict[name]:
-            output_analysis(name, field, protein, 1, bead)
+            output_analysis(name, field, protein, 1, bead, f)
+    print('END', file=f)
+    f.close()
