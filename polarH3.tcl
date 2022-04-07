@@ -363,7 +363,11 @@ proc polarHeightByField {system} {
 
 
     set Rmin 0
-    set Rmax 195
+    if {$system == "lgPO"} {
+        set Rmax 195
+    } else {
+        set Rmax 68
+    }
     set Rrange [expr $Rmax - $Rmin]
     set dr 6
     set Ntheta 30
@@ -607,7 +611,11 @@ proc polarHeightByField {system} {
 
 proc polarHeightByBead {system} {
     set Rmin 0
-    set Rmax 69
+    if {$system == "lgPO"} {
+        set Rmax 195
+    } else {
+        set Rmax 68
+    }
     set Rrange [expr $Rmax - $Rmin]
     set dr 6
     set Ntheta 30
