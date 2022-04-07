@@ -4,8 +4,8 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
-name_list = ["lgPO"]
+name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+#name_list = ["lgPO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -273,7 +273,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.save(name+'.'+field+'.avgheight.npy', avgHeight)
+        np.savetxt(name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
@@ -281,7 +281,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
-        np.save(name+'.'+bead+'.'+field+'.avgheight.npy', avgHeight)
+        np.savetxt(name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", bead)
@@ -310,8 +310,8 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.save(name+'.'+field+'.avgcurvature.npy',avgcurvature)
-        np.save(name+'.'+field+'.avgKcurvature.npy',avgkcurvature)
+        np.savetxt(name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
@@ -322,8 +322,8 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
-        np.save(name+'.'+bead+'.'+field+'.avgcurvature.npy',avgcurvature)
-        np.save(name+'.'+bead+'.'+field+'.avgKcurvature.npy',avgkcurvature)
+        np.savetxt(name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
@@ -336,14 +336,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
     elif dtype == 2:
       if bead is False:
         #save as file for debuggging / analysis
-        np.save(name+'.'+field+'.avgdensity.npy',density)
+        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, 0.75, 1.25, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
-        np.save(name+'.'+bead+'.'+field+'.avgdensity.npy',density)
+        np.savetxt(name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", bead)
@@ -367,11 +367,11 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 1, False, f, serial)
+        serial = output_analysis(name, field, protein, 2, False, f, serial)
       elif readbeads == 1:
-        serial = output_analysis(name, field, protein, 1, False, f, serial)
+        serial = output_analysis(name, field, protein, 3, False, f, serial)
         if field != "zzero":
           for bead in bead_dict[name]:
-            serial = output_analysis(name, field, protein, 1, bead, f, serial)
+            serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
