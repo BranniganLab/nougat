@@ -4,23 +4,24 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-name_list = ["PO"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+name_list = ["lgPO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
-'''
+
 bead_dict = {
   "DT" : ['C2A.C2B'],
   "DL" : ['C2A.C2B', 'C3A.C3B'],
   "DY" : ['D2A.D2B', 'C3A.C3B'],
   "DO" : ['D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
   "PO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "lgPO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DP" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DB" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
   "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
   "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
-'''
+
 
 def dimensions_analyzer(data):
   #figure out how many radial bins there are
@@ -189,12 +190,13 @@ def coord_format(value):
 
   
 
-def Make_surface_PDB(data,name,field,dr,dtheta,f,serial):
+def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
   resseqnum = 1
   atom_name = 'SURF'
-  resname = 'SURF'
   chain = 'X'
   row,col = data.shape
+  beadnum = str(bead[1])
+  beadname = "C"+beadnum+"  "
 
   for rbin in range(row):
     for thetabin in range(col):
@@ -206,7 +208,7 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial):
         y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
         y = coord_format(y)
         z = coord_format(data[rbin][thetabin])
-        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+field[:4]+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00      '+field[:4]+'  ',file=f)
+        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00      '+field[:4]+'  ',file=f)
         serial += 1
         resseqnum +=1
   return serial
@@ -275,7 +277,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
-        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial)
+        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,'C1  ')
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
@@ -283,6 +285,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", bead)
+        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,bead)
         print(name+' '+bead+' '+field+" height done!")
 
     elif dtype == 1:
@@ -350,7 +353,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 
 if __name__ == "__main__": 
-  readbeads = 0
+  readbeads = 1
   for name in name_list:
     f = open(name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
@@ -364,8 +367,9 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 3, False, f, serial)
+        serial = output_analysis(name, field, protein, 1, False, f, serial)
       elif readbeads == 1:
+        serial = output_analysis(name, field, protein, 1, False, f, serial)
         if field != "zzero":
           for bead in bead_dict[name]:
             serial = output_analysis(name, field, protein, 1, bead, f, serial)
