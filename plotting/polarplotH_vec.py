@@ -189,20 +189,18 @@ def coord_format(value):
 
   
 
-def Make_surface_PDB(data,name,field,dr,dtheta,f):
-  serial = 1
+def Make_surface_PDB(data,name,field,dr,dtheta,f,serial):
   resseqnum = 1
   atom_name = 'SURF'
   resname = 'SURF'
   chain = 'X'
   row,col = data.shape
 
-  print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
   for rbin in range(row):
     for thetabin in range(col):
       if str(data[rbin][thetabin]) != "nan":
         seriallen = 5-(len(str(serial)))
-        resseqlen = seriallen - 1
+        resseqlen = 4-(len(str(resseqnum)))
         x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
         x = coord_format(x)
         y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
@@ -211,12 +209,13 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f):
         print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+field[:4]+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00      '+field[:4]+'  ',file=f)
         serial += 1
         resseqnum +=1
-  print('END', file=f)
+  return serial
+
 
 
 #---------------------------------------------------------------------#
 
-def output_analysis(name, field, protein, data_opt, bead, surffile):
+def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
   #read in heights from VMD traj
   if bead is False:
@@ -276,7 +275,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile):
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
-        Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile)
+        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial)
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
@@ -346,6 +345,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile):
         #plot and save
         plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", bead)
         print(name+' '+bead+' '+field+" density done!")
+  return serial
 
 
 
@@ -353,6 +353,8 @@ if __name__ == "__main__":
   readbeads = 0
   for name in name_list:
     f = open(name+".avgheight.pdb","w")
+    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
+    serial = 1
     for field in field_list:
 
       #read in protein helix coordinates
@@ -362,10 +364,10 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        output_analysis(name, field, protein, 3, False, f)
+        serial = output_analysis(name, field, protein, 3, False, f, serial)
       elif readbeads == 1:
         if field != "zzero":
           for bead in bead_dict[name]:
-            output_analysis(name, field, protein, 1, bead, f)
+            serial = output_analysis(name, field, protein, 1, bead, f, serial)
     print('END', file=f)
     f.close()
