@@ -188,7 +188,11 @@ def coord_format(value):
   final_value = leftside+'.'+rightside
   return final_value
 
-  
+def bin_format(value):
+  strval = str(value)
+  length = len(strval)
+  final_value = (' '*(3-length))+strval+'.00'
+  return final_value
 
 def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
   resseqnum = 1
@@ -208,7 +212,9 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
         y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
         y = coord_format(y)
         z = coord_format(data[rbin][thetabin])
-        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+'  3.00  0.00      '+field[:4]+'  ',file=f)
+        rnum = bin_format(rbin)
+        thetanum = bin_format(thetabin)
+        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+rnum+thetanum+'      '+field[:4]+'  ',file=f)
         serial += 1
         resseqnum +=1
   return serial
