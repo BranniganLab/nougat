@@ -4,7 +4,8 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
 #name_list = ["lgPO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
