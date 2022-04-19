@@ -7,8 +7,9 @@ import glob
 
 
 #sys_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP", "lgPO"]
-sys_list = ["lgPO"]
-field_list = ['zone', 'ztwo', 'zzero', 'zplus']
+sys_list = ["DT"]
+#field_list = ['zone', 'ztwo', 'zzero', 'zplus']
+field_list = ['zone']
 
 bead_dict = {
   "DT" : ['C2A.C2B'],
@@ -35,6 +36,24 @@ def coord_format(value):
 		leftside = (' '*(4-len(leftside)))+leftside
 	final_value = leftside+'.'+rightside
 	return final_value
+
+def triangulate_surface(name,field,dr,dtheta):
+	data = np.load(name+"."+field+".avgheight.npy")
+	row,col = data.shape
+	
+	#wrap in theta direction
+	wrapdata = np.zeros((row,col+2))
+	wrapdata[:,1:col+1] = data 
+	wrapdata[:,0] = wrapdata[:,col]
+	wrapdata[:,col+1] = wrapdata[:,1]
+	
+	wrow,wcol = wrapdata.shape
+
+	for rbin in range(wrow):
+		for thetabin in range(wcol):
+			if str(wrapdata[rbin][thetabin] != "nan"):
+				i1x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
+				i1y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
 
 
 def Make_surface_PDB(name,field,dr,dtheta):
@@ -65,4 +84,4 @@ def Make_surface_PDB(name,field,dr,dtheta):
 
 for system in sys_list:
 	for field in field_list:
-		Make_surface_PDB(system,field,6,dth)
+		triangulate_surface(system,field,6,dth)
