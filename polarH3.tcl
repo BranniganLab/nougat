@@ -392,7 +392,7 @@ proc polarHeightByField {system} {
     
     #calculate number of r bins from dr and Rrange
     if {[expr $Rrange % $dr] == 0} { 
-        set Nr [expr $Rrange / $dr - 1] 
+        set Nr [expr [expr $Rrange / $dr] - 1.0] 
     } else {
         set Nr [expr $Rrange / $dr]
     }
@@ -430,6 +430,8 @@ proc polarHeightByField {system} {
     set dens_down [open "${system}.ztwo.density.dat" w]
     set dens_zplus [open "${system}.zplus.density.dat" w]
     set dens_zzero [open "${system}.zzero.density.dat" w]
+    set tilt_up [open "${system}.zone.tilt.dat" w]
+    set tilt_down [open "${system}.ztwo.tilt.dat" w]
 
     puts "Helper scripts complete. Starting analysis now."	
 
@@ -452,7 +454,7 @@ proc polarHeightByField {system} {
 
         set box_height [molinfo top get c]
         
-        set box_area_per_frame [expr [molinfo top get a] * [molinfo top get a]]
+        set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
 
         set meas_z_zero 0
@@ -489,6 +491,20 @@ proc polarHeightByField {system} {
             ;#turn into bin numbers rather than r values
             vecexpr [vecexpr $r_vals $dr div] floor &r_bins
 
+            ;#go fishing for tilt angles
+            if {$meas_z_zero == 0} {
+                set tiltselup1 [atomselect top "user 1 and name GL1 $tail_one"]
+                set tiltselup2 [atomselect top "user 1 and name GL2 $tail_two"]
+                set tiltseldown1 [atomselect top "user 2 and name GL1 $tail_one"]
+                set tiltseldown2 [atomselect top "user 2 and name GL2 $tail_two"]
+
+                set taillength [expr [llength $tail_one] + 1.0]
+
+                set up1x [$tiltselup1 get x]
+                set up1y [$tiltselup1 get y]
+                set up1z [$tiltselup1 get z]
+            }
+
             ;#initialize arrays to zeros
             array set totals_up [initialize_array $Nr $Ntheta]
             array set counts_up [initialize_array $Nr $Ntheta]
@@ -496,8 +512,10 @@ proc polarHeightByField {system} {
             array set counts_down [initialize_array $Nr $Ntheta]
             array set totals_zplus [initialize_array $Nr $Ntheta]
             array set counts_zplus [initialize_array $Nr $Ntheta]
+            array set tilts_up [initialize_array $Nr [expr $Ntheta*2.0]]
+            array set tilts_down [initialize_array $Nr [expr $Ntheta*2.0]]
 
-            ;#fill in arrays with z sum and count sum
+            ;#fill in total/count arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
                 set m [lindex $r_bins $i]
                 set n [lindex $theta_bins $i]
@@ -557,6 +575,10 @@ proc polarHeightByField {system} {
             } elseif {$meas_z_zero == 1} {
                 print_frame $Nr $heights_zzero $dr $Rmin $Ntheta [array get totals_up]
             }
+
+            ;#measure tilts
+            set tiltsel [atomselect top ""]
+
             set meas_z_zero 1
         }
     }
