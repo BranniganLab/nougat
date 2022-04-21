@@ -103,12 +103,26 @@ proc lsq { x } {
 
 #  least squares procedure from above, optimized for use with vecexpr
 proc lsq_vecexpr { tail_length list_of_tail_coords } {
-  set d [expr {0.5*($tail_length-1)}]
   set i_list []
-  for {set i 0} {$i<$tail_length} {incr i} {
-    lappend i_list $i
+  set counter 0
+  for {set i 0} {$i < [llength $list_of_tail_coords]} {incr i} {
+    lappend i_list $counter
+    set counter [expr $counter + 1]
+    if {[expr $counter%$tail_length]==0} {
+      set counter 0
+    }
   }
+  set d [expr {0.5*($tail_length-1)}]
   vecexpr $i_list $d sub >multiplier
-  set vector [vecexpr [vecexpr $list_of_tail_coords $multiplier mult] sum]
-  return $vector
+  set vector_components [vecexpr $list_of_tail_coords $multiplier mult]
+  set vectors []
+  for {set i 0} {$i < [expr [llength $list_of_tail_coords] / $tail_length]} {incr i} {
+    set startnum [expr $i*$tail_length]
+    set endnum [expr [expr [expr $i+1] * $tail_length] -1]
+    set quantity_to_sum [lrange $vector_components $startnum $endnum]
+    lappend vectors [vecexpr $quantity_to_sum sum]
+  }
+
+  return $vectors
 }
+
