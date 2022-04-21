@@ -155,11 +155,11 @@ proc print_frame {Nr file dr Rmin Ntheta data} {
 
 
 ;# sets all values of array to zero
-proc initialize_array {Nr Ntheta} {
+proc initialize_array {Nr Ntheta init_value} {
 
     for {set m 0} {$m <= $Nr} {incr m} {
         for {set n 0} {$n <= $Ntheta} {incr n} {
-            set data($m,$n) 0
+            set data($m,$n) $init_value
         }
     }
 
@@ -305,6 +305,25 @@ proc tail_analyzer { species } {
     return [list $tail_one $tail_two]
 }
 
+proc tilt_angles {tail_length tail_one tail_two} {
+    set vector_list []
+    set t1xvals [lsq_vecexpr $tail_length [$tail_one get x]]
+    set t1yvals [lsq_vecexpr $tail_length [$tail_one get y]]
+    set t1zvals [lsq_vecexpr $tail_length [$tail_one get z]]
+    set t2xvals [lsq_vecexpr $tail_length [$tail_two get x]]
+    set t2yvals [lsq_vecexpr $tail_length [$tail_two get y]]
+    set t2zvals [lsq_vecexpr $tail_length [$tail_two get z]]
+    for {set i 0} {$i < [llength $t1xvals]} {incr i} {
+        set vector1 "[lindex $t1xvals $i] [lindex $t1yvals $i] [lindex $t1zvals $i]"
+        set norm1 [vecnorm $vector1]
+        set vector2 "[lindex $t2xvals $i] [lindex $t2yvals $i] [lindex $t2zvals $i]"
+        set norm2 [vecnorm $vector2]
+        lappend vector_list $norm1
+        lappend vector_list $norm2
+    }
+    return $vector_list
+}
+
 ;# NEED TO UPDATE
 proc cell_prep {system} {
     set Rmin 0
@@ -439,18 +458,25 @@ proc polarHeightByField {system} {
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+    set t1tiltsel [atomselect top "resname $species and name GL1 $tail_one"]
+    set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
         
-    array set density_up [initialize_array $Nr $Ntheta]
-    array set density_down [initialize_array $Nr $Ntheta]
-    array set density_zplus [initialize_array $Nr $Ntheta]
-    array set density_zzero [initialize_array $Nr $Ntheta]
+    array set density_up [initialize_array $Nr $Ntheta 0.0]
+    array set density_down [initialize_array $Nr $Ntheta 0.0]
+    array set density_zplus [initialize_array $Nr $Ntheta 0.0]
+    array set density_zzero [initialize_array $Nr $Ntheta 0.0]
     
     ;#start frame looping here
     for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
+        set sellist [list $t1tiltsel $t2tiltsel]
+        foreach selex $sellist {
+            $selex frame $frm 
+            $selex update
+        }
+        
         puts "$system $frm"
 
         leaflet_check $frm $species "PO4" $tailnames
-        ;#rmv_outliers $frm $species "PO4" 15
 
         set box_height [molinfo top get c]
         
@@ -459,13 +485,16 @@ proc polarHeightByField {system} {
 
         set meas_z_zero 0
 
+        set taillength [expr [llength $tail_one] + 1]
+        set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
+
         set blist [list $heads $tails]
 
         foreach bead $blist {
             $bead frame $frm 
             $bead update
 
-            set x_vals [$bead get x] 
+            set x_vals [$bead get x]
             set y_vals [$bead get y]
             set z_vals [vecexpr [$bead get z] $ref_height sub]
             set chains [$bead get user]
@@ -473,11 +502,11 @@ proc polarHeightByField {system} {
             set indexs [$bead get index]
 
             ;#get theta values for all x,y pairs
-            set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]  
+            set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
 
-            ;#atan2 gives values from -180 to 180; shifting to 0 to 360                            
-            for {set i 0} {$i<[llength $theta_vals]} {incr i} {                                         
-                if {[lindex $theta_vals $i] < 0} {                                                      
+            ;#atan2 gives values from -180 to 180; shifting to 0 to 360
+            for {set i 0} {$i<[llength $theta_vals]} {incr i} {
+                if {[lindex $theta_vals $i] < 0} {
                     set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
                 }
             }
@@ -491,29 +520,15 @@ proc polarHeightByField {system} {
             ;#turn into bin numbers rather than r values
             vecexpr [vecexpr $r_vals $dr div] floor &r_bins
 
-            ;#go fishing for tilt angles
-            if {$meas_z_zero == 0} {
-                set tiltselup1 [atomselect top "user 1 and name GL1 $tail_one"]
-                set tiltselup2 [atomselect top "user 1 and name GL2 $tail_two"]
-                set tiltseldown1 [atomselect top "user 2 and name GL1 $tail_one"]
-                set tiltseldown2 [atomselect top "user 2 and name GL2 $tail_two"]
-
-                set taillength [expr [llength $tail_one] + 1.0]
-
-                set up1x [$tiltselup1 get x]
-                set up1y [$tiltselup1 get y]
-                set up1z [$tiltselup1 get z]
-            }
-
             ;#initialize arrays to zeros
-            array set totals_up [initialize_array $Nr $Ntheta]
-            array set counts_up [initialize_array $Nr $Ntheta]
-            array set totals_down [initialize_array $Nr $Ntheta]
-            array set counts_down [initialize_array $Nr $Ntheta]
-            array set totals_zplus [initialize_array $Nr $Ntheta]
-            array set counts_zplus [initialize_array $Nr $Ntheta]
-            array set tilts_up [initialize_array $Nr [expr $Ntheta*2.0]]
-            array set tilts_down [initialize_array $Nr [expr $Ntheta*2.0]]
+            array set totals_up [initialize_array $Nr $Ntheta 0.0]
+            array set counts_up [initialize_array $Nr $Ntheta 0.0]
+            array set totals_down [initialize_array $Nr $Ntheta 0.0]
+            array set counts_down [initialize_array $Nr $Ntheta 0.0]
+            array set totals_zplus [initialize_array $Nr $Ntheta 0.0]
+            array set counts_zplus [initialize_array $Nr $Ntheta 0.0]
+            array set tilts_up [initialize_array $Nr $Ntheta  {0.0 0.0 0.0}]
+            array set tilts_down [initialize_array $Nr $Ntheta {0.0 0.0 0.0}]
 
             ;#fill in total/count arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
@@ -525,10 +540,12 @@ proc polarHeightByField {system} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                             set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
+                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) [lindex $tilts $i] add]
                         } elseif {[lindex $chains $i] == 2} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                             set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
+                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) [lindex $tilts $i] add]
                         }
                     } elseif {$meas_z_zero == 1} {
                         ;# reuse the up arrays for zzero
@@ -544,12 +561,21 @@ proc polarHeightByField {system} {
                 for {set n 0} {$n <= $Ntheta} {incr n} {
                     if {$counts_up($m,$n) != 0} {
                         set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
+                        if {$meas_z_zero == 0} {
+                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
+                            set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
+                        } else {
+                            set tilts_up($m,$n) "nan"
+                        }
                     } else {
                         set totals_up($m,$n) "nan"
+                        set tilts_up($m,$n) "nan"
                     }
                     if {$meas_z_zero == 0} {
                         if {$counts_down($m,$n) != 0} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
+                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) $counts_down($m,$n) div]
+                            set tilts_down($m,$n) [vecnorm $tilts_down($m,$n)]
                             if {$counts_up($m,$n) != 0} {
                                 set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)]/2.0]
                                 set counts_zplus($m,$n) [expr $counts_up($m,$n) + $counts_down($m,$n)]
@@ -559,25 +585,28 @@ proc polarHeightByField {system} {
                         } else {
                             set totals_down($m,$n) "nan"
                             set totals_zplus($m,$n) "nan"
+                            set tilts_down($m,$n) "nan"
                         }
                     } elseif {$meas_z_zero == 1} {
                         set totals_down($m,$n) "nan"
                         set totals_zplus($m,$n) "nan"
+                        set tilts_up($m,$n) "nan"
+                        set tilts_down($m,$n) "nan"
                     }
                 }
             }
+
 
             ;#output heights to files
             if { $meas_z_zero == 0 } {
                 print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
                 print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
                 print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
+                print_frame $Nr $tilt_up $dr $Rmin $Ntheta [array get tilts_up]
+                print_frame $Nr $tilt_down $dr $Rmin $Ntheta [array get tilts_down]
             } elseif {$meas_z_zero == 1} {
                 print_frame $Nr $heights_zzero $dr $Rmin $Ntheta [array get totals_up]
             }
-
-            ;#measure tilts
-            set tiltsel [atomselect top ""]
 
             set meas_z_zero 1
         }
@@ -627,8 +656,12 @@ proc polarHeightByField {system} {
     close $dens_down
     close $dens_zplus
     close $dens_zzero
+    close $tilt_up 
+    close $tilt_down 
     $heads delete
     $tails delete
+    $t1tiltsel delete
+    $t2tiltsel delete
 }
 
 proc polarHeightByBead {system} {
@@ -727,9 +760,9 @@ proc polarHeightByBead {system} {
 
         set bead [atomselect top "name $beadpair"]
 
-        array set density_up [initialize_array $Nr $Ntheta]
-        array set density_down [initialize_array $Nr $Ntheta]
-        array set density_zplus [initialize_array $Nr $Ntheta]
+        array set density_up [initialize_array $Nr $Ntheta 0]
+        array set density_down [initialize_array $Nr $Ntheta 0]
+        array set density_zplus [initialize_array $Nr $Ntheta 0]
 
         ;#start frame looping here
         for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
@@ -773,12 +806,12 @@ proc polarHeightByBead {system} {
             vecexpr [vecexpr $r_vals $dr div] floor &r_bins
 
             ;#initialize arrays to zeros
-            array set totals_up [initialize_array $Nr $Ntheta]
-            array set counts_up [initialize_array $Nr $Ntheta]
-            array set totals_down [initialize_array $Nr $Ntheta]
-            array set counts_down [initialize_array $Nr $Ntheta]
-            array set totals_zplus [initialize_array $Nr $Ntheta]
-            array set counts_zplus [initialize_array $Nr $Ntheta]
+            array set totals_up [initialize_array $Nr $Ntheta 0]
+            array set counts_up [initialize_array $Nr $Ntheta 0]
+            array set totals_down [initialize_array $Nr $Ntheta 0]
+            array set counts_down [initialize_array $Nr $Ntheta 0]
+            array set totals_zplus [initialize_array $Nr $Ntheta 0]
+            array set counts_zplus [initialize_array $Nr $Ntheta 0]
 
             ;#fill in arrays with z sum and count sum
             for {set i 0} {$i < [llength $r_vals]} {incr i} {
