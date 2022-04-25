@@ -220,7 +220,19 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
         resseqnum +=1
   return serial
 
+def gen_avg_tilt(name, field):
+  tilt_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
+  height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
 
+  #strip r values from tilt info
+  tilt_data = tilt_data[:,2:]
+
+  #get bin info
+  N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
+
+  height = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
+  for x in range(Nframes):
+    tilt[:,:,x] = tilt_data[x*N_r_bins:(x+1)*N_r_bins,:]
 
 #---------------------------------------------------------------------#
 
@@ -358,9 +370,9 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
   return serial
 
 
-
+'''
 if __name__ == "__main__": 
-  readbeads = 1
+  readbeads = 0
   for name in name_list:
     f = open(name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
@@ -382,3 +394,9 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
+'''
+
+if __name__ == "__main__": 
+  for name in name_list:
+    for field in ['zone', 'ztwo']:
+      gen_avg_tilt(name, field)
