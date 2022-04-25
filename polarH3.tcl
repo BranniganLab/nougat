@@ -565,11 +565,11 @@ proc polarHeightByField {system} {
                             set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
                             set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
                         } else {
-                            set tilts_up($m,$n) "nan"
+                            set tilts_up($m,$n) "nan nan nan"
                         }
                     } else {
                         set totals_up($m,$n) "nan"
-                        set tilts_up($m,$n) "nan"
+                        set tilts_up($m,$n) "nan nan nan"
                     }
                     if {$meas_z_zero == 0} {
                         if {$counts_down($m,$n) != 0} {
@@ -585,17 +585,16 @@ proc polarHeightByField {system} {
                         } else {
                             set totals_down($m,$n) "nan"
                             set totals_zplus($m,$n) "nan"
-                            set tilts_down($m,$n) "nan"
+                            set tilts_down($m,$n) "nan nan nan"
                         }
                     } elseif {$meas_z_zero == 1} {
                         set totals_down($m,$n) "nan"
                         set totals_zplus($m,$n) "nan"
-                        set tilts_up($m,$n) "nan"
-                        set tilts_down($m,$n) "nan"
+                        set tilts_up($m,$n) "nan nan nan"
+                        set tilts_down($m,$n) "nan nan nan"
                     }
                 }
             }
-
 
             ;#output heights to files
             if { $meas_z_zero == 0 } {
