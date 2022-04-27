@@ -487,7 +487,7 @@ proc polarHeightByField {system} {
 
         set taillength [expr [llength $tail_one] + 1]
         set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
-
+        
         set blist [list $heads $tails]
 
         foreach bead $blist {

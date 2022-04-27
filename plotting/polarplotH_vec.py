@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-#name_list = ["lgPO"]
+name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
+#name_list = ["DB"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -220,6 +220,18 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
         resseqnum +=1
   return serial
 
+def normalize_vectors_in_array(array, Nr, Ntheta):
+  for row in range(Nr):
+    for col in range(Ntheta):
+      vector = array[row,col*3:((col+1)*3)-1]
+      if vector[0] != "nan":
+        norm_vec = 4*vector / np.sqrt(np.sum(vector**2))
+      else:
+        norm_vec = vector 
+      array[row,col*3:((col+1)*3)-1] = norm_vec
+
+  return array 
+
 def gen_avg_tilt(name, field):
   tilt_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
   height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
@@ -230,9 +242,26 @@ def gen_avg_tilt(name, field):
   #get bin info
   N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
 
-  height = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
+  tilt = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
   for x in range(Nframes):
     tilt[:,:,x] = tilt_data[x*N_r_bins:(x+1)*N_r_bins,:]
+
+  for row in range(N_r_bins):
+    for col in range(N_theta_bins*3):
+      zerocount = np.count_nonzero(tilt[row,col,:])
+      count = np.count_nonzero(np.isnan(tilt[row,col,:]))
+      if (zerocount-count)/Nframes <= .1:
+        tilt[row,col,:] = np.nan
+
+  #take average across frames
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    avgtilt=np.nanmean(tilt, axis=2)
+
+  #renormalize the now-averaged vectors
+  avgtilt = normalize_vectors_in_array(avgtilt, N_r_bins, N_theta_bins)
+
+  np.savetxt(name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
 
 #---------------------------------------------------------------------#
 
