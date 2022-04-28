@@ -403,7 +403,6 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 
 if __name__ == "__main__": 
-  '''
   readbeads = 0
   for name in name_list:
     f = open(name+".avgheight.pdb","w")
@@ -426,7 +425,6 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
-  '''
   for name in name_list:
     for field in ['zone', 'ztwo']:
       gen_avg_tilt(name, field)
