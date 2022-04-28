@@ -1,6 +1,5 @@
 set scriptpath "~/PolarHeightBinning"
 source $scriptpath/polarH3.tcl
-source $scriptpath/draw_arrow.tcl
 
 
 proc read_in {path} {
@@ -100,7 +99,7 @@ proc color_by_user {system} {
 		set beadnm C$beadnum
 		foreach field $field_list {
 			foreach qual $qual_list {
-				set filename $system.$bead.$field.$qual.dat 
+				set filename $system/$system.$bead.$field.$qual.dat 
 				set data [read_in $filename]
 				colorize $data $beadnm $field $qual
 			}
@@ -109,13 +108,13 @@ proc color_by_user {system} {
 	lappend field_list "zzero"
 	foreach field $field_list {
 		foreach qual $qual_list {
-			set filename $system.$field.$qual.dat 
+			set filename $system/$system.$field.$qual.dat 
 			set data [read_in $filename]
 			colorize $data C1 $field $qual 
 		}
 	}
 	foreach field "zone ztwo" {
-		set filename $system.$field.avgtilt.dat 
+		set filename $system/$system.$field.avgtilt.dat 
 		set data [read_in $filename]
 		draw_tilt_arrows $data C1 $field 
 	}
@@ -126,4 +125,4 @@ proc color_by_user {system} {
 
 
 
-color_by_user "DT"
+color_by_user "lgPO"
