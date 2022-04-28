@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-#name_list = ["DB"]
+name_list = ["DT"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -223,12 +223,14 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
 def normalize_vectors_in_array(array, Nr, Ntheta):
   for row in range(Nr):
     for col in range(Ntheta):
-      vector = array[row,col*3:((col+1)*3)-1]
+      vector = array[row,col*3:((col+1)*3)]
       if vector[0] != "nan":
+        print(vector)
         norm_vec = 4*vector / np.sqrt(np.sum(vector**2))
+        print(norm_vec)
       else:
         norm_vec = vector 
-      array[row,col*3:((col+1)*3)-1] = norm_vec
+      array[row,col*3:((col+1)*3)] = norm_vec
 
   return array 
 
@@ -399,8 +401,9 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
   return serial
 
 
-'''
+
 if __name__ == "__main__": 
+  '''
   readbeads = 0
   for name in name_list:
     f = open(name+".avgheight.pdb","w")
@@ -423,9 +426,7 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
-'''
-
-if __name__ == "__main__": 
+  '''
   for name in name_list:
     for field in ['zone', 'ztwo']:
       gen_avg_tilt(name, field)
