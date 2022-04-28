@@ -18,16 +18,17 @@ source $UTILS/leaflet_sorter_scripts.tcl
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
 
- proc RtoD {r} {
-    set pi 3.14159265358979323846
-    return [expr $r*180.0/$pi]
+proc RtoD {r} {
+    global M_PI
+    return [expr $r*180.0/$M_PI]
 }
 
+
 proc get_theta {x y} {
-    set pi 3.14159265358979323846
     set tmp  [expr {atan2($y,$x)}]
+    global M_PI
     if {$tmp < 0} {
-        set theta [expr 2*$pi + $tmp]    
+        set theta [expr 2*$M_PI + $tmp]    
     } else {
         set theta $tmp
     }
@@ -318,7 +319,7 @@ proc tilt_angles {tail_length tail_one tail_two} {
         set norm1 [vecnorm $vector1]
         set vector2 "[lindex $t2xvals $i] [lindex $t2yvals $i] [lindex $t2zvals $i]"
         set norm2 [vecnorm $vector2]
-        lappend vector_list $norm1
+        #lappend vector_list $norm1
         lappend vector_list $norm2
     }
     return $vector_list
@@ -347,8 +348,8 @@ proc cell_prep {system} {
     
     #calculate dtheta from number of theta bins
     set dthetadeg [expr 360/$Ntheta]
-    set pi 3.1415926535897931
-    set dtheta [expr 2 * $pi / $Ntheta]
+    global M_PI
+    set dtheta [expr 2 * $M_PI / $Ntheta]
     
     #calculate number of r bins from dr and Rrange
     if {[expr $Rrange % $dr] == 0} { 
@@ -393,9 +394,9 @@ proc polarHeightByField {system} {
     set sample_frame 200
     set dt 1                ;# need to fix this if you want to use it
     set nframes [molinfo top get numframes]
-    #set nframes 450
+    #set nframes 201
     set num_subunits 5.0 ;# pentamer = 5 subunits
-    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
+    set headnames "C1B" ;# which beads define the surface of your membrane?
     set boxarea []
 
     ;#figure out which lipids are in the system
@@ -406,8 +407,8 @@ proc polarHeightByField {system} {
     
     #calculate dtheta from number of theta bins
     set dthetadeg [expr 360/$Ntheta]
-    set pi 3.1415926535897931
-    set dtheta [expr 2 * $pi / $Ntheta]
+    global M_PI
+    set dtheta [expr 2 * $M_PI / $Ntheta]
     
     #calculate number of r bins from dr and Rrange
     if {[expr $Rrange % $dr] == 0} { 
@@ -487,7 +488,7 @@ proc polarHeightByField {system} {
 
         set taillength [expr [llength $tail_one] + 1]
         set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
-        
+
         set blist [list $heads $tails]
 
         foreach bead $blist {
@@ -689,8 +690,8 @@ proc polarHeightByBead {system} {
     
     #calculate dtheta from number of theta bins
     set dthetadeg [expr 360/$Ntheta]
-    set pi 3.1415926535897931
-    set dtheta [expr 2 * $pi / $Ntheta]
+    global M_PI
+    set dtheta [expr 2 * $M_PI / $Ntheta]
     
     #calculate number of r bins from dr and Rrange
     if {[expr $Rrange % $dr] == 0} { 
