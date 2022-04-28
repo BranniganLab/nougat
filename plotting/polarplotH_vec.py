@@ -233,8 +233,8 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
   return array 
 
 def gen_avg_tilt(name, field):
-  tilt_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
-  height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+  tilt_data = np.genfromtxt(name+'/'+name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
+  height_data = np.genfromtxt(name+'/'+name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
 
   #strip r values from tilt info
   tilt_data = tilt_data[:,2:]
@@ -261,7 +261,7 @@ def gen_avg_tilt(name, field):
   #renormalize the now-averaged vectors
   avgtilt = normalize_vectors_in_array(avgtilt, N_r_bins, N_theta_bins)
 
-  np.savetxt(name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
+  np.savetxt(name+'/'+name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
 
 #---------------------------------------------------------------------#
 
@@ -269,11 +269,11 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
   #read in heights from VMD traj
   if bead is False:
-    height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'/'+name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'/'+name+'.'+field+'.density.dat')
   else:
-    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'/'+name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'/'+name+'.'+bead+'.'+field+'.density.dat')
 
   #strip r values from density info
   density = density_data[:,2:]
@@ -321,7 +321,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.savetxt(name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        np.savetxt(name+'/'+name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
@@ -329,7 +329,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
-        np.savetxt(name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", bead)
@@ -358,8 +358,8 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.savetxt(name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
@@ -370,8 +370,8 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
-        np.savetxt(name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
@@ -384,14 +384,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
     elif dtype == 2:
       if bead is False:
         #save as file for debuggging / analysis
-        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, 0.75, 1.25, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
-        np.savetxt(name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", bead)
@@ -403,13 +403,13 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 if __name__ == "__main__": 
   readbeads = 0
   for name in name_list:
-    f = open(name+".avgheight.pdb","w")
+    f = open(name+'/'+name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
     serial = 1
     for field in field_list:
 
       #read in protein helix coordinates
-      protein_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
+      protein_coords = np.loadtxt(name+'/'+name+"_helcoords_"+field+".dat",skiprows=1)
       protein = []
       for i in range(10):
         protein.append(protein_coords[i])
