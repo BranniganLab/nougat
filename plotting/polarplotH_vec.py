@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-name_list = ["DT"]
+#name_list = ["DT"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -225,9 +225,7 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
     for col in range(Ntheta):
       vector = array[row,col*3:((col+1)*3)]
       if vector[0] != "nan":
-        print(vector)
         norm_vec = 4*vector / np.sqrt(np.sum(vector**2))
-        print(norm_vec)
       else:
         norm_vec = vector 
       array[row,col*3:((col+1)*3)] = norm_vec
@@ -417,7 +415,7 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 2, False, f, serial)
+        serial = output_analysis(name, field, protein, 3, False, f, serial)
       elif readbeads == 1:
         serial = output_analysis(name, field, protein, 3, False, f, serial)
         if field != "zzero":
