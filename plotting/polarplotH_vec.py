@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
+#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-#name_list = ["DT"]
+name_list = ["lgPO"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -116,7 +116,7 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, 
   plt.close()
 
 
-def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, dr, dtheta):
+def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, dr, dtheta):
   for frm in range(Nframes):
     for row in range(N_r_bins):
       for col in range(N_theta_bins+2):
@@ -147,9 +147,18 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           c3 = 1 / r**3
           c4 = 1 / r**4
 
+          #calculate normal vector x,y components
+          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr)
+          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr)
+          normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
+          norm_vec_x = norm_vec_x / normalization_factor
+          norm_vec_y = norm_vec_y / normalization_factor
+          norm_vec_z = 1 / normalization_factor
+
           #calculate polar laplacian and gaussian curvature
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
+          normal_vector_outputs[row,col,frm] = [norm_vec_x, norm_vec_y, norm_vec_z]
 
         elif nan_test[row,col,frm] == False:
 
@@ -159,6 +168,9 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
 
           #calculate dh/dr
           delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*dr)
+
+          #calculate dh/dtheta
+          deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*dtheta)
         
           #calculate d2h/dtheta2
           del2theta = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
@@ -169,14 +181,24 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           c1 = 1 / r
           c2 = 1 / r**2
 
+          #calculate normal vector x,y components
+          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr)
+          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr)
+          normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
+          norm_vec_x = norm_vec_x / normalization_factor
+          norm_vec_y = norm_vec_y / normalization_factor
+          norm_vec_z = 1 / normalization_factor
+
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = np.nan
+          normal_vector_outputs[row,col,frm] = [norm_vec_x, norm_vec_y, norm_vec_z]
 
         else:
           curvature_outputs[row,col,frm] = np.nan
           kgauss_outputs[row,col,frm] = np.nan 
+          normal_vector_outputs = np.nan
 
-  return curvature_outputs, kgauss_outputs
+  return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 
 def coord_format(value):
@@ -290,6 +312,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
   curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+  normal_vector_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
 
   #wrap the inputs in the theta direction for calculating curvature
   curvature_inputs[:,1:31,:] = height
@@ -344,11 +367,12 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
       nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N_r_bins, N_theta_bins)
 
       #measure the laplacian and gaussian curvatures
-      curvature_outputs, kgauss_outputs = measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, dr, dtheta)
+      curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, dr, dtheta)
 
       #unwrap along theta direction
       meancurvature = curvature_outputs[:,1:N_theta_bins+1,:]
       kcurvature = kgauss_outputs[:,1:N_theta_bins+1,:]
+      normal_vectors = normal_vector_outputs[:,1:N_theta_bins+1,:]
 
       #take the average curvatures over all frames
       with warnings.catch_warnings():
@@ -360,6 +384,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         #save as file for debugging / analysis
         np.savetxt(name+'/'+name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
         np.savetxt(name+'/'+name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+field+'.normal_vectors.dat',normal_vectors,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
@@ -372,6 +397,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         #save as file for debugging / analysis
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.normal_vectors.dat',normal_vectors,delimiter = ',',fmt='%10.7f')
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
@@ -401,7 +427,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 
 if __name__ == "__main__": 
-  readbeads = 0
+  readbeads = 1
   for name in name_list:
     f = open(name+'/'+name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
