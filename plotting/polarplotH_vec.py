@@ -146,19 +146,20 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           c2 = 1 / r**2
           c3 = 1 / r**3
           c4 = 1 / r**4
+          theta = ((col-1)*dtheta) + (dtheta/2)
 
           #calculate normal vector x,y components
-          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr)
-          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr)
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
-          norm_vec_x = norm_vec_x / normalization_factor
-          norm_vec_y = norm_vec_y / normalization_factor
+          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr) / normalization_factor
+          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr) / normalization_factor
           norm_vec_z = 1 / normalization_factor
 
           #calculate polar laplacian and gaussian curvature
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
-          normal_vector_outputs[row,col,frm] = [norm_vec_x, norm_vec_y, norm_vec_z]
+          normal_vector_outputs[row,col,frm,0] = norm_vec_x
+          normal_vector_outputs[row,col,frm,1] = norm_vec_y
+          normal_vector_outputs[row,col,frm,2] = norm_vec_z
 
         elif nan_test[row,col,frm] == False:
 
@@ -180,23 +181,26 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           r = (row*dr) + (dr/2)
           c1 = 1 / r
           c2 = 1 / r**2
+          theta = ((col-1)*dtheta) + (dtheta/2)
 
           #calculate normal vector x,y components
-          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr)
-          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr)
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
-          norm_vec_x = norm_vec_x / normalization_factor
-          norm_vec_y = norm_vec_y / normalization_factor
+          norm_vec_x = (c1*np.sin(theta)*deltheta) - (np.cos(theta)*delr) / normalization_factor
+          norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr) / normalization_factor
           norm_vec_z = 1 / normalization_factor
 
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = np.nan
-          normal_vector_outputs[row,col,frm] = [norm_vec_x, norm_vec_y, norm_vec_z]
+          normal_vector_outputs[row,col,frm,0] = norm_vec_x
+          normal_vector_outputs[row,col,frm,1] = norm_vec_y
+          normal_vector_outputs[row,col,frm,2] = norm_vec_z
 
         else:
           curvature_outputs[row,col,frm] = np.nan
           kgauss_outputs[row,col,frm] = np.nan 
-          normal_vector_outputs = np.nan
+          normal_vector_outputs[row,col,frm,0] = np.nan
+          normal_vector_outputs[row,col,frm,1] = np.nan
+          normal_vector_outputs[row,col,frm,2] = np.nan
 
   return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
@@ -312,7 +316,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
   curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-  normal_vector_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
+  normal_vector_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes, 3))
 
   #wrap the inputs in the theta direction for calculating curvature
   curvature_inputs[:,1:31,:] = height
@@ -384,7 +388,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         #save as file for debugging / analysis
         np.savetxt(name+'/'+name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
         np.savetxt(name+'/'+name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'/'+name+'.'+field+'.normal_vectors.dat',normal_vectors,delimiter = ',',fmt='%10.7f')
+        np.save(name+'/'+name+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
@@ -397,7 +401,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         #save as file for debugging / analysis
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.normal_vectors.dat',normal_vectors,delimiter = ',',fmt='%10.7f')
+        np.save(name+'/'+name+'.'+bead+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
@@ -427,7 +431,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 
 if __name__ == "__main__": 
-  readbeads = 1
+  readbeads = 0
   for name in name_list:
     f = open(name+'/'+name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
@@ -441,7 +445,7 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 3, False, f, serial)
+        serial = output_analysis(name, field, protein, 2, False, f, serial)
       elif readbeads == 1:
         serial = output_analysis(name, field, protein, 3, False, f, serial)
         if field != "zzero":
@@ -449,6 +453,6 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
-  for name in name_list:
-    for field in ['zone', 'ztwo']:
-      gen_avg_tilt(name, field)
+#  for name in name_list:
+#    for field in ['zone', 'ztwo']:
+#      gen_avg_tilt(name, field)
