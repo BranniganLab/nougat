@@ -259,35 +259,43 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
   return array 
 
 def gen_avg_tilt(name, field):
-  tilt_data = np.genfromtxt(name+'/'+name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
+  vector_data = np.genfromtxt(name+'/'+name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
   height_data = np.genfromtxt(name+'/'+name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+  normal_data = np.load(name+'/'+name+'.'+field+'.normal_vectors.npy')
+
+  #match direction between lipid vector and normal vector
+  if field == "zone":
+    normal_data = normal_data * -1
 
   #strip r values from tilt info
-  tilt_data = tilt_data[:,2:]
+  vector_data = vector_data[:,2:]
 
   #get bin info
   N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
 
-  tilt = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
-  for x in range(Nframes):
-    tilt[:,:,x] = tilt_data[x*N_r_bins:(x+1)*N_r_bins,:]
+  #recast the vector info into the correct dimensions
+  vector = np.zeros((N_r_bins, N_theta_bins, Nframes,3))
+  for frm in range(Nframes):
+    for vec_component in range(3):
+      vector[:,:,frm,vec_component] = vector_data[frm*N_r_bins:(frm+1)*N_r_bins,vec_component:N_theta_bins*3:3]
 
+  #if lipids are not in the bin at least 10% of the time it's no bin of mine
   for row in range(N_r_bins):
-    for col in range(N_theta_bins*3):
-      zerocount = np.count_nonzero(tilt[row,col,:])
-      count = np.count_nonzero(np.isnan(tilt[row,col,:]))
+    for col in range(N_theta_bins):
+      zerocount = np.count_nonzero(vector[row,col,:,:])
+      count = np.count_nonzero(np.isnan(vector[row,col,:,:]))
       if (zerocount-count)/Nframes <= .1:
-        tilt[row,col,:] = np.nan
+        vector[row,col,:,:] = np.nan
+
+  #tilt is the difference between lipid tail vectors and surface normal vectors
+  tilt = vector - normal_data
 
   #take average across frames
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=RuntimeWarning)
     avgtilt=np.nanmean(tilt, axis=2)
 
-  #renormalize the now-averaged vectors
-  avgtilt = normalize_vectors_in_array(avgtilt, N_r_bins, N_theta_bins)
-
-  np.savetxt(name+'/'+name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
+  np.save(name+'/'+name+'.'+field+'.avgtilt.npy',avgtilt)  
 
 #---------------------------------------------------------------------#
 
@@ -445,7 +453,7 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 2, False, f, serial)
+        serial = output_analysis(name, field, protein, 1, False, f, serial)
       elif readbeads == 1:
         serial = output_analysis(name, field, protein, 3, False, f, serial)
         if field != "zzero":
@@ -453,6 +461,6 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial)
     print('END', file=f)
     f.close()
-#  for name in name_list:
-#    for field in ['zone', 'ztwo']:
-#      gen_avg_tilt(name, field)
+  for name in name_list:
+    for field in ['zone', 'ztwo']:
+      gen_avg_tilt(name, field)
