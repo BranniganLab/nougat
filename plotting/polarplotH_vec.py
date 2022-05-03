@@ -453,7 +453,7 @@ if __name__ == "__main__":
         protein.append(protein_coords[i])
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 1, False, f, serial)
+        serial = output_analysis(name, field, protein, 3, False, f, serial)
       elif readbeads == 1:
         serial = output_analysis(name, field, protein, 3, False, f, serial)
         if field != "zzero":
