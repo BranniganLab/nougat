@@ -109,9 +109,9 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, 
 
   fig.set_size_inches(6,6)
   if bead is False:
-    plt.savefig(name+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+'/'+name+"_"+field+"_"+dataname+".png", dpi = 700)
   else:
-    plt.savefig(name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+'/'+name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
   plt.clf()
   plt.close()
 
@@ -146,7 +146,7 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           c2 = 1 / r**2
           c3 = 1 / r**3
           c4 = 1 / r**4
-          theta = ((col-1)*dtheta) + (dtheta/2)
+          theta = ((col-1)*dtheta) + (dtheta/2)     ;# col-1 because this is wrapped in theta direction
 
           #calculate normal vector x,y components
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
@@ -157,9 +157,9 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           #calculate polar laplacian and gaussian curvature
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
-          normal_vector_outputs[row,col,frm,0] = norm_vec_x
-          normal_vector_outputs[row,col,frm,1] = norm_vec_y
-          normal_vector_outputs[row,col,frm,2] = norm_vec_z
+          normal_vector_outputs[row,col*3,frm] = norm_vec_x
+          normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
+          normal_vector_outputs[row,col*3+2,frm] = norm_vec_z
 
         elif nan_test[row,col,frm] == False:
 
@@ -181,7 +181,7 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           r = (row*dr) + (dr/2)
           c1 = 1 / r
           c2 = 1 / r**2
-          theta = ((col-1)*dtheta) + (dtheta/2)
+          theta = ((col-1)*dtheta) + (dtheta/2)   ;# col-1 because this is wrapped in theta direction
 
           #calculate normal vector x,y components
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
@@ -191,16 +191,16 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
 
           curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
           kgauss_outputs[row,col,frm] = np.nan
-          normal_vector_outputs[row,col,frm,0] = norm_vec_x
-          normal_vector_outputs[row,col,frm,1] = norm_vec_y
-          normal_vector_outputs[row,col,frm,2] = norm_vec_z
+          normal_vector_outputs[row,col*3,frm] = norm_vec_x
+          normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
+          normal_vector_outputs[row,col*3+2,frm] = norm_vec_z
 
         else:
           curvature_outputs[row,col,frm] = np.nan
           kgauss_outputs[row,col,frm] = np.nan 
-          normal_vector_outputs[row,col,frm,0] = np.nan
-          normal_vector_outputs[row,col,frm,1] = np.nan
-          normal_vector_outputs[row,col,frm,2] = np.nan
+          normal_vector_outputs[row,col*3,frm] = np.nan
+          normal_vector_outputs[row,col*3+1,frm] = np.nan
+          normal_vector_outputs[row,col*3+2,frm] = np.nan
 
   return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
@@ -273,19 +273,17 @@ def gen_avg_tilt(name, field):
   #get bin info
   N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
 
-  #recast the vector info into the correct dimensions
-  vector = np.zeros((N_r_bins, N_theta_bins, Nframes,3))
-  for frm in range(Nframes):
-    for vec_component in range(3):
-      vector[:,:,frm,vec_component] = vector_data[frm*N_r_bins:(frm+1)*N_r_bins,vec_component:N_theta_bins*3:3]
+  vector = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
+  for x in range(Nframes):
+    vector[:,:,x] = vector_data[x*N_r_bins:(x+1)*N_r_bins,:]
 
-  #if lipids are not in the bin at least 10% of the time it's no bin of mine
+  #if lipids are not in the bin at least 10% of the time, exclude that bin
   for row in range(N_r_bins):
     for col in range(N_theta_bins):
-      zerocount = np.count_nonzero(vector[row,col,:,:])
-      count = np.count_nonzero(np.isnan(vector[row,col,:,:]))
+      zerocount = np.count_nonzero(vector[row,col,:])
+      count = np.count_nonzero(np.isnan(vector[row,col,:]))
       if (zerocount-count)/Nframes <= .1:
-        vector[row,col,:,:] = np.nan
+        vector[row,col,:] = np.nan
 
   #tilt is the difference between lipid tail vectors and surface normal vectors
   tilt = vector - normal_data
@@ -295,7 +293,7 @@ def gen_avg_tilt(name, field):
     warnings.simplefilter("ignore", category=RuntimeWarning)
     avgtilt=np.nanmean(tilt, axis=2)
 
-  np.save(name+'/'+name+'.'+field+'.avgtilt.npy',avgtilt)  
+  np.savetxt(name+'/'+name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
 
 #---------------------------------------------------------------------#
 
@@ -324,7 +322,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
   curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
   kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-  normal_vector_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes, 3))
+  normal_vector_outputs = np.zeros((N_r_bins, 3*(N_theta_bins+2), Nframes))
 
   #wrap the inputs in the theta direction for calculating curvature
   curvature_inputs[:,1:31,:] = height
@@ -384,7 +382,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
       #unwrap along theta direction
       meancurvature = curvature_outputs[:,1:N_theta_bins+1,:]
       kcurvature = kgauss_outputs[:,1:N_theta_bins+1,:]
-      normal_vectors = normal_vector_outputs[:,1:N_theta_bins+1,:]
+      normal_vectors = normal_vector_outputs[:,3:3*(N_theta_bins+1),:]
 
       #take the average curvatures over all frames
       with warnings.catch_warnings():
