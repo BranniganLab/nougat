@@ -58,7 +58,7 @@ proc Protein_Position {name nframes hnames tnames} {
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
+	set fout [open "${name}/${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 3) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $nframes]
@@ -879,9 +879,9 @@ proc polarHeightByBead {system} {
             $lipidsel delete
         }
         
-        set up_normfactor [expr [lindex $lipidnum 0] / [expr 2 * $avg_area]]
-        set down_normfactor [expr [lindex $lipidnum 1] / [expr 2 * $avg_area]]
-        set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 4 * $avg_area]]
+        set up_normfactor [expr [lindex $lipidnum 0] / $avg_area]
+        set down_normfactor [expr [lindex $lipidnum 1] / $avg_area]
+        set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 2 * $avg_area]]
 
         ;# calculate normalized density
         array set density_up [normalize_density [array get density_up] $Nr $Ntheta $up_normfactor [llength $headnames]]
