@@ -1,4 +1,4 @@
-# PolarHeightBinning
+# nougat
 
 This script utilizes Dr Henin's vecexpr package to drastically improve the polar height analysis script and allow for the measurement of membrane curvature across a trajectory.
 
