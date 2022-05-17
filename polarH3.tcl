@@ -11,7 +11,6 @@ set UTILS "~/PolarHeightBinning/utilities"
 set QWRAP "~/qwrap-master"
 set VEC "~/utilities/vecexpr"
 
-source $UTILS/BinTools.tcl
 source $UTILS/assign_tilts.tcl
 source $UTILS/leaflet_sorter_scripts.tcl
 
@@ -40,6 +39,7 @@ proc get_theta {x y} {
 ;# only useful for analysis later - doesn't impact your polar density script
 
 proc Protein_Position {name nframes hnames tnames} {
+    ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
     set chain_names [list "A" "B" "C" "D" "E"]
 
     set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
@@ -200,6 +200,20 @@ proc normalize_density {data Nr Ntheta normfactor numbeads} {
     return [array get data_copy]
 }
 
+;# Alignment based off vmd alignment
+proc Align { stuff } {
+    set nframes [molinfo top get numframes]
+    set ref [atomselect top $stuff frame 0]
+    for {set frames 1} {$frames < $nframes} {incr frames} {
+        set com [atomselect top $stuff frame $frames]
+        set TM [measure fit $com $ref]
+        $com delete
+        set move_sel [atomselect top "all" frame $frames]
+        $move_sel move $TM
+        $move_sel delete
+    }
+    $ref delete
+}
 
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
@@ -327,19 +341,25 @@ proc tilt_angles {tail_length tail_one tail_two} {
 
 ;# NEED TO UPDATE
 proc cell_prep {system} {
-    set Rmin 0
-    set Rmax 69
-    set Rrange [expr $Rmax - $Rmin]
+    
     set dr 6
     set Ntheta 30
-    set sample_frame 200
+    set sample_frame 200    ;# what frame would you like to start analysis with?
     set dt 1                ;# need to fix this if you want to use it
+    
     set nframes [molinfo top get numframes]
-    #set nframes 450
+
+    #measure box size to get Rmax value
+    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_r [expr int($box_x) / 2]
+    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
+    set Rmin 0
+    set Rrange [expr $Rmax - $Rmin]
+
 
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
-
+    
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
     set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
@@ -371,7 +391,7 @@ proc cell_prep {system} {
     #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "resname $species"
-    Align "occupancy 1 to 3 and name BB"
+    Align "name BB"
     leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 }
@@ -429,7 +449,7 @@ proc polarHeightByField {system} {
     #Helper scripts
     set_occupancy top ;#formats 5x29 to have separable chains and occupancies
     Center_System "resname $species"
-    Align "occupancy 1 to 3 and name BB"
+    Align "name BB"
     leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
     Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
 
@@ -665,19 +685,21 @@ proc polarHeightByField {system} {
 }
 
 proc polarHeightByBead {system} {
-    set Rmin 0
-    if {$system == "lgPO"} {
-        set Rmax 195
-    } else {
-        set Rmax 68
-    }
-    set Rrange [expr $Rmax - $Rmin]
+    
     set dr 6
     set Ntheta 30
-    set sample_frame 200
+    set sample_frame 200    ;# what frame would you like to start analysis with?
     set dt 1                ;# need to fix this if you want to use it
+    
     set nframes [molinfo top get numframes]
-    #set nframes 450
+
+    #measure box size to get Rmax value
+    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_r [expr int($box_x) / 2]
+    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
+    set Rmin 0
+    set Rrange [expr $Rmax - $Rmin]
+
 
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
