@@ -381,20 +381,20 @@ proc cell_prep {system} {
 
 proc polarHeightByField {system} {
 
-
-    set Rmin 0
-    if {$system == "lgPO"} {
-        set Rmax 195
-    } else {
-        set Rmax 68
-    }
-    set Rrange [expr $Rmax - $Rmin]
     set dr 6
     set Ntheta 30
-    set sample_frame 200
+    set sample_frame 200    ;# what frame would you like to start analysis with?
     set dt 1                ;# need to fix this if you want to use it
+    
     set nframes [molinfo top get numframes]
-    #set nframes 201
+
+    #measure box size to get Rmax value
+    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_r [expr int($box_x) / 2]
+    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
+    set Rmin 0
+    set Rrange [expr $Rmax - $Rmin]
+
     set num_subunits 5.0 ;# pentamer = 5 subunits
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
