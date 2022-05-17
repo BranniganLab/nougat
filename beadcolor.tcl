@@ -113,11 +113,11 @@ proc color_by_user {system} {
 			colorize $data C1 $field $qual 
 		}
 	}
-	foreach field "zone ztwo" {
-		set filename $system/$system.$field.avgtilt.dat 
-		set data [read_in $filename]
-		draw_tilt_arrows $data C1 $field 
-	}
+	#foreach field "zone ztwo" 
+	#	set filename $system/$system.$field.avgtilt.dat 
+	#	set data [read_in $filename]
+	#	draw_tilt_arrows $data C1 $field 
+	
 }
 
 
