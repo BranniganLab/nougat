@@ -336,7 +336,7 @@ proc cell_prep {system} {
     set dt 1                ;# need to fix this if you want to use it
     set nframes [molinfo top get numframes]
     #set nframes 450
-    set num_subunits 5.0 ;# pentamer = 5 subunits
+
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
 
@@ -395,7 +395,7 @@ proc polarHeightByField {system} {
     set Rmin 0
     set Rrange [expr $Rmax - $Rmin]
 
-    set num_subunits 5.0 ;# pentamer = 5 subunits
+
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
 
@@ -439,7 +439,7 @@ proc polarHeightByField {system} {
     set ref_bead [atomselect top "name BB and resid 15"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
-    set ref_height [expr [vecexpr $ref_height sum]/$num_subunits]
+    set ref_height [vecexpr $ref_height mean]
 
     #outfiles setup
     set heights_up [open "${system}/${system}.zone.height.dat" w]
@@ -678,7 +678,7 @@ proc polarHeightByBead {system} {
     set dt 1                ;# need to fix this if you want to use it
     set nframes [molinfo top get numframes]
     #set nframes 450
-    set num_subunits 5.0 ;# pentamer = 5 subunits
+
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
 
@@ -734,7 +734,7 @@ proc polarHeightByBead {system} {
     set ref_bead [atomselect top "name BB and resid 15"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
-    set ref_height [expr [vecexpr $ref_height sum]/$num_subunits]
+    set ref_height [vecexpr $ref_height mean]
 
     #find top of protein for pbc crossing event
     set sel [atomselect top "name BB"]
