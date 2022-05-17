@@ -401,7 +401,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" laplacian done!")
 
         #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, 0, -.005, protein, "gausscurvature", False)
+        plot_maker(radius, theta, avgkcurvature, name, field, 0.005, -.005, protein, "gausscurvature", False)
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
