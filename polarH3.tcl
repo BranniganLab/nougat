@@ -350,7 +350,7 @@ proc cell_prep {system} {
     set nframes [molinfo top get numframes]
 
     #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_x [molinfo top get a frame [expr $nframes - 1]]
     set box_r [expr int($box_x) / 2]
     set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
     set Rmin 0
@@ -359,7 +359,7 @@ proc cell_prep {system} {
 
     set headnames "C1A C1B" ;# which beads define the surface of your membrane?
     set boxarea []
-    
+
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
     set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
@@ -409,7 +409,7 @@ proc polarHeightByField {system} {
     set nframes [molinfo top get numframes]
 
     #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_x [molinfo top get a frame [expr $nframes - 1]]
     set box_r [expr int($box_x) / 2]
     set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
     set Rmin 0
@@ -694,7 +694,7 @@ proc polarHeightByBead {system} {
     set nframes [molinfo top get numframes]
 
     #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr nframes - 1]]
+    set box_x [molinfo top get a frame [expr $nframes - 1]]
     set box_r [expr int($box_x) / 2]
     set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
     set Rmin 0
