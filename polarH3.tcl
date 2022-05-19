@@ -38,9 +38,11 @@ proc get_theta {x y} {
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
 
-proc Protein_Position {name nframes hnames tnames} {
+proc Protein_Position {name hnames tnames} {
     ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
     set chain_names [list "A" "B" "C" "D" "E"]
+
+    set lastframe [expr [molinfo top get numframes] -1]
 
     set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
     set zone_zvals [$zone_sel get z]
@@ -61,7 +63,7 @@ proc Protein_Position {name nframes hnames tnames} {
 	set fout [open "${name}/${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
-                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 3) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $nframes]
+                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
                 set com [measure center $sel weight mass]
                 $sel delete
                 set x [lindex $com 0]
@@ -254,13 +256,13 @@ proc set_occupancy {molid} {
     }
 
     set sel [atomselect $molid "resid 0 to 39"]
-    $sel set occupancy 3
+    $sel set occupancy 1
     $sel delete
     set sel [atomselect $molid "resid 40 to 51"]
     $sel set occupancy 2
     $sel delete
     set sel [atomselect $molid "resid 52 to 65"]
-    $sel set occupancy 1
+    $sel set occupancy 3
     $sel delete
 
 }
@@ -344,15 +346,20 @@ proc cell_prep {system} {
     
     set dr 6
     set Ntheta 30
-    set sample_frame 200    ;# what frame would you like to start analysis with?
+    set sample_frame 10    ;# what frame would you like to start analysis with?
     set dt 1                ;# need to fix this if you want to use it
     
+    #set inclusion "name BB SC1 to SC4"
+    #set inclusion_backbone "name BB"
+    set inclusion "resname AU lig"
+    set inclusion_backbone "name AUC"
+
     set nframes [molinfo top get numframes]
 
     #measure box size to get Rmax value
     set box_x [molinfo top get a frame [expr $nframes - 1]]
     set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
+    set Rmax [expr [expr $box_r / $dr] * $dr ]
     set Rmin 0
     set Rrange [expr $Rmax - $Rmin]
 
@@ -362,66 +369,7 @@ proc cell_prep {system} {
 
     ;#figure out which lipids are in the system
     ;#if there are other mols in your system, add them as exceptions here!
-    set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
-    set species [lsort -unique [$sel get resname]]
-    $sel delete
-    
-    #calculate dtheta from number of theta bins
-    set dthetadeg [expr 360/$Ntheta]
-    global M_PI
-    set dtheta [expr 2 * $M_PI / $Ntheta]
-    
-    #calculate number of r bins from dr and Rrange
-    if {[expr $Rrange % $dr] == 0} { 
-        set Nr [expr $Rrange / $dr - 1] 
-    } else {
-        set Nr [expr $Rrange / $dr]
-    }
-    
-    #will need to make this less breakable
-    #only works for two tails of equal length
-    #only works for lipids of all same tail type
-    set acyl_names [tail_analyzer $species]
-    set tail_one [lindex $acyl_names 0]
-    set tail_two [lindex $acyl_names 1]
-    set t1T [lindex $tail_one end]
-    set t2T [lindex $tail_two end]
-    set tailnames "$t1T $t2T"
-
-    #Helper scripts
-    set_occupancy top ;#formats 5x29 to have separable chains and occupancies
-    Center_System "resname $species"
-    Align "name BB"
-    leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
-}
-
-;########################################################################################
-;# polarHeight Functions
-
-proc polarHeightByField {system} {
-
-    set dr 6
-    set Ntheta 30
-    set sample_frame 200    ;# what frame would you like to start analysis with?
-    set dt 1                ;# need to fix this if you want to use it
-    
-    set nframes [molinfo top get numframes]
-
-    #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr $nframes - 1]]
-    set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
-    set Rmin 0
-    set Rrange [expr $Rmax - $Rmin]
-
-
-    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
-    set boxarea []
-
-    ;#figure out which lipids are in the system
-    ;#if there are other mols in your system, add them as exceptions here!
-    set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
+    set sel [atomselect top "not $inclusion and not resname W ION"]
     set species [lsort -unique [$sel get resname]]
     $sel delete
     
@@ -436,7 +384,8 @@ proc polarHeightByField {system} {
     } else {
         set Nr [expr $Rrange / $dr]
     }
-    
+    puts $Nr
+
     #will need to make this less breakable
     #only works for systems with 100% one type of lipid
     set acyl_names [tail_analyzer $species]
@@ -447,16 +396,88 @@ proc polarHeightByField {system} {
     set tailnames "$t1T $t2T"
 
     #Helper scripts
-    set_occupancy top ;#formats 5x29 to have separable chains and occupancies
-    Center_System "resname $species"
-    Align "name BB"
-    leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+    #set_occupancy top ;#formats 5x29 to have separable chains and occupancies
+    Center_System "$inclusion_backbone and index 0"
+    #Align "$inclusion_backbone"
+    leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
+    #Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+
+}
+
+;########################################################################################
+;# polarHeight Functions
+
+proc polarHeightByField {system dr Ntheta start end step} {
+    
+    ;#**********************************************************
+    ;#          MAKE EDITS BELOW BEFORE STARTING
+    ;#********************************************************** 
+
+    ;# provide atomselection-style text that defines what is in your inclusion 
+    set inclusion_sel "name BB SC1 to SC4"
+
+    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel or membrane
+    ;# E.G. solvent, ions, other molecules that aren't membrane lipids
+    set excluded_sel "resname W ION"
+
+    ;# figures out which lipids are in the system
+    ;# no edits required
+    set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
+    set species [lsort -unique [$lipidsel get resname]]
+    $lipidsel delete
+
+    ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
+    ;# usually, this would be name BB for proteins
+    ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
+    set wrap_sel "resname $species"
+
+    ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
+    ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
+    set align_sel "name BB"
+
+    ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
+    ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
+    ;# the position of resid 15
+    set reference_point "name BB and resid 15"
+
+    ;# provide the beadnames that you consider to form the surface of your membrane
+    set headnames "C1A C1B"
+
+    ;# center, wrap, and align the system
+    ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
+    Center_System "$wrap_sel"
+    Align "$align_sel"
+
+    ;# custom proc to set my TMD helices to occupancy 1
+    ;# this allows Protein_Position to work
+    ;# comment this out or customize it for your inclusion
+    set_occupancy top 
+
+    ;# figures out which beads are in your lipids
+    ;# Only works for systems with 100% one type of lipid
+    ;# no edits required
+    set acyl_names [tail_analyzer $species]
+    set tail_one [lindex $acyl_names 0]
+    set tail_two [lindex $acyl_names 1]
+    set t1T [lindex $tail_one end]
+    set t2T [lindex $tail_two end]
+    set tailnames "$t1T $t2T"
+
+    ;# Assigns lipids to user value 1 or 2 depending on leaflet
+    ;# no edits required
+    leaflet_sorter $species $tailnames $start  
+
+    ;# this will only work if your TMD helices are set to occupancy 1
+    ;# otherwise, comment it out
+    ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
+    Protein_Position $system $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+
+    ;#**********************************************************
+    ;#          MAKE EDITS ABOVE BEFORE STARTING
+    ;#**********************************************************   
 
     #need to calculate heights relative to some point on the protein:
-    #For 5x29 we chose the juncture between TMD and protein cap
-    #because this corresponds to height zero in our elastic simulations
-    set ref_bead [atomselect top "name BB and resid 15"]
+    set ref_bead [atomselect top "$reference_point"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
     set ref_height [vecexpr $ref_height mean]
@@ -473,7 +494,36 @@ proc polarHeightByField {system} {
     set tilt_up [open "${system}/${system}.zone.tilt.dat" w]
     set tilt_down [open "${system}/${system}.ztwo.tilt.dat" w]
 
-    puts "Helper scripts complete. Starting analysis now."	
+    ;# set nframes based on $end input
+    if {$end == -1} {
+        set nframes [molinfo top get numframes]
+    } else {
+        set nframes $end
+    }
+
+    #measure box size to get Rmax value
+    set box_x [molinfo top get a frame [expr $nframes - 1]]
+    set box_r [expr int($box_x) / 2]
+    set Rmax [expr [expr $box_r / $dr] * $dr ]
+    set Rmin 0
+    set Rrange [expr $Rmax - $Rmin]
+    set boxarea []
+
+    #calculate dtheta from number of theta bins
+    set dthetadeg [expr 360/$Ntheta]
+    global M_PI
+    set dtheta [expr 2 * $M_PI / $Ntheta]
+    
+    #calculate number of r bins from dr and Rrange
+    if {[expr $Rrange % $dr] == 0} { 
+        set Nr [expr [expr $Rrange / $dr] - 1.0] 
+    } else {
+        set Nr [expr $Rrange / $dr]
+    }
+
+
+
+    puts "Setup complete. Starting analysis now."	
 
     #position 0 is the hydrophobic interface bead; position end is the interleaflet interface bead (nominally)
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
@@ -488,7 +538,7 @@ proc polarHeightByField {system} {
     array set density_zzero [initialize_array $Nr $Ntheta 0.0]
     
     ;#start frame looping here
-    for {set frm $sample_frame} {$frm < $nframes} {incr frm $dt} {
+    for {set frm $start} {$frm < $nframes} {incr frm $step} {
         set sellist [list $t1tiltsel $t2tiltsel]
         foreach selex $sellist {
             $selex frame $frm 
@@ -633,7 +683,7 @@ proc polarHeightByField {system} {
     }
 
     ;# calculate density
-    set delta_frame [expr ($nframes - $sample_frame) / $dt]
+    set delta_frame [expr ($nframes - $start) / $step]
     array set density_up [calculate_density [array get density_up] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
     array set density_down [calculate_density [array get density_down] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
     array set density_zplus [calculate_density [array get density_zplus] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
@@ -696,7 +746,7 @@ proc polarHeightByBead {system} {
     #measure box size to get Rmax value
     set box_x [molinfo top get a frame [expr $nframes - 1]]
     set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] - [expr $dr / 2]]
+    set Rmax [expr [expr $box_r / $dr] * $dr ]
     set Rmin 0
     set Rrange [expr $Rmax - $Rmin]
 
@@ -930,6 +980,9 @@ proc run_field_mult {list_of_systems} {
     foreach item $list_of_systems {
         set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
         set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
+        #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
+        #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
+        
         #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
         #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
         mol new $gro
@@ -937,7 +990,7 @@ proc run_field_mult {list_of_systems} {
         puts $gro
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
-        polarHeightByField $item
+        polarHeightByField $item 6 30 200 -1 1
         mol delete top
     }
 }

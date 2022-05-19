@@ -198,14 +198,14 @@ proc leaflet_check {frm species headname tailname} {
 
     #remove pore lipids
     #rewrite to make protein position passable value
-    set sel [atomselect top "name BB and resid 30" frame $frm]
-    set com [measure center $sel]
-    set x [lindex $com 0]
-    set y [lindex $com 1]
-    $sel delete
-    set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
-    $porelipids set chain "Z"
-    $porelipids delete
+    #set sel [atomselect top "name BB and resid 30" frame $frm]
+    #set com [measure center $sel]
+    #set x [lindex $com 0]
+    #set y [lindex $com 1]
+    #$sel delete
+    #set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
+    #$porelipids set chain "Z"
+    #$porelipids delete
 
     set upper [atomselect top "chain U" frame $frm]
     $upper set user 1
@@ -218,27 +218,3 @@ proc leaflet_check {frm species headname tailname} {
     $bad_chains delete
 }
 
-#experimental - didn't work
-proc rmv_outliers {frm species headnames lipidlength} {
-    set change_list []
-
-    set sel [atomselect top "name $headnames and user 1" frame $frm]
-    set ids [$sel get resid]
-    set z_vals [$sel get z]
-
-    set avgz [vecexpr $z_vals mean]
-
-    set cutoff [expr $avgz + $lipidlength]
-    for {set ndx 0} {$ndx <= [llength $z_vals]} {incr ndx} {
-        if {[lindex $z_vals $ndx] > $cutoff} {
-            lappend change_list [lindex $ids $ndx]
-        }
-    }
-
-    $sel delete        
-    if {[llength $change_list] > 0} {
-        set sel [atomselect top "resname $species and resid $change_list" frame $frm]
-        $sel set user 4
-        $sel delete
-    }
-}
