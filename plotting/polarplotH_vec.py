@@ -6,7 +6,7 @@ import warnings
 #name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
 #name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-name_list = ["lgPO"]
+name_list = ["normalnp"]
 field_list = ["zone","ztwo","zplus","zzero"]
 #field_list = ["test"]
 
@@ -96,13 +96,15 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, 
   ax = plt.subplot(projection="polar")
   c = plt.pcolormesh(theta,radius,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
   cbar = plt.colorbar(c)
-  for i in range(0,10,2):
-    plt.scatter(np.deg2rad(protein[i+1]),protein[i],c="black",linewidth=4,zorder=2)
+
+  #if protein != "nan":
+  #  for i in range(0,10,2):
+  #    plt.scatter(np.deg2rad(protein[i+1]),protein[i],c="black",linewidth=4,zorder=2)
   plt.axis('off')
 
-  circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
-  if field == "zone":
-    ax.add_artist(circle1)
+  #circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
+  #if field == "zone":
+  #  ax.add_artist(circle1)
 
   ax.set_xticklabels([])
   ax.set_yticklabels([])
@@ -155,7 +157,7 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           norm_vec_z = 1 / normalization_factor
 
           #calculate polar laplacian and gaussian curvature
-          curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
+          curvature_outputs[row,col,frm] = del2r + c1*delr ;# + c2*del2theta
           kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -189,7 +191,7 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
           norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr) / normalization_factor
           norm_vec_z = 1 / normalization_factor
 
-          curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
+          curvature_outputs[row,col,frm] = del2r + c1*delr ;# + c2*del2theta
           kgauss_outputs[row,col,frm] = np.nan
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -357,7 +359,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.savetxt(name+'/'+name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, 20, -65, protein, "avgHeight", False)
+        plot_maker(radius, theta, avgHeight, name, field, 60, -60, protein, "avgHeight", False)
         serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,'C1  ')
         print(name+" "+field+" height done!")
       else:
@@ -423,7 +425,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.savetxt(name+'/'+name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
-        plot_maker(radius, theta, density, name, field, 0.75, 1.25, protein, "density", False)
+        plot_maker(radius, theta, density, name, field, 0.5, 1.5, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
@@ -438,6 +440,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 if __name__ == "__main__": 
   readbeads = 0
+  protein_onoff = 0
   for name in name_list:
     f = open(name+'/'+name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
@@ -445,10 +448,13 @@ if __name__ == "__main__":
     for field in field_list:
 
       #read in protein helix coordinates
-      protein_coords = np.loadtxt(name+'/'+name+"_helcoords_"+field+".dat",skiprows=1)
-      protein = []
-      for i in range(10):
-        protein.append(protein_coords[i])
+      if protein_onoff == 1:
+        protein_coords = np.loadtxt(name+'/'+name+"_helcoords_"+field+".dat",skiprows=1)
+        protein = []
+        for i in range(10):
+          protein.append(protein_coords[i])
+      else:
+        protein = np.nan
 
       if readbeads == 0:
         serial = output_analysis(name, field, protein, 3, False, f, serial)
