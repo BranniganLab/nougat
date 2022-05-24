@@ -18,7 +18,7 @@ warnings
 ```
 
 ### Github Dependencies:
-This script utilizes Dr Jerome Henin's **vecexpr** package to drastically improve the efficiency of binning and allow for the measurement of multiple membrane quantities across a trajectory. It also makes use of his **qwrap** protocol to speed up initial setup. We have provided pre-packaged versions of these utilities, but recommend that you pay the author a visit.
+This script utilizes Dr Jerome Henin's **vecexpr** package to drastically improve the efficiency of binning and allow for the measurement of multiple membrane quantities across a trajectory. It also makes use of his **qwrap** protocol to speed up initial setup. Please visit the repos below and follow the installation instructions.
 ```
 github.com/jhenin/qwrap
 github.com/jhenin/vecexpr
