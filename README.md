@@ -6,7 +6,7 @@ Proteins and other inclusions are known to interact with membrane lipids in nume
 
 ### Software Dependencies:
 ```
-VMD with at least Tcl8.6
+VMD
 Python3
 ```
 
