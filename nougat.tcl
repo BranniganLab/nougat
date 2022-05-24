@@ -9,6 +9,81 @@ set VEC "~/utilities/vecexpr"
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
 
+proc cell_prep {system end} {
+    
+    ;#**********************************************************
+    ;#          MAKE EDITS BELOW BEFORE STARTING
+    ;#********************************************************** 
+
+    ;# provide atomselection-style text that defines what is in your inclusion 
+    set inclusion_sel "name BB SC1 to SC4"
+
+    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel or membrane
+    ;# E.G. solvent, ions, other molecules that aren't membrane lipids
+    set excluded_sel "resname W ION"
+
+    ;# figures out which lipids are in the system
+    ;# no edits required
+    set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
+    set species [lsort -unique [$lipidsel get resname]]
+    $lipidsel delete
+
+    ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
+    ;# usually, this would be name BB for proteins
+    ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
+    set wrap_sel "resname $species"
+
+    ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
+    ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
+    set align_sel "name BB"
+
+    ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
+    ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
+    ;# the position of resid 15
+    set reference_point "name BB and resid 15"
+
+    ;# provide the beadnames that you consider to form the surface of your membrane
+    ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
+    ;# in our opinion
+    set headnames "C1A C1B"
+
+    ;# center, wrap, and align the system
+    ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
+    Center_System "$wrap_sel"
+    Align "$align_sel"
+
+    ;# custom proc to set my TMD helices to occupancy 1
+    ;# this allows Protein_Position to work
+    ;# comment this out or customize it for your inclusion
+    set_occupancy top 
+
+    ;# figures out which beads are in your lipids
+    ;# Only works for systems with 100% one type of lipid
+    ;# no edits required
+    set acyl_names [tail_analyzer $species]
+    set tail_one [lindex $acyl_names 0]
+    set tail_two [lindex $acyl_names 1]
+    set t1T [lindex $tail_one end]
+    set t2T [lindex $tail_two end]
+    set tailnames "$t1T $t2T"
+
+    ;# Assigns lipids to user value 1 or 2 depending on leaflet
+    ;# no edits required
+    leaflet_sorter $species $tailnames $end  
+
+    ;# this will only work if your TMD helices are set to occupancy 1
+    ;# otherwise, comment it out
+    ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
+    Protein_Position $system $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+
+    ;#**********************************************************
+    ;#          MAKE EDITS ABOVE BEFORE STARTING
+    ;#********************************************************** 
+
+    set return_list "$species $headnames $tailnames $tail_one $tail_two $reference_point"  
+}
+
+
 proc RtoD {r} {
     global M_PI
     return [expr $r*180.0/$M_PI]
@@ -421,139 +496,19 @@ proc tilt_angles {tail_length tail_one tail_two} {
 }
 
 ;# NEED TO UPDATE
-proc cell_prep {system} {
-    
-    set dr 6
-    set Ntheta 30
-    set sample_frame 10    ;# what frame would you like to start analysis with?
-    set dt 1                ;# need to fix this if you want to use it
-    
-    #set inclusion "name BB SC1 to SC4"
-    #set inclusion_backbone "name BB"
-    set inclusion "resname AU lig"
-    set inclusion_backbone "name AUC"
-
-    set nframes [molinfo top get numframes]
-
-    #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr $nframes - 1]]
-    set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] * $dr ]
-    set Rmin 0
-    set Rrange [expr $Rmax - $Rmin]
-
-
-    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
-    set boxarea []
-
-    ;#figure out which lipids are in the system
-    ;#if there are other mols in your system, add them as exceptions here!
-    set sel [atomselect top "not $inclusion and not resname W ION"]
-    set species [lsort -unique [$sel get resname]]
-    $sel delete
-    
-    #calculate dtheta from number of theta bins
-    set dthetadeg [expr 360/$Ntheta]
-    global M_PI
-    set dtheta [expr 2 * $M_PI / $Ntheta]
-    
-    #calculate number of r bins from dr and Rrange
-    if {[expr $Rrange % $dr] == 0} { 
-        set Nr [expr [expr $Rrange / $dr] - 1.0] 
-    } else {
-        set Nr [expr $Rrange / $dr]
-    }
-    puts $Nr
-
-    #will need to make this less breakable
-    #only works for systems with 100% one type of lipid
-    set acyl_names [tail_analyzer $species]
-    set tail_one [lindex $acyl_names 0]
-    set tail_two [lindex $acyl_names 1]
-    set t1T [lindex $tail_one end]
-    set t2T [lindex $tail_two end]
-    set tailnames "$t1T $t2T"
-
-    #Helper scripts
-    #set_occupancy top ;#formats 5x29 to have separable chains and occupancies
-    Center_System "$inclusion_backbone and index 0"
-    #Align "$inclusion_backbone"
-    leaflet_sorter $species $tailnames $nframes    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    #Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
-
-}
 
 ;########################################################################################
 ;# polarHeight Functions
 
 proc polarHeightByField {system dr Ntheta start end step} {
     
-    ;#**********************************************************
-    ;#          MAKE EDITS BELOW BEFORE STARTING
-    ;#********************************************************** 
-
-    ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "name BB SC1 to SC4"
-
-    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel or membrane
-    ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "resname W ION"
-
-    ;# figures out which lipids are in the system
-    ;# no edits required
-    set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
-    set species [lsort -unique [$lipidsel get resname]]
-    $lipidsel delete
-
-    ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
-    ;# usually, this would be name BB for proteins
-    ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
-    set wrap_sel "resname $species"
-
-    ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
-    ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    set align_sel "name BB"
-
-    ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
-    ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
-    ;# the position of resid 15
-    set reference_point "name BB and resid 15"
-
-    ;# provide the beadnames that you consider to form the surface of your membrane
-    set headnames "C1A C1B"
-
-    ;# center, wrap, and align the system
-    ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
-    Center_System "$wrap_sel"
-    Align "$align_sel"
-
-    ;# custom proc to set my TMD helices to occupancy 1
-    ;# this allows Protein_Position to work
-    ;# comment this out or customize it for your inclusion
-    set_occupancy top 
-
-    ;# figures out which beads are in your lipids
-    ;# Only works for systems with 100% one type of lipid
-    ;# no edits required
-    set acyl_names [tail_analyzer $species]
-    set tail_one [lindex $acyl_names 0]
-    set tail_two [lindex $acyl_names 1]
-    set t1T [lindex $tail_one end]
-    set t2T [lindex $tail_two end]
-    set tailnames "$t1T $t2T"
-
-    ;# Assigns lipids to user value 1 or 2 depending on leaflet
-    ;# no edits required
-    leaflet_sorter $species $tailnames $start  
-
-    ;# this will only work if your TMD helices are set to occupancy 1
-    ;# otherwise, comment it out
-    ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    Protein_Position $system $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
-
-    ;#**********************************************************
-    ;#          MAKE EDITS ABOVE BEFORE STARTING
-    ;#**********************************************************   
+    set important_variables [cell_prep $system $start]
+    set species [lindex $important_variables 0]
+    set headnames [lindex $important_variables 1]
+    set tailnames [lindex $important_variables 2]
+    set tail_one [lindex $important_variables 3]
+    set tail_two [lindex $important_variables 4]
+    set reference_point [lindex $important_variables 5]
 
     #need to calculate heights relative to some point on the protein:
     set ref_bead [atomselect top "$reference_point"]
@@ -608,9 +563,11 @@ proc polarHeightByField {system dr Ntheta start end step} {
     #position 0 is used for z1, z2, and zplus; position end is used for z_zero
     set heads [atomselect top "name $headnames"]
     set tails [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+    set blist [list $heads $tails]
     set t1tiltsel [atomselect top "resname $species and name GL1 $tail_one"]
     set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
-        
+    set tiltlist [list $t1tiltsel $t2tiltsel]
+
     array set density_up [initialize_array $Nr $Ntheta 0.0]
     array set density_down [initialize_array $Nr $Ntheta 0.0]
     array set density_zplus [initialize_array $Nr $Ntheta 0.0]
@@ -618,8 +575,7 @@ proc polarHeightByField {system dr Ntheta start end step} {
     
     ;#start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
-        set sellist [list $t1tiltsel $t2tiltsel]
-        foreach selex $sellist {
+        foreach selex $tiltlist {
             $selex frame $frm 
             $selex update
         }
@@ -637,8 +593,6 @@ proc polarHeightByField {system dr Ntheta start end step} {
 
         set taillength [expr [llength $tail_one] + 1]
         set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
-
-        set blist [list $heads $tails]
 
         foreach bead $blist {
             $bead frame $frm 
