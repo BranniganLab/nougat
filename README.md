@@ -55,9 +55,9 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ### Run nougat.tcl!
 If you are interested in just analyzing the principle membrane fields z1, z2, z0, and zplus using the $headname you specified:
 ```
-nougatByField [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+nougatByField [the name you wish to use for your files] [dr] [start] [end] [step]
 ```
 If you want to analyze along every bead in the lipid chain:
 ```
-nougatByBead [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+nougatByBead [the name you wish to use for your files] [dr] [start] [end] [step]
 ```
