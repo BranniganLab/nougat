@@ -32,9 +32,10 @@ nougat.tcl will analyze your trajectory in VMD and output .dat files that contai
 - Open nougat.tcl in the text editor of your choice and make edits to two sections:
 ```
 Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored (lines 6-7)
-Edit all of the indicated fields in cell_prep proc (lines 12-81)
+Edit all of the indicated fields in cell_prep proc (lines 12-90)
 ```
 - Open VMD and load your structure and trajectory files. 
+- Ideally, ensure that your first frame contains a flat bilayer IE the starting condition from your simulation
 - Open the tkConsole
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
@@ -50,3 +51,13 @@ Scroll through your trajectory: are you only seeing lipids in the outer leaflet?
 Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ```
 - if you answered "no," troubleshoot; otherwise you're ready to use nougat!
+
+### Run nougat.tcl!
+If you are interested in just analyzing the principle membrane fields z1, z2, z0, and zplus using the $headname you specified:
+```
+nougatByField [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+```
+If you want to analyze along every bead in the lipid chain:
+```
+nougatByBead [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+```
