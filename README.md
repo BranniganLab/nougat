@@ -31,7 +31,7 @@ nougat.tcl will analyze your trajectory in VMD and output .dat files that contai
 ### How To Make nougat.tcl Work
 Open nougat.tcl in the text editor of your choice and make edits to two sections:
 ```
-add the correct paths to the directory where your qwrap.so and vecexpr.so files are stored
-edit all of the indicated fields in cell_prep
+add the correct paths to the directory where your qwrap.so and vecexpr.so files are stored (lines 6-7)
+edit all of the indicated fields in cell_prep proc (lines 12-81)
 ```
 
