@@ -80,7 +80,7 @@ proc cell_prep {system end} {
     ;#          MAKE EDITS ABOVE BEFORE STARTING
     ;#********************************************************** 
 
-    set return_list "$species $headnames $tailnames $tail_one $tail_two $reference_point"  
+    set return_list "$species $headnames $tailnames $tail_one $tail_two $tail_list $reference_point"  
 }
 
 
@@ -508,7 +508,8 @@ proc polarHeightByField {system dr Ntheta start end step} {
     set tailnames [lindex $important_variables 2]
     set tail_one [lindex $important_variables 3]
     set tail_two [lindex $important_variables 4]
-    set reference_point [lindex $important_variables 5]
+    set tail_list [lindex $important_variables 5]
+    set reference_point [lindex $important_variables 6]
 
     #need to calculate heights relative to some point on the protein:
     set ref_bead [atomselect top "$reference_point"]
@@ -769,84 +770,20 @@ proc polarHeightByField {system dr Ntheta start end step} {
 
 proc polarHeightByBead {system} {
     
-    set dr 6
-    set Ntheta 30
-    set sample_frame 200    ;# what frame would you like to start analysis with?
-    set dt 1                ;# need to fix this if you want to use it
-    
-    set nframes [molinfo top get numframes]
+    set important_variables [cell_prep $system $start]
+    set species [lindex $important_variables 0]
+    set headnames [lindex $important_variables 1]
+    set tailnames [lindex $important_variables 2]
+    set tail_one [lindex $important_variables 3]
+    set tail_two [lindex $important_variables 4]
+    set tail_list [lindex $important_variables 5]
+    set reference_point [lindex $important_variables 6]
 
-    #measure box size to get Rmax value
-    set box_x [molinfo top get a frame [expr $nframes - 1]]
-    set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] * $dr ]
-    set Rmin 0
-    set Rrange [expr $Rmax - $Rmin]
-
-
-    set headnames "C1A C1B" ;# which beads define the surface of your membrane?
-    set boxarea []
-
-    ;#figure out which lipids are in the system
-    ;#if there are other mols in your system, add them as exceptions here!
-    set sel [atomselect top "not name BB SC1 to SC4 and not resname W ION"]
-    set species [lsort -unique [$sel get resname]]
-    $sel delete
-    
-    #calculate dtheta from number of theta bins
-    set dthetadeg [expr 360/$Ntheta]
-    global M_PI
-    set dtheta [expr 2 * $M_PI / $Ntheta]
-    
-    #calculate number of r bins from dr and Rrange
-    if {[expr $Rrange % $dr] == 0} { 
-        set Nr [expr $Rrange / $dr - 1] 
-    } else {
-        set Nr [expr $Rrange / $dr]
-    }
-    
-    #will need to make this less breakable
-    #only works for two tails of equal length
-    #only works for systems with 100% one type of lipid
-    set tail_list []
-    set acyl_names [tail_analyzer $species]
-    set tail_one [lindex $acyl_names 0]
-    set tail_two [lindex $acyl_names 1]
-    if {[llength $tail_one] == [llength $tail_two]} {
-        for {set i 1} {$i < [llength $tail_one]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
-                set names "$t1bead $t2bead"
-                lappend tail_list $names
-        }
-    } else {
-        puts "Tail lengths are different. Teach me what to do."
-    }
-    set t1T [lindex $tail_one end]
-    set t2T [lindex $tail_two end]
-    set tailnames "$t1T $t2T"
-
-    #Helper scripts
-    set_occupancy top ;#formats 5x29 to have separable chains and occupancies
-    Center_System "resname $species"
-    Align "occupancy 1 to 3 and name BB"
-    leaflet_sorter $species $tailnames $sample_frame    ;#assigns lipids to chain U or L depending on leaflet based on 1st frame locations
-    Protein_Position $system $nframes $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
-
-    #need to calculate heights relative to some point on the protein
-    #for 5x29 we chose the juncture between TMD and protein cap
-    #because this corresponds to height zero in our elastic simulations
-    set ref_bead [atomselect top "name BB and resid 15"]
+    #need to calculate heights relative to some point on the protein:
+    set ref_bead [atomselect top "$reference_point"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
     set ref_height [vecexpr $ref_height mean]
-
-    #find top of protein for pbc crossing event
-    set sel [atomselect top "name BB"]
-    set prot_z [$sel get z]
-    $sel delete
-    set protein_top [::tcl::mathfunc::max {*}$prot_z]
-    set protein_top [expr $protein_top - $ref_height]
 
     puts "Helper scripts complete. Starting analysis now."  
 
