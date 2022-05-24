@@ -1,6 +1,12 @@
 # nougat: A Toolkit For Analysis of Membrane Disruption by Proteins and Other Inclusions
 
-Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. While some packages do exist for the analysis of lipid binding, we are not aware of any that offer a holistic view of protein-membrane interactions. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein: membrane thickness, membrane curvature, lipid density, and lipid tilt. 
+Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. While some packages do exist for the analysis of lipid binding, we are not aware of any that offer a holistic view of protein-membrane interactions. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein: membrane thickness, membrane curvature, lipid density, and lipid tilt.
+
+#### Terminology note:
+- z1: outer leaflet surface
+- z2: inner leaflet surface
+- z+: the midplane between z1 and z2
+- z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
 
 ## Prerequisites:
 
@@ -53,11 +59,25 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 - if you answered "no," troubleshoot; otherwise you're ready to use nougat!
 
 ### Run nougat.tcl!
-If you are interested in just analyzing the principle membrane fields z1, z2, z0, and zplus using the $headname you specified:
+If you are interested in just analyzing the principle membrane fields z1, z2, z0, and z+ using the $headname you specified:
 ```
-nougatByField [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+nougatByField [system name] [dr] [Ntheta] [start] [end] [step]
 ```
 If you want to analyze along every bead in the lipid chain:
 ```
-nougatByBead [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [dr] [start] [end] [step]
+nougatByBead [system name] [dr] [Ntheta] [start] [end] [step]
 ```
+An explanation of the options is as follows:
+```
+- system name       the name you want your files/directories to be saved with
+- dr                the radial bin width in Angstroms; we recommend starting with 6
+- Ntheta            the number of bins in the theta direction; we recommend starting with 30
+- start             the frame from which you would like to start analysis
+- end               the frame where you would like to stop analysis; -1 will run for the whole simulation
+- step              allows you to skip frames; otherwise use 1
+```
+
+### Run nougat.py!
+Open nougat.py in the text editor of your choice. If you did not comment out Protein_Position in nougat.tcl:
+```
+set 
