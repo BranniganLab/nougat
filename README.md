@@ -61,13 +61,21 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ### Run nougat.tcl!
 If you are interested in just analyzing the principle membrane fields z1, z2, z0, and z+ using the $headname you specified:
 ```
-nougatByField [the name you wish to use for your files] [dr] [Ntheta] [start] [end] [step]
+nougatByField [system name] [dr] [Ntheta] [start] [end] [step]
 ```
 If you want to analyze along every bead in the lipid chain:
 ```
-nougatByBead [the name you wish to use for your files] [dr] [Ntheta] [start] [end] [step]
+nougatByBead [system name] [dr] [Ntheta] [start] [end] [step]
 ```
-We recommend starting with dr = 6 and Ntheta = 30
+An explanation of the options is as follows:
+```
+- system name       the name you want your files/directories to be saved with
+- dr                the radial bin width in Angstroms; we recommend starting with 6
+- Ntheta            the number of bins in the theta direction; we recommend starting with 30
+- start             the frame from which you would like to start analysis
+- end               the frame where you would like to stop analysis; -1 will run for the whole simulation
+- step              allows you to skip frames; otherwise use 1
+
 ### Run nougat.py!
 Open nougat.py in the text editor of your choice. If you did not comment out Protein_Position in nougat.tcl:
 ```
