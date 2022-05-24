@@ -507,7 +507,7 @@ proc tilt_angles {tail_length tail_one tail_two} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc polarHeightByField {system dr Ntheta start end step} {
+proc nougatByField {system dr Ntheta start end step} {
     
     set important_variables [cell_prep $system $start]
     set species [lindex $important_variables 0]
@@ -775,7 +775,7 @@ proc polarHeightByField {system dr Ntheta start end step} {
     $t2tiltsel delete
 }
 
-proc polarHeightByBead {system} {
+proc nougatByBead {system} {
     
     set important_variables [cell_prep $system $start]
     set species [lindex $important_variables 0]
