@@ -1,11 +1,8 @@
 
 package require pbctools
 
-#locations on JS home computer
-#set QWRAP "~/qwrap"
-#set VEC "~/vecexpr"
-
-#locations on Belenus
+# EDIT THE PATHS HERE
+# TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
 set QWRAP "~/qwrap-master"
 set VEC "~/utilities/vecexpr"
 
