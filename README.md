@@ -75,6 +75,7 @@ An explanation of the options is as follows:
 - start             the frame from which you would like to start analysis
 - end               the frame where you would like to stop analysis; -1 will run for the whole simulation
 - step              allows you to skip frames; otherwise use 1
+```
 
 ### Run nougat.py!
 Open nougat.py in the text editor of your choice. If you did not comment out Protein_Position in nougat.tcl:
