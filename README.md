@@ -20,8 +20,8 @@ warnings
 ### Github Dependencies:
 This script utilizes Dr Jerome Henin's **vecexpr** package to drastically improve the efficiency of binning and allow for the measurement of multiple membrane quantities across a trajectory. It also makes use of his **qwrap** protocol to speed up initial setup. We have provided pre-packaged versions of these utilities, but recommend that you pay the author a visit.
 ```
-github.com/JHenin/qwrap
-github.com/JHenin/vecexpr
+github.com/jhenin/qwrap
+github.com/jhenin/vecexpr
 ```
 
 ## How To Use Nougat:
