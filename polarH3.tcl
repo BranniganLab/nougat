@@ -2,17 +2,12 @@
 package require pbctools
 
 #locations on JS home computer
-#set UTILS "~/Bending/scripts/PolarHeightBinning/utilities" 
 #set QWRAP "~/qwrap"
 #set VEC "~/vecexpr"
 
 #locations on Belenus
-set UTILS "~/PolarHeightBinning/utilities"
 set QWRAP "~/qwrap-master"
 set VEC "~/utilities/vecexpr"
-
-source $UTILS/assign_tilts.tcl
-source $UTILS/leaflet_sorter_scripts.tcl
 
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
@@ -22,6 +17,93 @@ proc RtoD {r} {
     return [expr $r*180.0/$M_PI]
 }
 
+#  returns a least squares fit for each lipid tail in the system at once
+#  Fit the points x to x = ai + b, i=0...N-1, and return the value of a 
+# a = 12/( (N(N^2 - 1)) ) sum[ (i-(N-1)/2) * xi]
+# reference: Bevington
+proc lsq_vecexpr { tail_length list_of_tail_coords } {
+  set i_list []
+  set counter 0
+  for {set i 0} {$i < [llength $list_of_tail_coords]} {incr i} {
+    lappend i_list $counter
+    set counter [expr $counter + 1]
+    if {[expr $counter%$tail_length]==0} {
+      set counter 0
+    }
+  }
+  set d [expr {0.5*($tail_length-1)}]
+  vecexpr $i_list $d sub >multiplier
+  set vector_components [vecexpr $list_of_tail_coords $multiplier mult]
+  set vectors []
+  for {set i 0} {$i < [expr [llength $list_of_tail_coords] / $tail_length]} {incr i} {
+    set startnum [expr $i*$tail_length]
+    set endnum [expr [expr [expr $i+1] * $tail_length] -1]
+    set quantity_to_sum [lrange $vector_components $startnum $endnum]
+    lappend vectors [vecexpr $quantity_to_sum sum]
+  }
+
+  return $vectors
+}
+
+#written in 2022 to be fast and dirty
+# just relies on whether the tails are above/below the heads
+# to sort leaflets
+proc leaflet_check {frm species headname tailname} {
+    set headsel [atomselect top "resname $species and name $headname" frame $frm]
+    set head_ht [$headsel get z]
+    set resids [$headsel get resid]
+    set chains [$headsel get chain]
+    $headsel delete
+    set tail_hts [lrepeat [llength $head_ht] 0]
+    foreach bead $tailname {
+        set tailsel [atomselect top "resname $species and name $bead" frame $frm]
+        set tail_ht [$tailsel get z]
+        set tail_hts [vecexpr $tail_hts $tail_ht add]
+        $tailsel delete
+    }
+    set avg_tail_ht [vecexpr $tail_hts [llength $tailname] div]
+
+    set test [vecexpr $head_ht $avg_tail_ht sub]
+    for {set i 0} {$i < [llength $test]} {incr i} {
+        if {[expr abs([lindex $test $i])] > 40} {
+            set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+            $sel set chain "U"
+            $sel delete
+        } else {
+            if {[lindex $test $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
+                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                $sel set chain "U"
+                $sel delete
+            } elseif {[lindex $test $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
+                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                $sel set chain "L"
+                $sel delete
+            }
+        }
+    }
+
+    #remove pore lipids
+    #rewrite to make this useable for you
+
+    #set sel [atomselect top "name BB and resid 30" frame $frm]
+    #set com [measure center $sel]
+    #set x [lindex $com 0]
+    #set y [lindex $com 1]
+    #$sel delete
+    #set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
+    #$porelipids set chain "Z"
+    #$porelipids delete
+
+    set upper [atomselect top "chain U" frame $frm]
+    $upper set user 1
+    $upper delete
+    set lower [atomselect top "chain L" frame $frm]
+    $lower set user 2
+    $lower delete
+    set bad_chains [atomselect top "chain Z" frame $frm]
+    $bad_chains set user 3
+    $bad_chains delete
+}
 
 proc get_theta {x y} {
     set tmp  [expr {atan2($y,$x)}]
