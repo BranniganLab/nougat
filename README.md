@@ -3,10 +3,10 @@
 Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. While some packages do exist for the analysis of lipid binding, we are not aware of any that offer a holistic view of protein-membrane interactions. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein: membrane thickness, membrane curvature, lipid density, and lipid tilt.
 
 #### Terminology note:
-z1: outer leaflet surface
-z2: inner leaflet surface
-z+: the midplane between z1 and z2
-z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
+- z1: outer leaflet surface
+- z2: inner leaflet surface
+- z+: the midplane between z1 and z2
+- z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
 
 ## Prerequisites:
 
