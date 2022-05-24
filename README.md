@@ -77,7 +77,13 @@ An explanation of the options is as follows:
 - step              allows you to skip frames; otherwise use 1
 ```
 
-### Run nougat.py!
-Open nougat.py in the text editor of your choice. If you did not comment out Protein_Position in nougat.tcl:
-```
-set 
+### Edit & Run nougat.py!
+- Open nougat.py in the text editor of your choice
+- If you used nougatByBead, set **readbeads** to 1
+- If you _did not_ comment out Protein_Position, set **protein_onoff** to 1
+- Edit name_list to contain the name(s) of your system(s) as specified by "system name" in nougat.tcl
+- If you used nougatByBead, add your lipid(s) to the bead_dict dictionary as needed; ensure the key is equal to the name in name_list!
+- run nougat.py from the command line
+
+### Explore your results
+
