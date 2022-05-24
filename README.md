@@ -28,7 +28,7 @@ github.com/jhenin/vecexpr
 ### What will it do?
 nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame (in the case of height and tilt) or for the whole trajectory (in the case of density). Plotting/nougat.py will read in those .dat files, extract curvature information from the heights, generate averages across the trajectory, and output its findings in .dat and .png files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. Beadcolor.tcl will import curvature and density data into the user fields of the pdb file in VMD.
 
-### How To Make nougat.tcl Work
+### Make Edits and Check Your Work
 - Open nougat.tcl in the text editor of your choice and make edits to two sections:
 ```
 Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored (lines 6-7)
@@ -39,5 +39,14 @@ Edit all of the indicated fields in cell_prep proc (lines 12-81)
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
-cell_prep [the name you wish to use for your files e.g. "PO" for a 100% POPC system] [NFrames/2]
+cell_prep [the name you wish to use for your files e.g. "PO" for a 100% POPC system] -1
 ```
+- After completion, visually inspect your trajectory in VMD for the following:
+```
+Is the inclusion properly centered in your system?
+Is the membrane relatively stable in the xy plane?
+Color by user with the value 1 and select "Update Selection Every Frame"
+Scroll through your trajectory: are you only seeing lipids in the outer leaflet?
+Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
+```
+- if you answered "no," troubleshoot; otherwise you're ready to use nougat!
