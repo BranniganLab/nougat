@@ -10,6 +10,13 @@ load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
 
 proc cell_prep {system end} {
+
+    ;# set nframes based on $end input
+    if {$end == -1} {
+        set lastframe [expr [molinfo top get numframes] -1]
+    } else {
+        set nframes $end
+    }
     
     ;#**********************************************************
     ;#          MAKE EDITS BELOW BEFORE STARTING
@@ -69,7 +76,7 @@ proc cell_prep {system end} {
 
     ;# Assigns lipids to user value 1 or 2 depending on leaflet
     ;# no edits required
-    leaflet_sorter $species $tailnames $end  
+    leaflet_sorter $species $tailnames $lastframe 
 
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
