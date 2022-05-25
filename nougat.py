@@ -3,13 +3,9 @@ import matplotlib
 import numpy as np
 import warnings
 
-#name_list = ["PO", "DT", "DG", "DX", "DY", "DL", "DB"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP","lgPO"]
-#name_list = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
-name_list = ["normalnp"]
-field_list = ["zone","ztwo","zplus","zzero"]
-#field_list = ["test"]
-
+readbeads = 0
+protein_onoff = 0
+name_list = ["PO", "DO", "DP"]
 bead_dict = {
   "DT" : ['C2A.C2B'],
   "DL" : ['C2A.C2B', 'C3A.C3B'],
@@ -23,6 +19,7 @@ bead_dict = {
   "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
 
+field_list = ["zone","ztwo","zplus","zzero"]
 
 def dimensions_analyzer(data):
   #figure out how many radial bins there are
@@ -439,8 +436,6 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 
 if __name__ == "__main__": 
-  readbeads = 0
-  protein_onoff = 0
   for name in name_list:
     f = open(name+'/'+name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
