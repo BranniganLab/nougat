@@ -32,7 +32,7 @@ github.com/jhenin/vecexpr
 
 ## How To Use Nougat:
 ### What will it do?
-nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame (in the case of height and tilt) or for the whole trajectory (in the case of density). Plotting/nougat.py will read in those .dat files, extract curvature information from the heights, generate averages across the trajectory, and output its findings in .dat and .png files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. Beadcolor.tcl will import curvature and density data into the user fields of the pdb file in VMD.
+nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame (in the case of height and tilt) or for the whole trajectory (in the case of density). nougat.py will read in those .dat files, extract curvature information from the heights, generate averages across the trajectory, and output its findings in .dat and .png files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. Beadcolor.tcl will import curvature and density data into the user fields of the pdb file in VMD.
 
 ### Make Edits and Check Your Work
 - Open nougat.tcl in the text editor of your choice and make edits to two sections:
