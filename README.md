@@ -86,6 +86,6 @@ An explanation of the options is as follows:
 - run nougat.py from the command line
 
 ### Explore your results!
-All results are available as heatmaps saved as 700 DPI png files. They will be saved in the folder labelled with your system name. To change the scale, adjust the max and min values in nougat.py (lines 21-28).
+All results are available as heatmaps saved as 700 DPI png files. They will be saved in the folder labelled with your system name. To change the scale, adjust the max and min values in nougat.py (lines 24-31).
 
 You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
