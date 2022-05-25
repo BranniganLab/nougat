@@ -18,6 +18,9 @@ bead_dict = {
   "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
   "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
+
+# These determine the scale in your png files
+# adjust as needed
 height_min = -60
 height_max = 60
 mean_curv_min = 0.05
