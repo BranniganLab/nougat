@@ -18,6 +18,14 @@ bead_dict = {
   "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
   "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
+height_min = -60
+height_max = 60
+mean_curv_min = 0.05
+mean_curv_max = -0.05
+gauss_curv_min = -0.005
+gauss_curv_max = 0.005
+density_min = 0
+density_max = 2
 
 field_list = ["zone","ztwo","zplus","zzero"]
 
@@ -356,7 +364,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.savetxt(name+'/'+name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, 60, -60, protein, "avgHeight", False)
+        plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", False)
         serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,'C1  ')
         print(name+" "+field+" height done!")
       else:
@@ -364,7 +372,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, 0, -45, protein, "avgHeight", bead)
+        plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", bead)
         serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,bead)
         print(name+' '+bead+' '+field+" height done!")
 
@@ -396,11 +404,11 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.save(name+'/'+name+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
-        plot_maker(radius, theta, avgcurvature, name, field, .05, -.05, protein, "curvature", False)
+        plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", False)
         print(name+" "+field+" laplacian done!")
 
         #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, 0.005, -.005, protein, "gausscurvature", False)
+        plot_maker(radius, theta, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", False)
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
@@ -409,11 +417,11 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.save(name+'/'+name+'.'+bead+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
-        plot_maker(radius, theta, avgcurvature, name, field, .01, -.01, protein, "curvature", bead)
+        plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead)
         print(name+' '+bead+' '+field+" laplacian done!")
 
         #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, .01, -.01, protein, "gausscurvature", bead)
+        plot_maker(radius, theta, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", bead)
         print(name+' '+bead+' '+field+" gaussian curvature done!")
 
     elif dtype == 2:
@@ -422,14 +430,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         np.savetxt(name+'/'+name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
-        plot_maker(radius, theta, density, name, field, 0.5, 1.5, protein, "density", False)
+        plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
         np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
-        plot_maker(radius, theta, density, name, field, 0, 2, protein, "density", bead)
+        plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", bead)
         print(name+' '+bead+' '+field+" density done!")
   return serial
 
