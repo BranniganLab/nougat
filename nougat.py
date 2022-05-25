@@ -311,11 +311,11 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
   #read in heights from VMD traj
   if bead is False:
-    height_data = np.genfromtxt(name+'/'+name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'/'+name+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+field+'.density.dat')
   else:
-    height_data = np.genfromtxt(name+'/'+name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'/'+name+'.'+bead+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.density.dat')
 
   #strip r values from density info
   density = density_data[:,2:]
@@ -448,14 +448,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 if __name__ == "__main__": 
   for name in name_list:
-    f = open(name+'/'+name+".avgheight.pdb","w")
+    f = open(name+".avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
     serial = 1
     for field in field_list:
 
       #read in protein helix coordinates
       if protein_onoff == 1:
-        protein_coords = np.loadtxt(name+'/'+name+"_helcoords_"+field+".dat",skiprows=1)
+        protein_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
         protein = []
         for i in range(10):
           protein.append(protein_coords[i])

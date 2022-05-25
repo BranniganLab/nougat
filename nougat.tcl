@@ -527,16 +527,16 @@ proc nougatByField {system dr Ntheta start end step} {
     set ref_height [vecexpr $ref_height mean]
 
     #outfiles setup
-    set heights_up [open "${system}/${system}.zone.height.dat" w]
-    set heights_down [open "${system}/${system}.ztwo.height.dat" w]
-    set heights_zplus [open "${system}/${system}.zplus.height.dat" w]
-    set heights_zzero [open "${system}/${system}.zzero.height.dat" w]
-    set dens_up [open "${system}/${system}.zone.density.dat" w]
-    set dens_down [open "${system}/${system}.ztwo.density.dat" w]
-    set dens_zplus [open "${system}/${system}.zplus.density.dat" w]
-    set dens_zzero [open "${system}/${system}.zzero.density.dat" w]
-    set tilt_up [open "${system}/${system}.zone.tilt.dat" w]
-    set tilt_down [open "${system}/${system}.ztwo.tilt.dat" w]
+    set heights_up [open "${system}.zone.height.dat" w]
+    set heights_down [open "${system}.ztwo.height.dat" w]
+    set heights_zplus [open "${system}.zplus.height.dat" w]
+    set heights_zzero [open "$${system}.zzero.height.dat" w]
+    set dens_up [open "${system}.zone.density.dat" w]
+    set dens_down [open "${system}.ztwo.density.dat" w]
+    set dens_zplus [open "${system}.zplus.density.dat" w]
+    set dens_zzero [open "${system}.zzero.density.dat" w]
+    set tilt_up [open "${system}.zone.tilt.dat" w]
+    set tilt_down [open "${system}.ztwo.tilt.dat" w]
 
     ;# set nframes based on $end input
     if {$end == -1} {
@@ -802,12 +802,12 @@ proc nougatByBead {system} {
         set condensed_name "${name1}.${name2}"
 
         #outfiles setup
-        set heights_up [open "${system}/${system}.${condensed_name}.zone.height.dat" w]
-        set heights_down [open "${system}/${system}.${condensed_name}.ztwo.height.dat" w]
-        set heights_zplus [open "${system}/${system}.${condensed_name}.zplus.height.dat" w]
-        set dens_up [open "${system}/${system}.${condensed_name}.zone.density.dat" w]
-        set dens_down [open "${system}/${system}.${condensed_name}.ztwo.density.dat" w]
-        set dens_zplus [open "${system}/${system}.${condensed_name}.zplus.density.dat" w]
+        set heights_up [open "${system}.${condensed_name}.zone.height.dat" w]
+        set heights_down [open "${system}.${condensed_name}.ztwo.height.dat" w]
+        set heights_zplus [open "${system}.${condensed_name}.zplus.height.dat" w]
+        set dens_up [open "${system}.${condensed_name}.zone.density.dat" w]
+        set dens_down [open "${system}.${condensed_name}.ztwo.density.dat" w]
+        set dens_zplus [open "${system}.${condensed_name}.zplus.density.dat" w]
 
         set bead [atomselect top "name $beadpair"]
 
