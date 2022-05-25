@@ -25,7 +25,8 @@ proc cell_prep {system end} {
     ;# provide atomselection-style text that defines what is in your inclusion 
     set inclusion_sel "name BB SC1 to SC4"
 
-    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel or membrane
+    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
+    ;# or membrane
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
     set excluded_sel "resname W ION"
 
@@ -46,7 +47,7 @@ proc cell_prep {system end} {
 
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
-    ;# the position of resid 15
+    ;# the average position of resid 15
     set reference_point "name BB and resid 15"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
@@ -66,6 +67,7 @@ proc cell_prep {system end} {
 
     ;# figures out which beads are in your lipids
     ;# Only works for systems with 100% one type of lipid
+    ;# will be fixed in June update
     ;# no edits required
     set acyl_names [tail_analyzer $species]
     set tail_one [lindex $acyl_names 0]
