@@ -3,11 +3,13 @@ package require pbctools
 
 # EDIT THE PATHS HERE
 # TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-set QWRAP "~/qwrap-master"
-set VEC "~/utilities/vecexpr"
+#set QWRAP "~/qwrap-master"
+#set VEC "~/utilities/vecexpr"
 
-load ${QWRAP}/qwrap.so
-load ${VEC}/vecexpr.so
+set UTILS "~/PolarHeightBinning/utilities"
+
+load ${UTILS}/qwrap.so
+load ${UTILS}/vecexpr.so
 
 proc cell_prep {system end} {
 
