@@ -11,11 +11,11 @@ load ${VEC}/vecexpr.so
 
 proc cell_prep {system end} {
 
-    ;# set nframes based on $end input
+    ;# set lastframe based on $end input
     if {$end == -1} {
         set lastframe [expr [molinfo top get numframes] -1]
     } else {
-        set nframes $end
+        set lastframe $end
     }
     
     ;#**********************************************************
