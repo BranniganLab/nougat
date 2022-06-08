@@ -269,9 +269,9 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
   return array 
 
 def gen_avg_tilt(name, field):
-  vector_data = np.genfromtxt(name+'/'+name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
-  height_data = np.genfromtxt(name+'/'+name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-  normal_data = np.load(name+'/'+name+'.'+field+'.normal_vectors.npy')
+  vector_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
+  height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
+  normal_data = np.load(name+'.'+field+'.normal_vectors.npy')
 
   #match direction between lipid vector and normal vector
   if field == "zone":
