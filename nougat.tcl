@@ -242,7 +242,7 @@ proc Protein_Position {name hnames tnames} {
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-	set fout [open "${name}/${name}_helcoords_${eqtxt}.dat" w]
+	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
@@ -549,7 +549,7 @@ proc nougatByField {system dr Ntheta start end step} {
     set heights_up [open "${system}.zone.height.dat" w]
     set heights_down [open "${system}.ztwo.height.dat" w]
     set heights_zplus [open "${system}.zplus.height.dat" w]
-    set heights_zzero [open "$${system}.zzero.height.dat" w]
+    set heights_zzero [open "${system}.zzero.height.dat" w]
     set dens_up [open "${system}.zone.density.dat" w]
     set dens_down [open "${system}.ztwo.density.dat" w]
     set dens_zplus [open "${system}.zplus.density.dat" w]
