@@ -75,6 +75,17 @@ proc cell_prep {system end} {
     set t1T [lindex $tail_one end]
     set t2T [lindex $tail_two end]
     set tailnames "$t1T $t2T"
+    set tail_list []
+    if {[llength $tail_one] == [llength $tail_two]} {
+        for {set i 1} {$i < [llength $tail_one]} {incr i} {
+                set t1bead [lindex $tail_one $i]
+                set t2bead [lindex $tail_two $i]
+                set names "$t1bead $t2bead"
+                lappend tail_list $names
+        }
+    } else {
+        puts "Tail lengths are different. Teach me what to do."
+    }
 
     ;# Assigns lipids to user value 1 or 2 depending on leaflet
     ;# no edits required
