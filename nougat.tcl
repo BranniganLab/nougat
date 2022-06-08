@@ -100,7 +100,15 @@ proc cell_prep {system end} {
     ;#          MAKE EDITS ABOVE BEFORE STARTING
     ;#********************************************************** 
 
-    set return_list "$species $headnames $tailnames $tail_one $tail_two $tail_list $reference_point"  
+    set return_list [] 
+    lappend return_list $species 
+    lappend return_list $headnames 
+    lappend return_list $tailnames 
+    lappend return_list $tail_one 
+    lappend return_list $tail_two 
+    lappend return_list $tail_list 
+    lappend return_list $reference_point
+    return $return_list  
 }
 
 
