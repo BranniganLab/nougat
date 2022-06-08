@@ -303,7 +303,7 @@ def gen_avg_tilt(name, field):
     warnings.simplefilter("ignore", category=RuntimeWarning)
     avgtilt=np.nanmean(tilt, axis=2)
 
-  np.savetxt(name+'/'+name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
+  np.savetxt(name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
 
 #---------------------------------------------------------------------#
 
@@ -364,7 +364,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.savetxt(name+'/'+name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        np.savetxt(name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", False)
@@ -372,7 +372,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" height done!")
       else:
         #save as file for debugging / analysis
-        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        np.savetxt(name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
 
         #plot and save
         plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", bead)
@@ -402,9 +402,9 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
       if bead is False: 
         #save as file for debugging / analysis
-        np.savetxt(name+'/'+name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'/'+name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'/'+name+'.'+field+'.normal_vectors.npy',normal_vectors)
+        np.savetxt(name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.save(name+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", False)
@@ -415,9 +415,9 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         print(name+" "+field+" gaussian curvature done!")
       else:
         #save as file for debugging / analysis
-        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'/'+name+'.'+bead+'.'+field+'.normal_vectors.npy',normal_vectors)
+        np.savetxt(name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.save(name+'.'+bead+'.'+field+'.normal_vectors.npy',normal_vectors)
 
         #laplacian plotting section
         plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead)
@@ -430,14 +430,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
     elif dtype == 2:
       if bead is False:
         #save as file for debuggging / analysis
-        np.savetxt(name+'/'+name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", False)
         print(name+" "+field+" density done!")
       else:
         #save as file for debuggging / analysis
-        np.savetxt(name+'/'+name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
         #plot and save
         plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", bead)
