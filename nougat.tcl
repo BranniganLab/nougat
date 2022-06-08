@@ -292,7 +292,7 @@ proc Center_System {inpt} {
                 pbc wrap -centersel "$inpt" -all
             }
         } else {
-            qwrap centersel "$inpt" ;#center entire system at ~0,0,0
+            qwrap sel "not $inpt" center "$inpt" ;#center entire system at ~0,0,0
         }
         set com [measure center $sel weight mass]
         incr counter_i
