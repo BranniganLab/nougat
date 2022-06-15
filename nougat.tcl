@@ -556,17 +556,23 @@ proc nougatByField {system d1 N2 start end step polar} {
     $ref_bead delete
     set ref_height [vecexpr $ref_height mean]
 
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    }
+
     #outfiles setup
-    set heights_up [open "${system}.zone.height.dat" w]
-    set heights_down [open "${system}.ztwo.height.dat" w]
-    set heights_zplus [open "${system}.zplus.height.dat" w]
-    set heights_zzero [open "${system}.zzero.height.dat" w]
-    set dens_up [open "${system}.zone.density.dat" w]
-    set dens_down [open "${system}.ztwo.density.dat" w]
-    set dens_zplus [open "${system}.zplus.density.dat" w]
-    set dens_zzero [open "${system}.zzero.density.dat" w]
-    set tilt_up [open "${system}.zone.tilt.dat" w]
-    set tilt_down [open "${system}.ztwo.tilt.dat" w]
+    set heights_up [open "${system}.zone.${coordsys}.height.dat" w]
+    set heights_down [open "${system}.ztwo.${coordsys}.height.dat" w]
+    set heights_zplus [open "${system}.zplus.${coordsys}.height.dat" w]
+    set heights_zzero [open "${system}.zzero.${coordsys}.height.dat" w]
+    set dens_up [open "${system}.zone.${coordsys}.density.dat" w]
+    set dens_down [open "${system}.ztwo.${coordsys}.density.dat" w]
+    set dens_zplus [open "${system}.zplus.${coordsys}.density.dat" w]
+    set dens_zzero [open "${system}.zzero.${coordsys}.density.dat" w]
+    set tilt_up [open "${system}.zone.${coordsys}.tilt.dat" w]
+    set tilt_down [open "${system}.ztwo.${coordsys}.tilt.dat" w]
 
     ;# set nframes based on $end input
     if {$end == -1} {
@@ -582,7 +588,7 @@ proc nougatByField {system d1 N2 start end step polar} {
         set box_r [expr int($box_x) / 2]
         set range1 [expr $box_r - $min]
     } elseif {$polar == 0} {
-        set range1 $box_x
+        set range1 [expr int([vecexpr $box_x floor])]
     }
 
     set boxarea []
@@ -602,7 +608,7 @@ proc nougatByField {system d1 N2 start end step polar} {
     } elseif {$polar == 0} {
         set d2 $d1
         set box_y [molinfo top get b frame [expr $nframes - 1]]
-        set range2 $box_y
+        set range2 [expr int([vecexpr $box_y floor])]
         if {[expr $range2 % $d2] == 0} { 
             set N2 [expr [expr $range2 / $d2] - 1.0] 
         } else {
@@ -680,8 +686,8 @@ proc nougatByField {system d1 N2 start end step polar} {
             } elseif {$polar == 0} {
                 set xmin [vecexpr $x_vals min]
                 set ymin [vecexpr $y_vals min]
-                set x_vals [vecexpr $x_vals $xmin add]
-                set y_vals [vecexpr $y_vals $ymin add]
+                set x_vals [vecexpr $x_vals $xmin sub]
+                set y_vals [vecexpr $y_vals $ymin sub]
                 vecexpr [vecexpr $x_vals $d1 div] floor &dim1_bins
                 vecexpr [vecexpr $y_vals $d2 div] floor &dim2_bins
             }
