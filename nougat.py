@@ -508,6 +508,6 @@ if __name__ == "__main__":
             serial = output_analysis(name, field, protein, 3, bead, f, serial, polar)
     print('END', file=f)
     f.close()
-  for name in name_list:
-    for field in ['zone', 'ztwo']:
-      gen_avg_tilt(name, field, polar)
+  #for name in name_list:
+  #  for field in ['zone', 'ztwo']:
+  #    gen_avg_tilt(name, field, polar)
