@@ -94,7 +94,7 @@ proc cell_prep {system end} {
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    Protein_Position $system $headnames $tailnames ;#outputs a file that contains the location of the TMD helix of each monomer
+    Protein_Position $system $headnames $tailnames 
 
     ;#**********************************************************
     ;#          MAKE EDITS ABOVE BEFORE STARTING
@@ -301,9 +301,9 @@ proc Center_System {inpt} {
     puts "Center_System finished!"
 }
 
-;# starts a new line in the print file that has the min/max r value for the bin
-proc print_line_init {file number dr Rmin} {
-    puts -nonewline $file "[format {%0.2f} [expr $number * $dr + $Rmin]]  [format {%0.2f} [expr ($number+1) * $dr + $Rmin]]  "
+;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
+proc print_line_init {file number d1 min} {
+    puts -nonewline $file "[format {%0.2f} [expr $number * $d1 + $min]]  [format {%0.2f} [expr ($number+1) * $d1 + $min]]  "
 }
 
 ;# adds a value to the print file
@@ -320,30 +320,30 @@ proc print_value {file value end_line} {
 
 
 ;#print an entire array (usually 1 frame) to file
-proc print_frame {Nr file dr Rmin Ntheta data} {
+proc print_frame {N1 file d1 min N2 data} {
     
     #needed in order to make the proc understand this is array data
     array set data_copy $data
 
-    ;# starts new line in outfile with radial bin values
-    for {set m 0} {$m <= $Nr} {incr m} {
-        print_line_init $file $m $dr $Rmin
+    ;# starts new line in outfile with bin values
+    for {set m 0} {$m <= $N1} {incr m} {
+        print_line_init $file $m $d1 $min
         ;# adds bin values through penultimate value in one line
-        for {set n 0} {$n < [expr $Ntheta - 1]} {incr n} {
+        for {set n 0} {$n < [expr $N2 - 1]} {incr n} {
             print_value $file $data_copy($m,$n) 0
         }
         ;# adds final value and starts new line in outfile
-        set final_ndx [expr $Ntheta-1]
+        set final_ndx [expr $N2-1]
         print_value $file $data_copy($m,$final_ndx) 1
     }
 }
 
 
 ;# sets all values of array to zero
-proc initialize_array {Nr Ntheta init_value} {
+proc initialize_array {N1 N2 init_value} {
 
-    for {set m 0} {$m <= $Nr} {incr m} {
-        for {set n 0} {$n <= $Ntheta} {incr n} {
+    for {set m 0} {$m <= $N1} {incr m} {
+        for {set n 0} {$n <= $N2} {incr n} {
             set data($m,$n) $init_value
         }
     }
@@ -353,14 +353,25 @@ proc initialize_array {Nr Ntheta init_value} {
 
 
 ;# calculate bin density
-proc calculate_density {data Rmin dr dtheta Nr Ntheta totfrms} {
+proc calculate_density {data min d1 d2 N1 N2 totfrms polar} {
     
     array set data_copy $data
-    for {set m 0} {$m <= $Nr} {incr m} {
-        set rval [expr $m * $dr + $Rmin + [expr 0.5 * $dr]]
-        set area [expr $rval * $dr * $dtheta]
-        for {set n 0} {$n <= $Ntheta} {incr n} {
-            set data_copy($m,$n) [expr $data_copy($m,$n) / [expr $totfrms * $area]]
+
+    if {$polar == 1} {
+        for {set m 0} {$m <= $N1} {incr m} {
+            set rval [expr $m * $d1 + $min + [expr 0.5 * $d1]]
+            set area [expr $rval * $d1 * $d2]
+            for {set n 0} {$n <= $N2} {incr n} {
+                set data_copy($m,$n) [expr $data_copy($m,$n) / [expr $totfrms * $area]]
+            }
+        }
+    } elseif {$polar == 0} {
+        set area [expr $d1 * $d2]
+        set divisor [expr $area * $totfrms]
+        for {set m 0} {$m <= $N1} {incr m} {
+            for {set n 0} {$n <= $N2} {incr n} {
+                set data_copy($m,$n) [expr $data_copy($m,$n) / $divisor]
+            }
         }
     }
 
@@ -369,14 +380,14 @@ proc calculate_density {data Rmin dr dtheta Nr Ntheta totfrms} {
 
 
 ;# normalize bin density to get enrichment
-proc normalize_density {data Nr Ntheta normfactor numbeads} {
+proc normalize_density {data N1 N2 normfactor numbeads} {
     
     array set data_copy $data
 
     set normfactor [expr $normfactor * $numbeads]
 
-    for {set m 0} {$m <= $Nr} {incr m} {
-        for {set n 0} {$n <= $Ntheta} {incr n} {
+    for {set m 0} {$m <= $N1} {incr m} {
+        for {set n 0} {$n <= $N2} {incr n} {
             set data_copy($m,$n) [expr $data_copy($m,$n) / $normfactor]
         }
     }
@@ -528,8 +539,8 @@ proc tilt_angles {tail_length tail_one tail_two} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc nougatByField {system dr Ntheta start end step} {
-    
+proc nougatByField {system d1 N2 start end step polar} {
+
     set important_variables [cell_prep $system $start]
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
@@ -539,7 +550,7 @@ proc nougatByField {system dr Ntheta start end step} {
     set tail_list [lindex $important_variables 5]
     set reference_point [lindex $important_variables 6]
 
-    #need to calculate heights relative to some point on the protein:
+    #need to calculate heights relative to some point on the inclusion:
     set ref_bead [atomselect top "$reference_point"]
     set ref_height [$ref_bead get z]
     $ref_bead delete
@@ -564,27 +575,40 @@ proc nougatByField {system dr Ntheta start end step} {
         set nframes $end
     }
 
-    #measure box size to get Rmax value
+    #measure box size to get bin values
     set box_x [molinfo top get a frame [expr $nframes - 1]]
-    set box_r [expr int($box_x) / 2]
-    set Rmax [expr [expr $box_r / $dr] * $dr ]
-    set Rmin 0
-    set Rrange [expr $Rmax - $Rmin]
-    set boxarea []
-
-    #calculate dtheta from number of theta bins
-    set dthetadeg [expr 360/$Ntheta]
-    global M_PI
-    set dtheta [expr 2 * $M_PI / $Ntheta]
-    
-    #calculate number of r bins from dr and Rrange
-    if {[expr $Rrange % $dr] == 0} { 
-        set Nr [expr [expr $Rrange / $dr] - 1.0] 
-    } else {
-        set Nr [expr $Rrange / $dr]
+    set min 0
+    if {$polar == 1} {
+        set box_r [expr int($box_x) / 2]
+        set range1 [expr $box_r - $min]
+    } elseif {$polar == 0} {
+        set range1 $box_x
     }
 
+    set boxarea []
+    
+    #calculate number of dim1 bins from d1 and range1
+    if {[expr $range1 % $d1] == 0} { 
+        set N1 [expr [expr $range1 / $d1] - 1.0] 
+    } else {
+        set N1 [expr $range1 / $d1]
+    }
 
+    #calculate dim2 values, based on whether polar or cartesian
+    if {$polar == 1} {
+        set dthetadeg [expr 360/$N2]
+        global M_PI
+        set d2 [expr 2 * $M_PI / $N2]
+    } elseif {$polar == 0} {
+        set d2 $d1
+        set box_y [molinfo top get b frame [expr $nframes - 1]]
+        set range2 $box_y
+        if {[expr $range2 % $d2] == 0} { 
+            set N2 [expr [expr $range2 / $d2] - 1.0] 
+        } else {
+            set N2 [expr $range2 / $d2]
+        }
+    }
 
     puts "Setup complete. Starting analysis now."	
 
@@ -597,10 +621,10 @@ proc nougatByField {system dr Ntheta start end step} {
     set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
     set tiltlist [list $t1tiltsel $t2tiltsel]
 
-    array set density_up [initialize_array $Nr $Ntheta 0.0]
-    array set density_down [initialize_array $Nr $Ntheta 0.0]
-    array set density_zplus [initialize_array $Nr $Ntheta 0.0]
-    array set density_zzero [initialize_array $Nr $Ntheta 0.0]
+    array set density_up [initialize_array $N1 $N2 0.0]
+    array set density_down [initialize_array $N1 $N2 0.0]
+    array set density_zplus [initialize_array $N1 $N2 0.0]
+    array set density_zzero [initialize_array $N1 $N2 0.0]
     
     ;#start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
@@ -634,40 +658,49 @@ proc nougatByField {system dr Ntheta start end step} {
             set resids [$bead get resid]
             set indexs [$bead get index]
 
-            ;#get theta values for all x,y pairs
-            set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
+            if {$polar == 1} {
+                ;#get theta values for all x,y pairs
+                set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
 
-            ;#atan2 gives values from -180 to 180; shifting to 0 to 360
-            for {set i 0} {$i<[llength $theta_vals]} {incr i} {
-                if {[lindex $theta_vals $i] < 0} {
-                    set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+                ;#atan2 gives values from -180 to 180; shifting to 0 to 360
+                for {set i 0} {$i<[llength $theta_vals]} {incr i} {
+                    if {[lindex $theta_vals $i] < 0} {
+                        set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+                    }
                 }
+
+                ;#turn into bin numbers rather than theta values
+                vecexpr [vecexpr $theta_vals $dthetadeg div] floor &dim2_bins
+                
+                ;#calculate distance from origin for all x,y pairs
+                set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+                
+                ;#turn into bin numbers rather than r values
+                vecexpr [vecexpr $r_vals $d1 div] floor &dim1_bins
+            } elseif {$polar == 0} {
+                set xmin [vecexpr $x_vals min]
+                set ymin [vecexpr $y_vals min]
+                set x_vals [vecexpr $x_vals $xmin add]
+                set y_vals [vecexpr $y_vals $ymin add]
+                vecexpr [vecexpr $x_vals $d1 div] floor &dim1_bins
+                vecexpr [vecexpr $y_vals $d2 div] floor &dim2_bins
             }
 
-            ;#turn into bin numbers rather than theta values
-            vecexpr [vecexpr $theta_vals $dthetadeg div] floor &theta_bins
-            
-            ;#calculate distance from origin for all x,y pairs
-            set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
-            
-            ;#turn into bin numbers rather than r values
-            vecexpr [vecexpr $r_vals $dr div] floor &r_bins
-
             ;#initialize arrays to zeros
-            array set totals_up [initialize_array $Nr $Ntheta 0.0]
-            array set counts_up [initialize_array $Nr $Ntheta 0.0]
-            array set totals_down [initialize_array $Nr $Ntheta 0.0]
-            array set counts_down [initialize_array $Nr $Ntheta 0.0]
-            array set totals_zplus [initialize_array $Nr $Ntheta 0.0]
-            array set counts_zplus [initialize_array $Nr $Ntheta 0.0]
-            array set tilts_up [initialize_array $Nr $Ntheta  {0.0 0.0 0.0}]
-            array set tilts_down [initialize_array $Nr $Ntheta {0.0 0.0 0.0}]
+            array set totals_up [initialize_array $N1 $N2 0.0]
+            array set counts_up [initialize_array $N1 $N2 0.0]
+            array set totals_down [initialize_array $N1 $N2 0.0]
+            array set counts_down [initialize_array $N1 $N2 0.0]
+            array set totals_zplus [initialize_array $N1 $N2 0.0]
+            array set counts_zplus [initialize_array $N1 $N2 0.0]
+            array set tilts_up [initialize_array $N1 $N2  {0.0 0.0 0.0}]
+            array set tilts_down [initialize_array $N1 $N2 {0.0 0.0 0.0}]
 
             ;#fill in total/count arrays with z sum and count sum
-            for {set i 0} {$i < [llength $r_vals]} {incr i} {
-                set m [lindex $r_bins $i]
-                set n [lindex $theta_bins $i]
-                if {$m <= $Nr} {
+            for {set i 0} {$i < [llength $x_vals]} {incr i} {
+                set m [lindex $dim1_bins $i]
+                set n [lindex $dim2_bins $i]
+                if {$m <= $N1} {
                     if {$meas_z_zero == 0} {
                         if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
@@ -686,12 +719,16 @@ proc nougatByField {system dr Ntheta start end step} {
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                         set density_zzero($m,$n) [expr {$density_zzero($m,$n) + 1}]
                     }
+                } elseif {$polar == 0 && $m > $N1} {
+                    puts "something weird is happening with your cartesian coordinates"
+                    puts $m 
+                    return 
                 }
             }    
 
             ;#turn the z sum into a z avg
-            for {set m 0} {$m <= $Nr} {incr m} {
-                for {set n 0} {$n <= $Ntheta} {incr n} {
+            for {set m 0} {$m <= $N1} {incr m} {
+                for {set n 0} {$n <= $N2} {incr n} {
                     if {$counts_up($m,$n) != 0} {
                         set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
                         if {$meas_z_zero == 0} {
@@ -731,13 +768,13 @@ proc nougatByField {system dr Ntheta start end step} {
 
             ;#output heights to files
             if { $meas_z_zero == 0 } {
-                print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
-                print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
-                print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
-                print_frame $Nr $tilt_up $dr $Rmin $Ntheta [array get tilts_up]
-                print_frame $Nr $tilt_down $dr $Rmin $Ntheta [array get tilts_down]
+                print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up]
+                print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down]
+                print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus]
+                print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up]
+                print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down]
             } elseif {$meas_z_zero == 1} {
-                print_frame $Nr $heights_zzero $dr $Rmin $Ntheta [array get totals_up]
+                print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up]
             }
 
             set meas_z_zero 1
@@ -746,10 +783,10 @@ proc nougatByField {system dr Ntheta start end step} {
 
     ;# calculate density
     set delta_frame [expr ($nframes - $start) / $step]
-    array set density_up [calculate_density [array get density_up] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_down [calculate_density [array get density_down] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_zplus [calculate_density [array get density_zplus] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
-    array set density_zzero [calculate_density [array get density_zzero] $Rmin $dr $dtheta $Nr $Ntheta $delta_frame]
+    array set density_up [calculate_density [array get density_up] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
+    array set density_down [calculate_density [array get density_down] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
+    array set density_zplus [calculate_density [array get density_zplus] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
+    array set density_zzero [calculate_density [array get density_zzero] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
 
     ;# prepare to normalize density
     set avg_area [vecexpr $boxarea mean]
@@ -768,16 +805,16 @@ proc nougatByField {system dr Ntheta start end step} {
     set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 2 * $avg_area]]
 
     ;# calculate normalized density
-    array set density_up [normalize_density [array get density_up] $Nr $Ntheta $up_normfactor [llength $headnames]]
-    array set density_down [normalize_density [array get density_down] $Nr $Ntheta $down_normfactor [llength $headnames]]
-    array set density_zplus [normalize_density [array get density_zplus] $Nr $Ntheta $combined_normfactor [expr [llength $headnames] * 2.0]]
-    array set density_zzero [normalize_density [array get density_zzero] $Nr $Ntheta $combined_normfactor [expr [llength $tailnames] * 2.0]]  
+    array set density_up [normalize_density [array get density_up] $N1 $N2 $up_normfactor [llength $headnames]]
+    array set density_down [normalize_density [array get density_down] $N1 $N2 $down_normfactor [llength $headnames]]
+    array set density_zplus [normalize_density [array get density_zplus] $N1 $N2 $combined_normfactor [expr [llength $headnames] * 2.0]]
+    array set density_zzero [normalize_density [array get density_zzero] $N1 $N2 $combined_normfactor [expr [llength $tailnames] * 2.0]]  
 
     ;# output densities to files
-    print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up]
-    print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down]
-    print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus]
-    print_frame $Nr $dens_zzero $dr $Rmin $Ntheta [array get density_zzero]
+    print_frame $N1 $dens_up $d1 $min $N2 [array get density_up]
+    print_frame $N1 $dens_down $d1 $min $N2 [array get density_down]
+    print_frame $N1 $dens_zplus $d1 $min $N2 [array get density_zplus]
+    print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero]
 
     ;#clean up
     close $heights_up
@@ -988,7 +1025,7 @@ proc run_field_mult {list_of_systems} {
         puts $gro
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
-        polarHeightByField $item 6 30 200 -1 1
+        polarHeightByField $item 6 30 200 -1 1 1
         mol delete top
     }
 }
