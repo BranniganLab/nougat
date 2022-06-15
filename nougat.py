@@ -5,7 +5,7 @@ import warnings
 
 readbeads = 0
 protein_onoff = 0
-name_list = ["PO", "DO", "DP"]
+name_list = ["PO"]
 bead_dict = {
   "DT" : ['C2A.C2B'],
   "DL" : ['C2A.C2B', 'C3A.C3B'],
@@ -108,7 +108,7 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, 
   #if protein != "nan":
   #  for i in range(0,10,2):
   #    plt.scatter(np.deg2rad(protein[i+1]),protein[i],c="black",linewidth=4,zorder=2)
-  plt.axis('off')
+  #plt.axis('off')
 
   #circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
   #if field == "zone":
@@ -119,9 +119,9 @@ def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, 
 
   fig.set_size_inches(6,6)
   if bead is False:
-    plt.savefig(name+'/'+name+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+field+"_"+dataname+".png", dpi = 700)
   else:
-    plt.savefig(name+'/'+name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
   plt.clf()
   plt.close()
 
