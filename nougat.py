@@ -5,6 +5,7 @@ import warnings
 
 readbeads = 0
 protein_onoff = 0
+polar = True
 name_list = ["PO"]
 bead_dict = {
   "DT" : ['C2A.C2B'],
@@ -32,7 +33,7 @@ density_max = 2
 
 field_list = ["zone","ztwo","zplus","zzero"]
 
-def dimensions_analyzer(data):
+def dimensions_analyzer(data, polar):
   #figure out how many radial bins there are
   counter = 1
   flag = True
@@ -45,26 +46,29 @@ def dimensions_analyzer(data):
         counter = counter+1
     except IndexError:
       flag = False
-  N_r_bins = counter
-  dr = data[0,1] - data[0,0]
+  N1_bins = counter
+  d1 = data[0,1] - data[0,0]
 
   #figure out how many azimuthal bins there are
-  N_theta_bins = len(data[0,:]) - 2
-  dtheta = (np.pi*2)/N_theta_bins
+  N2_bins = len(data[0,:]) - 2
+  if polar is True:
+    d2 = (np.pi*2)/N2_bins
+  elif polar is False:
+    d2 = d1
 
   #figure out how many frames there are in the traj
-  Nframes = int(len(data[:,0])/N_r_bins)
+  Nframes = int(len(data[:,0])/N1_bins)
 
-  return N_r_bins, dr, N_theta_bins, dtheta, Nframes
+  return N1_bins, d1, N2_bins, d2, Nframes
 
 
-def empty_neighbor_test(data, Nframes, N_r_bins, N_theta_bins):
+def empty_neighbor_test(data, Nframes, N1_bins, N2_bins):
   nan_test = np.array(data, copy=True)
   nan_test2 = np.array(data, copy=True)
   knan_test = np.array(data, copy=True)
   for frm in range(Nframes):
-    for row in range(1,N_r_bins-1):
-      for col in range(1,N_theta_bins+1):
+    for row in range(1,N1_bins-1):
+      for col in range(1,N2_bins+1):
         if nan_test2[row-1,col,frm] == True:
           nan_test[row,col,frm] = True
           knan_test[row,col,frm] = True
@@ -87,76 +91,94 @@ def empty_neighbor_test(data, Nframes, N_r_bins, N_theta_bins):
           knan_test[row,col,frm] = True 
 
   nan_test[0,:,:] = True
-  nan_test[N_r_bins-1,:,:] = True
+  nan_test[N1_bins-1,:,:] = True
   nan_test[:,0,:] = True
-  nan_test[:,N_theta_bins+1,:] = True
+  nan_test[:,N2_bins+1,:] = True
 
   knan_test[0,:,:] = True
-  knan_test[N_r_bins-1,:,:] = True
+  knan_test[N1_bins-1,:,:] = True
   knan_test[:,0,:] = True
-  knan_test[:,N_theta_bins+1,:] = True
+  knan_test[:,N2_bins+1,:] = True
 
   return nan_test, knan_test
 
 
-def plot_maker(radius, theta, data, name, field, Vmax, Vmin, protein, dataname, bead):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, polar):
   fig = plt.figure()
-  ax = plt.subplot(projection="polar")
-  c = plt.pcolormesh(theta,radius,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
+
+  if polar is True:
+    ax = plt.subplot(projection="polar")
+  elif polar is False:
+    ax = plt.subplot()
+    
+  c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
   cbar = plt.colorbar(c)
 
-  #if protein != "nan":
-  #  for i in range(0,10,2):
-  #    plt.scatter(np.deg2rad(protein[i+1]),protein[i],c="black",linewidth=4,zorder=2)
-  #plt.axis('off')
+  if protein != False:
+    print(protein)
+    for i in range(0,10,2):
+      protein[i+1] = np.deg2rad(protein[i+1])
+      if polar is False:
+        protein[i], protein[i+1] = convert_to_cart(protein[i],protein[i+1])
+      plt.scatter(protein[i+1],protein[i],c="black",linewidth=4,zorder=2)
+    circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
+    if field == "zone":
+      ax.add_artist(circle1)
 
-  #circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
-  #if field == "zone":
-  #  ax.add_artist(circle1)
-
+  plt.axis('off')
   ax.set_xticklabels([])
   ax.set_yticklabels([])
 
   fig.set_size_inches(6,6)
+
+  if polar is True:
+    coordsys = "polar"
+  elif polar is False:
+    coordsys = "cart"
+
   if bead is False:
-    plt.savefig(name+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+field+"_"+coordsys+"_"+dataname+".png", dpi = 700)
   else:
-    plt.savefig(name+"_"+bead+"_"+field+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+bead+"_"+field+"_"+coordsys+"_"+dataname+".png", dpi = 700)
   plt.clf()
   plt.close()
 
+def convert_to_cart(rval, thetaval):
+  xval = rval*np.cos(thetaval)
+  yval = rval*np.sin(thetaval)
+  return xval, yval
 
-def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, dr, dtheta):
+def measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2):
   for frm in range(Nframes):
-    for row in range(N_r_bins):
-      for col in range(N_theta_bins+2):
+    for row in range(N1_bins):
+      for col in range(N2_bins+2):
         if knan_test[row,col,frm] == False:
 
           #calculate d2h/dr2
           del2r = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
-          del2r = del2r / dr**2
+          del2r = del2r / d1**2
 
           #calculate dh/dr
-          delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*dr)
+          delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
           
           #calculate d2h/drdtheta
           delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm])
-          delrdeltheta = delrdeltheta/(4*dr*dtheta)
+          delrdeltheta = delrdeltheta/(4*d1*d2)
 
           #calculate dh/dtheta
-          deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*dtheta)
+          deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*d2)
 
           #calculate d2h/dtheta2
           del2theta = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
-          del2theta = del2theta / dtheta**2
+          del2theta = del2theta / d2**2
 
           #calculate coefficients
-          r = (row*dr) + (dr/2)
+          r = (row*d1) + (d1/2)
           c1 = 1 / r
           c2 = 1 / r**2
           c3 = 1 / r**3
           c4 = 1 / r**4
-          theta = ((col-1)*dtheta) + (dtheta/2)     ;# col-1 because this is wrapped in theta direction
+          theta = ((col-1)*d2) + (d2/2)     ;# col-1 because this is wrapped in theta direction
 
           #calculate normal vector x,y components
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
@@ -175,23 +197,23 @@ def measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curv
 
           #calculate d2h/dr2
           del2r = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
-          del2r = del2r / dr**2
+          del2r = del2r / d1**2
 
           #calculate dh/dr
-          delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*dr)
+          delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
 
           #calculate dh/dtheta
-          deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*dtheta)
+          deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*d2)
         
           #calculate d2h/dtheta2
           del2theta = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
-          del2theta = del2theta / dtheta**2
+          del2theta = del2theta / d2**2
 
           #calculate coefficients
-          r = (row*dr) + (dr/2)
+          r = (row*d1) + (d1/2)
           c1 = 1 / r
           c2 = 1 / r**2
-          theta = ((col-1)*dtheta) + (dtheta/2)   ;# col-1 because this is wrapped in theta direction
+          theta = ((col-1)*d2) + (d2/2)   ;# col-1 because this is wrapped in theta direction
 
           #calculate normal vector x,y components
           normalization_factor = np.sqrt(1 + c2*deltheta**2 + delr**2)
@@ -231,7 +253,7 @@ def bin_format(value):
   final_value = (' '*(3-length))+strval+'.00'
   return final_value
 
-def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
+def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
   resseqnum = 1
   atom_name = 'SURF'
   chain = 'X'
@@ -244,9 +266,9 @@ def Make_surface_PDB(data,name,field,dr,dtheta,f,serial,bead):
       if str(data[rbin][thetabin]) != "nan":
         seriallen = 5-(len(str(serial)))
         resseqlen = 4-(len(str(resseqnum)))
-        x = (dr*rbin + .5*dr)*(np.cos(thetabin*dtheta + 0.5*dtheta))
+        x = (d1*rbin + .5*d1)*(np.cos(thetabin*d2 + 0.5*d2))
         x = coord_format(x)
-        y = (dr*rbin + .5*dr)*(np.sin(thetabin*dtheta + 0.5*dtheta))
+        y = (d1*rbin + .5*d1)*(np.sin(thetabin*d2 + 0.5*d2))
         y = coord_format(y)
         z = coord_format(data[rbin][thetabin])
         rnum = bin_format(rbin)
@@ -268,7 +290,7 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
 
   return array 
 
-def gen_avg_tilt(name, field):
+def gen_avg_tilt(name, field, polar):
   vector_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
   height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
   normal_data = np.load(name+'.'+field+'.normal_vectors.npy')
@@ -281,15 +303,15 @@ def gen_avg_tilt(name, field):
   vector_data = vector_data[:,2:]
 
   #get bin info
-  N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
+  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(height_data, polar)
 
-  vector = np.zeros((N_r_bins, N_theta_bins*3, Nframes))
+  vector = np.zeros((N1_bins, N2_bins*3, Nframes))
   for x in range(Nframes):
-    vector[:,:,x] = vector_data[x*N_r_bins:(x+1)*N_r_bins,:]
+    vector[:,:,x] = vector_data[x*N1_bins:(x+1)*N1_bins,:]
 
   #if lipids are not in the bin at least 10% of the time, exclude that bin
-  for row in range(N_r_bins):
-    for col in range(N_theta_bins):
+  for row in range(N1_bins):
+    for col in range(N2_bins):
       zerocount = np.count_nonzero(vector[row,col,:])
       count = np.count_nonzero(np.isnan(vector[row,col,:]))
       if (zerocount-count)/Nframes <= .1:
@@ -307,51 +329,71 @@ def gen_avg_tilt(name, field):
 
 #---------------------------------------------------------------------#
 
-def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
+def output_analysis(name, field, protein, data_opt, bead, surffile, serial, polar):
+  
+  if polar is True:
+    coordsys = "polar"
+  elif polar is False:
+    coordsys = "cart"
 
   #read in heights from VMD traj
   if bead is False:
-    height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'.'+field+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+field+'.'+coordsys+'.density.dat')
   else:
-    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.density.dat')
+    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.'+coordsys+'.density.dat')
 
-  #strip r values from density info
+  #strip dim1 values from density info
   density = density_data[:,2:]
 
   #get bin info
-  N_r_bins, dr, N_theta_bins, dtheta, Nframes = dimensions_analyzer(height_data)
+  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(height_data, polar)
 
   #create a new array that has each frame in a different array level
-  height = np.zeros((N_r_bins, N_theta_bins, Nframes))
+  height = np.zeros((N1_bins, N2_bins, Nframes))
   for x in range(Nframes):
-    height[:,:,x] = height_data[x*N_r_bins:(x+1)*N_r_bins,2:]
+    height[:,:,x] = height_data[x*N1_bins:(x+1)*N1_bins,2:]
 
   #create arrays for storing curvature data
-  curvature_inputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-  curvature_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-  kgauss_outputs = np.zeros((N_r_bins, N_theta_bins+2, Nframes))
-  normal_vector_outputs = np.zeros((N_r_bins, 3*(N_theta_bins+2), Nframes))
+  if polar is True:
+    curvature_inputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    curvature_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    kgauss_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    normal_vector_outputs = np.zeros((N1_bins, 3*(N2_bins+2), Nframes))
+  elif polar is False:
+    curvature_inputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    curvature_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    kgauss_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    normal_vector_outputs = np.zeros((N1_bins+2, 3*(N2_bins+2), Nframes))
 
   #wrap the inputs in the theta direction for calculating curvature
-  curvature_inputs[:,1:31,:] = height
-  curvature_inputs[:,0,:] = curvature_inputs[:,30,:]
-  curvature_inputs[:,31,:] = curvature_inputs[:,1,:]
+  curvature_inputs[:,1:(N2_bins+1),:] = height
+  curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
+  curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
+
+  #if cartesian, wrap in both directions
+  if polar == 0:
+    curvature_inputs[1:(N1_bins+1),:,:] = height
+    curvature_inputs[0,:,:] = curvature_inputs[N1_bins,:,:]
+    curvature_inputs[(N1_bins+1),:,:] = curvature_inputs[1,:,:]
 
   #prep plot dimensions
-  rad = height_data[0:N_r_bins,0]
-  rad = np.append(rad, height_data[N_r_bins-1,1])
-  the = np.linspace(0,2*np.pi,N_theta_bins+1)
-  radius,theta=np.meshgrid(rad, the, indexing='ij')
+  dim1 = height_data[0:N1_bins,0]
+  dim1 = np.append(dim1, height_data[N1_bins-1,1])
+  if polar is True:
+    dim2 = np.linspace(0,2*np.pi,N2_bins+1)
+  elif polar is False:
+    dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
+  dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
   #produce average height (dtype == 0) and curvature (dtype == 1) plots
   for dtype in range(data_opt):
     if dtype == 0:
 
       #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
-      for row in range(N_r_bins):
-        for col in range(N_theta_bins):
+      for row in range(N1_bins):
+        for col in range(N2_bins):
           zerocount = np.count_nonzero(height[row,col,:])
           count = np.count_nonzero(np.isnan(height[row,col,:]))
           if (zerocount-count)/Nframes <= .1:
@@ -362,21 +404,17 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avgHeight=np.nanmean(height, axis=2)
 
-      if bead is False: 
-        #save as file for debugging / analysis
-        np.savetxt(name+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+      #make plots!
+      plot_maker(dim1vals, dim2vals, avgHeight, name, field, height_max, height_min, protein, "avgHeight", bead, polar)
 
-        #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", False)
-        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,'C1  ')
+      #save as file for debugging / analysis AND make PDB!
+      if bead is False: 
+        np.savetxt(name+'.'+field+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        serial = Make_surface_PDB(avgHeight,name,field,d1,d2,surffile,serial,'C1  ',polar)
         print(name+" "+field+" height done!")
       else:
-        #save as file for debugging / analysis
-        np.savetxt(name+'.'+bead+'.'+field+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
-
-        #plot and save
-        plot_maker(radius, theta, avgHeight, name, field, height_max, height_min, protein, "avgHeight", bead)
-        serial = Make_surface_PDB(avgHeight,name,field,dr,dtheta,surffile,serial,bead)
+        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        serial = Make_surface_PDB(avgHeight,name,field,d1,d2,surffile,serial,bead,polar)
         print(name+' '+bead+' '+field+" height done!")
 
     elif dtype == 1:
@@ -384,15 +422,24 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
       nan_test = np.isnan(curvature_inputs)
 
       #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-      nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N_r_bins, N_theta_bins)
+      nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N1_bins, N2_bins)
 
       #measure the laplacian and gaussian curvatures
-      curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature(Nframes, N_r_bins, N_theta_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, dr, dtheta)
+      if polar is True:
+        curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2)
+      elif polar is False:
+        curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart()
 
-      #unwrap along theta direction
-      meancurvature = curvature_outputs[:,1:N_theta_bins+1,:]
-      kcurvature = kgauss_outputs[:,1:N_theta_bins+1,:]
-      normal_vectors = normal_vector_outputs[:,3:3*(N_theta_bins+1),:]
+      #unwrap along dim2 direction
+      meancurvature = curvature_outputs[:,1:N2_bins+1,:]
+      kcurvature = kgauss_outputs[:,1:N2_bins+1,:]
+      normal_vectors = normal_vector_outputs[:,3:3*(N2_bins+1),:]
+
+      #if cartesian, unwrap along dim1 direction too
+      if polar is False:
+        meancurvature = meancurvature[1:N1_bins+1,:,:]
+        kcurvature = kcurvature[1:N1_bins+1,:,:]
+        normal_vectors = normal_vectors[1:N1_bins+1,:,:]
 
       #take the average curvatures over all frames
       with warnings.catch_warnings():
@@ -400,47 +447,34 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
         avgcurvature=np.nanmean(meancurvature, axis=2)
         avgkcurvature=np.nanmean(kcurvature, axis=2)
 
+      #make plots!
+      plot_maker(dim1vals, dim2vals, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", bead, polar)
+      plot_maker(dim1vals, dim2vals, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead, polar)
+
+      #save as files for debugging / analysis
       if bead is False: 
         #save as file for debugging / analysis
-        np.savetxt(name+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'.'+field+'.normal_vectors.npy',normal_vectors)
-
-        #laplacian plotting section
-        plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", False)
-        print(name+" "+field+" laplacian done!")
-
-        #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", False)
-        print(name+" "+field+" gaussian curvature done!")
+        np.savetxt(name+'.'+field+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+field+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.save(name+'.'+field+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+        print(name+" "+field+" curvatures done!")
       else:
-        #save as file for debugging / analysis
-        np.savetxt(name+'.'+bead+'.'+field+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+bead+'.'+field+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'.'+bead+'.'+field+'.normal_vectors.npy',normal_vectors)
-
-        #laplacian plotting section
-        plot_maker(radius, theta, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead)
-        print(name+' '+bead+' '+field+" laplacian done!")
-
-        #gaussian plotting section
-        plot_maker(radius, theta, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", bead)
-        print(name+' '+bead+' '+field+" gaussian curvature done!")
+        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+        np.save(name+'.'+bead+'.'+field+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+        print(name+' '+bead+' '+field+" curvatures done!")
 
     elif dtype == 2:
-      if bead is False:
-        #save as file for debuggging / analysis
-        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
 
-        #plot and save
-        plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", False)
+      #make plot!
+      plot_maker(dim1vals, dim2vals, density, name, field, density_max, density_min, protein, "density", bead, polar)
+
+      #save as file for debugging / analysis
+      if bead is False:
+        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
         print(name+" "+field+" density done!")
       else:
-        #save as file for debuggging / analysis
         np.savetxt(name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
-
-        #plot and save
-        plot_maker(radius, theta, density, name, field, density_max, density_min, protein, "density", bead)
         print(name+' '+bead+' '+field+" density done!")
   return serial
 
@@ -448,7 +482,10 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial):
 
 if __name__ == "__main__": 
   for name in name_list:
-    f = open(name+".avgheight.pdb","w")
+    if polar is True:
+      f = open(name+"polar.avgheight.pdb","w")
+    elif polar is False:
+      f = open(name+"cart.avgheight.pdb","w")
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
     serial = 1
     for field in field_list:
@@ -460,17 +497,17 @@ if __name__ == "__main__":
         for i in range(10):
           protein.append(protein_coords[i])
       else:
-        protein = np.nan
+        protein = False
 
       if readbeads == 0:
-        serial = output_analysis(name, field, protein, 3, False, f, serial)
+        serial = output_analysis(name, field, protein, 3, False, f, serial, polar)
       elif readbeads == 1:
-        serial = output_analysis(name, field, protein, 3, False, f, serial)
+        serial = output_analysis(name, field, protein, 3, False, f, serial, polar)
         if field != "zzero":
           for bead in bead_dict[name]:
-            serial = output_analysis(name, field, protein, 3, bead, f, serial)
+            serial = output_analysis(name, field, protein, 3, bead, f, serial, polar)
     print('END', file=f)
     f.close()
   for name in name_list:
     for field in ['zone', 'ztwo']:
-      gen_avg_tilt(name, field)
+      gen_avg_tilt(name, field, polar)
