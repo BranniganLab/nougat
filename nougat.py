@@ -3,8 +3,8 @@ import matplotlib
 import numpy as np
 import warnings
 
-readbeads = 0
-protein_onoff = 0
+readbeads = False
+inclusion_drawn = False
 polar = True
 name_list = ["PO"]
 bead_dict = {
@@ -111,10 +111,10 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   elif polar is False:
     ax = plt.subplot()
     
-  c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
+  c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
   cbar = plt.colorbar(c)
 
-  if protein != False:
+  if protein is not False:
     print(protein)
     for i in range(0,10,2):
       protein[i+1] = np.deg2rad(protein[i+1])
@@ -491,21 +491,21 @@ if __name__ == "__main__":
     for field in field_list:
 
       #read in protein helix coordinates
-      if protein_onoff == 1:
-        protein_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
-        protein = []
+      if inclusion_drawn is True:
+        inclusion_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
+        inclusion = []
         for i in range(10):
-          protein.append(protein_coords[i])
+          inclusion.append(inclusion_coords[i])
       else:
-        protein = False
+        inclusion = False
 
-      if readbeads == 0:
-        serial = output_analysis(name, field, protein, 3, False, f, serial, polar)
-      elif readbeads == 1:
-        serial = output_analysis(name, field, protein, 3, False, f, serial, polar)
+      if readbeads is False:
+        serial = output_analysis(name, field, inclusion, 3, False, f, serial, polar)
+      elif readbeads is True:
+        serial = output_analysis(name, field, inclusion, 3, False, f, serial, polar)
         if field != "zzero":
           for bead in bead_dict[name]:
-            serial = output_analysis(name, field, protein, 3, bead, f, serial, polar)
+            serial = output_analysis(name, field, inclusion, 3, bead, f, serial, polar)
     print('END', file=f)
     f.close()
   #for name in name_list:
