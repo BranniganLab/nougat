@@ -5,7 +5,7 @@ import warnings
 
 readbeads = False
 inclusion_drawn = False
-polar = False
+polar = True
 name_list = ["lgPO"]
 bead_dict = {
   "DT" : ['C2A.C2B'],
@@ -241,8 +241,8 @@ def measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curv
           delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
           
           #calculate d2h/drdtheta
-          delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm])
-          delrdeltheta = delrdeltheta/(4*d1*d2)
+          delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
+          delrdeltheta = delrdeltheta/(2*d1*d2)
 
           #calculate dh/dtheta
           deltheta = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*d2)
