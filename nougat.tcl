@@ -706,7 +706,7 @@ proc nougatByField {system d1 N2 start end step polar} {
             for {set i 0} {$i < [llength $x_vals]} {incr i} {
                 set m [lindex $dim1_bins $i]
                 set n [lindex $dim2_bins $i]
-                if {$m <= $N1} {
+                if {$m <= $N1 && $n <= $N2} {
                     if {$meas_z_zero == 0} {
                         if {[lindex $chains $i] == 1} {
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
@@ -725,10 +725,14 @@ proc nougatByField {system d1 N2 start end step polar} {
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                         set density_zzero($m,$n) [expr {$density_zzero($m,$n) + 1}]
                     }
-                } elseif {$polar == 0 && $m > $N1} {
-                    puts "something weird is happening with your cartesian coordinates"
-                    puts $m 
-                    return 
+                } elseif {$polar == 0} {
+                    if {$m > $N1 || $n > $N2} {
+                        puts "something weird is happening with your cartesian coordinates"
+                        puts $m 
+                        puts $N1
+                        puts $n
+                        puts $N2
+                    }
                 }
             }    
 
