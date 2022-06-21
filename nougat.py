@@ -5,8 +5,8 @@ import warnings
 
 readbeads = False
 inclusion_drawn = False
-polar = True
-name_list = ["PO"]
+polar = False
+name_list = ["lgPO"]
 bead_dict = {
   "DT" : ['C2A.C2B'],
   "DL" : ['C2A.C2B', 'C3A.C3B'],
@@ -62,13 +62,19 @@ def dimensions_analyzer(data, polar):
   return N1_bins, d1, N2_bins, d2, Nframes
 
 
-def empty_neighbor_test(data, Nframes, N1_bins, N2_bins):
+def empty_neighbor_test(data):
   nan_test = np.array(data, copy=True)
   nan_test2 = np.array(data, copy=True)
   knan_test = np.array(data, copy=True)
-  for frm in range(Nframes):
-    for row in range(1,N1_bins-1):
-      for col in range(1,N2_bins+1):
+  
+  shape = np.shape(data)
+  dim1 = shape[0]
+  dim2 = shape[1]
+  dim3 = shape[2]
+
+  for frm in range(dim3):
+    for row in range(1,dim1-1):
+      for col in range(1,dim2-1):
         if nan_test2[row-1,col,frm] == True:
           nan_test[row,col,frm] = True
           knan_test[row,col,frm] = True
@@ -91,14 +97,14 @@ def empty_neighbor_test(data, Nframes, N1_bins, N2_bins):
           knan_test[row,col,frm] = True 
 
   nan_test[0,:,:] = True
-  nan_test[N1_bins-1,:,:] = True
+  nan_test[dim1-1,:,:] = True
   nan_test[:,0,:] = True
-  nan_test[:,N2_bins+1,:] = True
+  nan_test[:,dim2-1,:] = True
 
   knan_test[0,:,:] = True
-  knan_test[N1_bins-1,:,:] = True
+  knan_test[dim1-1,:,:] = True
   knan_test[:,0,:] = True
-  knan_test[:,N2_bins+1,:] = True
+  knan_test[:,dim2-1,:] = True
 
   return nan_test, knan_test
 
@@ -108,10 +114,12 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
 
   if polar is True:
     ax = plt.subplot(projection="polar")
+    c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
   elif polar is False:
     ax = plt.subplot()
+    c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
     
-  c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
+  
   cbar = plt.colorbar(c)
 
   if protein is not False:
@@ -148,7 +156,78 @@ def convert_to_cart(rval, thetaval):
   yval = rval*np.sin(thetaval)
   return xval, yval
 
+def measure_curvature_cart(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2):
+  #mean curvature: Hxx + Hyy
+  #gaussian curvature: HxxHyy - Hxy^2
+
+  for frm in range(Nframes):
+    for row in range(N1_bins+2):
+      for col in range(N2_bins+2):
+        if knan_test[row,col,frm] == False:
+
+          del2x = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
+          del2x = del2x / (d1**2)
+
+          del2y = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
+          del2y = del2y / (d2**2)
+
+          delxy = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
+          delxy = delxy/(2*d1*d2)
+
+          #delxy = curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm]
+          #delxy = delxy / (4*d1*d2)
+
+          delx = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
+
+          dely = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*d2)
+
+          normalization_factor = np.sqrt(1+delx**2+dely**2)
+          norm_vec_x = -1*delx/normalization_factor
+          norm_vec_y = -1*dely/normalization_factor
+          norm_vec_z = 1/normalization_factor
+
+          curvature_outputs[row,col,frm] = del2x + del2y
+          kgauss_outputs[row,col,frm] = del2x*del2y - delxy**2
+          normal_vector_outputs[row,col*3,frm] = norm_vec_x
+          normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
+          normal_vector_outputs[row,col*3+2,frm] = norm_vec_z
+        
+        elif nan_test[row,col,frm] == False:
+          del2x = curvature_inputs[row-1,col,frm] + curvature_inputs[row+1,col,frm] - 2*curvature_inputs[row,col,frm]
+          del2x = del2x / d1**2
+
+          del2y = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
+          del2y = del2y / d2**2
+
+          delx = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
+
+          dely = (curvature_inputs[row,col+1,frm] - curvature_inputs[row,col-1,frm])/(2*d2)
+
+          normalization_factor = np.sqrt(1+delx**2+dely**2)
+          norm_vec_x = -1*delx/normalization_factor
+          norm_vec_y = -1*dely/normalization_factor
+          norm_vec_z = 1/normalization_factor
+
+          curvature_outputs[row,col,frm] = del2x + del2y
+          kgauss_outputs[row,col,frm] = np.nan
+          normal_vector_outputs[row,col*3,frm] = norm_vec_x
+          normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
+          normal_vector_outputs[row,col*3+2,frm] = norm_vec_z
+
+        else:
+
+          curvature_outputs[row,col,frm] = np.nan
+          kgauss_outputs[row,col,frm] = np.nan 
+          normal_vector_outputs[row,col*3,frm] = np.nan
+          normal_vector_outputs[row,col*3+1,frm] = np.nan
+          normal_vector_outputs[row,col*3+2,frm] = np.nan
+
+  return curvature_outputs, kgauss_outputs, normal_vector_outputs
+
 def measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2):
+  #mean curvature: h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)
+  #gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
+
   for frm in range(Nframes):
     for row in range(N1_bins):
       for col in range(N2_bins+2):
@@ -187,8 +266,8 @@ def measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curv
           norm_vec_z = 1 / normalization_factor
 
           #calculate polar laplacian and gaussian curvature
-          curvature_outputs[row,col,frm] = del2r + c1*delr ;# + c2*del2theta
-          kgauss_outputs[row,col,frm] = (-1*c1*del2r*delr) + (c2*(delrdeltheta**2 - (del2r*del2theta))) + (-2*c3*delrdeltheta*deltheta) + (c4*deltheta**2)
+          curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
+          kgauss_outputs[row,col,frm] = c1*delr*del2r + 2*c3*delrdeltheta*deltheta - c4*deltheta**2 - c2*(delrdeltheta**2-del2r*del2theta)
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
           normal_vector_outputs[row,col*3+2,frm] = norm_vec_z
@@ -367,16 +446,24 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
     kgauss_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
     normal_vector_outputs = np.zeros((N1_bins+2, 3*(N2_bins+2), Nframes))
 
-  #wrap the inputs in the theta direction for calculating curvature
-  curvature_inputs[:,1:(N2_bins+1),:] = height
-  curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
-  curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
-
-  #if cartesian, wrap in both directions
-  if polar == 0:
-    curvature_inputs[1:(N1_bins+1),:,:] = height
+  
+  if polar is True:
+    #wrap the inputs in the theta direction for calculating curvature
+    curvature_inputs[:,1:(N2_bins+1),:] = height
+    curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
+    curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
+  elif polar is False:
+    #if cartesian, wrap in both directions
+    curvature_inputs[1:(N1_bins+1),1:(N2_bins+1),:] = height
+    curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
+    curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
     curvature_inputs[0,:,:] = curvature_inputs[N1_bins,:,:]
     curvature_inputs[(N1_bins+1),:,:] = curvature_inputs[1,:,:]
+    #and fill in the corners
+    curvature_inputs[0,0,:] = curvature_inputs[N1_bins,N2_bins,:]
+    curvature_inputs[N1_bins+1,N2_bins+1,:] = curvature_inputs[1,1,:]
+    curvature_inputs[0,N2_bins+1,:] = curvature_inputs[N1_bins,1,:]
+    curvature_inputs[N1_bins+1,0,:] = curvature_inputs[1,N2_bins,:]
 
   #prep plot dimensions
   dim1 = height_data[0:N1_bins,0]
@@ -422,13 +509,13 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
       nan_test = np.isnan(curvature_inputs)
 
       #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-      nan_test, knan_test = empty_neighbor_test(nan_test, Nframes, N1_bins, N2_bins)
+      nan_test, knan_test = empty_neighbor_test(nan_test)
 
       #measure the laplacian and gaussian curvatures
       if polar is True:
         curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2)
       elif polar is False:
-        curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart()
+        curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2)
 
       #unwrap along dim2 direction
       meancurvature = curvature_outputs[:,1:N2_bins+1,:]
