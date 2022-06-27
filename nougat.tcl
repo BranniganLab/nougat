@@ -1021,7 +1021,7 @@ proc nougatByBead {system} {
     }  
 }
 
-proc run_field_mult {list_of_systems} {
+proc run_field_mult {list_of_systems polar} {
     foreach item $list_of_systems {
         set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
         set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
@@ -1035,7 +1035,11 @@ proc run_field_mult {list_of_systems} {
         puts $gro
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
-        polarHeightByField $item 6 30 200 -1 1 1
+        if {$polar == 1} {
+            polarHeightByField $item 6 30 200 -1 1 1
+        } elseif {$polar == 0} {
+            polarHeightByField $item 6 30 200 -1 1 0
+        }
         mol delete top
     }
 }
