@@ -320,21 +320,24 @@ proc print_value {file value end_line} {
 
 
 ;#print an entire array (usually 1 frame) to file
-proc print_frame {N1 file d1 min N2 data} {
+proc print_frame {N1 file d1 min N2 data polar} {
     
     #needed in order to make the proc understand this is array data
     array set data_copy $data
+
+    if {$polar == 1} {
+        set N2 [expr $N2-1]
+    }
 
     ;# starts new line in outfile with bin values
     for {set m 0} {$m <= $N1} {incr m} {
         print_line_init $file $m $d1 $min
         ;# adds bin values through penultimate value in one line
-        for {set n 0} {$n < [expr $N2 - 1]} {incr n} {
+        for {set n 0} {$n < $N2} {incr n} {
             print_value $file $data_copy($m,$n) 0
         }
         ;# adds final value and starts new line in outfile
-        set final_ndx [expr $N2-1]
-        print_value $file $data_copy($m,$final_ndx) 1
+        print_value $file $data_copy($m,$N2) 1
     }
 }
 
@@ -725,14 +728,6 @@ proc nougatByField {system d1 N2 start end step polar} {
                         set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                         set density_zzero($m,$n) [expr {$density_zzero($m,$n) + 1}]
                     }
-                } elseif {$polar == 0} {
-                    if {$m > $N1 || $n > $N2} {
-                        puts "something weird is happening with your cartesian coordinates"
-                        puts $m 
-                        puts $N1
-                        puts $n
-                        puts $N2
-                    }
                 }
             }    
 
@@ -778,13 +773,13 @@ proc nougatByField {system d1 N2 start end step polar} {
 
             ;#output heights to files
             if { $meas_z_zero == 0 } {
-                print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up]
-                print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down]
-                print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus]
-                print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up]
-                print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down]
+                print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up] $polar 
+                print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down] $polar 
+                print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus] $polar 
+                print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up] $polar 
+                print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down] $polar 
             } elseif {$meas_z_zero == 1} {
-                print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up]
+                print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up] $polar 
             }
 
             set meas_z_zero 1
@@ -821,10 +816,10 @@ proc nougatByField {system d1 N2 start end step polar} {
     array set density_zzero [normalize_density [array get density_zzero] $N1 $N2 $combined_normfactor [expr [llength $tailnames] * 2.0]]  
 
     ;# output densities to files
-    print_frame $N1 $dens_up $d1 $min $N2 [array get density_up]
-    print_frame $N1 $dens_down $d1 $min $N2 [array get density_down]
-    print_frame $N1 $dens_zplus $d1 $min $N2 [array get density_zplus]
-    print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero]
+    print_frame $N1 $dens_up $d1 $min $N2 [array get density_up] $polar 
+    print_frame $N1 $dens_down $d1 $min $N2 [array get density_down] $polar 
+    print_frame $N1 $dens_zplus $d1 $min $N2 [array get density_zplus] $polar 
+    print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero] $polar 
 
     ;#clean up
     close $heights_up
@@ -974,9 +969,9 @@ proc nougatByBead {system} {
             }
 
             ;#output heights to files
-            print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up]
-            print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down]
-            print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus]
+            print_frame $Nr $heights_up $dr $Rmin $Ntheta [array get totals_up] $polar 
+            print_frame $Nr $heights_down $dr $Rmin $Ntheta [array get totals_down] $polar 
+            print_frame $Nr $heights_zplus $dr $Rmin $Ntheta [array get totals_zplus] $polar 
         }
         ;# calculate density
         set delta_frame [expr ($nframes - $sample_frame) / $dt]
@@ -1006,9 +1001,9 @@ proc nougatByBead {system} {
         array set density_zplus [normalize_density [array get density_zplus] $Nr $Ntheta $combined_normfactor [expr [llength $headnames] * 2.0]]
 
         ;# output densities to files
-        print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up]
-        print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down]
-        print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus]
+        print_frame $Nr $dens_up $dr $Rmin $Ntheta [array get density_up] $polar 
+        print_frame $Nr $dens_down $dr $Rmin $Ntheta [array get density_down] $polar 
+        print_frame $Nr $dens_zplus $dr $Rmin $Ntheta [array get density_zplus] $polar 
 
         ;#clean up
         close $heights_up
@@ -1036,9 +1031,9 @@ proc run_field_mult {list_of_systems polar} {
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
         if {$polar == 1} {
-            polarHeightByField $item 6 30 200 -1 1 1
+            nougatByField $item 12 30 200 -1 1 1
         } elseif {$polar == 0} {
-            polarHeightByField $item 6 30 200 -1 1 0
+            nougatByField $item 12 30 200 -1 1 0
         }
         mol delete top
     }
