@@ -83,8 +83,35 @@ proc cell_prep {system end} {
                 set names "$t1bead $t2bead"
                 lappend tail_list $names
         }
-    } else {
-        puts "Tail lengths are different. Teach me what to do."
+    } elseif {[llength $tail_one] > [llength $tail_two]} {
+        set acyl_names [offset_tail_analyzer $species]
+        set tail_one [lindex $acyl_names 0]
+        set tail_two [lindex $acyl_names 1]
+        set t1T [lindex $tail_one end]
+        set t2T [lindex $tail_two end]
+        set tailnames "$t1T $t2T"
+        set tail_list []
+        for {set i 1} {$i < [llength $tail_one]} {incr i} {
+                set t1bead [lindex $tail_one $i]
+                set t2bead [lindex $tail_two $i]
+                set names "$t1bead $t2bead"
+                lappend tail_list $names
+        }
+    } elseif {[llength $tail_two] > [llength $tail_one]} {
+        set acyl_names [offset_tail_analyzer $species]
+        set tail_one [lindex $acyl_names 0]
+        set tail_two [lindex $acyl_names 1]
+        set t1T [lindex $tail_one end]
+        set t2T [lindex $tail_two end]
+        set tailnames "$t1T $t2T"
+        set tail_list []
+        for {set i 1} {$i < [llength $tail_two]} {incr i} {
+                set t1bead [lindex $tail_one $i]
+                set t2bead [lindex $tail_two $i]
+                set names "$t1bead $t2bead"
+                lappend tail_list $names
+        }
+        
     }
 
     ;# Assigns lipids to user value 1 or 2 depending on leaflet
@@ -495,6 +522,27 @@ proc leaflet_sorter {species tailnames sample_frame} {
     puts "Leaflet sorting complete!"
 }
 
+proc offset_tail_analyzer { species } {
+
+    set tail_one []
+    set tail_two []
+
+    set seltext [format {name "C.*" "D.*" and name ".*A"}]
+    set seltext2 [format {name "C.*" "D.*" and name ".*B"}]
+    set sel [atomselect top "resname $species and $seltext"]
+    set sel2 [atomselect top "resname $species and $seltext2"]
+    foreach i $sel j $sel2 {
+        lappend tail_one $i
+        lappend tail_two $j
+    }
+    if {lsearch -inline $tail_one {} == {}} {
+        lreplace $tail_one [lsearch $tail_one {}] end NA
+    }
+    if {lsearch -inline $tail_two {} == {}} {
+        lreplace $tail_one [lsearch $tail_two {}] end NA
+    }
+    return [list $tail_one $tail_two]
+}
 proc tail_analyzer { species } {
 
     set sel [atomselect top "resname $species"]
