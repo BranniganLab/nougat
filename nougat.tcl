@@ -3,8 +3,8 @@ package require pbctools
 
 # EDIT THE PATHS HERE
 # TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-set QWRAP "~/qwrap-master"
-set VEC "~/utilities/vecexpr"
+set QWRAP "~/APPS/qwrap-master"
+set VEC "~/APPS/vecexpr-master"
 
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
@@ -23,7 +23,7 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "name BB SC1 to SC4"
+    set inclusion_sel "resname AU lig"
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
@@ -43,12 +43,12 @@ proc cell_prep {system end} {
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    set align_sel "name BB"
+    #set align_sel "nam"
 
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
     ;# the average position of resid 15
-    set reference_point "name BB and resid 15"
+    set reference_point "index 1"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -58,12 +58,12 @@ proc cell_prep {system end} {
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
     Center_System "$wrap_sel"
-    Align "$align_sel"
+    #Align "$align_sel"
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     ;# comment this out or customize it for your inclusion
-    set_occupancy top 
+    #set_occupancy top 
 
     ;# figures out which beads are in your lipids
     ;# Only works for systems with 100% one type of lipid
@@ -94,7 +94,7 @@ proc cell_prep {system end} {
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    Protein_Position $system $headnames $tailnames 
+    #Protein_Position $system $headnames $tailnames 
 
     ;#**********************************************************
     ;#          MAKE EDITS ABOVE BEFORE STARTING
