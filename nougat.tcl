@@ -660,13 +660,13 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     set heights_zplus [open "${system}.zplus.${condensed_name}.${coordsys}.height.dat" w]
     set dens_up [open "${system}.zone.${condensed_name}.${coordsys}.density.dat" w]
     set dens_down [open "${system}.ztwo.${condensed_name}.${coordsys}.density.dat" w]
+    set thick_up [open "${system}.zone.${condensed_name}.${coordsys}.thickness.dat" w]
+    set thick_down [open "${system}.ztwo.${condensed_name}.${coordsys}.thickness.dat" w]
     if {$separate_beads == 0} {
         set heights_zzero [open "${system}.zzero.${condensed_name}.${coordsys}.height.dat" w]
         set dens_zzero [open "${system}.zzero.${condensed_name}.${coordsys}.density.dat" w]
         set tilt_up [open "${system}.zone.${condensed_name}.${coordsys}.tilt.dat" w]
         set tilt_down [open "${system}.ztwo.${condensed_name}.${coordsys}.tilt.dat" w]
-        set thick_up [open "${system}.zone.${condensed_name}.${coordsys}.thickness.dat" w]
-        set thick_down [open "${system}.ztwo.${condensed_name}.${coordsys}.thickness.dat" w]
         ;#set order_up [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
         ;#set order_down [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
     }
@@ -699,7 +699,15 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     ;#start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
-        leaflet_check $frm $species "PO4" $tailnames
+        if {$step == 1} {
+            leaflet_check $frm $species "PO4" $tailnames
+        } elseif {$step > 1} {
+            if {$frm != $start} {
+                for {set frame [expr $step - 1]} {$frame >= 0} {set frame [expr $frame - 1]} {
+                    leaflet_check [expr $frm - $frame] $species "PO4" $tailnames
+                }
+            }
+        }
 
         foreach selex $sellist {
             $selex frame $frm 
@@ -781,11 +789,11 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
                 array set totals_down [initialize_array $N1 $N2 0.0]
                 array set counts_down [initialize_array $N1 $N2 0.0]
                 array set totals_zplus [initialize_array $N1 $N2 0.0]
+                array set thickness_up [initialize_array $N1 $N2 0.0]
+                array set thickness_down [initialize_array $N1 $N2 0.0]
                 if {$separate_beads == 0} {
                     array set tilts_up [initialize_array $N1 $N2 {0.0 0.0 0.0}]
                     array set tilts_down [initialize_array $N1 $N2 {0.0 0.0 0.0}]
-                    array set thickness_up [initialize_array $N1 $N2 0.0]
-                    array set thickness_down [initialize_array $N1 $N2 0.0]
                     ;#array set chain_order_up [initialize_array $N1 $N2 0.0]
                     ;#array set chain_order_down [initialize_array $N1 $N2 0.0]
                 }
@@ -804,18 +812,18 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
                             set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
                             set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
                             set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
+                            set thickness_up($m,$n) [expr {$thickness_up($m,$n) + [lindex $mins_list $i]}]
                             if {$separate_beads == 0} {
                                 set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) [lindex $tilts $i] add]
-                                set thickness_up($m,$n) [expr {$thickness_up($m,$n) + [lindex $mins_list $i]}]
                                 ;#set chain_order_up($m,$n) [expr {$chain_order_up($m,$n) + [lindex $order $i]}]
                             }
                         } elseif {[lindex $leaflet $i] == 2} {
                             set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
                             set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
                             set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
+                            set thickness_down($m,$n) [expr {$thickness_down($m,$n) + [lindex $maxs_list $i]}]
                             if {$separate_beads == 0} {
                                 set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) [lindex $tilts $i] add]
-                                set thickness_down($m,$n) [expr {$thickness_down($m,$n) + [lindex $maxs_list $i]}]
                                 ;#set chain_order_down($m,$n) [expr {$chain_order_down($m,$n) + [lindex $order $i]}]
                             }
                         }
@@ -832,35 +840,35 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
                     if {$meas_z_zero == 0} {
                         if {$counts_up($m,$n) != 0.0} {
                             set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
+                            set thickness_up($m,$n) [expr $thickness_up($m,$n) / $counts_up($m,$n)]
+                            set thickness_up($m,$n) [expr $totals_up($m,$n) - $thickness_up($m,$n)]
                             if {$separate_beads == 0} {
                                 set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
                                 set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
-                                set thickness_up($m,$n) [expr $thickness_up($m,$n) / $counts_up($m,$n)]
-                                set thickness_up($m,$n) [expr $totals_up($m,$n) - $thickness_up($m,$n)]
                                 ;# ADD ORDER HERE
                             }
                         } else {
                             set totals_up($m,$n) "nan"
+                            set thickness_up($m,$n) "nan"
                             if {$separate_beads == 0} {
                                 set tilts_up($m,$n) "nan nan nan"
-                                set thickness_up($m,$n) "nan"
                                 ;# ADD ORDER HERE
                             }
                         }
                         if {$counts_down($m,$n) != 0.0} {
                             set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
+                            set thickness_down($m,$n) [expr $thickness_down($m,$n) / $counts_down($m,$n)]
+                            set thickness_down($m,$n) [expr $thickness_down($m,$n) - $totals_down($m,$n)]
                             if {$separate_beads == 0} {
                                 set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) $counts_down($m,$n) div]
                                 set tilts_down($m,$n) [vecnorm $tilts_down($m,$n)]
-                                set thickness_down($m,$n) [expr $thickness_down($m,$n) / $counts_down($m,$n)]
-                                set thickness_down($m,$n) [expr $thickness_down($m,$n) - $totals_down($m,$n)]
                                 ;# ADD ORDER HERE
                             }
                         } else {
                             set totals_down($m,$n) "nan"
+                            set thickness_down($m,$n) "nan"
                             if {$separate_beads == 0} {
                                 set tilts_down($m,$n) "nan nan nan"
-                                set thickness_down($m,$n) "nan"
                                 ;# ADD ORDER HERE
                             }
                         }
@@ -943,8 +951,8 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     close $dens_zzero
     close $tilt_up 
     close $tilt_down 
-    ;#close $thick_up 
-    ;#close $thick_down 
+    close $thick_up 
+    close $thick_down 
     ;#close $order_up 
     ;#close $order_down 
     
