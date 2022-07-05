@@ -578,7 +578,7 @@ proc nougatByField {system d1 N2 start end step polar separate_beads} {
     
     #calculate number of dim1 bins from d1 and range1
     if {[expr $range1 % $d1] == 0} { 
-        set N1 [expr [expr $range1 / $d1] - 1.0] 
+        set N1 [expr [expr $range1 / $d1] - 1] 
     } else {
         set N1 [expr $range1 / $d1]
     }
@@ -593,7 +593,7 @@ proc nougatByField {system d1 N2 start end step polar separate_beads} {
         set box_y [molinfo top get b frame [expr $nframes - 1]]
         set range2 [expr int([vecexpr $box_y floor])]
         if {[expr $range2 % $d2] == 0} { 
-            set N2 [expr [expr $range2 / $d2] - 1.0] 
+            set N2 [expr [expr $range2 / $d2] - 1] 
         } else {
             set N2 [expr $range2 / $d2]
         }
@@ -613,7 +613,10 @@ proc nougatByField {system d1 N2 start end step polar separate_beads} {
     lappend important_variables $nframes 
     lappend important_variables $step 
     lappend important_variables $ref_height
-    lappend important_variables $min 
+    lappend important_variables $min
+    if {$polar == 1} {
+        lappend important_variables $dthetadeg
+    } 
 
     run_nougat $system $headnames $coordsys $important_variables $polar 0
     if {$separate_beads == 1} {
@@ -643,6 +646,9 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     set step [lindex $important_variables 13]
     set ref_height [lindex $important_variables 14]
     set min [lindex $important_variables 15]
+    if {$polar == 1} {
+        set dthetadeg [lindex $important_variables 16]
+    }
 
     set name1 [lindex $beadname 0]
     set name2 [lindex $beadname 1]
