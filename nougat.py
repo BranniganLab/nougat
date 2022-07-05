@@ -5,19 +5,19 @@ import warnings
 
 readbeads = False
 inclusion_drawn = False
-polar = True
-name_list = ["lgPO"]
+polar = False
+name_list = ["DT"]
 bead_dict = {
-  "DT" : ['C2A.C2B'],
-  "DL" : ['C2A.C2B', 'C3A.C3B'],
-  "DY" : ['D2A.D2B', 'C3A.C3B'],
-  "DO" : ['D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
-  "PO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "lgPO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DP" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DB" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
-  "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
-  "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
+  "DT" : ['C1A.C1B', 'C2A.C2B'],
+  "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
+  "DY" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B'],
+  "DO" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
+  "PO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "lgPO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DP" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DB" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
+  "DG" : ['C1A.C1B', 'C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
+  "DX" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
 
 # These determine the scale in your png files
@@ -30,6 +30,8 @@ gauss_curv_min = -0.005
 gauss_curv_max = 0.005
 density_min = 0
 density_max = 2
+thick_min = 0
+thick_max = 7
 
 field_list = ["zone","ztwo","zplus","zzero"]
 
@@ -416,15 +418,15 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
     coordsys = "cart"
 
   #read in heights from VMD traj
-  if bead is False:
-    height_data = np.genfromtxt(name+'.'+field+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+field+'.'+coordsys+'.density.dat')
-  else:
-    height_data = np.genfromtxt(name+'.'+bead+'.'+field+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
-    density_data = np.genfromtxt(name+'.'+bead+'.'+field+'.'+coordsys+'.density.dat')
+  height_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+  if field != "zplus":
+    density_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.density.dat')
+  if field == "zone" or field == "ztwo":
+    thickness_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.thickness.dat',missing_values='nan',filling_values=np.nan)
 
-  #strip dim1 values from density info
-  density = density_data[:,2:]
+  if field != "zplus":
+    #strip dim1 values from density info
+    density = density_data[:,2:]
 
   #get bin info
   N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(height_data, polar)
@@ -433,6 +435,11 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
   height = np.zeros((N1_bins, N2_bins, Nframes))
   for x in range(Nframes):
     height[:,:,x] = height_data[x*N1_bins:(x+1)*N1_bins,2:]
+
+  if field == "zone" or field == "ztwo":
+    thickness = np.zeros((N1_bins, N2_bins, Nframes))
+    for x in range(Nframes):
+      thickness[:,:,x] = thickness_data[x*N1_bins:(x+1)*N1_bins,2:]
 
   #create arrays for storing curvature data
   if polar is True:
@@ -495,14 +502,9 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
       plot_maker(dim1vals, dim2vals, avgHeight, name, field, height_max, height_min, protein, "avgHeight", bead, polar)
 
       #save as file for debugging / analysis AND make PDB!
-      if bead is False: 
-        np.savetxt(name+'.'+field+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
-        serial = Make_surface_PDB(avgHeight,name,field,d1,d2,surffile,serial,'C1  ',polar)
-        print(name+" "+field+" height done!")
-      else:
-        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
-        serial = Make_surface_PDB(avgHeight,name,field,d1,d2,surffile,serial,bead,polar)
-        print(name+' '+bead+' '+field+" height done!")
+      np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+      serial = Make_surface_PDB(avgHeight,name,field,d1,d2,surffile,serial,bead,polar)
+      print(name+' '+bead+' '+field+" height done!")
 
     elif dtype == 1:
       #if a bin is empty, you can't measure its curvature
@@ -539,30 +541,40 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
       plot_maker(dim1vals, dim2vals, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead, polar)
 
       #save as files for debugging / analysis
-      if bead is False: 
-        #save as file for debugging / analysis
-        np.savetxt(name+'.'+field+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+field+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'.'+field+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
-        print(name+" "+field+" curvatures done!")
-      else:
-        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-        np.savetxt(name+'.'+bead+'.'+field+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-        np.save(name+'.'+bead+'.'+field+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
-        print(name+' '+bead+' '+field+" curvatures done!")
+      np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+      np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+      np.save(name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+      print(name+' '+bead+' '+field+" curvatures done!")
 
     elif dtype == 2:
+      if field != "zplus":
+        #make plot!
+        plot_maker(dim1vals, dim2vals, density, name, field, density_max, density_min, protein, "density", bead, polar)
 
-      #make plot!
-      plot_maker(dim1vals, dim2vals, density, name, field, density_max, density_min, protein, "density", bead, polar)
-
-      #save as file for debugging / analysis
-      if bead is False:
-        np.savetxt(name+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
-        print(name+" "+field+" density done!")
-      else:
+        #save as file for debugging / analysis
         np.savetxt(name+'.'+bead+'.'+field+'.avgdensity.dat',density,delimiter = ',',fmt='%10.7f')
         print(name+' '+bead+' '+field+" density done!")
+    elif dtype == 3:
+      if field == "zone" or field == "ztwo":
+        #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+        for row in range(N1_bins):
+          for col in range(N2_bins):
+            zerocount = np.count_nonzero(thickness[row,col,:])
+            count = np.count_nonzero(np.isnan(thickness[row,col,:]))
+            if (zerocount-count)/Nframes <= .1:
+              thickness[row,col,:] = np.nan
+
+        #take the average height over all frames
+        with warnings.catch_warnings():
+          warnings.simplefilter("ignore", category=RuntimeWarning)
+          avgThickness=np.nanmean(thickness, axis=2)
+
+        #make plots!
+        plot_maker(dim1vals, dim2vals, avgThickness, name, field, thick_max, thick_min, protein, "avgThickness", bead, polar)
+
+        #save as file for debugging / analysis AND make PDB!
+        np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgthickness.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        print(name+' '+bead+' '+field+" thickness done!")
   return serial
 
 
@@ -587,11 +599,11 @@ if __name__ == "__main__":
         inclusion = False
 
       if readbeads is False:
-        serial = output_analysis(name, field, inclusion, 3, False, f, serial, polar)
+        serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
       elif readbeads is True:
-        serial = output_analysis(name, field, inclusion, 3, False, f, serial, polar)
+        serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
         if field != "zzero":
-          for bead in bead_dict[name]:
+          for bead in bead_dict[name][1:]:
             serial = output_analysis(name, field, inclusion, 3, bead, f, serial, polar)
     print('END', file=f)
     f.close()
