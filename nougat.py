@@ -147,9 +147,9 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     coordsys = "cart"
 
   if bead is False:
-    plt.savefig(name+"_"+field+"_"+coordsys+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
   else:
-    plt.savefig(name+"_"+bead+"_"+field+"_"+coordsys+"_"+dataname+".png", dpi = 700)
+    plt.savefig(name+"_"+bead+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
   plt.clf()
   plt.close()
 
