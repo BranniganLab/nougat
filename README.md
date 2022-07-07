@@ -61,7 +61,7 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ### Run nougat.tcl
 
 ```
-startNougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar] [bead analysis]
+start_nougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar] [bead analysis]
 ```
 An explanation of the options is as follows:
 ```
