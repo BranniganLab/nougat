@@ -542,7 +542,7 @@ proc tilt_angles {tail_length tail_one tail_two} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc nougatByField {system d1 N2 start end step polar separate_beads} {
+proc startNougat {system d1 N2 start end step polar separate_beads} {
 
     set important_variables [cell_prep $system $start]
     set species [lindex $important_variables 0]
