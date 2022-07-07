@@ -38,7 +38,7 @@ nougat.tcl will analyze your trajectory in VMD and output .dat files that contai
 - Open nougat.tcl in the text editor of your choice and make edits to two sections:
 ```
 Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored (lines 6-7)
-Edit all of the indicated fields in cell_prep proc (lines 12-90)
+Edit all of the indicated fields in cell_prep proc (lines 12-100)
 ```
 - Open VMD and load your structure and trajectory files. 
 - Ideally, ensure that your first frame contains a flat bilayer IE the starting condition from your simulation
@@ -59,27 +59,25 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 - if you answered "no," to any questions: troubleshoot; otherwise you're ready to use nougat!
 
 ### Run nougat.tcl
-If you are interested in just analyzing the principle membrane fields z1, z2, z0, and z+ using the $headname you specified:
+
 ```
-nougatByField [system name] [dr] [Ntheta] [start] [end] [step]
-```
-If you want to analyze along every bead in the lipid chain:
-```
-nougatByBead [system name] [dr] [Ntheta] [start] [end] [step]
+startNougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar] [bead analysis]
 ```
 An explanation of the options is as follows:
 ```
 - system name       the name you want your files/directories to be saved with
-- dr                the radial bin width in Angstroms; we recommend starting with 6
-- Ntheta            the number of bins in the theta direction; we recommend starting with 30
+- dr | dx           the bin width in A; depends on if you are analyzing polar or cartesian systems
+- Ntheta            the number of bins in the theta direction; will be ignored if cartesian
 - start             the frame from which you would like to start analysis
 - end               the frame where you would like to stop analysis; -1 will run for the whole simulation
 - step              allows you to skip frames; otherwise use 1
+- polar             1 for polar system, 0 for cartesian system
+- bead analysis     0 for normal nougat, 1 for nougat analysis of all beads down the lipid chain
 ```
 
 ### Edit & Run nougat.py
 - Open nougat.py in the text editor of your choice
-- If you used nougatByBead, set **readbeads** to 1
+- If you used bead analysis, set **readbeads** to 1
 - If you _did not_ comment out Protein_Position, set **protein_onoff** to 1
 - Edit name_list to contain the name(s) of your system(s) as specified by "system name" in nougat.tcl
 - If you used nougatByBead, add your lipid(s) to the bead_dict dictionary as needed; ensure the key is equal to the name in name_list!
