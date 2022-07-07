@@ -3,8 +3,8 @@ package require pbctools
 
 # EDIT THE PATHS HERE
 # TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-set QWRAP "~/APPS/qwrap-master"
-set VEC "~/APPS/vecexpr-master"
+set QWRAP "/home/jje63/Documents/nougat/utilities"
+set VEC "/home/jje63/Documents/nougat/utilities"
 
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
@@ -76,41 +76,29 @@ proc cell_prep {system end} {
     set t2T [lindex $tail_two end]
     set tailnames "$t1T $t2T"
     set tail_list []
-    if {[llength $tail_one] == [llength $tail_two]} {
-        for {set i 1} {$i < [llength $tail_one]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
+    puts "$tail_one" 
+    puts "$tail_two"
+    foreach i $tail_one j $tail_two {
+                set t1bead $i
+                set t2bead $j
                 set names "$t1bead $t2bead"
                 lappend tail_list $names
-        }
-    } elseif {[llength $tail_one] > [llength $tail_two]} {
-        set acyl_names [offset_tail_analyzer $species]
-        set tail_one [lindex $acyl_names 0]
-        set tail_two [lindex $acyl_names 1]
-        set t1T [lindex $tail_one end]
-        set t2T [lindex $tail_two end]
-        set tailnames "$t1T $t2T"
-        set tail_list []
-        for {set i 1} {$i < [llength $tail_one]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
-                set names "$t1bead $t2bead"
-                lappend tail_list $names
-        }
-    } elseif {[llength $tail_two] > [llength $tail_one]} {
-        set acyl_names [offset_tail_analyzer $species]
-        set tail_one [lindex $acyl_names 0]
-        set tail_two [lindex $acyl_names 1]
-        set t1T [lindex $tail_one end]
-        set t2T [lindex $tail_two end]
-        set tailnames "$t1T $t2T"
-        set tail_list []
-        for {set i 1} {$i < [llength $tail_two]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
-                set names "$t1bead $t2bead"
-                lappend tail_list $names
-        }
+    #if {[llength $tail_one] == [llength $tail_two]} {
+    #    puts "yes"
+    #    for {set i 1} {$i < [llength $tail_one]} {incr i} {
+    #            set t1bead [lindex $tail_one $i]
+    #            set t2bead [lindex $tail_two $i]
+    #            set names "$t1bead $t2bead"
+    #            lappend tail_list $names
+    #    }
+    #} elseif {[llength $tail_one] > [llength $tail_two]} {
+    #    foreach i $tail_one j $tail_two {
+    #            set t1bead $i
+    #            set t2bead $j
+    #            set names "$t1bead $t2bead"
+    #            lappend tail_list $names
+    #    }
+    #}
         
     }
 
