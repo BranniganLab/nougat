@@ -3,8 +3,8 @@ package require pbctools
 
 # EDIT THE PATHS HERE
 # TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-set QWRAP "/home/jje63/Documents/nougat/utilities"
-set VEC "/home/jje63/Documents/nougat/utilities"
+set QWRAP "/home/jahmalennis/Documents/nougat/utilities"
+set VEC "/home/jahmalennis/Documents/nougat/utilities"
 
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
@@ -257,7 +257,7 @@ proc Protein_Position {name hnames tnames} {
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
+    set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
@@ -707,7 +707,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         ;#set order_down [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
     }
 
-    puts "Setup complete. Starting analysis now."	
+    puts "Setup complete. Starting analysis now."   
 
 
     set heads [atomselect top "name $beadname"]
@@ -769,9 +769,20 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set thickness_list []
         set counter 0
         foreach bead [lrange $sellist 4 end] {
-            set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
-            incr counter
+            if {[llength [lsort -unique [$bead get name]]] == 2} {
+                set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
+                incr counter
+            } elseif { [llength [lsort -unique [$bead get name]]] == 1 } {
+                set bead2 []
+                foreach num [$bead get z] {
+                    lappend bead2 $num
+                    lappend bead2 0
+                }
+                set thickness_list "$thickness_list [vecexpr $bead2 $ref_height sub]"
+                incr counter
+                }
         }
+
         if {$counter > 1} {
             set mins_list [vecexpr $thickness_list $counter min_ew]
             ;# there is no max_ew in vecexpr, so multiply by -1, do min_ew, then multiply by -1 again
