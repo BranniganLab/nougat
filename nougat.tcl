@@ -510,27 +510,7 @@ proc leaflet_sorter {species tailnames sample_frame} {
     puts "Leaflet sorting complete!"
 }
 
-proc offset_tail_analyzer { species } {
 
-    set tail_one []
-    set tail_two []
-
-    set seltext [format {name "C.*" "D.*" and name ".*A"}]
-    set seltext2 [format {name "C.*" "D.*" and name ".*B"}]
-    set sel [atomselect top "resname $species and $seltext"]
-    set sel2 [atomselect top "resname $species and $seltext2"]
-    foreach i $sel j $sel2 {
-        lappend tail_one $i
-        lappend tail_two $j
-    }
-    if {lsearch -inline $tail_one {} == {}} {
-        lreplace $tail_one [lsearch $tail_one {}] end NA
-    }
-    if {lsearch -inline $tail_two {} == {}} {
-        lreplace $tail_one [lsearch $tail_two {}] end NA
-    }
-    return [list $tail_one $tail_two]
-}
 proc tail_analyzer { species } {
 
     set sel [atomselect top "resname $species"]
@@ -718,6 +698,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set t1tiltsel [atomselect top "resname $species and name GL1 $tail_one"]
         set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
         set sellist [list $heads $interface $t1tiltsel $t2tiltsel]
+        #puts [[lindex $sellist 2] get name]
 
         for {set beadpair 0} {$beadpair < [llength $tail_list]} {incr beadpair} {
             set newsel [atomselect top "resname $species and name [lindex $tail_list $beadpair]"]
@@ -769,6 +750,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set thickness_list []
         set counter 0
         foreach bead [lrange $sellist 4 end] {
+            #puts [$bead get z]
             set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
             incr counter
         }
@@ -780,7 +762,6 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
             set mins_list $thickness_list
             set maxs_list $thickness_list
         }
-
         foreach bead $blist {
 
             set x_vals [$bead get x]
