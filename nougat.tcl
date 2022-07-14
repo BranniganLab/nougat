@@ -413,6 +413,25 @@ proc Align { stuff } {
     $ref delete
 }
 
+proc calc_vec_magn {xvals yvals zvals} {
+    set x2 [vecexpr $xvals sq]
+    set y2 [vecexpr $yvals sq]
+    set z2 [vecexpr $zvals sq]
+    return [vecexpr [vecexpr [vecexpr $x2 $y2 add] $z2 add] sqrt]
+}
+
+proc calc_vector_btw_beads {b1x b1y b1z b2x b2y b2z} {
+    set xvals [vecexpr b2x b1x sub]
+    set yvals [vecexpr b2y b1y sub]
+    set zvals [vecexpr b2z b1z sub]
+    return [list $xvals $yvals $zvals]
+}
+
+proc calc_avg_order {angle_list} {
+    set threecos2minusone [vecexpr [vecexpr [vecexpr [vecexpr $angle_list cos] sq] 3 mult] 1 sub]
+    return [expr [vecexpr $threecos2minusone mean] / 2.0]
+}
+
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -942,19 +961,9 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero] $polar 
 
     ;#clean up
-    close $heights_up
-    close $heights_down
-    close $heights_zplus
-    close $heights_zzero
-    close $dens_up
-    close $dens_down
-    close $dens_zzero
-    close $tilt_up 
-    close $tilt_down 
-    close $thick_up 
-    close $thick_down 
-    ;#close $order_up 
-    ;#close $order_down 
+    foreach channel [file channels "file*"] {
+        close $channel
+    }
     
     foreach selection [atomselect list] {
         $selection delete
