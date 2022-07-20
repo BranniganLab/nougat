@@ -66,35 +66,16 @@ proc cell_prep {system end} {
     set_occupancy top 
 
     ;# figures out which beads are in your lipids
-    ;# Only works for systems with 100% one type of lipid
-    ;# will be fixed in June update
+    ;# then assigns lipids to user value 1 or 2, depending on leaflet
     ;# no edits required
     set acyl_names [tail_analyzer $species]
-    set tail_one [lindex $acyl_names 0]
-    set tail_two [lindex $acyl_names 1]
-    set t1T [lindex $tail_one end]
-    set t2T [lindex $tail_two end]
-    set tailnames "$t1T $t2T"
-    set tail_list []
-    if {[llength $tail_one] == [llength $tail_two]} {
-        for {set i 1} {$i < [llength $tail_one]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
-                set names "$t1bead $t2bead"
-                lappend tail_list $names
-        }
-    } else {
-        puts "Tail lengths are different. Teach me what to do."
-    }
-
-    ;# Assigns lipids to user value 1 or 2 depending on leaflet
-    ;# no edits required
-    leaflet_sorter $species $tailnames $lastframe 
+    set tail_ends [list_ends $acyl_names]
+    leaflet_sorter $species $tail_ends $lastframe  ;# FIX ME
 
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    Protein_Position $system $headnames $tailnames 
+    Protein_Position $system $headnames $tail_ends ;# FIX ME
 
     ;#**********************************************************
     ;#          MAKE EDITS ABOVE BEFORE STARTING
@@ -103,14 +84,24 @@ proc cell_prep {system end} {
     set return_list [] 
     lappend return_list $species 
     lappend return_list $headnames 
-    lappend return_list $tailnames 
-    lappend return_list $tail_one 
-    lappend return_list $tail_two 
-    lappend return_list $tail_list 
+    lappend return_list $acyl_names
+    lappend return_list $tail_ends
     lappend return_list $reference_point
     return $return_list  
 }
 
+
+proc list_ends {acyl_names} {
+    set tail_list []
+    foreach lipid $acyl_names {
+        set lipidlist []
+        foreach tail $lipid {
+            lappend lipidlist [lindex $tail end]
+        }
+        lappend tail_list $lipidlist
+    }
+    return $tail_list
+}
 
 proc RtoD {r} {
     global M_PI
@@ -515,26 +506,35 @@ proc leaflet_sorter {species tailnames sample_frame} {
 }
 
 proc tail_analyzer { species } {
-
-    set sel [atomselect top "resname $species"]
-    set res [$sel get resid]
-    $sel delete
-    set sel [atomselect top "resname $species and resid [lindex $res 0]"]
-    set names [$sel get name]
-    $sel delete
- 
-    set tail_one []
-    set tail_two []
-
-    foreach nm $names {
-        if {[string match ??A $nm]} {
-            lappend tail_one $nm
-        } elseif {[string match ??B $nm]} {
-            lappend tail_two $nm
+    set taillist []
+    set letters "A B C D E F G H I J"
+    foreach lipidtype $species {
+        puts $lipidtype
+        set tails []
+        set sel [atomselect top "resname $lipidtype"]
+        set res [$sel get resid]
+        $sel delete
+        set sel [atomselect top "resname $lipidtype and resid [lindex $res 0]"]
+        set names [$sel get name]
+        $sel delete
+        foreach letter $letters {
+            set tail []
+            foreach nm $names {
+                if {[string match ??${letter} $nm]} {
+                    puts $nm
+                    lappend tail $nm
+                }
+            }
+            if {[llength $tail] != 0} {
+                lappend tails $tail
+            }
         }
-    }  
-
-    return [list $tail_one $tail_two]
+        if {[llength $tails] != 0} {
+            lappend taillist $tails
+        }
+    }
+    
+    return $taillist
 }
 
 proc tilt_angles {tail_length tail_one tail_two} {
@@ -605,6 +605,31 @@ proc bin_generator {x_vals y_vals d1 d2 dthetadeg polar} {
     return [list $dim1_bins $dim2_bins]
 }
 
+proc create_outfiles {quantity_of_interest system headnames species taillist coordsys} {
+    if {$quantity_of_interest eq "height"} {
+        dict set outfiles heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+    } elseif {$quantity_of_interest eq "density"} {
+        foreach lipidtype $species {
+            dict set outfiles density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
+            dict set outfiles density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+        }
+    } elseif {$quantity_of_interest eq "tilt"} {
+        for {set i 0} {$i < [llength $taillist]} {incr i} {
+            set lipidtype [lindex $species $i]
+            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
+                set tailnum "tail$j"
+                foreach bead [lindex [lindex $taillist $i] $j] {
+                    dict set outfiles tilts_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.density.dat" w]
+                }
+            }
+        } 
+    }
+    return [dict get outfiles]
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
@@ -613,11 +638,9 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
     set important_variables [cell_prep $system $start]
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
-    set tailnames [lindex $important_variables 2]
-    set tail_one [lindex $important_variables 3]
-    set tail_two [lindex $important_variables 4]
-    set tail_list [lindex $important_variables 5]
-    set reference_point [lindex $important_variables 6]
+    set acyl_names [lindex $important_variables 2]
+    set tail_ends [lindex $important_variables 3]
+    set reference_point [lindex $important_variables 4]
 
     #need to calculate heights relative to some point on the inclusion:
     set ref_bead [atomselect top "$reference_point"]
@@ -718,6 +741,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     set condensed_name "${name1}.${name2}"
 
     #outfiles setup
+    set outfiles [create_outfiles $quantity_of_interest]
     set heights_up [open "${system}.zone.${condensed_name}.${coordsys}.height.dat" w]
     set heights_down [open "${system}.ztwo.${condensed_name}.${coordsys}.height.dat" w]
     set heights_zplus [open "${system}.zplus.${condensed_name}.${coordsys}.height.dat" w]
