@@ -556,7 +556,54 @@ proc tilt_angles {tail_length tail_one tail_two} {
     return $vector_list
 }
 
-;# NEED TO UPDATE
+proc prep_thickness_lists {sellist ref_height} {
+    set thickness_list []
+    set counter 0
+    foreach bead [lrange $sellist 4 end] {
+        set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
+        incr counter
+    }
+    if {$counter > 1} {
+        set mins_list [vecexpr $thickness_list $counter min_ew]
+        ;# there is no max_ew in vecexpr, so multiply by -1, do min_ew, then multiply by -1 again
+        set maxs_list [vecexpr [vecexpr [vecexpr $thickness_list -1.0 mult] $counter min_ew] -1.0 mult] 
+    } elseif {$counter == 1} {
+        set mins_list $thickness_list
+        set maxs_list $thickness_list
+    }
+    return [list $mins_list $maxs_list]
+}
+
+proc bin_generator {x_vals y_vals d1 d2 dthetadeg polar} {
+    if {$polar == 1} {
+        ;#get theta values for all x,y pairs
+        set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
+
+        ;#atan2 gives values from -180 to 180; shifting to 0 to 360
+        for {set i 0} {$i<[llength $theta_vals]} {incr i} {
+            if {[lindex $theta_vals $i] < 0} {
+                set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+            }
+        }
+
+        ;#turn into bin numbers rather than theta values
+        vecexpr [vecexpr $theta_vals $dthetadeg div] floor &dim2_bins
+        
+        ;#calculate distance from origin for all x,y pairs
+        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+        
+        ;#turn into bin numbers rather than r values
+        vecexpr [vecexpr $r_vals $d1 div] floor &dim1_bins
+    } elseif {$polar == 0} {
+        set xmin [vecexpr $x_vals min]
+        set ymin [vecexpr $y_vals min]
+        set x_vals [vecexpr $x_vals $xmin sub]
+        set y_vals [vecexpr $y_vals $ymin sub]
+        vecexpr [vecexpr $x_vals $d1 div] floor &dim1_bins
+        vecexpr [vecexpr $y_vals $d2 div] floor &dim2_bins
+    }
+    return [list $dim1_bins $dim2_bins]
+}
 
 ;########################################################################################
 ;# polarHeight Functions
@@ -616,6 +663,7 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
         } else {
             set N2 [expr $range2 / $d2]
         }
+        set dthetadeg "NA"
     }
 
     if {$polar == 1} {
@@ -633,9 +681,7 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
     lappend important_variables $step 
     lappend important_variables $ref_height
     lappend important_variables $min
-    if {$polar == 1} {
-        lappend important_variables $dthetadeg
-    } 
+    lappend important_variables $dthetadeg 
 
     run_nougat $system $headnames $coordsys $important_variables $polar 0
     if {$separate_beads == 1} {
@@ -665,9 +711,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     set step [lindex $important_variables 13]
     set ref_height [lindex $important_variables 14]
     set min [lindex $important_variables 15]
-    if {$polar == 1} {
-        set dthetadeg [lindex $important_variables 16]
-    }
+    set dthetadeg [lindex $important_variables 16]
 
     set name1 [lindex $beadname 0]
     set name2 [lindex $beadname 1]
@@ -748,21 +792,13 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
             set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
         }
 
-        ;# identify lowest/highest beads for thickness calculation
-        set thickness_list []
-        set counter 0
-        foreach bead [lrange $sellist 4 end] {
-            set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
-            incr counter
-        }
-        if {$counter > 1} {
-            set mins_list [vecexpr $thickness_list $counter min_ew]
-            ;# there is no max_ew in vecexpr, so multiply by -1, do min_ew, then multiply by -1 again
-            set maxs_list [vecexpr [vecexpr [vecexpr $thickness_list -1.0 mult] $counter min_ew] -1.0 mult] 
-        } elseif {$counter == 1} {
-            set mins_list $thickness_list
-            set maxs_list $thickness_list
-        }
+        ;# identify lowest/highest beads for thickness calculations later
+        set thickness_lists [prep_thickness_lists $sellist $ref_height]
+        set mins_list [lindex $thickness_lists 0]
+        set maxs_list [lindex $thickness_lists 1]
+
+        ;# slow implementation of order params
+        ;#set order_list [measure_order $sellist $ref_height]
 
         foreach bead $blist {
 
@@ -770,36 +806,10 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
             set y_vals [$bead get y]
             set z_vals [vecexpr [$bead get z] $ref_height sub]
             set leaflet [$bead get user]
-            set resids [$bead get resid]
-            set indexs [$bead get index]
 
-            if {$polar == 1} {
-                ;#get theta values for all x,y pairs
-                set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
-
-                ;#atan2 gives values from -180 to 180; shifting to 0 to 360
-                for {set i 0} {$i<[llength $theta_vals]} {incr i} {
-                    if {[lindex $theta_vals $i] < 0} {
-                        set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
-                    }
-                }
-
-                ;#turn into bin numbers rather than theta values
-                vecexpr [vecexpr $theta_vals $dthetadeg div] floor &dim2_bins
-                
-                ;#calculate distance from origin for all x,y pairs
-                set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
-                
-                ;#turn into bin numbers rather than r values
-                vecexpr [vecexpr $r_vals $d1 div] floor &dim1_bins
-            } elseif {$polar == 0} {
-                set xmin [vecexpr $x_vals min]
-                set ymin [vecexpr $y_vals min]
-                set x_vals [vecexpr $x_vals $xmin sub]
-                set y_vals [vecexpr $y_vals $ymin sub]
-                vecexpr [vecexpr $x_vals $d1 div] floor &dim1_bins
-                vecexpr [vecexpr $y_vals $d2 div] floor &dim2_bins
-            }
+            set bins [bin_generator $x_vals $y_vals $d1 $d2 $dthetadeg $polar]
+            set dim1_bins [lindex $bins 0]
+            set dim2_bins [lindex $bins 1]
 
             ;#initialize arrays to zeros
             if {$meas_z_zero == 0} {
