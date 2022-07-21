@@ -725,10 +725,10 @@ proc start_nougat {system d1 N2 start end step polar} {
     set maxframes [molinfo top get numframes]
     if {$end == -1} {
         set nframes $maxframes
-    } elseif {$end <= $maxframes} {
+    } elseif {($end <= $maxframes) || ($end > $start)} {
         set nframes $end
     } else {
-        puts "you specified a frame number that exceeds the number of frames in your trajectory"
+        puts "you specified a frame number that is outside the allowable range"
         break
     }
 
