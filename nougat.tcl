@@ -70,12 +70,12 @@ proc cell_prep {system end} {
     ;# no edits required
     set acyl_names [tail_analyzer $species]
     set tail_ends [list_ends $acyl_names]
-    leaflet_sorter $species $tail_ends $lastframe  ;# FIX ME
+    leaflet_sorter $species $acyl_names $lastframe
 
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    Protein_Position $system $headnames $tail_ends ;# FIX ME
+    ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
 
     ;#**********************************************************
     ;#          MAKE EDITS ABOVE BEFORE STARTING
@@ -137,40 +137,47 @@ proc lsq_vecexpr { tail_length list_of_tail_coords } {
 }
 
 #written in 2022 to be fast and dirty
-# just relies on whether the tails are above/below the heads
+# just relies on whether the bottom of each tail is above/below the top of each tail
 # to sort leaflets
-proc leaflet_check {frm species headname tailname} {
-    set headsel [atomselect top "resname $species and name $headname" frame $frm]
-    set head_ht [$headsel get z]
-    set resids [$headsel get resid]
-    set chains [$headsel get chain]
-    $headsel delete
-    set tail_hts [lrepeat [llength $head_ht] 0]
-    foreach bead $tailname {
-        set tailsel [atomselect top "resname $species and name $bead" frame $frm]
-        set tail_ht [$tailsel get z]
-        set tail_hts [vecexpr $tail_hts $tail_ht add]
-        $tailsel delete
-    }
-    set avg_tail_ht [vecexpr $tail_hts [llength $tailname] div]
-
-    set test [vecexpr $head_ht $avg_tail_ht sub]
-    for {set i 0} {$i < [llength $test]} {incr i} {
-        if {[expr abs([lindex $test $i])] > 40} {
-            set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-            $sel set chain "U"
-            $sel delete
-        } else {
-            if {[lindex $test $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
+proc leaflet_check {frm species taillist} {
+    set counter 0
+    foreach lipidtype $species {
+        set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
+        set resids [$sel get resid]
+        $sel delete
+        set topsum [lrepeat [llength $resids] 0.0]
+        set bottomsum [lrepeat [llength $resids] 0.0]
+        foreach tail [lindex $taillist $counter] {
+            set topsel [atomselect top "resname $lipidtype and name [lindex $tail 0]" frame 0]
+            set bottomsel [atomselect top "resname $lipidtype and name [lindex $tail end]" frame 0]
+            set topsum [vecexpr $topsum [$topsel get z] add]
+            set bottomsum [vecexpr $bottomsum [$bottomsel get z] add] 
+            set resids [$topsel get resid]
+            set chains [$topsel get chain]
+            $topsel delete
+            $bottomsel delete
+        } 
+        set topavg [vecexpr $topsum [llength [lindex $taillist $counter]] div]
+        set bottomavg [vecexpr $bottomsum [llength [lindex $taillist $counter]] div]
+        set diff_top_to_bottom [vecexpr $topsum $bottomsum sub]
+        for {set i 0} {$i < [llength $diff_top_to_bottom]} {incr i} {
+            if {[expr abs([lindex $diff_top_to_bottom $i])] > 40} {
                 set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
                 $sel set chain "U"
                 $sel delete
-            } elseif {[lindex $test $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
-                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-                $sel set chain "L"
-                $sel delete
+            } else {
+                if {[lindex $diff_top_to_bottom $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
+                    set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                    $sel set chain "U"
+                    $sel delete
+                } elseif {[lindex $diff_top_to_bottom $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
+                    set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
+                    $sel set chain "L"
+                    $sel delete
+                }
             }
         }
+        incr counter
     }
 
     #remove pore lipids
@@ -474,32 +481,49 @@ proc set_occupancy {molid} {
 }
 
 
-proc leaflet_sorter {species tailnames sample_frame} {
+proc leaflet_sorter {species taillist analysis_start} {
     puts "Starting leaflet sorting"
-    set nframes [molinfo top get numframes]
-    set sel [atomselect top "name PO4" frame 0]
-    set resids [$sel get resid]
-    set indexs [$sel get index]
-    $sel delete
-    foreach resd $resids indx $indexs {
-        set lipid [atomselect top "resname $species and resid $resd" frame 0]
-        set po4 [atomselect top "index $indx" frame 0]
-        set lipid_com [measure center $lipid weight mass]
-        set lipid_com_z [lindex $lipid_com 2]
-        set po4_z [$po4 get z]
-        if {$po4_z > $lipid_com_z} {
-            $lipid set chain U
-            $lipid set user 1
-        } else {
-            $lipid set chain L
-            $lipid set user 2
+    set counter 0
+    foreach lipidtype $species {
+        set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
+        set resids [$sel get resid]
+        $sel delete
+        set topsum [lrepeat [llength $resids] 0.0]
+        set bottomsum [lrepeat [llength $resids] 0.0]
+        foreach tail [lindex $taillist $counter] {
+            set topsel [atomselect top "resname $lipidtype and name [lindex $tail 0]" frame 0]
+            set bottomsel [atomselect top "resname $lipidtype and name [lindex $tail end]" frame 0]
+            set topsum [vecexpr $topsum [$topsel get z] add]
+            set bottomsum [vecexpr $bottomsum [$bottomsel get z] add] 
+            set resids [$topsel get resid]
+            $topsel delete
+            $bottomsel delete
+        } 
+        set topavg [vecexpr $topsum [llength [lindex $taillist $counter]] div]
+        set bottomavg [vecexpr $bottomsum [llength [lindex $taillist $counter]] div]
+        set diff_top_to_bottom [vecexpr $topsum $bottomsum sub]
+        set uplist []
+        set downlist []
+        for {set i 0} {$i < [llength $diff_top_to_bottom]} {incr i} {
+            if {[lindex $diff_top_to_bottom $i] > 0} {
+                lappend uplist [lindex $resids $i]
+            } elseif {[lindex $diff_top_to_bottom $i] < 0} {
+                lappend downlist [lindex $resids $i]
+            }
         }
-        $lipid delete
-        $po4 delete
+        set upsel [atomselect top "resid $uplist"]
+        set downsel [atomselect top "resid $downlist"]
+        $upsel set user 1
+        $upsel set chain "U"
+        $downsel set user 2
+        $downsel set chain "L"
+        $upsel delete
+        $downsel delete
+        incr counter
     }
 
-    for {set frm 0} {$frm <= $sample_frame} {incr frm} {
-        leaflet_check $frm $species "PO4" $tailnames
+    for {set frm 0} {$frm <= $analysis_start} {incr frm} {
+        leaflet_check $frm $species $taillist
     }
     
     puts "Leaflet sorting complete!"
@@ -509,7 +533,6 @@ proc tail_analyzer { species } {
     set taillist []
     set letters "A B C D E F G H I J"
     foreach lipidtype $species {
-        puts $lipidtype
         set tails []
         set sel [atomselect top "resname $lipidtype"]
         set res [$sel get resid]
@@ -521,7 +544,6 @@ proc tail_analyzer { species } {
             set tail []
             foreach nm $names {
                 if {[string match ??${letter} $nm]} {
-                    puts $nm
                     lappend tail $nm
                 }
             }
@@ -534,6 +556,16 @@ proc tail_analyzer { species } {
         }
     }
     
+    ;# change user3 to match tail number
+    ;# makes tails separable for tilt/order analysis
+    for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
+        for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
+            set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
+            $sel set user3 [expr $tail+1]
+            $sel delete
+        }
+    }
+
     return $taillist
 }
 
@@ -622,7 +654,10 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
                 set tailnum "tail$j"
                 foreach bead [lindex [lindex $taillist $i] $j] {
-                    dict set outfiles tilts_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.density.dat" w]
+                    dict set outfiles tilts_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.tilt.dat" w]
+                    dict set outfiles tilts_down_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.ztwo.${bead}.${coordsys}.tilt.dat" w]
+                    dict set outfiles order_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.order.dat" w]
+                    dict set outfiles order_down_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.ztwo.${bead}.${coordsys}.order.dat" w]
                 }
             }
         } 
