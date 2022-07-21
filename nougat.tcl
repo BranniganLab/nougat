@@ -529,7 +529,7 @@ proc leaflet_sorter {species taillist analysis_start} {
     puts "Leaflet sorting complete!"
 }
 
-proc tail_analyzer { species } {
+proc tail_analyzer { species nframes } {
     set taillist []
     set letters "A B C D E F G H I J"
     foreach lipidtype $species {
@@ -561,7 +561,11 @@ proc tail_analyzer { species } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
         for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
             set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
-            $sel set user3 [expr $tail+1]
+            for {set frm 0} {$frm < $nframes} {incr frm} {
+                $sel frame $frm 
+                $sel update
+                $sel set user3 [expr $tail+1]
+            }
             $sel delete
         }
     }
@@ -772,21 +776,6 @@ proc run_nougat {system beadname coordsys important_variables bindims polar sepa
 
     #outfiles setup
     set outfiles [create_outfiles $quantity_of_interest]
-    set heights_up [open "${system}.zone.${condensed_name}.${coordsys}.height.dat" w]
-    set heights_down [open "${system}.ztwo.${condensed_name}.${coordsys}.height.dat" w]
-    set heights_zplus [open "${system}.zplus.${condensed_name}.${coordsys}.height.dat" w]
-    set dens_up [open "${system}.zone.${condensed_name}.${coordsys}.density.dat" w]
-    set dens_down [open "${system}.ztwo.${condensed_name}.${coordsys}.density.dat" w]
-    set thick_up [open "${system}.zone.${condensed_name}.${coordsys}.thickness.dat" w]
-    set thick_down [open "${system}.ztwo.${condensed_name}.${coordsys}.thickness.dat" w]
-    if {$separate_beads == 0} {
-        set heights_zzero [open "${system}.zzero.${condensed_name}.${coordsys}.height.dat" w]
-        set dens_zzero [open "${system}.zzero.${condensed_name}.${coordsys}.density.dat" w]
-        set tilt_up [open "${system}.zone.${condensed_name}.${coordsys}.tilt.dat" w]
-        set tilt_down [open "${system}.ztwo.${condensed_name}.${coordsys}.tilt.dat" w]
-        ;#set order_up [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
-        ;#set order_down [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
-    }
 
     puts "Setup complete. Starting analysis now."	
 
