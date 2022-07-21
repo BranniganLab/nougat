@@ -665,31 +665,7 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
     return [dict get outfiles]
 }
 
-;########################################################################################
-;# polarHeight Functions
-
-proc start_nougat {system d1 N2 start end step polar separate_beads} {
-
-    set important_variables [cell_prep $system $start]
-    set species [lindex $important_variables 0]
-    set headnames [lindex $important_variables 1]
-    set acyl_names [lindex $important_variables 2]
-    set tail_ends [lindex $important_variables 3]
-    set reference_point [lindex $important_variables 4]
-
-    #need to calculate heights relative to some point on the inclusion:
-    set ref_bead [atomselect top "$reference_point"]
-    set ref_height [$ref_bead get z]
-    $ref_bead delete
-    set ref_height [vecexpr $ref_height mean]
-
-    ;# set nframes based on $end input
-    if {$end == -1} {
-        set nframes [molinfo top get numframes]
-    } else {
-        set nframes $end
-    }
-
+proc bin_prep {nframes polar min d1} {
     #measure box size to get bin values
     set box_x [molinfo top get a frame [expr $nframes - 1]]
     set min 0
@@ -723,6 +699,32 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
         }
         set dthetadeg "NA"
     }
+    return [list $d1 $d2 $N1 $N2 $dthetadeg]
+}
+
+;########################################################################################
+;# polarHeight Functions
+
+proc start_nougat {system d1 N2 start end step polar separate_beads} {
+
+    set important_variables [cell_prep $system $start]
+    set headnames [lindex $important_variables 1]
+    set reference_point [lindex $important_variables 4]
+
+    #need to calculate heights relative to some point on the inclusion:
+    set ref_bead [atomselect top "$reference_point"]
+    set ref_height [$ref_bead get z]
+    $ref_bead delete
+    set ref_height [vecexpr $ref_height mean]
+
+    ;# set nframes based on $end input
+    if {$end == -1} {
+        set nframes [molinfo top get numframes]
+    } else {
+        set nframes $end
+    }
+
+    set bindims [bin_prep $nframes $polar $min $d1]
 
     if {$polar == 1} {
         set coordsys "polar"
@@ -730,26 +732,21 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
         set coordsys "cart"
     }
 
-    lappend important_variables $d1 
-    lappend important_variables $d2 
-    lappend important_variables $N1
-    lappend important_variables $N2
     lappend important_variables $start 
     lappend important_variables $nframes 
     lappend important_variables $step 
     lappend important_variables $ref_height
     lappend important_variables $min
-    lappend important_variables $dthetadeg 
 
-    run_nougat $system $headnames $coordsys $important_variables $polar 0
+    run_nougat $system $headnames $coordsys $important_variables $bindims $polar 0
     if {$separate_beads == 1} {
         foreach beadpair $tail_list {
-            run_nougat $system $beadpair $coordsys $important_variables $polar 1
+            run_nougat $system $beadpair $coordsys $important_variables $bindims $polar 1
         }
     }
 }
 
-proc run_nougat {system beadname coordsys important_variables polar separate_beads} {  
+proc run_nougat {system beadname coordsys important_variables bindims polar separate_beads} {  
 
     set boxarea []
 
@@ -757,17 +754,17 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
     set tail_ends [lindex $important_variables 3]
-    set reference_point [lindex $important_variables 4]
-    set d1 [lindex $important_variables 5]
-    set d2 [lindex $important_variables 6]
-    set N1 [lindex $important_variables 7]
-    set N2 [lindex $important_variables 8]
-    set start [lindex $important_variables 9]
-    set nframes [lindex $important_variables 10]
-    set step [lindex $important_variables 11]
-    set ref_height [lindex $important_variables 12]
-    set min [lindex $important_variables 13]
-    set dthetadeg [lindex $important_variables 14]
+    set start [lindex $important_variables 5]
+    set nframes [lindex $important_variables 6]
+    set step [lindex $important_variables 7]
+    set ref_height [lindex $important_variables 8]
+    set min [lindex $important_variables 9]
+    
+    set d1 [lindex $bindims 0]
+    set d2 [lindex $bindims 1]
+    set N1 [lindex $$bindims 2]
+    set N2 [lindex $$bindims 3]
+    set dthetadeg [lindex $bindims 4]
 
     set name1 [lindex $beadname 0]
     set name2 [lindex $beadname 1]
