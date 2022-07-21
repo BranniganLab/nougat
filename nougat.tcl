@@ -722,10 +722,14 @@ proc start_nougat {system d1 N2 start end step polar} {
     set ref_height [vecexpr $ref_height mean]
 
     ;# set nframes based on $end input
+    set maxframes [molinfo top get numframes]
     if {$end == -1} {
-        set nframes [molinfo top get numframes]
-    } else {
+        set nframes $maxframes
+    } elseif {$end <= $maxframes} {
         set nframes $end
+    } else {
+        puts "you specified a frame number that exceeds the number of frames in your trajectory"
+        break
     }
 
     ;# determine number and size of bins
@@ -766,6 +770,9 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
         set coordsys "polar"
     } elseif {$polar == 0} {
         set coordsys "cart"
+    } else {
+        puts "polar must be 1 or 0"
+        break
     }
 
     if {[llength $beadname] > 1} {
@@ -774,8 +781,11 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
             set addname [lindex $beadname $i]
             set condensed_name "$condensed_name.$addname"
         }
-    } else {
+    } elseif {[llength $beadname] == 1} {
         set condensed_name $beadname
+    } else {
+        puts "beadname must contain a bead name"
+        break
     }
 
     #outfiles setup
