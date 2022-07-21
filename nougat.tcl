@@ -666,7 +666,7 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
             }
         } 
     }
-    return [dict get outfiles]
+    return $outfiles
 }
 
 proc bin_prep {nframes polar min d1} {
@@ -709,7 +709,7 @@ proc bin_prep {nframes polar min d1} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc start_nougat {system d1 N2 start end step polar separate_beads} {
+proc start_nougat {system d1 N2 start end step polar} {
 
     set important_variables [cell_prep $system $start]
     set headnames [lindex $important_variables 1]
@@ -728,13 +728,8 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
         set nframes $end
     }
 
+    ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1]
-
-    if {$polar == 1} {
-        set coordsys "polar"
-    } elseif {$polar == 0} {
-        set coordsys "cart"
-    }
 
     lappend important_variables $start 
     lappend important_variables $nframes 
@@ -742,15 +737,12 @@ proc start_nougat {system d1 N2 start end step polar separate_beads} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    run_nougat $system $headnames $coordsys $important_variables $bindims $polar 0
-    if {$separate_beads == 1} {
-        foreach beadpair $tail_list {
-            run_nougat $system $beadpair $coordsys $important_variables $bindims $polar 1
-        }
-    }
+    run_nougat $system $headnames $important_variables $bindims $polar "height"
+    run_nougat $system $headnames $important_variables $bindims $polar "density"
+    run_nougat $system $headnames $important_variables $bindims $polar "tilt"
 }
 
-proc run_nougat {system beadname coordsys important_variables bindims polar separate_beads} {  
+proc run_nougat {system beadname important_variables bindims polar quantity_of_interest} {  
 
     set boxarea []
 
@@ -770,12 +762,24 @@ proc run_nougat {system beadname coordsys important_variables bindims polar sepa
     set N2 [lindex $$bindims 3]
     set dthetadeg [lindex $bindims 4]
 
-    set name1 [lindex $beadname 0]
-    set name2 [lindex $beadname 1]
-    set condensed_name "${name1}.${name2}"
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    }
+
+    if {[llength $beadname] > 1} {
+        set condensed_name [lindex $beadname 0]
+        for {set i 1} {$i < [llength $beadname]} {incr i} {
+            set addname [lindex $beadname $i]
+            set condensed_name "$condensed_name.$addname"
+        }
+    } else {
+        set condensed_name $beadname
+    }
 
     #outfiles setup
-    set outfiles [create_outfiles $quantity_of_interest]
+    set outfiles [create_outfiles $quantity_of_interest $system $condensed_name $species $acyl_names $coordsys]
 
     puts "Setup complete. Starting analysis now."	
 
