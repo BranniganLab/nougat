@@ -644,17 +644,18 @@ proc bin_generator {x_vals y_vals d1 d2 dthetadeg polar} {
 }
 
 proc create_outfiles {quantity_of_interest system headnames species taillist coordsys} {
-    if {$quantity_of_interest eq "height"} {
+    if {$quantity_of_interest eq "height_density"} {
         dict set outfiles heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-    } elseif {$quantity_of_interest eq "density"} {
         foreach lipidtype $species {
             dict set outfiles density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
             dict set outfiles density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
         }
-    } elseif {$quantity_of_interest eq "tilt"} {
+    } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
+        dict set outfiles thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
+        dict set outfiles thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
         for {set i 0} {$i < [llength $taillist]} {incr i} {
             set lipidtype [lindex $species $i]
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
@@ -709,10 +710,10 @@ proc bin_prep {nframes polar min d1} {
 }
 
 proc create_atomselections {quantity_of_interest system beadname species acyl_names coordsys} {
-    if {$quantity_of_interest == "height_density"} {
+    if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $beadname"]
         dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
-    } elseif {$quantity_of_interest == "tilt_order_thickness"} {
+    } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
         foreach lipidtype $species beadlist $acyl_names {
             foreach tail $beadlist {
                 foreach bead $tail {
@@ -721,6 +722,7 @@ proc create_atomselections {quantity_of_interest system beadname species acyl_na
             }
         }
     }
+    return $selections
 }
 
 ;########################################################################################
@@ -759,15 +761,15 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    run_nougat $system $headnames $important_variables $bindims $polar "height"
-    run_nougat $system $headnames $important_variables $bindims $polar "density"
-    run_nougat $system $headnames $important_variables $bindims $polar "tilt"
+    run_nougat $system $headnames $important_variables $bindims $polar "height_density"
+    run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness"
 }
 
 proc run_nougat {system beadname important_variables bindims polar quantity_of_interest} {  
 
     set boxarea []
 
+    ;# unpack important_variables
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
@@ -778,12 +780,14 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     set ref_height [lindex $important_variables 8]
     set min [lindex $important_variables 9]
     
+    ;# unpack bindims
     set d1 [lindex $bindims 0]
     set d2 [lindex $bindims 1]
-    set N1 [lindex $$bindims 2]
-    set N2 [lindex $$bindims 3]
+    set N1 [lindex $bindims 2]
+    set N2 [lindex $bindims 3]
     set dthetadeg [lindex $bindims 4]
 
+    ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
         set coordsys "polar"
     } elseif {$polar == 0} {
@@ -793,6 +797,7 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
         break
     }
 
+    ;# concatenate all beadnames together for file naming purposes
     if {[llength $beadname] > 1} {
         set condensed_name [lindex $beadname 0]
         for {set i 1} {$i < [llength $beadname]} {incr i} {
@@ -806,35 +811,14 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
         break
     }
 
-    #outfiles setup
+    ;# outfiles setup as dict
     set outfiles [create_outfiles $quantity_of_interest $system $condensed_name $species $acyl_names $coordsys]
 
-    puts "Setup complete. Starting analysis now."	
-
+    ;# selections setup as dict
     set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
 
-    set heads [atomselect top "name $beadname"]
-    
-    if {$separate_beads == 0} {
-        set interface [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
-        set blist [list $heads $interface]
-        set t1tiltsel [atomselect top "resname $species and name GL1 $tail_one"]
-        set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
-        set sellist [list $heads $interface $t1tiltsel $t2tiltsel]
+    puts "Setup complete. Starting analysis now."   
 
-        for {set beadpair 0} {$beadpair < [llength $tail_list]} {incr beadpair} {
-            set newsel [atomselect top "resname $species and name [lindex $tail_list $beadpair]"]
-            lappend sellist $newsel
-        }
-    } elseif {$separate_beads == 1} {
-        set sellist [list $heads]
-        set blist [list $heads]
-    }  
-
-    array set density_up [initialize_array $N1 $N2 0.0]
-    array set density_down [initialize_array $N1 $N2 0.0]
-    array set density_zzero [initialize_array $N1 $N2 0.0]
-    
     ;#start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
