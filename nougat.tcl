@@ -706,12 +706,28 @@ proc bin_prep {nframes polar min d1} {
     return [list $d1 $d2 $N1 $N2 $dthetadeg]
 }
 
+proc create_atomselections {quantity_of_interest system beadname species acyl_names coordsys} {
+    if {$quantity_of_interest == "height_density"} {
+        dict set selections z1z2 [atomselect top "resname $species and name $beadname"]
+        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+    } elseif {$quantity_of_interest == "tilt_order_thickness"} {
+        foreach lipidtype $species beadlist $acyl_names {
+            foreach tail $beadlist {
+                foreach bead $tail {
+                    dict set selections $species.$bead [atomselect top "resname $species and name $bead"]
+                }
+            }
+        }
+    }
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
 proc start_nougat {system d1 N2 start end step polar} {
 
     set important_variables [cell_prep $system $start]
+    set min 0 ;# change this value if you want to exclude an inner radius in polar coords
     set headnames [lindex $important_variables 1]
     set reference_point [lindex $important_variables 4]
 
@@ -793,6 +809,7 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
 
     puts "Setup complete. Starting analysis now."	
 
+    set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
 
     set heads [atomselect top "name $beadname"]
     
