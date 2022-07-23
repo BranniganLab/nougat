@@ -612,7 +612,7 @@ proc prep_thickness_lists {sellist ref_height} {
     return [list $mins_list $maxs_list]
 }
 
-proc bin_generator {x_vals y_vals d1 d2 dthetadeg polar} {
+proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     if {$polar == 1} {
         ;#get theta values for all x,y pairs
         set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
@@ -645,13 +645,19 @@ proc bin_generator {x_vals y_vals d1 d2 dthetadeg polar} {
 
 proc create_outfiles {quantity_of_interest system headnames species taillist coordsys} {
     if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 {
+            heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+            heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+            heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
+        }
+        dict set outfiles z0 {
+            heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        }
         foreach lipidtype $species {
-            dict set outfiles density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
-            dict set outfiles density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+            dict with outfiles {
+                dict append z1z2 density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
+                dict append z1z2 density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+            }
         }
     } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
         dict set outfiles thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
@@ -717,7 +723,7 @@ proc create_atomselections {quantity_of_interest system beadname species acyl_na
         foreach lipidtype $species beadlist $acyl_names {
             foreach tail $beadlist {
                 foreach bead $tail {
-                    dict set selections $species.$bead [atomselect top "resname $species and name $bead"]
+                    dict set selections $species.$bead [atomselect top "resname $lipidtype and name $bead"]
                 }
             }
         }
@@ -819,182 +825,157 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
 
     puts "Setup complete. Starting analysis now."   
 
-    ;#start frame looping here
+    ;# start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
+        ;# update leaflets in case lipids have flip-flopped
         if {$step == 1} {
-            leaflet_check $frm $species "PO4" $tailnames
+            leaflet_check $frm $species $acyl_names
         } elseif {$step > 1} {
             if {$frm != $start} {
                 for {set frame [expr $step - 1]} {$frame >= 0} {set frame [expr $frame - 1]} {
-                    leaflet_check [expr $frm - $frame] $species "PO4" $tailnames
+                    leaflet_check [expr $frm - $frame] $species $acyl_names
                 }
             }
         }
 
-        foreach selex $sellist {
-            $selex frame $frm 
-            $selex update
-        }
-        
-        puts "$system $frm"
+        puts "$system $quantity_of_interest $frm"
 
         set box_height [molinfo top get c]
-        
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
 
-        set meas_z_zero 0
+        set xvals_list []
+        set yvals_list []
+        set zvals_list []
+        set leaflet_list []
+        set lipid_list []
+        set dim1_bins_list []
+        set dim2_bins_list []
 
-        set taillength [expr [llength $tail_one] + 1]
+        dict for {selexname selex} $selections {
+            $selex frame $frm 
+            $selex update
 
-        if {$separate_beads == 0} {
-            set tilts [tilt_angles $taillength $t1tiltsel $t2tiltsel]
+            lappend xvals_list [$selex get x]
+            lappend yvals_list [$selex get y]
+            lappend zvals_list [vecexpr [$selex get z] $ref_height sub]
+            lappend leaflet_list [$selex get user]
+            lappend lipid_list [$selex get resname]
+
+            set bins [bin_assigner $x_vals $y_vals $d1 $d2 $dthetadeg $polar]
+            lappend dim1_bins_list [lindex $bins 0]
+            lappend dim2_bins_list [lindex $bins 1]
         }
 
-        ;# identify lowest/highest beads for thickness calculations later
-        set thickness_lists [prep_thickness_lists $sellist $ref_height]
-        set mins_list [lindex $thickness_lists 0]
-        set maxs_list [lindex $thickness_lists 1]
+        ;#initialize arrays to zeros
+        foreach key [dict keys $outfiles] {
+            set array_$key [initialize_array $N1 $N2 0.0]
+        }
 
-        ;# slow implementation of order params
-        ;#set order_list [measure_order $sellist $ref_height]
-
-        foreach bead $blist {
-
-            set x_vals [$bead get x]
-            set y_vals [$bead get y]
-            set z_vals [vecexpr [$bead get z] $ref_height sub]
-            set leaflet [$bead get user]
-
-            set bins [bin_generator $x_vals $y_vals $d1 $d2 $dthetadeg $polar]
-            set dim1_bins [lindex $bins 0]
-            set dim2_bins [lindex $bins 1]
-
-            ;#initialize arrays to zeros
-            if {$meas_z_zero == 0} {
-                array set totals_up [initialize_array $N1 $N2 0.0]
-                array set counts_up [initialize_array $N1 $N2 0.0]
-                array set totals_down [initialize_array $N1 $N2 0.0]
-                array set counts_down [initialize_array $N1 $N2 0.0]
-                array set totals_zplus [initialize_array $N1 $N2 0.0]
-                array set thickness_up [initialize_array $N1 $N2 0.0]
-                array set thickness_down [initialize_array $N1 $N2 0.0]
-                if {$separate_beads == 0} {
-                    array set tilts_up [initialize_array $N1 $N2 {0.0 0.0 0.0}]
-                    array set tilts_down [initialize_array $N1 $N2 {0.0 0.0 0.0}]
-                    ;#array set chain_order_up [initialize_array $N1 $N2 0.0]
-                    ;#array set chain_order_down [initialize_array $N1 $N2 0.0]
-                }
-            } elseif {$meas_z_zero == 1} {
-                array set totals_zzero [initialize_array $N1 $N2 0.0]
-                array set counts_zzero [initialize_array $N1 $N2 0.0]
-            }
-
-            ;#fill in total/count arrays with z sum and count sum
-            for {set i 0} {$i < [llength $x_vals]} {incr i} {
-                set m [lindex $dim1_bins $i]
-                set n [lindex $dim2_bins $i]
-                if {$m <= $N1 && $n <= $N2} {
-                    if {$meas_z_zero == 0} {
-                        if {[lindex $leaflet $i] == 1} {
-                            set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
-                            set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                            set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
-                            set thickness_up($m,$n) [expr {$thickness_up($m,$n) + [lindex $mins_list $i]}]
-                            if {$separate_beads == 0} {
-                                set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) [lindex $tilts $i] add]
-                                ;#set chain_order_up($m,$n) [expr {$chain_order_up($m,$n) + [lindex $order $i]}]
-                            }
-                        } elseif {[lindex $leaflet $i] == 2} {
-                            set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
-                            set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
-                            set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
-                            set thickness_down($m,$n) [expr {$thickness_down($m,$n) + [lindex $maxs_list $i]}]
-                            if {$separate_beads == 0} {
-                                set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) [lindex $tilts $i] add]
-                                ;#set chain_order_down($m,$n) [expr {$chain_order_down($m,$n) + [lindex $order $i]}]
-                            }
+        ;#fill in total/count arrays with z sum and count sum
+        for {set i 0} {$i < [llength $x_vals]} {incr i} {
+            set m [lindex $dim1_bins $i]
+            set n [lindex $dim2_bins $i]
+            if {$m <= $N1 && $n <= $N2} {
+                if {$meas_z_zero == 0} {
+                    if {[lindex $leaflet $i] == 1} {
+                        set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
+                        set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
+                        set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
+                        set thickness_up($m,$n) [expr {$thickness_up($m,$n) + [lindex $mins_list $i]}]
+                        if {$separate_beads == 0} {
+                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) [lindex $tilts $i] add]
+                            ;#set chain_order_up($m,$n) [expr {$chain_order_up($m,$n) + [lindex $order $i]}]
                         }
-                    } elseif {$meas_z_zero == 1} {
-                        set totals_zzero($m,$n) [expr {$totals_zzero($m,$n) + [lindex $z_vals $i]}]
-                        set counts_zzero($m,$n) [expr {$counts_zzero($m,$n) + 1}]
+                    } elseif {[lindex $leaflet $i] == 2} {
+                        set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
+                        set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
+                        set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
+                        set thickness_down($m,$n) [expr {$thickness_down($m,$n) + [lindex $maxs_list $i]}]
+                        if {$separate_beads == 0} {
+                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) [lindex $tilts $i] add]
+                            ;#set chain_order_down($m,$n) [expr {$chain_order_down($m,$n) + [lindex $order $i]}]
+                        }
                     }
+                } elseif {$meas_z_zero == 1} {
+                    set totals_zzero($m,$n) [expr {$totals_zzero($m,$n) + [lindex $z_vals $i]}]
+                    set counts_zzero($m,$n) [expr {$counts_zzero($m,$n) + 1}]
                 }
-            }    
+            }
+        }    
 
-            ;#turn the z sum into a z avg
-            for {set m 0} {$m <= $N1} {incr m} {
-                for {set n 0} {$n <= $N2} {incr n} {
-                    if {$meas_z_zero == 0} {
-                        if {$counts_up($m,$n) != 0.0} {
-                            set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
-                            set thickness_up($m,$n) [expr $thickness_up($m,$n) / $counts_up($m,$n)]
-                            set thickness_up($m,$n) [expr $totals_up($m,$n) - $thickness_up($m,$n)]
-                            if {$separate_beads == 0} {
-                                set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
-                                set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
-                                ;# ADD ORDER HERE
-                            }
-                        } else {
-                            set totals_up($m,$n) "nan"
-                            set thickness_up($m,$n) "nan"
-                            if {$separate_beads == 0} {
-                                set tilts_up($m,$n) "nan nan nan"
-                                ;# ADD ORDER HERE
-                            }
+        ;#turn the z sum into a z avg
+        for {set m 0} {$m <= $N1} {incr m} {
+            for {set n 0} {$n <= $N2} {incr n} {
+                if {$meas_z_zero == 0} {
+                    if {$counts_up($m,$n) != 0.0} {
+                        set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
+                        set thickness_up($m,$n) [expr $thickness_up($m,$n) / $counts_up($m,$n)]
+                        set thickness_up($m,$n) [expr $totals_up($m,$n) - $thickness_up($m,$n)]
+                        if {$separate_beads == 0} {
+                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
+                            set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
+                            ;# ADD ORDER HERE
                         }
-                        if {$counts_down($m,$n) != 0.0} {
-                            set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
-                            set thickness_down($m,$n) [expr $thickness_down($m,$n) / $counts_down($m,$n)]
-                            set thickness_down($m,$n) [expr $thickness_down($m,$n) - $totals_down($m,$n)]
-                            if {$separate_beads == 0} {
-                                set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) $counts_down($m,$n) div]
-                                set tilts_down($m,$n) [vecnorm $tilts_down($m,$n)]
-                                ;# ADD ORDER HERE
-                            }
-                        } else {
-                            set totals_down($m,$n) "nan"
-                            set thickness_down($m,$n) "nan"
-                            if {$separate_beads == 0} {
-                                set tilts_down($m,$n) "nan nan nan"
-                                ;# ADD ORDER HERE
-                            }
+                    } else {
+                        set totals_up($m,$n) "nan"
+                        set thickness_up($m,$n) "nan"
+                        if {$separate_beads == 0} {
+                            set tilts_up($m,$n) "nan nan nan"
+                            ;# ADD ORDER HERE
                         }
-                        if {$counts_up($m,$n) != 0.0 && $counts_down($m,$n) != 0.0} {
-                            set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $counts_down($m,$n)] / 2.0]
-                        } else {
-                            set totals_zplus($m,$n) "nan"
+                    }
+                    if {$counts_down($m,$n) != 0.0} {
+                        set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
+                        set thickness_down($m,$n) [expr $thickness_down($m,$n) / $counts_down($m,$n)]
+                        set thickness_down($m,$n) [expr $thickness_down($m,$n) - $totals_down($m,$n)]
+                        if {$separate_beads == 0} {
+                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) $counts_down($m,$n) div]
+                            set tilts_down($m,$n) [vecnorm $tilts_down($m,$n)]
+                            ;# ADD ORDER HERE
                         }
-                        
+                    } else {
+                        set totals_down($m,$n) "nan"
+                        set thickness_down($m,$n) "nan"
+                        if {$separate_beads == 0} {
+                            set tilts_down($m,$n) "nan nan nan"
+                            ;# ADD ORDER HERE
+                        }
+                    }
+                    if {$counts_up($m,$n) != 0.0 && $counts_down($m,$n) != 0.0} {
+                        set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $counts_down($m,$n)] / 2.0]
+                    } else {
+                        set totals_zplus($m,$n) "nan"
+                    }
+                    
 
 
-                    } elseif {$meas_z_zero == 1} {
-                        if {$counts_zzero($m,$n) != 0} {
-                            set totals_zzero($m,$n) [expr $totals_zzero($m,$n) / $counts_zzero($m,$n)]
-                        } else {
-                            set totals_zzero($m,$n) "nan"
-                        }
+                } elseif {$meas_z_zero == 1} {
+                    if {$counts_zzero($m,$n) != 0} {
+                        set totals_zzero($m,$n) [expr $totals_zzero($m,$n) / $counts_zzero($m,$n)]
+                    } else {
+                        set totals_zzero($m,$n) "nan"
                     }
                 }
             }
+        }
 
-            ;#output heights to files
-            if { $meas_z_zero == 0 } {
-                print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up] $polar 
-                print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down] $polar 
-                print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus] $polar 
-                print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up] $polar 
-                print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down] $polar 
-                print_frame $N1 $thick_up $d1 $min $N2 [array get thickness_up] $polar 
-                print_frame $N1 $thick_down $d1 $min $N2 [array get thickness_down] $polar 
-            } elseif {$meas_z_zero == 1} {
-                print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up] $polar 
-            }
+        ;#output heights to files
+        if { $meas_z_zero == 0 } {
+            print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up] $polar 
+            print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down] $polar 
+            print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus] $polar 
+            print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up] $polar 
+            print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down] $polar 
+            print_frame $N1 $thick_up $d1 $min $N2 [array get thickness_up] $polar 
+            print_frame $N1 $thick_down $d1 $min $N2 [array get thickness_down] $polar 
+        } elseif {$meas_z_zero == 1} {
+            print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up] $polar 
+        }
 
-            if {$separate_beads == 0} {
-                set meas_z_zero 1
-            }
+        if {$separate_beads == 0} {
+            set meas_z_zero 1
         }
     }
 
