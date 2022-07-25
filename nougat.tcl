@@ -531,7 +531,7 @@ proc leaflet_sorter {species taillist analysis_start} {
     puts "Leaflet sorting complete!"
 }
 
-proc tail_analyzer { species nframes } {
+proc tail_analyzer { species } {
     set taillist []
     set letters "A B C D E F G H I J"
     foreach lipidtype $species {
@@ -563,7 +563,7 @@ proc tail_analyzer { species nframes } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
         for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
             set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
-            for {set frm 0} {$frm < $nframes} {incr frm} {
+            for {set frm 0} {$frm < [molinfo top get numframes]} {incr frm} {
                 $sel frame $frm 
                 $sel update
                 $sel set user3 [expr $tail+1]
@@ -645,32 +645,28 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
 
 proc create_outfiles {system headnames species taillist coordsys} {
 
-    dict set outfiles z1z2 {
-        heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
-    }
+    dict set outfiles z1z2 heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+    dict set outfiles z1z2 heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+    dict set outfiles z1z2 heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
     foreach lipidtype $species {
         dict with outfiles {
-            dict append z1z2 density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
-            dict append z1z2 density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+            dict append z1z2 density_up_${lipidtype} [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
+            dict append z1z2 density_down_${lipidtype} [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
         }
     }
     dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
 
-    dict set outfiles allbeads {
-        thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
-        thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
-    }
+    dict set outfiles allbeads thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
+    dict set outfiles allbeads thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
     for {set i 0} {$i < [llength $taillist]} {incr i} {
         set lipidtype [lindex $species $i]
         for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
             set tailnum "tail$j"
             dict with outfiles {
-                dict append allbeads tilts_up_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict append allbeads tilts_down_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict append allbeads order_up_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict append allbeads order_down_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                dict append allbeads tilts_up_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict append allbeads tilts_down_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict append allbeads order_up_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict append allbeads order_down_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
         }
     } 
@@ -730,6 +726,23 @@ proc create_atomselections {quantity_of_interest system beadname species acyl_na
     return $selections
 }
 
+proc concat_names { headnames } {
+    ;# concatenate all beadnames together for file naming purposes
+    if {[llength $headnames] > 1} {
+        set condensed_name [lindex $headnames 0]
+        for {set i 1} {$i < [llength $headnames]} {incr i} {
+            set addname [lindex $headnames $i]
+            set condensed_name "$condensed_name.$addname"
+        }
+    } elseif {[llength $headnames] == 1} {
+        set condensed_name $beadname
+    } else {
+        puts "headnames must contain a bead name"
+        break
+    }
+    return $condensed_name
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
@@ -737,7 +750,9 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     set important_variables [cell_prep $system $start]
     set min 0 ;# change this value if you want to exclude an inner radius in polar coords
+    set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
+    set acyl_names [lindex $important_variables 2]
     set reference_point [lindex $important_variables 4]
 
     #need to calculate heights relative to some point on the inclusion:
@@ -757,6 +772,16 @@ proc start_nougat {system d1 N2 start end step polar} {
         break
     }
 
+    ;# generate string for polar or cartesian coordinates
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    } else {
+        puts "polar must be 1 or 0"
+        break
+    }
+
     ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1]
 
@@ -767,10 +792,16 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $min
 
     ;# outfiles setup as dict
-    set outfiles [create_outfiles $system $condensed_name $species $acyl_names $coordsys]
+    set outfiles [create_outfiles $system [concat_names $headnames] $species $acyl_names $coordsys]
 
-    run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
-    run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
+    puts $outfiles
+    #run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
+    #run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
+
+    ;# just-in-case file closing
+    foreach channel [file channels "file*"] {
+        close $channel
+    }
 }
 
 proc run_nougat {system beadname important_variables bindims polar quantity_of_interest outfiles} {  
@@ -794,30 +825,6 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     set N1 [lindex $bindims 2]
     set N2 [lindex $bindims 3]
     set dthetadeg [lindex $bindims 4]
-
-    ;# generate string for polar or cartesian coordinates
-    if {$polar == 1} {
-        set coordsys "polar"
-    } elseif {$polar == 0} {
-        set coordsys "cart"
-    } else {
-        puts "polar must be 1 or 0"
-        break
-    }
-
-    ;# concatenate all beadnames together for file naming purposes
-    if {[llength $beadname] > 1} {
-        set condensed_name [lindex $beadname 0]
-        for {set i 1} {$i < [llength $beadname]} {incr i} {
-            set addname [lindex $beadname $i]
-            set condensed_name "$condensed_name.$addname"
-        }
-    } elseif {[llength $beadname] == 1} {
-        set condensed_name $beadname
-    } else {
-        puts "beadname must contain a bead name"
-        break
-    }
 
     ;# selections setup as dict
     set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
