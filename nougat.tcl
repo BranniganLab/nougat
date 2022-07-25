@@ -717,6 +717,7 @@ proc bin_prep {nframes polar min d1} {
 proc create_atomselections {quantity_of_interest system beadname species acyl_names coordsys} {
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $beadname"]
+        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
         foreach lipidtype $species beadlist $acyl_names {
             set j 0
@@ -725,8 +726,6 @@ proc create_atomselections {quantity_of_interest system beadname species acyl_na
                 incr j
             }
         }
-    } elseif {$quantity_of_interest eq "zzero"} {
-        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     }
     return $selections
 }
@@ -772,7 +771,6 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
     run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
-    run_nougat $system $headnames $important_variables $bindims $polar "zzero" $outfiles
 }
 
 proc run_nougat {system beadname important_variables bindims polar quantity_of_interest outfiles} {  
@@ -945,13 +943,10 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
                         }
                     }
                     if {$counts_up($m,$n) != 0.0 && $counts_down($m,$n) != 0.0} {
-                        set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $counts_down($m,$n)] / 2.0]
+                        set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)] / 2.0]
                     } else {
                         set totals_zplus($m,$n) "nan"
                     }
-                    
-
-
                 } elseif {$meas_z_zero == 1} {
                     if {$counts_zzero($m,$n) != 0} {
                         set totals_zzero($m,$n) [expr $totals_zzero($m,$n) / $counts_zzero($m,$n)]
