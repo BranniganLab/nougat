@@ -650,9 +650,6 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
             heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
             heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
         }
-        dict set outfiles z0 {
-            heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-        }
         foreach lipidtype $species {
             dict with outfiles {
                 dict append z1z2 density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
@@ -674,6 +671,9 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
                 }
             }
         } 
+    } elseif {} {
+                dict set outfiles z0 {
+            heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
     }
     return $outfiles
 }
@@ -718,15 +718,16 @@ proc bin_prep {nframes polar min d1} {
 proc create_atomselections {quantity_of_interest system beadname species acyl_names coordsys} {
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $beadname"]
-        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
         foreach lipidtype $species beadlist $acyl_names {
+            set j 0
             foreach tail $beadlist {
-                foreach bead $tail {
-                    dict set selections $species.$bead [atomselect top "resname $lipidtype and name $bead"]
-                }
+                dict set selections $lipidtype.tail$j [atomselect top "resname $lipidtype and name $bead"]
+                incr j
             }
         }
+    } elseif {$quantity_of_interest eq "zzero_height"} {
+        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     }
     return $selections
 }
@@ -823,7 +824,7 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     ;# selections setup as dict
     set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
 
-    puts "Setup complete. Starting analysis now."   
+    puts "Setup complete. Starting frame analysis now."   
 
     ;# start frame looping here
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
