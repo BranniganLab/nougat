@@ -643,37 +643,37 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     return [list $dim1_bins $dim2_bins]
 }
 
-proc create_outfiles {quantity_of_interest system headnames species taillist coordsys} {
-    if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 {
-            heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-            heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-            heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
-        }
-        foreach lipidtype $species {
-            dict with outfiles {
-                dict append z1z2 density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
-                dict append z1z2 density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
-            }
-        }
-    } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
-        dict set outfiles thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
-        dict set outfiles thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
-        for {set i 0} {$i < [llength $taillist]} {incr i} {
-            set lipidtype [lindex $species $i]
-            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
-                set tailnum "tail$j"
-                foreach bead [lindex [lindex $taillist $i] $j] {
-                    dict set outfiles tilts_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.tilt.dat" w]
-                    dict set outfiles tilts_down_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.ztwo.${bead}.${coordsys}.tilt.dat" w]
-                    dict set outfiles order_up_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.zone.${bead}.${coordsys}.order.dat" w]
-                    dict set outfiles order_down_$lipidtype_$tailnum_$bead [open "${system}.${lipidtype}.${tailnum}.ztwo.${bead}.${coordsys}.order.dat" w]
-                }
-            }
-        } 
-    } elseif {$quantity_of_interest eq "zzero"} {
-                dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+proc create_outfiles {system headnames species taillist coordsys} {
+
+    dict set outfiles z1z2 {
+        heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
     }
+    foreach lipidtype $species {
+        dict with outfiles {
+            dict append z1z2 density_up_$lipidtype [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
+            dict append z1z2 density_down_$lipidtype [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+        }
+    }
+    dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+
+    dict set outfiles allbeads {
+        thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
+        thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
+    }
+    for {set i 0} {$i < [llength $taillist]} {incr i} {
+        set lipidtype [lindex $species $i]
+        for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
+            set tailnum "tail$j"
+            dict with outfiles {
+                dict append allbeads tilts_up_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict append allbeads tilts_down_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict append allbeads order_up_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict append allbeads order_down_$lipidtype_$tailnum [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+            }
+        }
+    } 
     return $outfiles
 }
 
@@ -767,12 +767,15 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    run_nougat $system $headnames $important_variables $bindims $polar "height_density"
-    run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness"
-    run_nougat $system $headnames $important_variables $bindims $polar "zzero"
+    ;# outfiles setup as dict
+    set outfiles [create_outfiles $system $condensed_name $species $acyl_names $coordsys]
+
+    run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
+    run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
+    run_nougat $system $headnames $important_variables $bindims $polar "zzero" $outfiles
 }
 
-proc run_nougat {system beadname important_variables bindims polar quantity_of_interest} {  
+proc run_nougat {system beadname important_variables bindims polar quantity_of_interest outfiles} {  
 
     set boxarea []
 
@@ -817,9 +820,6 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
         puts "beadname must contain a bead name"
         break
     }
-
-    ;# outfiles setup as dict
-    set outfiles [create_outfiles $quantity_of_interest $system $condensed_name $species $acyl_names $coordsys]
 
     ;# selections setup as dict
     set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
@@ -1011,14 +1011,16 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     print_frame $N1 $dens_up $d1 $min $N2 [array get density_up] $polar 
     print_frame $N1 $dens_down $d1 $min $N2 [array get density_down] $polar 
     print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero] $polar 
-
-    ;#clean up
-    foreach channel [file channels "file*"] {
-        close $channel
-    }
     
     foreach selection [atomselect list] {
         $selection delete
+    }
+
+    ;# close channels as needed
+    if {$quantity_of_interest eq "height_density"} {
+        ;# close outfiles z1z2 and z0
+    } else {
+        ;# close allbeads
     }
 }
 
