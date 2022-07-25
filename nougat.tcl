@@ -671,9 +671,8 @@ proc create_outfiles {quantity_of_interest system headnames species taillist coo
                 }
             }
         } 
-    } elseif {} {
-                dict set outfiles z0 {
-            heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+    } elseif {$quantity_of_interest eq "zzero"} {
+                dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
     }
     return $outfiles
 }
@@ -726,7 +725,7 @@ proc create_atomselections {quantity_of_interest system beadname species acyl_na
                 incr j
             }
         }
-    } elseif {$quantity_of_interest eq "zzero_height"} {
+    } elseif {$quantity_of_interest eq "zzero"} {
         dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     }
     return $selections
@@ -770,6 +769,7 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     run_nougat $system $headnames $important_variables $bindims $polar "height_density"
     run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness"
+    run_nougat $system $headnames $important_variables $bindims $polar "zzero"
 }
 
 proc run_nougat {system beadname important_variables bindims polar quantity_of_interest} {  
