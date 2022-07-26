@@ -575,21 +575,19 @@ proc tail_analyzer { species } {
     return $taillist
 }
 
-proc tilt_angles {tail_length tail_one tail_two} {
+proc tilt_angles {lengths tails} {
     set vector_list []
-    set t1xvals [lsq_vecexpr $tail_length [$tail_one get x]]
-    set t1yvals [lsq_vecexpr $tail_length [$tail_one get y]]
-    set t1zvals [lsq_vecexpr $tail_length [$tail_one get z]]
-    set t2xvals [lsq_vecexpr $tail_length [$tail_two get x]]
-    set t2yvals [lsq_vecexpr $tail_length [$tail_two get y]]
-    set t2zvals [lsq_vecexpr $tail_length [$tail_two get z]]
-    for {set i 0} {$i < [llength $t1xvals]} {incr i} {
-        set vector1 "[lindex $t1xvals $i] [lindex $t1yvals $i] [lindex $t1zvals $i]"
-        set norm1 [vecnorm $vector1]
-        set vector2 "[lindex $t2xvals $i] [lindex $t2yvals $i] [lindex $t2zvals $i]"
-        set norm2 [vecnorm $vector2]
-        lappend vector_list $norm1
-        lappend vector_list $norm2
+    foreach tail $tails length $lengths {
+        set temp_list []
+        set xvals [lsq_vecexpr $lengths [$tail get x]]
+        set yvals [lsq_vecexpr $lengths [$tail get y]]
+        set zvals [lsq_vecexpr $lengths [$tail get z]]
+        for {set i 0} {$i < [llength $xvals]} {incr i} {
+            set vector "[lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]"
+            set norm [vecnorm $vector]
+            lappend temp_list $norm
+        }
+        lappend vector_list $temp_list
     }
     return $vector_list
 }
@@ -647,17 +645,18 @@ proc create_outfiles {system headnames species taillist coordsys} {
 
     dict set outfiles z1z2 heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
     dict set outfiles z1z2 heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-    dict set outfiles z1z2 heights_zplus [open "${system}.zplus.${headnames}.${coordsys}.height.dat" w]
     foreach lipidtype $species {
         dict with outfiles {
             dict append z1z2 density_up_${lipidtype} [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
             dict append z1z2 density_down_${lipidtype} [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
         }
     }
+    dict set outfiles z1z2 density_up_all [open "${system}.all.zone.${headnames}.${coordsys}.density.dat" w]
+    dict set outfiles z1z2 density_down_all [open "${system}.all.ztwo.${headnames}.${coordsys}.density.dat" w]
+    
     dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
 
-    dict set outfiles allbeads thickness_up [open "${system}.zone.${coordsys}.thickness.dat" w]
-    dict set outfiles allbeads thickness_down [open "${system}.ztwo.${coordsys}.thickness.dat" w]
+    dict set outfiles allbeads dummy "dummy" ;# needed so that append works, below
     for {set i 0} {$i < [llength $taillist]} {incr i} {
         set lipidtype [lindex $species $i]
         for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
@@ -670,6 +669,7 @@ proc create_outfiles {system headnames species taillist coordsys} {
             }
         }
     } 
+    dict unset outfiles allbeads dummy
     return $outfiles
 }
 
@@ -794,7 +794,12 @@ proc start_nougat {system d1 N2 start end step polar} {
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system [concat_names $headnames] $species $acyl_names $coordsys]
 
-    puts $outfiles
+    foreach key [dict keys $outfiles] {
+        puts $key
+        foreach fn [dict keys [dict get $outfiles $key]] {
+            puts $fn
+        }
+    }
     #run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
     #run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
 
