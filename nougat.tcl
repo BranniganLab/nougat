@@ -861,7 +861,10 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
         foreach key [dict keys $outfiles] {
             print_frame $N1 $outfiles $key $d1 $min $N2 $polar
+            set outfiles [dict unset outfiles $key bin]
         } 
+
+        dict remove res_dict
     }
 
     foreach channel [file channels "file*"] {
