@@ -6,14 +6,14 @@ import warnings
 readbeads = False
 inclusion_drawn = False
 polar = False
-name_list = ["DT"]
+name_list = ["dicttest"]
 bead_dict = {
   "DT" : ['C1A.C1B', 'C2A.C2B'],
   "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
   "DY" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B'],
   "DO" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
   "PO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "lgPO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "dicttest" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DP" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DB" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
   "DG" : ['C1A.C1B', 'C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
@@ -33,7 +33,7 @@ density_max = 2
 thick_min = 0
 thick_max = 7
 
-field_list = ["zone","ztwo","zplus","zzero"]
+field_list = ["zone","ztwo"]
 
 def dimensions_analyzer(data, polar):
   #figure out how many radial bins there are
@@ -419,14 +419,14 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
 
   #read in heights from VMD traj
   height_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
-  if field != "zplus":
-    density_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.density.dat')
-  if field == "zone" or field == "ztwo":
-    thickness_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.thickness.dat',missing_values='nan',filling_values=np.nan)
+  #if field != "zplus":
+    #density_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.density.dat')
+  #if field == "zone" or field == "ztwo":
+    #thickness_data = np.genfromtxt(name+'.'+field+'.'+bead+'.'+coordsys+'.thickness.dat',missing_values='nan',filling_values=np.nan)
 
-  if field != "zplus":
+  #if field != "zplus":
     #strip dim1 values from density info
-    density = density_data[:,2:]
+    #density = density_data[:,2:]
 
   #get bin info
   N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(height_data, polar)
@@ -436,10 +436,10 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
   for x in range(Nframes):
     height[:,:,x] = height_data[x*N1_bins:(x+1)*N1_bins,2:]
 
-  if field == "zone" or field == "ztwo":
-    thickness = np.zeros((N1_bins, N2_bins, Nframes))
-    for x in range(Nframes):
-      thickness[:,:,x] = thickness_data[x*N1_bins:(x+1)*N1_bins,2:]
+  #if field == "zone" or field == "ztwo":
+  #  thickness = np.zeros((N1_bins, N2_bins, Nframes))
+  #  for x in range(Nframes):
+  #    thickness[:,:,x] = thickness_data[x*N1_bins:(x+1)*N1_bins,2:]
 
   #create arrays for storing curvature data
   if polar is True:
@@ -599,7 +599,7 @@ if __name__ == "__main__":
         inclusion = False
 
       if readbeads is False:
-        serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
+        serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], f, serial, polar)
       elif readbeads is True:
         serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
         if field != "zzero":
