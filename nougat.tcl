@@ -71,7 +71,14 @@ proc cell_prep {system end} {
     ;# then assigns lipids to user value 1 or 2, depending on leaflet
     ;# no edits required
     set acyl_names [tail_analyzer $species]
-    set tail_ends [list_ends $acyl_names]
+    set full_tails []
+    foreach lipidtype $acyl_names {
+        foreach tail $lipidtype {
+            foreach bead $tail {
+                lappend full_tails $bead
+            }
+        }
+    }
     leaflet_sorter $species $acyl_names $lastframe
 
     ;# this will only work if your TMD helices are set to occupancy 1
@@ -87,22 +94,9 @@ proc cell_prep {system end} {
     lappend return_list $species 
     lappend return_list $headnames 
     lappend return_list $acyl_names
-    lappend return_list $tail_ends
+    lappend return_list $full_tails
     lappend return_list $reference_point
     return $return_list  
-}
-
-
-proc list_ends {acyl_names} {
-    set tail_list []
-    foreach lipid $acyl_names {
-        set lipidlist []
-        foreach tail $lipid {
-            lappend lipidlist [lindex $tail end]
-        }
-        lappend tail_list $lipidlist
-    }
-    return $tail_list
 }
 
 proc RtoD {r} {
@@ -320,10 +314,9 @@ proc print_value {file value end_line} {
 
 
 ;#print an entire array (usually 1 frame) to file
-proc print_frame {N1 file d1 min N2 data polar} {
-    
-    #needed in order to make the proc understand this is array data
-    array set data_copy $data
+proc print_frame {N1 outfiles key d1 min N2 polar} {
+
+    set file [dict get $outfiles $key fname]
 
     if {$polar == 1} {
         set N2 [expr $N2-1]
@@ -334,26 +327,20 @@ proc print_frame {N1 file d1 min N2 data polar} {
         print_line_init $file $m $d1 $min
         ;# adds bin values through penultimate value in one line
         for {set n 0} {$n < $N2} {incr n} {
-            print_value $file $data_copy($m,$n) 0
+            if {[dict exists $outfiles $key bin "$m,$n"]} {
+                print_value $file [dict get $outfiles $key bin "$m,$n"] 0
+            } else {
+                print_value $file 0 0
+            }
         }
         ;# adds final value and starts new line in outfile
-        print_value $file $data_copy($m,$N2) 1
-    }
-}
-
-
-;# sets all values of array to zero
-proc initialize_array {N1 N2 init_value} {
-
-    for {set m 0} {$m <= $N1} {incr m} {
-        for {set n 0} {$n <= $N2} {incr n} {
-            set data($m,$n) $init_value
+        if {[dict exists $outfiles $key bin "$m,$N2"]} {
+            print_value $file [dict get $outfiles $key bin "$m,$N2"] 1
+        } else {
+            print_value $file 0 1
         }
     }
-
-    return [array get data]
 }
-
 
 ;# calculate bin density
 proc calculate_density {data min d1 d2 N1 N2 totfrms polar} {
@@ -592,24 +579,6 @@ proc tilt_angles {lengths tails} {
     return $vector_list
 }
 
-proc prep_thickness_lists {sellist ref_height} {
-    set thickness_list []
-    set counter 0
-    foreach bead [lrange $sellist 4 end] {
-        set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
-        incr counter
-    }
-    if {$counter > 1} {
-        set mins_list [vecexpr $thickness_list $counter min_ew]
-        ;# there is no max_ew in vecexpr, so multiply by -1, do min_ew, then multiply by -1 again
-        set maxs_list [vecexpr [vecexpr [vecexpr $thickness_list -1.0 mult] $counter min_ew] -1.0 mult] 
-    } elseif {$counter == 1} {
-        set mins_list $thickness_list
-        set maxs_list $thickness_list
-    }
-    return [list $mins_list $maxs_list]
-}
-
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     if {$polar == 1} {
         ;#get theta values for all x,y pairs
@@ -641,35 +610,27 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     return [list $dim1_bins $dim2_bins]
 }
 
-proc create_outfiles {system headnames species taillist coordsys} {
+proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
 
-    dict set outfiles z1z2 heights_up [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-    dict set outfiles z1z2 heights_down [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-    foreach lipidtype $species {
-        dict with outfiles {
-            dict append z1z2 density_up_${lipidtype} [open "${system}.${lipidtype}.zone.${headnames}.${coordsys}.density.dat" w]
-            dict append z1z2 density_down_${lipidtype} [open "${system}.${lipidtype}.ztwo.${headnames}.${coordsys}.density.dat" w]
+    if {$quantity_of_interest eq "height_density"} {
+        dict set outfiles heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        foreach lipidtype $species {
+            dict set outfiles density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
         }
-    }
-    dict set outfiles z1z2 density_up_all [open "${system}.all.zone.${headnames}.${coordsys}.density.dat" w]
-    dict set outfiles z1z2 density_down_all [open "${system}.all.ztwo.${headnames}.${coordsys}.density.dat" w]
-    
-    dict set outfiles z0 heights_zzero [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-
-    dict set outfiles allbeads dummy "dummy" ;# needed so that append works, below
-    for {set i 0} {$i < [llength $taillist]} {incr i} {
-        set lipidtype [lindex $species $i]
-        for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
-            set tailnum "tail$j"
-            dict with outfiles {
-                dict append allbeads tilts_up_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict append allbeads tilts_down_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict append allbeads order_up_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict append allbeads order_down_${lipidtype}_${tailnum} [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+    } elseif {$quantity_of_interest eq "tilt_order"} {
+        for {set i 0} {$i < [llength $taillist]} {incr i} {
+            set lipidtype [lindex $species $i]
+            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
+                set tailnum "tail$j"
+                dict set outfiles tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
-        }
-    } 
-    dict unset outfiles allbeads dummy
+        } 
+    }
     return $outfiles
 }
 
@@ -710,22 +671,6 @@ proc bin_prep {nframes polar min d1} {
     return [list $d1 $d2 $N1 $N2 $dthetadeg]
 }
 
-proc create_atomselections {quantity_of_interest system beadname species acyl_names coordsys} {
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname $species and name $beadname"]
-        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
-    } elseif {$quantity_of_interest eq "tilt_order_thickness"} {
-        foreach lipidtype $species beadlist $acyl_names {
-            set j 0
-            foreach tail $beadlist {
-                dict set selections $lipidtype.tail$j [atomselect top "resname $lipidtype and name $bead"]
-                incr j
-            }
-        }
-    }
-    return $selections
-}
-
 proc concat_names { headnames } {
     ;# concatenate all beadnames together for file naming purposes
     if {[llength $headnames] > 1} {
@@ -743,6 +688,50 @@ proc concat_names { headnames } {
     return $condensed_name
 }
 
+proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list} {
+    dict set res_dict dummy "dummy"
+    for {set i 0} {$i < [llength $lipid_list]} {incr i} {
+        if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
+            set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+            set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
+            if {[dict exists $res_dict $bin_leaf]} {
+                dict append res_dict $bin_leaf " $i"
+            } else {
+                dict set res_dict $bin_leaf $i                
+            }
+        }
+    }
+    dict unset res_dict dummy
+    return $res_dict
+}
+
+proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list} {
+    dict for {bin indices} $res_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+        set newlist []
+        foreach indx $indices {
+            if {$leaf == 1} {
+                set dens_key "density_up_[lindex $lipid_list $indx]"
+                set height_key "heights_up"
+            } else {
+                set dens_key "density_down_[lindex $lipid_list $indx]"
+                set height_key "heights_down"
+            }
+            lappend newlist [lindex $zvals_list $indx]
+        }
+        if {[llength $newlist] == 1} {
+            dict set outfiles $height_key bin $correct_bin [lindex $newlist 0]
+            dict set outfiles $dens_key bin $correct_bin 1
+        } elseif {[llength $newlist] > 1} {
+            set avg [vecexpr $newlist mean]
+            dict set outfiles $height_key bin $correct_bin $avg 
+            dict set outfiles $dens_key bin $correct_bin [llength $newlist]
+        }
+    }
+    return $outfiles
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
@@ -753,6 +742,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
+    set full_tails [lindex $important_variables 3]
     set reference_point [lindex $important_variables 4]
 
     #need to calculate heights relative to some point on the inclusion:
@@ -772,16 +762,6 @@ proc start_nougat {system d1 N2 start end step polar} {
         break
     }
 
-    ;# generate string for polar or cartesian coordinates
-    if {$polar == 1} {
-        set coordsys "polar"
-    } elseif {$polar == 0} {
-        set coordsys "cart"
-    } else {
-        puts "polar must be 1 or 0"
-        break
-    }
-
     ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1]
 
@@ -791,25 +771,12 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    ;# outfiles setup as dict
-    set outfiles [create_outfiles $system [concat_names $headnames] $species $acyl_names $coordsys]
+    run_nougat $system $important_variables $bindims $polar "height_density" 
+    #run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
-    foreach key [dict keys $outfiles] {
-        puts $key
-        foreach fn [dict keys [dict get $outfiles $key]] {
-            puts $fn
-        }
-    }
-    #run_nougat $system $headnames $important_variables $bindims $polar "height_density" $outfiles
-    #run_nougat $system $headnames $important_variables $bindims $polar "tilt_order_thickness" $outfiles
-
-    ;# just-in-case file closing
-    foreach channel [file channels "file*"] {
-        close $channel
-    }
 }
 
-proc run_nougat {system beadname important_variables bindims polar quantity_of_interest outfiles} {  
+proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
 
     set boxarea []
 
@@ -817,7 +784,7 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
-    set tail_ends [lindex $important_variables 3]
+    set full_tails [lindex $important_variables 3]
     set start [lindex $important_variables 5]
     set nframes [lindex $important_variables 6]
     set step [lindex $important_variables 7]
@@ -831,8 +798,22 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
     set N2 [lindex $bindims 3]
     set dthetadeg [lindex $bindims 4]
 
-    ;# selections setup as dict
-    set selections [create_atomselections $quantity_of_interest $system $beadname $species $acyl_names $coordsys]
+    ;# generate string for polar or cartesian coordinates
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    } else {
+        puts "polar must be 1 or 0"
+        break
+    }
+
+    ;# outfiles setup as dict
+    set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
+
+    set mainsel [atomselect top "resname $species and name $full_tails"]
+    set z0sel [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+    set sellist [list $mainsel $z0sel]
 
     puts "Setup complete. Starting frame analysis now."   
 
@@ -856,136 +837,40 @@ proc run_nougat {system beadname important_variables bindims polar quantity_of_i
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
 
-        set xvals_list []
-        set yvals_list []
-        set zvals_list []
-        set leaflet_list []
-        set lipid_list []
-        set dim1_bins_list []
-        set dim2_bins_list []
+        $mainsel frame $frm 
+        $mainsel update
 
-        dict for {selexname selex} $selections {
-            $selex frame $frm 
-            $selex update
+        set zvals_list [vecexpr [$mainsel get z] $ref_height sub]
+        set leaflet_list [$mainsel get user]
+        set lipid_list [$mainsel get resname]
+        set tail_list [$mainsel get user3]
+        set name_list [$mainsel get name]
+        set resid_list [$mainsel get resid]
 
-            lappend xvals_list [$selex get x]
-            lappend yvals_list [$selex get y]
-            lappend zvals_list [vecexpr [$selex get z] $ref_height sub]
-            lappend leaflet_list [$selex get user]
-            lappend lipid_list [$selex get resname]
+        set bins [bin_assigner [$mainsel get x] [$mainsel get y] $d1 $d2 $dthetadeg $polar]
+        set dim1_bins_list [lindex $bins 0]
+        set dim2_bins_list [lindex $bins 1]
 
-            set bins [bin_assigner $x_vals $y_vals $d1 $d2 $dthetadeg $polar]
-            lappend dim1_bins_list [lindex $bins 0]
-            lappend dim2_bins_list [lindex $bins 1]
+        set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
+
+        if {$quantity_of_interest eq "height_density"} {
+            set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
+        } elseif {$quantity_of_interest eq "tilt_order"} {
+            ;# do the complicated thing
         }
 
-        ;#initialize arrays to zeros
         foreach key [dict keys $outfiles] {
-            set array_$key [initialize_array $N1 $N2 0.0]
-        }
-
-        ;#fill in total/count arrays with z sum and count sum
-        for {set i 0} {$i < [llength $x_vals]} {incr i} {
-            set m [lindex $dim1_bins $i]
-            set n [lindex $dim2_bins $i]
-            if {$m <= $N1 && $n <= $N2} {
-                if {$meas_z_zero == 0} {
-                    if {[lindex $leaflet $i] == 1} {
-                        set totals_up($m,$n) [expr {$totals_up($m,$n) + [lindex $z_vals $i]}]
-                        set counts_up($m,$n) [expr {$counts_up($m,$n) + 1}]
-                        set density_up($m,$n) [expr {$density_up($m,$n) + 1}]
-                        set thickness_up($m,$n) [expr {$thickness_up($m,$n) + [lindex $mins_list $i]}]
-                        if {$separate_beads == 0} {
-                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) [lindex $tilts $i] add]
-                            ;#set chain_order_up($m,$n) [expr {$chain_order_up($m,$n) + [lindex $order $i]}]
-                        }
-                    } elseif {[lindex $leaflet $i] == 2} {
-                        set totals_down($m,$n) [expr {$totals_down($m,$n) + [lindex $z_vals $i]}]
-                        set counts_down($m,$n) [expr {$counts_down($m,$n) + 1}]
-                        set density_down($m,$n) [expr {$density_down($m,$n) + 1}]
-                        set thickness_down($m,$n) [expr {$thickness_down($m,$n) + [lindex $maxs_list $i]}]
-                        if {$separate_beads == 0} {
-                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) [lindex $tilts $i] add]
-                            ;#set chain_order_down($m,$n) [expr {$chain_order_down($m,$n) + [lindex $order $i]}]
-                        }
-                    }
-                } elseif {$meas_z_zero == 1} {
-                    set totals_zzero($m,$n) [expr {$totals_zzero($m,$n) + [lindex $z_vals $i]}]
-                    set counts_zzero($m,$n) [expr {$counts_zzero($m,$n) + 1}]
-                }
-            }
-        }    
-
-        ;#turn the z sum into a z avg
-        for {set m 0} {$m <= $N1} {incr m} {
-            for {set n 0} {$n <= $N2} {incr n} {
-                if {$meas_z_zero == 0} {
-                    if {$counts_up($m,$n) != 0.0} {
-                        set totals_up($m,$n) [expr $totals_up($m,$n) / $counts_up($m,$n)]
-                        set thickness_up($m,$n) [expr $thickness_up($m,$n) / $counts_up($m,$n)]
-                        set thickness_up($m,$n) [expr $totals_up($m,$n) - $thickness_up($m,$n)]
-                        if {$separate_beads == 0} {
-                            set tilts_up($m,$n) [vecexpr $tilts_up($m,$n) $counts_up($m,$n) div]
-                            set tilts_up($m,$n) [vecnorm $tilts_up($m,$n)]
-                            ;# ADD ORDER HERE
-                        }
-                    } else {
-                        set totals_up($m,$n) "nan"
-                        set thickness_up($m,$n) "nan"
-                        if {$separate_beads == 0} {
-                            set tilts_up($m,$n) "nan nan nan"
-                            ;# ADD ORDER HERE
-                        }
-                    }
-                    if {$counts_down($m,$n) != 0.0} {
-                        set totals_down($m,$n) [expr $totals_down($m,$n) / $counts_down($m,$n)]
-                        set thickness_down($m,$n) [expr $thickness_down($m,$n) / $counts_down($m,$n)]
-                        set thickness_down($m,$n) [expr $thickness_down($m,$n) - $totals_down($m,$n)]
-                        if {$separate_beads == 0} {
-                            set tilts_down($m,$n) [vecexpr $tilts_down($m,$n) $counts_down($m,$n) div]
-                            set tilts_down($m,$n) [vecnorm $tilts_down($m,$n)]
-                            ;# ADD ORDER HERE
-                        }
-                    } else {
-                        set totals_down($m,$n) "nan"
-                        set thickness_down($m,$n) "nan"
-                        if {$separate_beads == 0} {
-                            set tilts_down($m,$n) "nan nan nan"
-                            ;# ADD ORDER HERE
-                        }
-                    }
-                    if {$counts_up($m,$n) != 0.0 && $counts_down($m,$n) != 0.0} {
-                        set totals_zplus($m,$n) [expr [expr $totals_up($m,$n) + $totals_down($m,$n)] / 2.0]
-                    } else {
-                        set totals_zplus($m,$n) "nan"
-                    }
-                } elseif {$meas_z_zero == 1} {
-                    if {$counts_zzero($m,$n) != 0} {
-                        set totals_zzero($m,$n) [expr $totals_zzero($m,$n) / $counts_zzero($m,$n)]
-                    } else {
-                        set totals_zzero($m,$n) "nan"
-                    }
-                }
-            }
-        }
-
-        ;#output heights to files
-        if { $meas_z_zero == 0 } {
-            print_frame $N1 $heights_up $d1 $min $N2 [array get totals_up] $polar 
-            print_frame $N1 $heights_down $d1 $min $N2 [array get totals_down] $polar 
-            print_frame $N1 $heights_zplus $d1 $min $N2 [array get totals_zplus] $polar 
-            print_frame $N1 $tilt_up $d1 $min $N2 [array get tilts_up] $polar 
-            print_frame $N1 $tilt_down $d1 $min $N2 [array get tilts_down] $polar 
-            print_frame $N1 $thick_up $d1 $min $N2 [array get thickness_up] $polar 
-            print_frame $N1 $thick_down $d1 $min $N2 [array get thickness_down] $polar 
-        } elseif {$meas_z_zero == 1} {
-            print_frame $N1 $heights_zzero $d1 $min $N2 [array get totals_up] $polar 
-        }
-
-        if {$separate_beads == 0} {
-            set meas_z_zero 1
-        }
+            print_frame $N1 $outfiles $key $d1 $min $N2 $polar
+        } 
     }
+
+    foreach channel [file channels "file*"] {
+        close $channel
+    }
+    foreach selection [atomselect list] {
+        $selection delete
+    }
+    return
 
     ;# calculate density
     set delta_frame [expr ($nframes - $start) / $step]
