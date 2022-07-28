@@ -330,14 +330,14 @@ proc print_frame {N1 outfiles key d1 min N2 polar} {
             if {[dict exists $outfiles $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $key bin "$m,$n"] 0
             } else {
-                print_value $file 0 0
+                print_value $file "nan" 0
             }
         }
         ;# adds final value and starts new line in outfile
         if {[dict exists $outfiles $key bin "$m,$N2"]} {
             print_value $file [dict get $outfiles $key bin "$m,$N2"] 1
         } else {
-            print_value $file 0 1
+            print_value $file "nan" 1
         }
     }
 }
