@@ -811,9 +811,13 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
 
-    set mainsel [atomselect top "resname $species and name $full_tails"]
-    set z0sel [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
-    set sellist [list $mainsel $z0sel]
+    if {$quantity_of_interest eq "height_density"} {
+        dict set selections [atomselect top "resname $species and name $full_tails"]
+        dict set selections [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+    } elseif {$quantity_of_interest eq "tilt_order"} {
+        ;#set some other sels
+    }
+
 
     puts "Setup complete. Starting frame analysis now."   
 
@@ -836,27 +840,32 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         set box_height [molinfo top get c]
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
+        
+        foreach sel [dict keys $selections] {
 
-        $mainsel frame $frm 
-        $mainsel update
+            $sel frame $frm 
+            $sel update
 
-        set zvals_list [vecexpr [$mainsel get z] $ref_height sub]
-        set leaflet_list [$mainsel get user]
-        set lipid_list [$mainsel get resname]
-        set tail_list [$mainsel get user3]
-        set name_list [$mainsel get name]
-        set resid_list [$mainsel get resid]
+            set xvals_list [$sel get x]
+            set yvals_list [$sel get y]
+            set zvals_list [vecexpr [$sel get z] $ref_height sub]
+            set leaflet_list [$sel get user]
+            set lipid_list [$sel get resname]
+            set tail_list [$sel get user3]
+            set name_list [$sel get name]
+            set resid_list [$sel get resid]
 
-        set bins [bin_assigner [$mainsel get x] [$mainsel get y] $d1 $d2 $dthetadeg $polar]
-        set dim1_bins_list [lindex $bins 0]
-        set dim2_bins_list [lindex $bins 1]
+            set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
+            set dim1_bins_list [lindex $bins 0]
+            set dim2_bins_list [lindex $bins 1]
 
-        set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
+            set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
 
-        if {$quantity_of_interest eq "height_density"} {
-            set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
-        } elseif {$quantity_of_interest eq "tilt_order"} {
-            ;# do the complicated thing
+            if {$quantity_of_interest eq "height_density"} {
+                set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
+            } elseif {$quantity_of_interest eq "tilt_order"} {
+                ;# do the complicated thing
+            }
         }
 
         foreach key [dict keys $outfiles] {
