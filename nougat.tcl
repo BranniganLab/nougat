@@ -10,6 +10,8 @@ set UTILS "~/PolarHeightBinning/utilities"
 
 load ${UTILS}/qwrap.so
 load ${UTILS}/vecexpr.so
+#load ~/qwrap/qwrap.so 
+#load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system end} {
 
@@ -30,7 +32,7 @@ proc cell_prep {system end} {
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "resname W ION"
+    set excluded_sel "resname W ION 'CL-' 'NA+'"
 
     ;# figures out which lipids are in the system
     ;# no edits required
@@ -732,6 +734,33 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
     return $outfiles
 }
 
+proc tail_length_sorter {species acyl_names} {
+    set lenlist []
+    for {set i 0} {$i < [llength $acyl_names]} {incr i} {
+        foreach tail [lindex $acyl_names $i] {
+            lappend lenlist [llength $tail]
+        }
+    }
+    set lengthlist [lsort -unique $lenlist]
+    set sellist []
+    foreach length $lengthlist {
+        set resnamelist []
+        set namelist []
+        for {set i 0} {$i < [llength $acyl_names]} {incr i} {
+            foreach tail [lindex $acyl_names $i] {
+                if {[llength $tail] == $length} {
+                    lappend resnamelist [lindex $species $i]
+                    foreach nm $tail {
+                        lappend namelist $nm 
+                    }
+                }
+            }
+        }
+        lappend sellist "resname [lsort -unique $resnamelist] and name [lsort -unique $namelist]"
+    }
+    return [list $sellist $lengthlist]
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
@@ -812,10 +841,15 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
 
     if {$quantity_of_interest eq "height_density"} {
-        dict set selections [atomselect top "resname $species and name $full_tails"]
-        dict set selections [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+        dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
+        #dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
     } elseif {$quantity_of_interest eq "tilt_order"} {
-        ;#set some other sels
+        set lists [tail_length_sorter $species $acyl_names]
+        set sellist [lindex $lists 0]
+        set lenlist [lindex $lists 1]
+        foreach sel $sellist len $lenlist {
+            dict set selections $len [atomselect top "$sel"] 
+        }
     }
 
 
@@ -841,8 +875,8 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
         
-        foreach sel [dict keys $selections] {
-
+        foreach selex [dict keys $selections] {
+            set sel [dict get $selections $selex]
             $sel frame $frm 
             $sel update
 
