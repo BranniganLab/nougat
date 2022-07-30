@@ -564,21 +564,18 @@ proc tail_analyzer { species } {
     return $taillist
 }
 
-proc tilt_angles {lengths tails} {
-    set vector_list []
-    foreach tail $tails length $lengths {
-        set temp_list []
-        set xvals [lsq_vecexpr $lengths [$tail get x]]
-        set yvals [lsq_vecexpr $lengths [$tail get y]]
-        set zvals [lsq_vecexpr $lengths [$tail get z]]
-        for {set i 0} {$i < [llength $xvals]} {incr i} {
-            set vector "[lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]"
-            set norm [vecnorm $vector]
-            lappend temp_list $norm
-        }
-        lappend vector_list $temp_list
+proc tilt_angles {length xvals yvals zvals} {
+    set tilt_list []
+    set xvec [lsq_vecexpr $length $xvals]
+    set yvec [lsq_vecexpr $length $yvals]
+    set zvec [lsq_vecexpr $length $zvals]
+    for {set i 0} {$i < [llength $xvec]} {incr i} {
+        set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
+        set norm [vecnorm $vector]
+        lappend tilt_list $norm
     }
-    return $vector_list
+
+    return $tilt_list
 }
 
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
@@ -800,9 +797,15 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    run_nougat $system $important_variables $bindims $polar "height_density" 
-    #run_nougat $system $important_variables $bindims $polar "tilt_order" 
+    #run_nougat $system $important_variables $bindims $polar "height_density" 
+    run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
+}
+
+proc order_params {length xvals yvals zvals leaflets} {
+    for {set i 1} {$i < [llength $xvals]} {incr i} {
+
+    }
 }
 
 proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
@@ -894,12 +897,22 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set dim2_bins_list [lindex $bins 1]
 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
+            
 
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
-                ;# do the complicated thing
+                set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
+                set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
+                ;# figure out how to bin based on res_dict
             }
+            foreach channel [file channels "file*"] {
+                close $channel
+            }
+            foreach selection [atomselect list] {
+                $selection delete
+            }
+            return
         }
 
         foreach key [dict keys $outfiles] {
