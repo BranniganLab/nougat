@@ -941,21 +941,13 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
                 set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
-            foreach channel [file channels "file*"] {
-                close $channel
-            }
-            foreach selection [atomselect list] {
-                $selection delete
-            }
-            return
+            foreach key [dict keys $outfiles] {
+                print_frame $N1 $outfiles $key $d1 $min $N2 $polar
+                set outfiles [dict unset outfiles $key bin]
+            } 
+
+            dict remove res_dict
         }
-
-        foreach key [dict keys $outfiles] {
-            print_frame $N1 $outfiles $key $d1 $min $N2 $polar
-            set outfiles [dict unset outfiles $key bin]
-        } 
-
-        dict remove res_dict
     }
 
     foreach channel [file channels "file*"] {
