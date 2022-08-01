@@ -774,7 +774,8 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-        set newlist []
+        set tiltlist []
+        set orderlist []
         foreach indx $indices {
             if {$leaf == 1} {
                 set tilt_key "tilts_up_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
@@ -783,15 +784,17 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
                 set order_key "order_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
             }
-            lappend newlist [lindex $zvals_list $indx]
+            lappend tiltlist [lindex $tilts $indx]
+            lappend orderlist [lindex $orders $indx]
         }
-        if {[llength $newlist] == 1} {
-            dict set outfiles $height_key bin $correct_bin [lindex $newlist 0]
-            dict set outfiles $dens_key bin $correct_bin 1
-        } elseif {[llength $newlist] > 1} {
-            set avg [vecexpr $newlist mean]
-            dict set outfiles $height_key bin $correct_bin $avg 
-            dict set outfiles $dens_key bin $correct_bin [llength $newlist]
+        if {[llength $tiltlist] == 1} {
+            dict set outfiles $tilt_key bin $correct_bin [lindex $tiltlist 0]
+            dict set outfiles $order_key bin $correct_bin [lindex $orderlist 0]
+        } elseif {[llength $tiltlist] > 1} {
+            set tiltavg [vecexpr $tiltlist mean]
+            dict set outfiles $tilt_key bin $correct_bin $tiltavg
+            set orderavg [vecexpr $orderlist mean] 
+            dict set outfiles $order_key bin $correct_bin $orderavg
         }
     }
     return $outfiles
@@ -936,7 +939,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
-                ;#set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
+                set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
             foreach channel [file channels "file*"] {
                 close $channel
