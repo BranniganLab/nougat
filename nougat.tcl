@@ -555,8 +555,12 @@ proc tilt_angles {length xvals yvals zvals} {
         set norm [vecnorm $vector]
         lappend tilt_list $norm
     }
-
-    return $tilt_list
+    set final_tilt_list []
+    foreach item $tilt_list {
+        set final_tilt_list [concat $final_tilt_list [lrepeat $length $item]]
+    }
+    puts [list $final_tilt_list]
+    return [list $final_tilt_list]
 }
 
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
@@ -767,7 +771,11 @@ proc order_params {length xvals yvals zvals leaflets} {
             }
         }
     }
-    return $order_list
+    set final_order_list []
+    foreach item $order_list {
+        set final_order_list [concat $final_order_list [lrepeat $length $item]]
+    }
+    return [list $final_order_list]
 }
 
 proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list} {
@@ -791,7 +799,11 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
             dict set outfiles $tilt_key bin $correct_bin [lindex $tiltlist 0]
             dict set outfiles $order_key bin $correct_bin [lindex $orderlist 0]
         } elseif {[llength $tiltlist] > 1} {
-            set tiltavg [vecexpr $tiltlist mean]
+            set tiltsum "0 0 0"
+            for {set i 0} {$i < [llength $tiltlist]} {incr i} {
+                set tiltsum [vecexpr [lindex $tiltlist $i] $tiltsum add]
+            }
+            set tiltavg [vecexpr $tiltsum [llength $tiltlist] div]
             dict set outfiles $tilt_key bin $correct_bin $tiltavg
             set orderavg [vecexpr $orderlist mean] 
             dict set outfiles $order_key bin $correct_bin $orderavg
@@ -941,6 +953,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
                 set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
+
             foreach key [dict keys $outfiles] {
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar
                 set outfiles [dict unset outfiles $key bin]
