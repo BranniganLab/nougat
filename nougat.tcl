@@ -402,25 +402,6 @@ proc Align { stuff } {
     $ref delete
 }
 
-proc calc_vec_magn {xvals yvals zvals} {
-    set x2 [vecexpr $xvals sq]
-    set y2 [vecexpr $yvals sq]
-    set z2 [vecexpr $zvals sq]
-    return [vecexpr [vecexpr [vecexpr $x2 $y2 add] $z2 add] sqrt]
-}
-
-proc calc_vector_btw_beads {b1x b1y b1z b2x b2y b2z} {
-    set xvals [vecexpr b2x b1x sub]
-    set yvals [vecexpr b2y b1y sub]
-    set zvals [vecexpr b2z b1z sub]
-    return [list $xvals $yvals $zvals]
-}
-
-proc calc_avg_order {angle_list} {
-    set threecos2minusone [vecexpr [vecexpr [vecexpr [vecexpr $angle_list cos] sq] 3 mult] 1 sub]
-    return [expr [vecexpr $threecos2minusone mean] / 2.0]
-}
-
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
@@ -758,6 +739,64 @@ proc tail_length_sorter {species acyl_names} {
     return [list $sellist $lengthlist]
 }
 
+proc order_params {length xvals yvals zvals leaflets} {
+    set order_list []
+    set temp_list []
+    for {set i 1} {$i < [llength $xvals]} {incr i} {
+        if {[expr $i % $length] == 0} {
+            set step1 [vecexpr $temp_list 3 mult]
+            set step2 [vecexpr $step1 1 sub]
+            set step3 [vecexpr $step2 mean]
+            lappend order_list $step3
+            set temp_list []
+            continue
+        } else {
+            set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
+            set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
+            set magn_a [vecdist $start $end]
+            set theta [expr [expr [lindex $zvals $i] - [lindex $zvals $i-1]] / $magn_a]
+            if {($theta > 1) || ($theta < -1)} {
+                puts "Something is wrong with your order params"
+                puts "This is out of the range allowed for arccos"
+                return
+            }
+            if {[lindex $leaflets $i] == 1} {
+                lappend temp_list $theta
+            } elseif {[lindex $leaflets $i] == 2} {
+                lappend temp_list [expr -1.0 * $theta]
+            }
+        }
+    }
+    return $order_list
+}
+
+proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list} {
+    dict for {bin indices} $res_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+        set newlist []
+        foreach indx $indices {
+            if {$leaf == 1} {
+                set tilt_key "tilts_up_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+                set order_key "order_up_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+            } else {
+                set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+                set order_key "order_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+            }
+            lappend newlist [lindex $zvals_list $indx]
+        }
+        if {[llength $newlist] == 1} {
+            dict set outfiles $height_key bin $correct_bin [lindex $newlist 0]
+            dict set outfiles $dens_key bin $correct_bin 1
+        } elseif {[llength $newlist] > 1} {
+            set avg [vecexpr $newlist mean]
+            dict set outfiles $height_key bin $correct_bin $avg 
+            dict set outfiles $dens_key bin $correct_bin [llength $newlist]
+        }
+    }
+    return $outfiles
+}
+
 ;########################################################################################
 ;# polarHeight Functions
 
@@ -800,12 +839,6 @@ proc start_nougat {system d1 N2 start end step polar} {
     #run_nougat $system $important_variables $bindims $polar "height_density" 
     run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
-}
-
-proc order_params {length xvals yvals zvals leaflets} {
-    for {set i 1} {$i < [llength $xvals]} {incr i} {
-
-    }
 }
 
 proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
@@ -898,13 +931,12 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
             
-
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
-                ;# figure out how to bin based on res_dict
+                ;#set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
             foreach channel [file channels "file*"] {
                 close $channel
