@@ -758,7 +758,7 @@ proc tail_length_sorter {species acyl_names} {
 proc order_params {length xvals yvals zvals} {
     set order_list []
     set temp_list []
-    for {set i 1} {$i < [llength $xvals]} {incr i} {
+    for {set i 1} {$i <= [llength $xvals]} {incr i} {
         if {[expr $i % $length] == 0} {
             set avg [vecexpr $temp_list mean]
             set step2 [expr $avg*3.0 - 1]
@@ -794,16 +794,15 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
         set orderlist []
         foreach indx $indices {
             if {$leaf == 1} {
-                set tilt_key "tilts_up_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
-                set order_key "order_up_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+                set tilt_key "tilts_up_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
+                set order_key "order_up_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
             } else {
-                set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
-                set order_key "order_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
+                set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
+                set order_key "order_down_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
             }
             lappend tiltlist [lindex [lindex $tilts 0] $indx]
             lappend orderlist [lindex [lindex $orders 0] $indx]
         }
-        puts $orderlist
         if {[llength $tiltlist] == 1} {
             dict set outfiles $tilt_key bin $correct_bin [lindex $tiltlist 0]
             dict set outfiles $order_key bin $correct_bin [lindex $orderlist 0]
@@ -860,7 +859,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $ref_height
     lappend important_variables $min
 
-    #run_nougat $system $important_variables $bindims $polar "height_density" 
+    run_nougat $system $important_variables $bindims $polar "height_density" 
     run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
 }
@@ -977,50 +976,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
     foreach selection [atomselect list] {
         $selection delete
-    }
-    return
-
-    ;# calculate density
-    set delta_frame [expr ($nframes - $start) / $step]
-    array set density_up [calculate_density [array get density_up] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
-    array set density_down [calculate_density [array get density_down] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
-    array set density_zzero [calculate_density [array get density_zzero] $min $d1 $d2 $N1 $N2 $delta_frame $polar]
-
-    ;# prepare to normalize density
-    set avg_area [vecexpr $boxarea mean]
-    
-    ;# x_B * N_L = N_B
-    set lipidnum []
-    foreach leaflet "1 2" {
-        set lipidsel [atomselect top "resname $species and user $leaflet" frame [expr $nframes -1]]
-        set lipidres [lsort -unique [$lipidsel get resid]]
-        lappend lipidnum [llength $lipidres]
-        $lipidsel delete
-    }
-    
-    set up_normfactor [expr [lindex $lipidnum 0] / $avg_area]
-    set down_normfactor [expr [lindex $lipidnum 1] / $avg_area]
-    set combined_normfactor [expr [vecexpr $lipidnum sum] / [expr 2 * $avg_area]]
-
-    ;# calculate normalized density
-    array set density_up [normalize_density [array get density_up] $N1 $N2 $up_normfactor [llength $headnames]]
-    array set density_down [normalize_density [array get density_down] $N1 $N2 $down_normfactor [llength $headnames]]
-    array set density_zzero [normalize_density [array get density_zzero] $N1 $N2 $combined_normfactor [expr [llength $tailnames] * 2.0]]  
-
-    ;# output densities to files
-    print_frame $N1 $dens_up $d1 $min $N2 [array get density_up] $polar 
-    print_frame $N1 $dens_down $d1 $min $N2 [array get density_down] $polar 
-    print_frame $N1 $dens_zzero $d1 $min $N2 [array get density_zzero] $polar 
-    
-    foreach selection [atomselect list] {
-        $selection delete
-    }
-
-    ;# close channels as needed
-    if {$quantity_of_interest eq "height_density"} {
-        ;# close outfiles z1z2 and z0
-    } else {
-        ;# close allbeads
     }
 }
 
