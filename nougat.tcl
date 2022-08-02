@@ -110,25 +110,38 @@ proc RtoD {r} {
 #  Fit the points x to x = ai + b, i=0...N-1, and return the value of a 
 # a = 12/( (N(N^2 - 1)) ) sum[ (i-(N-1)/2) * xi]
 # reference: Bevington
-proc lsq_vecexpr { tail_length list_of_tail_coords } {
-  set i_list []
-  set counter 0
-  for {set i 0} {$i < [llength $list_of_tail_coords]} {incr i} {
-    lappend i_list $counter
-    set counter [expr $counter + 1]
-    if {[expr $counter%$tail_length]==0} {
-      set counter 0
-    }
+proc lsq_vec { X } {
+  #initialize
+  set len [llength $X]
+  set diff [expr $len-1]
+  set d [expr 0.5*$diff] ;#normalization factor
+  set I {}
+
+  #Make a list from 0 to len
+  for {set k 0} {$k < $len} {incr k} {
+    lappend I $k
   }
-  set d [expr {0.5*($tail_length-1)}]
-  vecexpr $i_list $d sub >multiplier
-  set vector_components [vecexpr $list_of_tail_coords $multiplier mult]
+  
+  #Get element-wise diff between I(integers 0 to len) and d(0.5*(len-1)). stack=1vector
+  #push X to stack. stack=2vecs
+  #Multiply X and the differences. stack=1vec
+  #sum over the vector. stack=1scalar
+  #store the scalar in tot
+  vecexpr $I $d sub <X mult sum >tot
+  
+  return $tot
+}
+
+proc fit_all_tails { tail_length list_of_tail_coords } {
   set vectors []
-  for {set i 0} {$i < [expr [llength $list_of_tail_coords] / $tail_length]} {incr i} {
-    set startnum [expr $i*$tail_length]
-    set endnum [expr [expr [expr $i+1] * $tail_length] -1]
-    set quantity_to_sum [lrange $vector_components $startnum $endnum]
-    lappend vectors [vecexpr $quantity_to_sum sum]
+  set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
+  set start_idx 0
+  for {set i 0} {$i < $N_lipids} {incr i} {
+    set next_idx [expr $start_idx + $tail_length]
+    set end_idx [expr $next_idx - 1]
+    set coords [lrange $list_of_tail_coords $start_idx $end_idx]
+    lappend vectors [lsq_vec $coords]
+    set start_idx $next_idx
   }
 
   return $vectors
@@ -547,9 +560,9 @@ proc tail_analyzer { species } {
 
 proc tilt_angles {length xvals yvals zvals} {
     set tilt_list []
-    set xvec [lsq_vecexpr $length $xvals]
-    set yvec [lsq_vecexpr $length $yvals]
-    set zvec [lsq_vecexpr $length $zvals]
+    set xvec [fit_all_tails $length $xvals]
+    set yvec [fit_all_tails $length $yvals]
+    set zvec [fit_all_tails $length $zvals]
     for {set i 0} {$i < [llength $xvec]} {incr i} {
         set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
         set norm [vecnorm $vector]
@@ -559,7 +572,6 @@ proc tilt_angles {length xvals yvals zvals} {
     foreach item $tilt_list {
         set final_tilt_list [concat $final_tilt_list [lrepeat $length $item]]
     }
-    puts [list $final_tilt_list]
     return [list $final_tilt_list]
 }
 
@@ -743,15 +755,15 @@ proc tail_length_sorter {species acyl_names} {
     return [list $sellist $lengthlist]
 }
 
-proc order_params {length xvals yvals zvals leaflets} {
+proc order_params {length xvals yvals zvals} {
     set order_list []
     set temp_list []
     for {set i 1} {$i < [llength $xvals]} {incr i} {
         if {[expr $i % $length] == 0} {
-            set step1 [vecexpr $temp_list 3 mult]
-            set step2 [vecexpr $step1 1 sub]
-            set step3 [vecexpr $step2 mean]
-            lappend order_list $step3
+            set avg [vecexpr $temp_list mean]
+            set step2 [expr $avg*3.0 - 1]
+            set order [expr $step2 / 2.0]
+            lappend order_list $order
             set temp_list []
             continue
         } else {
@@ -764,11 +776,7 @@ proc order_params {length xvals yvals zvals leaflets} {
                 puts "This is out of the range allowed for arccos"
                 return
             }
-            if {[lindex $leaflets $i] == 1} {
-                lappend temp_list $theta
-            } elseif {[lindex $leaflets $i] == 2} {
-                lappend temp_list [expr -1.0 * $theta]
-            }
+            lappend temp_list [expr $theta * $theta]
         }
     }
     set final_order_list []
@@ -792,14 +800,15 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
                 set order_key "order_down_[lindex $lipid_list $indx]_tail[expr [lindex $tail_list $indx] - 1]"
             }
-            lappend tiltlist [lindex $tilts $indx]
-            lappend orderlist [lindex $orders $indx]
+            lappend tiltlist [lindex [lindex $tilts 0] $indx]
+            lappend orderlist [lindex [lindex $orders 0] $indx]
         }
+        puts $orderlist
         if {[llength $tiltlist] == 1} {
             dict set outfiles $tilt_key bin $correct_bin [lindex $tiltlist 0]
             dict set outfiles $order_key bin $correct_bin [lindex $orderlist 0]
         } elseif {[llength $tiltlist] > 1} {
-            set tiltsum "0 0 0"
+            set tiltsum [list 0 0 0]
             for {set i 0} {$i < [llength $tiltlist]} {incr i} {
                 set tiltsum [vecexpr [lindex $tiltlist $i] $tiltsum add]
             }
@@ -950,7 +959,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list $leaflet_list]
+                set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
 
