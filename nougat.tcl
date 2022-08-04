@@ -578,6 +578,7 @@ proc tilt_angles {length xvals yvals zvals} {
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     
     if {$polar == 1} {
+        ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
         set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
@@ -599,6 +600,7 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
         set dim2_bins [vecexpr [vecexpr $theta_vals $dthetadeg div] floor]
         
     } elseif {$polar == 0} {
+        ;# use cartesian (x,y) bins
         
         ;# shift all values so that they are temporarily positive
         ;# no negative bin numbers allowed!
@@ -640,9 +642,9 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
 }
 
 proc bin_prep {nframes polar min d1} {
-    #measure box size to get bin values
+    #measure box size at final frame to get bin values
     set box_x [molinfo top get a frame [expr $nframes - 1]]
-    set min 0
+
     if {$polar == 1} {
         set box_r [expr int($box_x) / 2]
         set range1 [expr $box_r - $min]
