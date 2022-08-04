@@ -110,29 +110,16 @@ proc RtoD {r} {
 #  Fit the points x to x = ai + b, i=0...N-1, and return the value of a 
 # a = 12/( (N(N^2 - 1)) ) sum[ (i-(N-1)/2) * xi]
 # reference: Bevington
-proc lsq_vec { X } {
-  #initialize
-  set len [llength $X]
-  set diff [expr $len-1]
-  set d [expr 0.5*$diff] ;#normalization factor
-  set I {}
-
-  #Make a list from 0 to len
-  for {set k 0} {$k < $len} {incr k} {
-    lappend I $k
-  }
-  
-  #Get element-wise diff between I(integers 0 to len) and d(0.5*(len-1)). stack=1vector
-  #push X to stack. stack=2vecs
+proc lsq_vec { X differences } {
   #Multiply X and the differences. stack=1vec
   #sum over the vector. stack=1scalar
   #store the scalar in tot
-  vecexpr $I $d sub <X mult sum >tot
+  set tot [vecexpr [vecexpr $X $differences mult] sum]
   
   return $tot
 }
 
-proc fit_all_tails { tail_length list_of_tail_coords } {
+proc fit_all_tails { tail_length list_of_tail_coords lsqnormfactor} {
   set vectors []
   set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
   set start_idx 0
@@ -140,7 +127,7 @@ proc fit_all_tails { tail_length list_of_tail_coords } {
     set next_idx [expr $start_idx + $tail_length]
     set end_idx [expr $next_idx - 1]
     set coords [lrange $list_of_tail_coords $start_idx $end_idx]
-    lappend vectors [lsq_vec $coords]
+    lappend vectors [lsq_vec $coords $lsqnormfactor]
     set start_idx $next_idx
   }
 
@@ -228,7 +215,6 @@ proc get_theta {x y} {
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
-
 proc Protein_Position {name hnames tnames} {
     ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
     set chain_names [list "A" "B" "C" "D" "E"]
@@ -558,11 +544,27 @@ proc tail_analyzer { species } {
     return $taillist
 }
 
+proc calc_lsq_normfactor { $length } {
+    set diff [expr $length-1]
+    set d [expr 0.5*$diff] ;#normalization factor
+    set I {}
+
+    #Make a list from 0 to len
+    for {set k 0} {$k < $length} {incr k} {
+        lappend I $k
+    }
+
+    set lsqnormfactor [vecexpr $I $d sub]
+
+    return $lsqnormfactor
+}
+
 proc tilt_angles {length xvals yvals zvals} {
     set tilt_list []
-    set xvec [fit_all_tails $length $xvals]
-    set yvec [fit_all_tails $length $yvals]
-    set zvec [fit_all_tails $length $zvals]
+    set lsqnormfactor [calc_lsq_normfactor $length]
+    set xvec [fit_all_tails $length $xvals $lsqnormfactor]
+    set yvec [fit_all_tails $length $yvals $lsqnormfactor]
+    set zvec [fit_all_tails $length $zvals $lsqnormfactor]
     for {set i 0} {$i < [llength $xvec]} {incr i} {
         set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
         set norm [vecnorm $vector]
