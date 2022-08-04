@@ -544,7 +544,7 @@ proc tail_analyzer { species } {
     return $taillist
 }
 
-proc calc_lsq_normfactor { $length } {
+proc calc_lsq_normfactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
     set I {}
