@@ -974,7 +974,8 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
             set tail_list [$sel get user3]
 
-            ;# calculate which bin each x,y pair belongs in and return as list of same length
+            ;# calculate which bins each bead belongs in along both axes
+            ;# and return as two lists of same length as the lists above
             set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
@@ -996,6 +997,8 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# Now that all information has been binned, print it to files
             foreach key [dict keys $outfiles] {
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar
+
+                ;# precautionary cleanup before next step
                 set outfiles [dict unset outfiles $key bin]
             } 
 
@@ -1004,10 +1007,12 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         }
     }
 
-    ;# close all outfiles and delete all atomselections
+    ;# close all outfiles
     foreach channel [file channels "file*"] {
         close $channel
     }
+
+    ;# delete all atomselections in scope
     foreach selection [atomselect list] {
         $selection delete
     }
