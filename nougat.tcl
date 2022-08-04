@@ -950,18 +950,33 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
         foreach selex [dict keys $selections] {
+            
+            ;# $selex is a dict key that holds an atomselection as its value
             set sel [dict get $selections $selex]
+            
             $sel frame $frm 
             $sel update
 
             set xvals_list [$sel get x]
             set yvals_list [$sel get y]
-            set zvals_list [vecexpr [$sel get z] $ref_height sub]
-            set leaflet_list [$sel get user]
-            set lipid_list [$sel get resname]
-            set tail_list [$sel get user3]
-            set name_list [$sel get name]
             set resid_list [$sel get resid]
+            
+            ;# the z vals are subtracted by a reference height provided in cell_prep 
+            set zvals_list [vecexpr [$sel get z] $ref_height sub]
+            
+            ;# user contains a 1 or 2 for outer or inner leaflet, respectively
+            set leaflet_list [$sel get user]
+
+            ;# resname has the lipid species name
+            set lipid_list [$sel get resname]
+
+            ;# user3 contains an int that describes which tail in the lipid this is
+            ;# E.G. POPC will have 0 or 1 (it has two tails)
+            ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
+            set tail_list [$sel get user3]
+
+            ;# name contains the Martini bead name
+            set name_list [$sel get name]
 
             ;# calculate which bin each x,y pair belongs in and return as list of same length
             set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
