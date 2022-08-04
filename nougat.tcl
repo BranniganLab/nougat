@@ -825,8 +825,11 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
 
 proc start_nougat {system d1 N2 start end step polar} {
 
+    ;# running cell_prep will do some important initial configuration based on user input. 
+    ;# check the extensive documentation at the top of this file for instructions.
     set important_variables [cell_prep $system $start]
-    set min 0 ;# change this value if you want to exclude an inner radius in polar coords
+    
+    ;# unpack user-provided info from cell_prep
     set species [lindex $important_variables 0]
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
@@ -850,23 +853,27 @@ proc start_nougat {system d1 N2 start end step polar} {
         break
     }
 
+    ;# change this value if you want to exclude an inner radius in polar coords
+    set min 0 
+
     ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1]
 
+    ;# add all these new values to important_values for easy transfer
     lappend important_variables $start 
     lappend important_variables $nframes 
     lappend important_variables $step 
     lappend important_variables $ref_height
     lappend important_variables $min
 
+    ;# run nougat twice, once to compute height and density and once to compute
+    ;# lipid tail vectors and order parameters
     run_nougat $system $important_variables $bindims $polar "height_density" 
     run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
 }
 
 proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
-
-    set boxarea []
 
     ;# unpack important_variables
     set species [lindex $important_variables 0]
@@ -886,6 +893,8 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     set N2 [lindex $bindims 3]
     set dthetadeg [lindex $bindims 4]
 
+    set boxarea []
+
     ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
         set coordsys "polar"
@@ -899,6 +908,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
 
+    ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
         #dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
@@ -930,10 +940,15 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
         puts "$system $quantity_of_interest $frm"
 
+        ;# calculate avg box area for density normalization later
         set box_height [molinfo top get c]
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
         
+        ;# height_density only has one selection, so this will execute once.
+        ;# tilt_order has different selections, one for each tail length present
+        ;# in the system, so this will execute as many times as there are
+        ;# unique tail lengths.
         foreach selex [dict keys $selections] {
             set sel [dict get $selections $selex]
             $sel frame $frm 
@@ -948,12 +963,17 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set name_list [$sel get name]
             set resid_list [$sel get resid]
 
+            ;# calculate which bin each x,y pair belongs in and return as list of same length
             set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 
+            ;# Binning is controlled by the bead designated in $headnames.
+            ;# Creates a dict that contains the bin and leaflet information linked to
+            ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list]
             
+            ;# Make necessary calculations (in case of tilts/orders) and then bin them
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
@@ -962,15 +982,18 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
             }
 
+            ;# Now that all information has been binned, print it to files
             foreach key [dict keys $outfiles] {
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar
                 set outfiles [dict unset outfiles $key bin]
             } 
 
+            ;# precautionary cleanup before next step
             dict remove res_dict
         }
     }
 
+    ;# close all outfiles and delete all atomselections
     foreach channel [file channels "file*"] {
         close $channel
     }
@@ -998,20 +1021,6 @@ proc run_field_mult {list_of_systems polar} {
         } elseif {$polar == 0} {
             nougatByField $item 12 30 200 -1 1 0
         }
-        mol delete top
-    }
-}
-
-proc run_prep {list_of_systems} {
-    foreach item $list_of_systems {
-        set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
-        set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
-        mol new $gro
-        mol addfile $xtc waitfor all
-        puts $gro
-        puts $xtc
-        animate delete beg 0 end 0 skip 0 top
-        cell_prep $item
         mol delete top
     }
 }
