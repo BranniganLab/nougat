@@ -576,8 +576,16 @@ proc tilt_angles {length xvals yvals zvals} {
 }
 
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
+    
     if {$polar == 1} {
-        ;#get theta values for all x,y pairs
+
+        ;#calculate r: distance from origin for all x,y pairs
+        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+        
+        ;#turn into bin numbers rather than r values
+        set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
+        
+        ;#calculate theta: use atan2 to get values for al x,y pairs
         set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
 
         ;#atan2 gives values from -180 to 180; shifting to 0 to 360
@@ -588,21 +596,22 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
         }
 
         ;#turn into bin numbers rather than theta values
-        vecexpr [vecexpr $theta_vals $dthetadeg div] floor &dim2_bins
+        set dim2_bins [vecexpr [vecexpr $theta_vals $dthetadeg div] floor]
         
-        ;#calculate distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
-        
-        ;#turn into bin numbers rather than r values
-        vecexpr [vecexpr $r_vals $d1 div] floor &dim1_bins
     } elseif {$polar == 0} {
+        
+        ;# shift all values so that they are temporarily positive
+        ;# no negative bin numbers allowed!
         set xmin [vecexpr $x_vals min]
         set ymin [vecexpr $y_vals min]
         set x_vals [vecexpr $x_vals $xmin sub]
         set y_vals [vecexpr $y_vals $ymin sub]
-        vecexpr [vecexpr $x_vals $d1 div] floor &dim1_bins
-        vecexpr [vecexpr $y_vals $d2 div] floor &dim2_bins
+
+        ;# turn into bin numbers rather than x,y values
+        set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
+        set dim2_bins [vecexpr [vecexpr $y_vals $d2 div] floor]
     }
+
     return [list $dim1_bins $dim2_bins]
 }
 
