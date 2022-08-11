@@ -52,6 +52,8 @@ proc cell_prep {system end} {
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
     ;# the average position of resid 15
+    ;# IF YOU DO NOT HAVE AN INCLUSION OR DO NOT WISH TO SET A REFERENCE POINT:
+    ;# replace the text with "NULL"
     set reference_point "name BB and resid 15"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
@@ -850,10 +852,14 @@ proc start_nougat {system d1 N2 start end step polar} {
     set reference_point [lindex $important_variables 4]
 
     #need to calculate heights relative to some point on the inclusion:
-    set ref_bead [atomselect top "$reference_point"]
-    set ref_height [$ref_bead get z]
-    $ref_bead delete
-    set ref_height [vecexpr $ref_height mean]
+    if {$reference_point ne "NULL"} {
+        set ref_bead [atomselect top "$reference_point"]
+        set ref_height [$ref_bead get z]
+        $ref_bead delete
+        set ref_height [vecexpr $ref_height mean]
+    } else {
+        set ref_height "NULL"
+    }
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
@@ -882,7 +888,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
     run_nougat $system $important_variables $bindims $polar "height_density" 
-    run_nougat $system $important_variables $bindims $polar "tilt_order" 
+    #run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
 }
 
@@ -977,7 +983,12 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set name_list [$sel get name]
             
             ;# the z vals are subtracted by a reference height provided in cell_prep 
-            set zvals_list [vecexpr [$sel get z] $ref_height sub]
+            if {$ref_height ne "NULL"} {
+                set zvals_list [vecexpr [$sel get z] $ref_height sub]
+            } else {
+                set zvals_list [$sel get z]
+            }   
+            
             
             ;# user contains a 1 or 2 for outer or inner leaflet, respectively
             set leaflet_list [$sel get user]
