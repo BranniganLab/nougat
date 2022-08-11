@@ -521,9 +521,11 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
     if {$quantity_of_interest eq "height_density"} {
         dict set outfiles heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
         foreach lipidtype $species {
             dict set outfiles density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
             dict set outfiles density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
@@ -594,12 +596,24 @@ proc concat_names { headnames } {
     return $condensed_name
 }
 
-proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list} {
+proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
     dict set res_dict dummy "dummy"
-    for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-        if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
+    if {$selex ne "zzero"} {
+        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
+            if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
+                set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+                set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
+                if {[dict exists $res_dict $bin_leaf]} {
+                    dict append res_dict $bin_leaf " $i"
+                } else {
+                    dict set res_dict $bin_leaf $i                
+                }
+            }
+        }
+    } else {
+        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
             set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
-            set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
+            set bin_leaf "$bin,3"
             if {[dict exists $res_dict $bin_leaf]} {
                 dict append res_dict $bin_leaf " $i"
             } else {
@@ -620,9 +634,15 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
             if {$leaf == 1} {
                 set dens_key "density_up_[lindex $lipid_list $indx]"
                 set height_key "heights_up"
-            } else {
+            } elseif {$leaf == 2} {
                 set dens_key "density_down_[lindex $lipid_list $indx]"
                 set height_key "heights_down"
+            } elseif {$leaf == 3} {
+                set dens_key "density_zzero_[lindex $lipid_list $indx]"
+                set height_key "heights_zzero"
+            } else {
+                puts "something has gone wrong with the binning"
+                return
             }
             lappend newlist [lindex $zvals_list $indx]
         }
