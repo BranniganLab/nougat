@@ -235,7 +235,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
         lappend boxarea $box_area_per_frame
         
-        ;# height_density only has one selection, so this will execute once.
+        ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
@@ -252,7 +252,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set resid_list [$sel get resid]
             set lipid_list [$sel get resname]
             set name_list [$sel get name]
-            
+
             ;# the z vals are subtracted by a reference height provided in cell_prep 
             if {$ref_height ne "NULL"} {
                 set zvals_list [vecexpr [$sel get z] $ref_height sub]
@@ -291,6 +291,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
             ;# Now that all information has been binned, print it to files
             foreach key [dict keys $outfiles] {
+                puts $key
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar
 
                 ;# precautionary cleanup before next step

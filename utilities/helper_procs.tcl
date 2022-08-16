@@ -598,7 +598,7 @@ proc concat_names { headnames } {
 
 proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
     dict set res_dict dummy "dummy"
-    if {$selex ne "zzero"} {
+    if {$selex ne "z0"} {
         for {set i 0} {$i < [llength $lipid_list]} {incr i} {
             if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
                 set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
