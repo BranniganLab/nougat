@@ -6,28 +6,28 @@ import warnings
 readbeads = False
 inclusion_drawn = False
 polar = False
-name_list = ["dicttest"]
+name_list = ["DTtest"]
 bead_dict = {
-  "DT" : ['C1A.C1B', 'C2A.C2B'],
+  "DTtest" : ['C1A.C1B', 'C2A.C2B'],
   "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
   "DY" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B'],
   "DO" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
   "PO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "dicttest" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "lgPOtest" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DP" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
   "DB" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
   "DG" : ['C1A.C1B', 'C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
   "DX" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
 }
 
-# These determine the scale in your png files
+# These determine the scale in your image files
 # adjust as needed
 height_min = -60
 height_max = 60
 mean_curv_min = 0.05
 mean_curv_max = -0.05
-gauss_curv_min = -0.005
-gauss_curv_max = 0.005
+gauss_curv_min = -0.05
+gauss_curv_max = 0.05
 density_min = 0
 density_max = 2
 thick_min = 0
@@ -36,7 +36,7 @@ thick_max = 7
 field_list = ["zone","ztwo"]
 
 def dimensions_analyzer(data, polar):
-  #figure out how many radial bins there are
+  # figure out how many radial bins there are
   counter = 1
   flag = True
   match_value = data[0,0]
@@ -46,6 +46,7 @@ def dimensions_analyzer(data, polar):
         flag = False
       else:
         counter = counter+1
+    # what if there is only 1 frame? Will raise IndexError 
     except IndexError:
       flag = False
   N1_bins = counter
@@ -454,7 +455,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
     normal_vector_outputs = np.zeros((N1_bins+2, 3*(N2_bins+2), Nframes))
 
   
-  if polar is True:
+  if polar is True:normalize_vectors_in_array
     #wrap the inputs in the theta direction for calculating curvature
     curvature_inputs[:,1:(N2_bins+1),:] = height
     curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
@@ -580,33 +581,41 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
 
 
 if __name__ == "__main__": 
+  #parser = argparse.ArgumentParser()
+  #parser.add_argument("A", type=float, help="A/f = dt")
+  #parser.add_argument("k", type=float, help="spring constant")
+  #parser.add_argument("m1", type=float, help="mass of object 1")
+  #parser.add_argument("m2", type=float, help="mass of object 2")
+  #args = parser.parse_args()
+
   for name in name_list:
     if polar is True:
-      f = open(name+"polar.avgheight.pdb","w")
+      pdbname = name+".polar.avgheight.pdb"
     elif polar is False:
-      f = open(name+"cart.avgheight.pdb","w")
-    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
-    serial = 1
-    for field in field_list:
+      pdbname = name+".cart.avgheight.pdb"
+    with open(pdbname,"w") as f:
+      print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
+      serial = 1
+      for field in field_list:
 
-      #read in protein helix coordinates
-      if inclusion_drawn is True:
-        inclusion_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
-        inclusion = []
-        for i in range(10):
-          inclusion.append(inclusion_coords[i])
-      else:
-        inclusion = False
+        #read in protein helix coordinates
+        if inclusion_drawn is True:
+          inclusion_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
+          inclusion = []
+          for i in range(10):
+            inclusion.append(inclusion_coords[i])
+        else:
+          inclusion = False
 
-      if readbeads is False:
-        serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], f, serial, polar)
-      elif readbeads is True:
-        serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
-        if field != "zzero":
-          for bead in bead_dict[name][1:]:
-            serial = output_analysis(name, field, inclusion, 3, bead, f, serial, polar)
-    print('END', file=f)
-    f.close()
-  #for name in name_list:
-  #  for field in ['zone', 'ztwo']:
-  #    gen_avg_tilt(name, field, polar)
+        if readbeads is False:
+          serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], f, serial, polar)
+        elif readbeads is True:
+          serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
+          if field != "zzero":
+            for bead in bead_dict[name][1:]:
+              serial = output_analysis(name, field, inclusion, 3, bead, f, serial, polar)
+      print('END', file=f)
+
+    #for name in name_list:
+    #  for field in ['zone', 'ztwo']:
+    #    gen_avg_tilt(name, field, polar)
