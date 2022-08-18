@@ -158,8 +158,8 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $important_variables $bindims $polar "height_density" 
-    #run_nougat $system $important_variables $bindims $polar "tilt_order" 
+    #run_nougat $system $important_variables $bindims $polar "height_density" 
+    run_nougat $system $important_variables $bindims $polar "tilt_order" 
 
 }
 
@@ -194,10 +194,10 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         puts "polar must be 1 or 0"
         break
     }
-
+    
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
-
+     
     ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
@@ -280,22 +280,21 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
             
-            ;# Make necessary calculations (in case of tilts/orders) and then bin them
+            ;# Make necessary calculations (if any) and then bin them
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list]
+                set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
             }
-
+            
             ;# Now that all information has been binned, print it to files
-            foreach key [dict keys $outfiles] {
-                puts $key
-                print_frame $N1 $outfiles $key $d1 $min $N2 $polar
+            dict for {key val} [dict get $outfiles $selex] {
+                print_frame $N1 $outfiles $key $d1 $min $N2 $polar $selex
 
                 ;# precautionary cleanup before next step
-                set outfiles [dict unset outfiles $key bin]
+                set outfiles [dict unset outfiles $selex $key bin]
             } 
 
             ;# precautionary cleanup before next step

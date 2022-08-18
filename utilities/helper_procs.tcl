@@ -212,9 +212,9 @@ proc print_value {file value end_line} {
 
 
 ;#print an entire array (usually 1 frame) to file
-proc print_frame {N1 outfiles key d1 min N2 polar} {
+proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
-    set file [dict get $outfiles $key fname]
+    set file [dict get $outfiles $selex $key fname]
 
     if {$polar == 1} {
         set N2 [expr $N2-1]
@@ -225,15 +225,15 @@ proc print_frame {N1 outfiles key d1 min N2 polar} {
         print_line_init $file $m $d1 $min
         ;# adds bin values through penultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n + 1.0]} {
-            if {[dict exists $outfiles $key bin "$m,$n"]} {
-                print_value $file [dict get $outfiles $key bin "$m,$n"] 0
+            if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
+                print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
             } else {
                 print_value $file "nan" 0
             }
         }
         ;# adds final value and starts new line in outfile
         if {[dict exists $outfiles $key bin "$m,$N2"]} {
-            print_value $file [dict get $outfiles $key bin "$m,$N2"] 1
+            print_value $file [dict get $outfiles $selex $key bin "$m,$N2"] 1
         } else {
             print_value $file "nan" 1
         }
@@ -519,23 +519,24 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
 proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
 
     if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
         foreach lipidtype $species {
-            dict set outfiles density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
             set lipidtype [lindex $species $i]
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
                 set tailnum "tail$j"
-                dict set outfiles tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                set taillength [llength [lindex [lindex $taillist $i] $j]]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
         } 
     }
@@ -632,12 +633,15 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
         set newlist []
         foreach indx $indices {
             if {$leaf == 1} {
+                set field_key "z1z2"
                 set dens_key "density_up_[lindex $lipid_list $indx]"
                 set height_key "heights_up"
             } elseif {$leaf == 2} {
+                set field_key "z1z2"
                 set dens_key "density_down_[lindex $lipid_list $indx]"
                 set height_key "heights_down"
             } elseif {$leaf == 3} {
+                set field_key "z0"
                 set dens_key "density_zzero_[lindex $lipid_list $indx]"
                 set height_key "heights_zzero"
             } else {
@@ -647,12 +651,12 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
             lappend newlist [lindex $zvals_list $indx]
         }
         if {[llength $newlist] == 1} {
-            dict set outfiles $height_key bin $correct_bin [lindex $newlist 0]
-            dict set outfiles $dens_key bin $correct_bin 1
+            dict set outfiles $field_key $height_key bin $correct_bin [lindex $newlist 0]
+            dict set outfiles $field_key $dens_key bin $correct_bin 1
         } elseif {[llength $newlist] > 1} {
             set avg [vecexpr $newlist mean]
-            dict set outfiles $height_key bin $correct_bin $avg 
-            dict set outfiles $dens_key bin $correct_bin [llength $newlist]
+            dict set outfiles $field_key $height_key bin $correct_bin $avg 
+            dict set outfiles $field_key $dens_key bin $correct_bin [llength $newlist]
         }
     }
     return $outfiles
@@ -716,7 +720,7 @@ proc order_params {length xvals yvals zvals} {
     return [list $final_order_list]
 }
 
-proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list} {
+proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
@@ -734,17 +738,17 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
             lappend orderlist [lindex [lindex $orders 0] $indx]
         }
         if {[llength $tiltlist] == 1} {
-            dict set outfiles $tilt_key bin $correct_bin [lindex $tiltlist 0]
-            dict set outfiles $order_key bin $correct_bin [lindex $orderlist 0]
+            dict set outfiles $selex $tilt_key bin $correct_bin [lindex $tiltlist 0]
+            dict set outfiles $selex $order_key bin $correct_bin [lindex $orderlist 0]
         } elseif {[llength $tiltlist] > 1} {
             set tiltsum [list 0 0 0]
             for {set i 0} {$i < [llength $tiltlist]} {incr i} {
                 set tiltsum [vecexpr [lindex $tiltlist $i] $tiltsum add]
             }
             set tiltavg [vecexpr $tiltsum [llength $tiltlist] div]
-            dict set outfiles $tilt_key bin $correct_bin $tiltavg
+            dict set outfiles $selex $tilt_key bin $correct_bin $tiltavg
             set orderavg [vecexpr $orderlist mean] 
-            dict set outfiles $order_key bin $correct_bin $orderavg
+            dict set outfiles $selex $order_key bin $correct_bin $orderavg
         }
     }
     return $outfiles
