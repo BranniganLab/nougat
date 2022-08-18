@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import warnings
+import glob
 
 readbeads = False
 inclusion_drawn = False
@@ -455,7 +456,7 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
     normal_vector_outputs = np.zeros((N1_bins+2, 3*(N2_bins+2), Nframes))
 
   
-  if polar is True:normalize_vectors_in_array
+  if polar is True:
     #wrap the inputs in the theta direction for calculating curvature
     curvature_inputs[:,1:(N2_bins+1),:] = height
     curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
@@ -593,8 +594,8 @@ if __name__ == "__main__":
       pdbname = name+".polar.avgheight.pdb"
     elif polar is False:
       pdbname = name+".cart.avgheight.pdb"
-    with open(pdbname,"w") as f:
-      print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=f)
+    with open(pdbname,"w") as pdb:
+      print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
       serial = 1
       for field in field_list:
 
@@ -608,13 +609,13 @@ if __name__ == "__main__":
           inclusion = False
 
         if readbeads is False:
-          serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], f, serial, polar)
+          serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
         elif readbeads is True:
-          serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], f, serial, polar)
+          serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
           if field != "zzero":
             for bead in bead_dict[name][1:]:
-              serial = output_analysis(name, field, inclusion, 3, bead, f, serial, polar)
-      print('END', file=f)
+              serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
+      print('END', file=pdb)
 
     #for name in name_list:
     #  for field in ['zone', 'ztwo']:
