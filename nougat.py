@@ -589,34 +589,35 @@ if __name__ == "__main__":
   #parser.add_argument("m2", type=float, help="mass of object 2")
   #args = parser.parse_args()
 
-  for name in name_list:
-    if polar is True:
-      pdbname = name+".polar.avgheight.pdb"
-    elif polar is False:
-      pdbname = name+".cart.avgheight.pdb"
-    with open(pdbname,"w") as pdb:
-      print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
-      serial = 1
-      for field in field_list:
 
-        #read in protein helix coordinates
-        if inclusion_drawn is True:
-          inclusion_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
-          inclusion = []
-          for i in range(10):
-            inclusion.append(inclusion_coords[i])
-        else:
-          inclusion = False
+  if polar is True:
+    pdbname = name+".polar.avgheight.pdb"
+  elif polar is False:
+    pdbname = name+".cart.avgheight.pdb"
 
-        if readbeads is False:
-          serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
-        elif readbeads is True:
-          serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
-          if field != "zzero":
-            for bead in bead_dict[name][1:]:
-              serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
-      print('END', file=pdb)
+  with open(pdbname,"w") as pdb:
+    
+    #print first line of pdb file
+    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
+    
+    #set serial counter - will keep pdb file in order
+    serial = 1
+    
+    #JESSE: add this back in later
+    #if inclusion_drawn is True:
+    #  inclusion = add_inclusion(name, field_list)
+    #else:
+    #  inclusion = False
 
-    #for name in name_list:
-    #  for field in ['zone', 'ztwo']:
-    #    gen_avg_tilt(name, field, polar)
+    if readbeads is False:
+      serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
+    elif readbeads is True:
+      serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
+      if field != "zzero":
+        for bead in bead_dict[name][1:]:
+          serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
+    print('END', file=pdb)
+
+  #for name in name_list:
+  #  for field in ['zone', 'ztwo']:
+  #    gen_avg_tilt(name, field, polar)
