@@ -585,6 +585,31 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
   serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
   print(sys_name+' '+bead+" zplus height done!")
 
+def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+  zzero = np.load(sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
+
+  outer_leaflet = zone-zzero
+  inner_leaflet = zzero-ztwo
+
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    avgouter=np.nanmean(outer_leaflet, axis=2)
+    avginner=np.nanmean(inner_leaflet, axis=2)
+
+  #make plots!
+  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', thickness_max, thickness_min, inclusion, "avgThickness", bead, polar)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', thickness_max, thickness_min, inclusion, "avgThickness", bead, polar)
+
+  #save as file for debugging / analysis AND make PDB!
+  np.save(sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
+  np.save(sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
+  np.savetxt(sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
+  np.savetxt(sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
+
+  print(sys_name+' '+bead+" thickness done!")
 
 def bin_prep(sys_name, names_dict, coordsys, polar):
   sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
@@ -696,12 +721,6 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
   return 
 
 if __name__ == "__main__": 
-  #parser = argparse.ArgumentParser()
-  #parser.add_argument("A", type=float, help="A/f = dt")
-  #parser.add_argument("k", type=float, help="spring constant")
-  #parser.add_argument("m1", type=float, help="mass of object 1")
-  #parser.add_argument("m2", type=float, help="mass of object 2")
-  #args = parser.parse_args()
 
   inclusion_drawn = 0
   polar = False
@@ -727,6 +746,7 @@ if __name__ == "__main__":
   analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze thickness
+  calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
 
   #analyze curvature
 
