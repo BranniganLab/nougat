@@ -4,22 +4,7 @@ import numpy as np
 import warnings
 import glob
 
-readbeads = False
-inclusion_drawn = False
-polar = False
-name_list = ["DTtest"]
-bead_dict = {
-  "DTtest" : ['C1A.C1B', 'C2A.C2B'],
-  "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
-  "DY" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B'],
-  "DO" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
-  "PO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "lgPOtest" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DP" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DB" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
-  "DG" : ['C1A.C1B', 'C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
-  "DX" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
-}
+
 
 # These determine the scale in your image files
 # adjust as needed
@@ -580,6 +565,135 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
   return serial
 
 
+def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+
+  zplus=(zone+ztwo)/2
+
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    avgzplus=np.nanmean(zplus, axis=2)
+
+  #make plots!
+  plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', height_max, height_min, inclusion, "avgHeight", bead, polar)
+
+  #save as file for debugging / analysis AND make PDB!
+  np.save(sys_name+'.zplus.'+bead+'.'+coordsys+'.height.npy', zplus)
+  np.savetxt(sys_name+'.zplus.'+bead+'.'+coordsys+'.avgheight.dat', avgzplus,delimiter = ',',fmt='%10.5f')
+  serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
+  print(sys_name+' '+bead+" zplus height done!")
+
+
+def bin_prep(sys_name, names_dict, coordsys, polar):
+  sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(sample_data, polar)
+  
+  #prep plot dimensions
+  dim1 = sample_data[0:N1_bins,0]
+  dim1 = np.append(dim1, sample_data[N1_bins-1,1])
+  if polar is True:
+    dim2 = np.linspace(0,2*np.pi,N2_bins+1)
+  elif polar is False:
+    dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
+  dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
+
+  return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
+
+def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
+  #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+  for row in range(N1_bins):
+    for col in range(N2_bins):
+      zerocount = np.count_nonzero(data_array[row,col,:])
+      count = np.count_nonzero(np.isnan(data_array[row,col,:]))
+      if (zerocount-count)/Nframes <= .1:
+        data_array[row,col,:] = np.nan
+  return data_array
+
+def fetch_names(sys_name, coordsys):
+  
+  
+  names_dict = {}
+  names_dict['species_list'] = [] 
+  names_dict['beads_list'] = []
+
+  files = glob.glob(sys_name+'*.zone.*.tilt.dat')
+
+  for filename in files:
+    namefields = filename.split('.')
+    species = namefields[1]
+    tail = namefields[2]
+
+    if species not in names_dict['species_list']:
+      names_dict['species_list'].append(species)
+      names_dict[species] = [tail]
+    else:
+      names_dict[species].append(tail)
+
+  files = glob.glob(sys_name+'.zone.*.height.dat')
+  
+  for filename in files:
+    beadstart = len(sys_name)+6
+    beadend = filename.find('.'+coordsys)
+    beadname = filename[beadstart:beadend]
+
+    if beadname not in names_dict['beads_list']:
+      names_dict['beads_list'].append(beadname)
+
+  return names_dict
+
+def unpack_dims(dims):
+  return dims[0], dims[1], dims[2], dims[3], dims[4], dims[5], dims[6]
+
+def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
+
+  serial = 1
+
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+
+  pdbname = sys_name+"."+coordsys+".avgheight.pdb"
+
+  with open(pdbname,"w") as pdb:
+    
+    #print first line of pdb file
+    print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
+
+    #do height analysis
+    for bead in names_dict['beads_list']:
+      for field in ['zone', 'ztwo', 'zzero']:
+
+        #import traj values
+        height_data = np.genfromtxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+
+        #create a new array that has each frame in a different array level
+        height = np.zeros((N1_bins, N2_bins, Nframes))
+        for frm in range(Nframes):
+          height[:,:,frm] = height_data[frm*N1_bins:(frm+1)*N1_bins,2:]
+
+        #if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
+        height = mostly_empty(height, N1_bins, N2_bins, Nframes)
+
+        #take the average height over all frames
+        with warnings.catch_warnings():
+          warnings.simplefilter("ignore", category=RuntimeWarning)
+          avgHeight=np.nanmean(height, axis=2)
+
+        #make plots!
+        plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, height_max, height_min, inclusion, "avgHeight", bead, polar)
+
+        #save as file for debugging / analysis AND make PDB!
+        np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
+        np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
+        print(sys_name+' '+bead+' '+field+" height done!")
+
+      calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb)
+
+    #print last line of pdb file
+    print('END', file=pdb)
+
+  return 
 
 if __name__ == "__main__": 
   #parser = argparse.ArgumentParser()
@@ -589,34 +703,35 @@ if __name__ == "__main__":
   #parser.add_argument("m2", type=float, help="mass of object 2")
   #args = parser.parse_args()
 
-  for name in name_list:
-    if polar is True:
-      pdbname = name+".polar.avgheight.pdb"
-    elif polar is False:
-      pdbname = name+".cart.avgheight.pdb"
-    with open(pdbname,"w") as pdb:
-      print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
-      serial = 1
-      for field in field_list:
+  inclusion_drawn = 0
+  polar = False
+  sys_name = 'z0test'
 
-        #read in protein helix coordinates
-        if inclusion_drawn is True:
-          inclusion_coords = np.loadtxt(name+"_helcoords_"+field+".dat",skiprows=1)
-          inclusion = []
-          for i in range(10):
-            inclusion.append(inclusion_coords[i])
-        else:
-          inclusion = False
+  if inclusion_drawn is True:
+    inclusion = add_inclusion(name, field_list)
+  else:
+    inclusion = False
 
-        if readbeads is False:
-          serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
-        elif readbeads is True:
-          serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
-          if field != "zzero":
-            for bead in bead_dict[name][1:]:
-              serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
-      print('END', file=pdb)
+  if polar is True:
+    coordsys = 'polar'
+  elif polar is False:
+    coordsys = 'cart'
 
-    #for name in name_list:
-    #  for field in ['zone', 'ztwo']:
-    #    gen_avg_tilt(name, field, polar)
+  #figure out all the file names that you'll need to fetch
+  names_dict = fetch_names(sys_name, coordsys)
+
+  #get data dimensions and prep plots from one of your trajectories
+  dims = bin_prep(sys_name, names_dict, coordsys, polar)
+
+  #analyze height
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+
+  #analyze thickness
+
+  #analyze curvature
+
+  #analyze density
+
+  #analyze order
+
+  #analyze tilts
