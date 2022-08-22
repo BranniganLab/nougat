@@ -201,7 +201,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
-        dict set selections z0 [atomselect top "(user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)"]
+        dict set selections z0 [atomselect top "resname $species and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
     } elseif {$quantity_of_interest eq "tilt_order"} {
         set lists [tail_length_sorter $species $acyl_names]
         set sellist [lindex $lists 0]
@@ -279,7 +279,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
-            
+
             ;# Make necessary calculations (if any) and then bin them
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
