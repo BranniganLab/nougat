@@ -4,22 +4,7 @@ import numpy as np
 import warnings
 import glob
 
-readbeads = False
-inclusion_drawn = False
-polar = False
-name_list = ["DTtest"]
-bead_dict = {
-  "DTtest" : ['C1A.C1B', 'C2A.C2B'],
-  "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
-  "DY" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B'],
-  "DO" : ['C1A.C1B', 'D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
-  "PO" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "lgPOtest" : ['C1A.C1B', 'D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DP" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
-  "DB" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
-  "DG" : ['C1A.C1B', 'C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
-  "DX" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
-}
+
 
 # These determine the scale in your image files
 # adjust as needed
@@ -32,7 +17,9 @@ gauss_curv_max = 0.05
 density_min = 0
 density_max = 2
 thick_min = 0
-thick_max = 7
+thick_max = 10
+order_min = -1
+order_max = 1
 
 field_list = ["zone","ztwo"]
 
@@ -66,7 +53,8 @@ def dimensions_analyzer(data, polar):
   return N1_bins, d1, N2_bins, d2, Nframes
 
 
-def empty_neighbor_test(data):
+def empty_neighbor_test(curvature_inputs):
+  data = np.isnan(curvature_inputs)
   nan_test = np.array(data, copy=True)
   nan_test2 = np.array(data, copy=True)
   knan_test = np.array(data, copy=True)
@@ -160,7 +148,9 @@ def convert_to_cart(rval, thetaval):
   yval = rval*np.sin(thetaval)
   return xval, yval
 
-def measure_curvature_cart(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2):
+def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  
   #mean curvature: Hxx + Hyy
   #gaussian curvature: HxxHyy - Hxy^2
 
@@ -228,7 +218,9 @@ def measure_curvature_cart(Nframes, N1_bins, N2_bins, knan_test, nan_test, curva
 
   return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
-def measure_curvature_polar(Nframes, N1_bins, N2_bins, knan_test, nan_test, curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, d1, d2):
+def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  
   #mean curvature: h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)
   #gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
 
@@ -509,11 +501,8 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
       print(name+' '+bead+' '+field+" height done!")
 
     elif dtype == 1:
-      #if a bin is empty, you can't measure its curvature
-      nan_test = np.isnan(curvature_inputs)
-
       #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-      nan_test, knan_test = empty_neighbor_test(nan_test)
+      nan_test, knan_test = empty_neighbor_test(curvature_inputs)
 
       #measure the laplacian and gaussian curvatures
       if polar is True:
@@ -580,44 +569,273 @@ def output_analysis(name, field, protein, data_opt, bead, surffile, serial, pola
   return serial
 
 
+def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
 
-if __name__ == "__main__": 
-  #parser = argparse.ArgumentParser()
-  #parser.add_argument("A", type=float, help="A/f = dt")
-  #parser.add_argument("k", type=float, help="spring constant")
-  #parser.add_argument("m1", type=float, help="mass of object 1")
-  #parser.add_argument("m2", type=float, help="mass of object 2")
-  #args = parser.parse_args()
+  zplus=(zone+ztwo)/2
 
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    avgzplus=np.nanmean(zplus, axis=2)
+
+  #make plots!
+  plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', height_max, height_min, inclusion, "avgHeight", bead, polar)
+
+  #save as file for debugging / analysis AND make PDB!
+  np.save(sys_name+'.zplus.'+bead+'.'+coordsys+'.height.npy', zplus)
+  np.savetxt(sys_name+'.zplus.'+bead+'.'+coordsys+'.avgheight.dat', avgzplus,delimiter = ',',fmt='%10.5f')
+  serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
+  print(sys_name+' '+bead+" zplus height done!")
+
+def calc_avg_over_time(matrix_data):
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    avg=np.nanmean(matrix_data, axis=2)
+    return avg
+
+def init_curvature_data(height, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+
+  #create arrays for storing curvature data
+  if polar is True:
+    curvature_inputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    curvature_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    kgauss_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
+    normal_vector_outputs = np.zeros((N1_bins, 3*(N2_bins+2), Nframes))
+  elif polar is False:
+    curvature_inputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    curvature_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    kgauss_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
+    normal_vector_outputs = np.zeros((N1_bins+2, 3*(N2_bins+2), Nframes))
 
   if polar is True:
-    pdbname = name+".polar.avgheight.pdb"
+    #wrap the inputs in the theta direction for calculating curvature
+    curvature_inputs[:,1:(N2_bins+1),:] = height
+    curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
+    curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
   elif polar is False:
-    pdbname = name+".cart.avgheight.pdb"
+    #if cartesian, wrap in both directions
+    curvature_inputs[1:(N1_bins+1),1:(N2_bins+1),:] = height
+    curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
+    curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
+    curvature_inputs[0,:,:] = curvature_inputs[N1_bins,:,:]
+    curvature_inputs[(N1_bins+1),:,:] = curvature_inputs[1,:,:]
+    #and fill in the corners
+    curvature_inputs[0,0,:] = curvature_inputs[N1_bins,N2_bins,:]
+    curvature_inputs[N1_bins+1,N2_bins+1,:] = curvature_inputs[1,1,:]
+    curvature_inputs[0,N2_bins+1,:] = curvature_inputs[N1_bins,1,:]
+    curvature_inputs[N1_bins+1,0,:] = curvature_inputs[1,N2_bins,:]
+
+  return curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs
+
+def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  for field in ["zone", "ztwo", "zzero", "zplus"]: 
+    field_height = np.load(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
+
+    curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, dims)
+
+    #if a bin is empty, you can't (nicely) measure the curvature of its neighbors
+    nan_test, knan_test = empty_neighbor_test(curvature_inputs)
+    
+    #measure the laplacian and gaussian curvatures
+    if polar is True:
+      curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
+    elif polar is False:
+      curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
+
+    #unwrap along dim2 direction
+    meancurvature = curvature_outputs[:,1:N2_bins+1,:]
+    kcurvature = kgauss_outputs[:,1:N2_bins+1,:]
+    normal_vectors = normal_vector_outputs[:,3:3*(N2_bins+1),:]
+
+    #if cartesian, unwrap along dim1 direction too
+    if polar is False:
+      meancurvature = meancurvature[1:N1_bins+1,:,:]
+      kcurvature = kcurvature[1:N1_bins+1,:,:]
+      normal_vectors = normal_vectors[1:N1_bins+1,:,:]
+
+    #take the average curvatures over all frames
+    avgcurvature = calc_avg_over_time(meancurvature)
+    avgkcurvature = calc_avg_over_time(kcurvature)
+
+    #make plots!
+    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, gauss_curv_max, gauss_curv_min, inclusion, "gausscurvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, mean_curv_max, mean_curv_min, inclusion, "curvature", bead, polar)
+
+    #save as files for debugging / analysis
+    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+    
+    print(sys_name+' '+bead+' '+field+" curvatures done!")
+
+def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+  zzero = np.load(sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
+
+  outer_leaflet = zone-zzero
+  inner_leaflet = zzero-ztwo
+
+  avgouter = calc_avg_over_time(outer_leaflet)
+  avginner = calc_avg_over_time(inner_leaflet)
+
+  #make plots!
+  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
+
+  #save as file for debugging / analysis AND make PDB!
+  np.save(sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
+  np.save(sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
+  np.savetxt(sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
+  np.savetxt(sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
+
+  print(sys_name+' '+bead+" thickness done!")
+
+def bin_prep(sys_name, names_dict, coordsys, polar):
+  sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(sample_data, polar)
+  
+  #prep plot dimensions
+  dim1 = sample_data[0:N1_bins,0]
+  dim1 = np.append(dim1, sample_data[N1_bins-1,1])
+  if polar is True:
+    dim2 = np.linspace(0,2*np.pi,N2_bins+1)
+  elif polar is False:
+    dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
+  dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
+
+  return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
+
+def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
+  #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+  for row in range(N1_bins):
+    for col in range(N2_bins):
+      zerocount = np.count_nonzero(data_array[row,col,:])
+      count = np.count_nonzero(np.isnan(data_array[row,col,:]))
+      if (zerocount-count)/Nframes <= .1:
+        data_array[row,col,:] = np.nan
+  return data_array
+
+def fetch_names(sys_name, coordsys):
+  names_dict = {}
+  names_dict['species_list'] = [] 
+  names_dict['beads_list'] = []
+
+  files = glob.glob(sys_name+'*.zone.*.tilt.dat')
+
+  for filename in files:
+    namefields = filename.split('.')
+    species = namefields[1]
+    tail = namefields[2]
+
+    if species not in names_dict['species_list']:
+      names_dict['species_list'].append(species)
+      names_dict[species] = [tail]
+    else:
+      names_dict[species].append(tail)
+
+  files = glob.glob(sys_name+'.zone.*.height.dat')
+  
+  for filename in files:
+    beadstart = len(sys_name)+6
+    beadend = filename.find('.'+coordsys)
+    beadname = filename[beadstart:beadend]
+
+    if beadname not in names_dict['beads_list']:
+      names_dict['beads_list'].append(beadname)
+
+  return names_dict
+
+def unpack_dims(dims):
+  return dims[0], dims[1], dims[2], dims[3], dims[4], dims[5], dims[6]
+
+def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
+  serial = 1
+
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+
+  pdbname = sys_name+"."+coordsys+".avgheight.pdb"
 
   with open(pdbname,"w") as pdb:
     
     #print first line of pdb file
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
-    
-    #set serial counter - will keep pdb file in order
-    serial = 1
-    
-    #JESSE: add this back in later
-    #if inclusion_drawn is True:
-    #  inclusion = add_inclusion(name, field_list)
-    #else:
-    #  inclusion = False
 
-    if readbeads is False:
-      serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
-    elif readbeads is True:
-      serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
-      if field != "zzero":
-        for bead in bead_dict[name][1:]:
-          serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
+    #do height analysis
+    for bead in names_dict['beads_list']:
+      for field in ['zone', 'ztwo', 'zzero']:
+
+        #import traj values
+        height_data = np.genfromtxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+
+        #create a new array that has each frame in a different array level
+        height = np.zeros((N1_bins, N2_bins, Nframes))
+        for frm in range(Nframes):
+          height[:,:,frm] = height_data[frm*N1_bins:(frm+1)*N1_bins,2:]
+
+        #if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
+        height = mostly_empty(height, N1_bins, N2_bins, Nframes)
+
+        #take the average height over all frames
+        avgHeight = calc_avg_over_time(height)
+
+        #make plots!
+        plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, height_max, height_min, inclusion, "avgHeight", bead, polar)
+
+        #save as file for debugging / analysis AND make PDB!
+        np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
+        np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
+        print(sys_name+' '+bead+' '+field+" height done!")
+
+      calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb)
+
+    #print last line of pdb file
     print('END', file=pdb)
 
-  #for name in name_list:
-  #  for field in ['zone', 'ztwo']:
-  #    gen_avg_tilt(name, field, polar)
+  return 
+
+if __name__ == "__main__": 
+  inclusion_drawn = 0
+  polar = False
+  sys_name = 'lgPOtest'
+
+  if inclusion_drawn is True:
+    inclusion = add_inclusion(name, field_list)
+  else:
+    inclusion = False
+
+  if polar is True:
+    coordsys = 'polar'
+  elif polar is False:
+    coordsys = 'cart'
+
+  #figure out all the file names that you'll need to fetch
+  names_dict = fetch_names(sys_name, coordsys)
+
+  #get data dimensions and prep plots from one of your trajectories
+  dims = bin_prep(sys_name, names_dict, coordsys, polar)
+
+  #analyze height
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+
+  for bead in names_dict['beads_list']:
+  
+    #calculate thickness
+    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
+
+    #calculate curvature
+    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+
+  #analyze density
+
+  #analyze order
+
+  #analyze tilts
