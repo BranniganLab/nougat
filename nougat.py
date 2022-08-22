@@ -574,6 +574,7 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
   zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
   ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
 
+<<<<<<< HEAD
   zplus=(zone+ztwo)/2
 
   with warnings.catch_warnings():
@@ -762,11 +763,27 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
 
   pdbname = sys_name+"."+coordsys+".avgheight.pdb"
+=======
+if __name__ == "__main__": 
+  #parser = argparse.ArgumentParser()
+  #parser.add_argument("A", type=float, help="A/f = dt")
+  #parser.add_argument("k", type=float, help="spring constant")
+  #parser.add_argument("m1", type=float, help="mass of object 1")
+  #parser.add_argument("m2", type=float, help="mass of object 2")
+  #args = parser.parse_args()
+
+
+  if polar is True:
+    pdbname = name+".polar.avgheight.pdb"
+  elif polar is False:
+    pdbname = name+".cart.avgheight.pdb"
+>>>>>>> cec7ee67abac3ca2f022464420017e8ee051c8a2
 
   with open(pdbname,"w") as pdb:
     
     #print first line of pdb file
     print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
+<<<<<<< HEAD
 
     #do height analysis
     for bead in names_dict['beads_list']:
@@ -839,3 +856,27 @@ if __name__ == "__main__":
   #analyze order
 
   #analyze tilts
+=======
+    
+    #set serial counter - will keep pdb file in order
+    serial = 1
+    
+    #JESSE: add this back in later
+    #if inclusion_drawn is True:
+    #  inclusion = add_inclusion(name, field_list)
+    #else:
+    #  inclusion = False
+
+    if readbeads is False:
+      serial = output_analysis(name, field, inclusion, 2, bead_dict[name][0], pdb, serial, polar)
+    elif readbeads is True:
+      serial = output_analysis(name, field, inclusion, 4, bead_dict[name][0], pdb, serial, polar)
+      if field != "zzero":
+        for bead in bead_dict[name][1:]:
+          serial = output_analysis(name, field, inclusion, 3, bead, pdb, serial, polar)
+    print('END', file=pdb)
+
+  #for name in name_list:
+  #  for field in ['zone', 'ztwo']:
+  #    gen_avg_tilt(name, field, polar)
+>>>>>>> cec7ee67abac3ca2f022464420017e8ee051c8a2
