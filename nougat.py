@@ -632,7 +632,7 @@ def init_curvature_data(height, polar, dims):
 
 def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
-  for field in [list "zone", "ztwo", "zzero", "zplus"]: 
+  for field in ["zone", "ztwo", "zzero", "zplus"]: 
     field_height = np.load(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
 
     curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, dims)
@@ -662,17 +662,17 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     avgkcurvature = calc_avg_over_time(kcurvature)
 
     #make plots!
-    plot_maker(dim1vals, dim2vals, avgkcurvature, name, field, gauss_curv_max, gauss_curv_min, protein, "gausscurvature", bead, polar)
-    plot_maker(dim1vals, dim2vals, avgcurvature, name, field, mean_curv_max, mean_curv_min, protein, "curvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, gauss_curv_max, gauss_curv_min, inclusion, "gausscurvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, mean_curv_max, mean_curv_min, inclusion, "curvature", bead, polar)
 
     #save as files for debugging / analysis
-    np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-    np.savetxt(name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-    np.save(name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
-    np.save(name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
-    np.save(name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
+    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
     
-    print(name+' '+bead+' '+field+" curvatures done!")
+    print(sys_name+' '+bead+' '+field+" curvatures done!")
 
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
@@ -805,7 +805,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
 if __name__ == "__main__": 
   inclusion_drawn = 0
   polar = False
-  sys_name = 'z0test'
+  sys_name = 'lgPOtest'
 
   if inclusion_drawn is True:
     inclusion = add_inclusion(name, field_list)
