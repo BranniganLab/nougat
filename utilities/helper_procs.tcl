@@ -540,6 +540,7 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
             }
         } 
     }
+    puts [dict get $outfiles "z0"]
     return $outfiles
 }
 
