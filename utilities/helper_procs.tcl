@@ -285,6 +285,7 @@ proc normalize_density {data N1 N2 normfactor numbeads} {
 
 ;# Alignment based off vmd alignment
 proc Align { stuff } {
+    puts "Align start"
     set nframes [molinfo top get numframes]
     set ref [atomselect top $stuff frame 0]
     for {set frames 1} {$frames < $nframes} {incr frames} {
@@ -296,6 +297,7 @@ proc Align { stuff } {
         $move_sel delete
     }
     $ref delete
+    puts "Align end"
 }
 
 ;# THIS IS FOR 5X29!
@@ -540,6 +542,7 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
             }
         } 
     }
+    
     return $outfiles
 }
 
