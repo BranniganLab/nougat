@@ -589,6 +589,40 @@ def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, di
 
   print("Total density done!")
 
+def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  
+  for species in names_dict['species_list']:
+    for tail in [names_dict[]]:
+      zone = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
+      ztwo = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
+
+      #create a new array that has each frame in a different array level
+      order_up = np.zeros((N1_bins, N2_bins, Nframes))
+      order_down = np.zeros((N1_bins, N2_bins, Nframes))
+      for frm in range(Nframes):
+        order_up[:,:,frm] = zone[frm*N1_bins:(frm+1)*N1_bins,2:]
+        order_down[:,:,frm] = ztwo[frm*N1_bins:(frm+1)*N1_bins,2:]
+
+      avgouter = calc_avg_over_time(order_up)
+      avginner = calc_avg_over_time(order_down)
+
+      #make plots!
+      plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.'+tail+'.zone', density_max, density_min, inclusion, "avgOrder", False, polar)
+      plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', density_max, density_min, inclusion, "avgOrder", False, polar)
+
+      #save as file for debugging / analysis 
+      np.save(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', density_up)
+      np.save(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.npy', density_down)
+      np.savetxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.avgOrder.dat', avgouter,delimiter = ',',fmt='%10.5f')
+      np.savetxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.avgOrder.dat', avginner,delimiter = ',',fmt='%10.5f')
+
+      print(sys_name+' '+species+" "+tail+" order done!")
+
+  if len(names_dict['species_list']) > 1:
+    calculate_total_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  elif len(names_dict['species_list']) < 1:
+    print("Something is wrong with species_list!")
 
 def bin_prep(sys_name, names_dict, coordsys, polar):
   sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
@@ -733,4 +767,4 @@ if __name__ == "__main__":
   calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze tilts
-  calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
