@@ -223,7 +223,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m <= $N1} {set m [expr $m + 1.0]} {
         print_line_init $file $m $d1 $min
-        ;# adds bin values through penultimate value in one line
+        ;# prints bin values through penultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n + 1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
@@ -231,7 +231,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
                 print_value $file "nan" 0
             }
         }
-        ;# adds final value and starts new line in outfile
+        ;# prints final value and starts new line in outfile
         if {[dict exists $outfiles $key bin "$m,$N2"]} {
             print_value $file [dict get $outfiles $selex $key bin "$m,$N2"] 1
         } else {
