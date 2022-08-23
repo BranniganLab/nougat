@@ -107,9 +107,11 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   if polar is True:
     ax = plt.subplot(projection="polar")
     c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
+    coordsys = "polar"
   elif polar is False:
     ax = plt.subplot()
     c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
+    coordsys = "cart"
     
   
   cbar = plt.colorbar(c)
@@ -130,11 +132,6 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   ax.set_yticklabels([])
 
   fig.set_size_inches(6,6)
-
-  if polar is True:
-    coordsys = "polar"
-  elif polar is False:
-    coordsys = "cart"
 
   if bead is False:
     plt.savefig(name+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
