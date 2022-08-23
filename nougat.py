@@ -608,8 +608,8 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
       avginner = calc_avg_over_time(order_down)
 
       #make plots!
-      plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.'+tail+'.zone', density_max, density_min, inclusion, "avgOrder", False, polar)
-      plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', density_max, density_min, inclusion, "avgOrder", False, polar)
+      plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.'+tail+'.zone', order_max, order_min, inclusion, "avgOrder", False, polar)
+      plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', order_max, order_min, inclusion, "avgOrder", False, polar)
 
       #save as file for debugging / analysis 
       np.save(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', density_up)
