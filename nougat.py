@@ -616,15 +616,15 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
 
       print(sys_name+' '+species+" "+tail+" order done!")
 
-    if len(names_dict[species]) > 1:
-      calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims)
-    elif len(names_dict[species]) < 1:
-      print("Something is wrong with your tails list!")
+    #if len(names_dict[species]) > 1:
+    #  calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims)
+    #elif len(names_dict[species]) < 1:
+    #  print("Something is wrong with your tails list!")
 
-  if len(names_dict['species_list']) > 1:
-    calculate_total_order(sys_name, "all", names_dict, coordsys, inclusion, polar, dims)
-  elif len(names_dict['species_list']) < 1:
-    print("Something is wrong with your species_list!")
+  #if len(names_dict['species_list']) > 1:
+  #  calculate_total_order(sys_name, "all", names_dict, coordsys, inclusion, polar, dims)
+  #elif len(names_dict['species_list']) < 1:
+  #  print("Something is wrong with your species_list!")
 
 def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
