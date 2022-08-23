@@ -50,7 +50,7 @@ def dimensions_analyzer(data, polar):
   #figure out how many frames there are in the traj
   Nframes = int(len(data[:,0])/N1_bins)
 
-  return N1_bins, d1, N2_bins, d2, Nframes
+  return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
 def empty_neighbor_test(curvature_inputs):
@@ -375,7 +375,7 @@ def gen_avg_tilt(name, field, polar):
   vector_data = vector_data[:,2:]
 
   #get bin info
-  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(height_data, polar)
+  N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(height_data, polar)
 
   vector = np.zeros((N1_bins, N2_bins*3, Nframes))
   for x in range(Nframes):
@@ -590,7 +590,7 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
   
   for species in names_dict['species_list']:
-    for tail in [names_dict[]]:
+    for tail in names_dict[species]:
       zone = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
       ztwo = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
 
@@ -616,14 +616,33 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
 
       print(sys_name+' '+species+" "+tail+" order done!")
 
+    if len(names_dict[species]) > 1:
+      calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims)
+    elif len(names_dict[species]) < 1:
+      print("Something is wrong with your tails list!")
+
   if len(names_dict['species_list']) > 1:
-    calculate_total_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+    calculate_total_order(sys_name, "all", names_dict, coordsys, inclusion, polar, dims)
   elif len(names_dict['species_list']) < 1:
-    print("Something is wrong with species_list!")
+    print("Something is wrong with your species_list!")
+
+def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+
+  if species not "all":
+    for leaflet in ['zone','ztwo']:
+      tot_order = np.zeros((N1_bins, N2_bins, Nframes))
+
+      for tail in names_dict[species]:
+        order_per_tail = np.load(sys_name+'.'+species+'.'+tail+'.'+leaflet+'.'+coordsys+'.order.npy')
+        tot_order = tot_order + order_per_tail
+        #weight average by density!
+
+
 
 def bin_prep(sys_name, names_dict, coordsys, polar):
   sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
-  N1_bins, d1, N2_bins, d2, Nframes = dimensions_analyzer(sample_data, polar)
+  N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, polar)
   
   #prep plot dimensions
   dim1 = sample_data[0:N1_bins,0]
@@ -634,7 +653,23 @@ def bin_prep(sys_name, names_dict, coordsys, polar):
     dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
   dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
+  #create an array that represents the area per bin for normalizing density later
+  save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name)
+
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
+
+def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar):
+  
+  areas = np.ones([N1_bins,N2_bins])
+
+  areas = areas * d1 * d2 
+  if polar is True:
+    #convert d2 from degrees to radians
+    areas = areas * 2 * np.pi / 360
+    for row in range(N1_bins):
+      dist_to_center = min_val + row*d1 + d1/2.0
+      areas[row,:] = areas[row,:]*dist_to_center
+  np.save(sys_name+".areas.npy", areas)
 
 def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
