@@ -183,8 +183,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     set N2 [lindex $bindims 3]
     set dthetadeg [lindex $bindims 4]
 
-    set boxarea []
-
     ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
         set coordsys "polar"
@@ -229,11 +227,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         }
 
         puts "$system $quantity_of_interest $frm"
-
-        ;# calculate avg box area for density normalization later
-        set box_height [molinfo top get c]
-        set box_area_per_frame [expr [molinfo top get a] * [molinfo top get b]]
-        lappend boxarea $box_area_per_frame
         
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
@@ -311,6 +304,9 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     foreach selection [atomselect list] {
         $selection delete
     }
+
+    ;# output density normalization info 
+    output_density_norm_info $start $nframes $step $species
 }
 
 ;# Need to rewrite so that it works with all the new settings

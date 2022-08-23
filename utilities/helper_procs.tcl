@@ -240,49 +240,6 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     }
 }
 
-;# calculate bin density
-proc calculate_density {data min d1 d2 N1 N2 totfrms polar} {
-    
-    array set data_copy $data
-
-    if {$polar == 1} {
-        for {set m 0} {$m <= $N1} {incr m} {
-            set rval [expr $m * $d1 + $min + [expr 0.5 * $d1]]
-            set area [expr $rval * $d1 * $d2]
-            for {set n 0} {$n <= $N2} {incr n} {
-                set data_copy($m,$n) [expr $data_copy($m,$n) / [expr $totfrms * $area]]
-            }
-        }
-    } elseif {$polar == 0} {
-        set area [expr $d1 * $d2]
-        set divisor [expr $area * $totfrms]
-        for {set m 0} {$m <= $N1} {incr m} {
-            for {set n 0} {$n <= $N2} {incr n} {
-                set data_copy($m,$n) [expr $data_copy($m,$n) / $divisor]
-            }
-        }
-    }
-
-    return [array get data_copy]
-}
-
-
-;# normalize bin density to get enrichment
-proc normalize_density {data N1 N2 normfactor numbeads} {
-    
-    array set data_copy $data
-
-    set normfactor [expr $normfactor * $numbeads]
-
-    for {set m 0} {$m <= $N1} {incr m} {
-        for {set n 0} {$n <= $N2} {incr n} {
-            set data_copy($m,$n) [expr $data_copy($m,$n) / $normfactor]
-        }
-    }
-
-    return [array get data_copy]
-}
-
 ;# Alignment based off vmd alignment
 proc Align { stuff } {
     puts "Align start"
@@ -627,6 +584,31 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
     }
     dict unset res_dict dummy
     return $res_dict
+}
+
+proc output_density_norm_info {start nframes step species system} {
+    set arealist []
+    for {set frm $start} {$frm <= $nframes} {set frm [expr $frm + $step]} {
+        lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
+    }
+    set avgarea [vecexpr $arealist mean]
+    set normfactor_outfile [open "${system}.density.normfactor.dat" w]
+    puts $normfactor_outfile "total avgarea $avgarea"
+    foreach spec $species {
+        set sel [atomselect top "resname $spec"]
+        set sample_resid [lindex [$sel get resid] 0]
+        set sel2 [atomselect top "resname $spec and resid $sample_resid"]
+        set sb [llength [$sel2 get resid]]
+        set Nb [expr [llength [$sel get resid]] / [expr $sb * 1.0]]
+        $sel delete
+        $sel2 delete
+        set normfactor [expr $avgarea / [expr $Nb * $sb * 1.0]]
+        puts $normfactor_outfile "$spec NB $Nb"
+        puts $normfactor_outfile "$spec sb $sb"
+        puts $normfactor_outfile "$spec normfactor $normfactor"
+    }
+    
+    close $normfactor_outfile
 }
 
 proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list} {
