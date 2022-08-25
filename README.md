@@ -61,7 +61,7 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ### Run nougat.tcl
 
 ```
-start_nougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar] [bead analysis]
+start_nougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar]
 ```
 An explanation of the options is as follows:
 ```
@@ -72,18 +72,16 @@ An explanation of the options is as follows:
 - end               the frame where you would like to stop analysis; -1 will run for the whole simulation
 - step              allows you to skip frames; otherwise use 1
 - polar             1 for polar system, 0 for cartesian system
-- bead analysis     0 for normal nougat, 1 for nougat analysis of all beads down the lipid chain
 ```
 
 ### Edit & Run nougat.py
 - Open nougat.py in the text editor of your choice
-- If you used bead analysis, set **readbeads** to 1
-- If you _did not_ comment out Protein_Position, set **protein_onoff** to 1
-- Edit name_list to contain the name(s) of your system(s) as specified by "system name" in nougat.tcl
-- If you used nougatByBead, add your lipid(s) to the bead_dict dictionary as needed; ensure the key is equal to the name in name_list!
+- Edit sys_name to match what you set "system name" to in nougat.tcl
+- If you _did not_ comment out Protein_Position, set **inclusion_drawn** to 1
+- If you set $polar to 1 in nougat.tcl, set polar to True in nougat.py
 - run nougat.py from the command line
 
 ### Explore your results!
-All results are available as heatmaps saved as 700 DPI png files. They will be saved in the folder labelled with your system name. To change the scale, adjust the max and min values in nougat.py (lines 24-31).
+All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat.py (lines 12-25).
 
 You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
