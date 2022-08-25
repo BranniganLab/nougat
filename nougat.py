@@ -4,6 +4,9 @@ import numpy as np
 import warnings
 import glob
 
+sys_name = 'lgPOtest'
+inclusion_drawn = 0
+polar = False
 
 
 # These determine the scale in your image files
@@ -530,7 +533,8 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
-  
+  areas = np.load(sys_name+".areas.npy")
+
   for species in names_dict['species_list']:
     zone = np.genfromtxt(sys_name+'.'+species+'zone.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
     ztwo = np.genfromtxt(sys_name+'.'+species+'ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
@@ -542,10 +546,16 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
       density_up[:,:,frm] = zone[frm*N1_bins:(frm+1)*N1_bins,2:]
       density_down[:,:,frm] = ztwo[frm*N1_bins:(frm+1)*N1_bins,2:]
 
-    #NEED TO NORMALIZE!!!!
-
     avgouter = np.mean(density_up, axis=2)
     avginner = np.mean(density_down, axis=2)
+
+    with open(sys_name+'.density.normfactor.dat', 'r') as normfile:
+      norms = read(normfile)
+      for 
+
+    #normalize
+    avgouter = (avgouter * normfactor) / areas
+    avginner = (avginner * normfactor) / areas 
 
     #make plots!
     plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', density_max, density_min, inclusion, "avgDensity", False, polar)
@@ -761,9 +771,6 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
   return 
 
 if __name__ == "__main__": 
-  inclusion_drawn = 0
-  polar = False
-  sys_name = 'lgPOtest'
 
   if inclusion_drawn is True:
     inclusion = add_inclusion(name, field_list)
