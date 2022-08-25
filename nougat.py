@@ -5,8 +5,8 @@ import warnings
 
 readbeads = False
 inclusion_drawn = False
-polar = False
-name_list = ["DT"]
+polar = True
+name_list = ["PO"]
 bead_dict = {
   "DT" : ['C1A.C1B', 'C2A.C2B'],
   "DL" : ['C1A.C1B', 'C2A.C2B', 'C3A.C3B'],
