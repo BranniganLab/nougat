@@ -750,11 +750,9 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set thickness_list []
         set counter 0
         foreach bead [lrange $sellist 4 end] {
-<<<<<<< HEAD
             #puts [$bead get z]
             set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
             incr counter
-=======
             if {[llength [lsort -unique [$bead get name]]] == 2} {
                 set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
                 incr counter
@@ -767,7 +765,6 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
                 set thickness_list "$thickness_list [vecexpr $bead2 $ref_height sub]"
                 incr counter
                 }
->>>>>>> 33091c91a7aa0b42d8650a9f945f3f1c85d097fb
         }
 
         if {$counter > 1} {
