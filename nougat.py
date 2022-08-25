@@ -19,8 +19,8 @@ gauss_curv_min = -0.05
 gauss_curv_max = 0.05
 density_min = 0
 density_max = 2
-thick_min = 0
-thick_max = 10
+thick_min = 5
+thick_max = 15
 order_min = -1
 order_max = 1
 
@@ -536,8 +536,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   areas = np.load(sys_name+".areas.npy")
 
   for species in names_dict['species_list']:
-    zone = np.genfromtxt(sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
-    ztwo = np.genfromtxt(sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
+    zone = np.genfromtxt(sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
+    ztwo = np.genfromtxt(sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
 
     #create a new array that has each frame in a different array level
     density_up = np.zeros((N1_bins, N2_bins, Nframes))
@@ -546,8 +546,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
       density_up[:,:,frm] = zone[frm*N1_bins:(frm+1)*N1_bins,2:]
       density_down[:,:,frm] = ztwo[frm*N1_bins:(frm+1)*N1_bins,2:]
 
-    avgouter = np.mean(density_up, axis=2)
-    avginner = np.mean(density_down, axis=2)
+    avgouter = calc_avg_over_time(density_up)
+    avginner = calc_avg_over_time(density_down)
 
     found = False
     with open(sys_name+'.density.normfactor.dat', 'r') as normfile:
@@ -795,21 +795,21 @@ if __name__ == "__main__":
   dims = bin_prep(sys_name, names_dict, coordsys, polar)
 
   #analyze height
-  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  #analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
-  for bead in names_dict['beads_list']:
+  #for bead in names_dict['beads_list']:
   
     #calculate thickness
-    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
+    #calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
 
     #calculate curvature
-    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+    #calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
 
   #analyze density
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze order
-  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze tilts
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
