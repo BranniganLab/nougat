@@ -3,8 +3,13 @@ package require pbctools
 
 # EDIT THE PATHS HERE
 # TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
+<<<<<<< HEAD
 set QWRAP "~/Documents/nougat/utilities"
 set VEC "~/Documents/nougat/utilities"
+=======
+set QWRAP "/home/jahmalennis/Documents/nougat/utilities"
+set VEC "/home/jahmalennis/Documents/nougat/utilities"
+>>>>>>> bb1c42ef7db32ea53336400e60637c52995ffab3
 
 load ${QWRAP}/qwrap.so
 load ${VEC}/vecexpr.so
@@ -23,7 +28,11 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
+<<<<<<< HEAD
     set inclusion_sel "(resname AU and resid 10)"
+=======
+    set inclusion_sel "resname AU lig"
+>>>>>>> bb1c42ef7db32ea53336400e60637c52995ffab3
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
@@ -43,12 +52,20 @@ proc cell_prep {system end} {
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
+<<<<<<< HEAD
     #set align_sel "name BB"
+=======
+    #set align_sel "nam"
+>>>>>>> bb1c42ef7db32ea53336400e60637c52995ffab3
 
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 in your plots
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
     ;# the average position of resid 15
+<<<<<<< HEAD
     set reference_point "name AUC and resid 10"
+=======
+    set reference_point "index 1"
+>>>>>>> bb1c42ef7db32ea53336400e60637c52995ffab3
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -76,15 +93,30 @@ proc cell_prep {system end} {
     set t2T [lindex $tail_two end]
     set tailnames "$t1T $t2T"
     set tail_list []
-    if {[llength $tail_one] == [llength $tail_two]} {
-        for {set i 1} {$i < [llength $tail_one]} {incr i} {
-                set t1bead [lindex $tail_one $i]
-                set t2bead [lindex $tail_two $i]
+    puts "$tail_one" 
+    puts "$tail_two"
+    foreach i $tail_one j $tail_two {
+                set t1bead $i
+                set t2bead $j
                 set names "$t1bead $t2bead"
                 lappend tail_list $names
-        }
-    } else {
-        puts "Tail lengths are different. Teach me what to do."
+    #if {[llength $tail_one] == [llength $tail_two]} {
+    #    puts "yes"
+    #    for {set i 1} {$i < [llength $tail_one]} {incr i} {
+    #            set t1bead [lindex $tail_one $i]
+    #            set t2bead [lindex $tail_two $i]
+    #            set names "$t1bead $t2bead"
+    #            lappend tail_list $names
+    #    }
+    #} elseif {[llength $tail_one] > [llength $tail_two]} {
+    #    foreach i $tail_one j $tail_two {
+    #            set t1bead $i
+    #            set t2bead $j
+    #            set names "$t1bead $t2bead"
+    #            lappend tail_list $names
+    #    }
+    #}
+        
     }
 
     ;# Assigns lipids to user value 1 or 2 depending on leaflet
@@ -242,7 +274,7 @@ proc Protein_Position {name hnames tnames} {
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
+    set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
@@ -495,6 +527,7 @@ proc leaflet_sorter {species tailnames sample_frame} {
     puts "Leaflet sorting complete!"
 }
 
+
 proc tail_analyzer { species } {
 
     set sel [atomselect top "resname $species"]
@@ -671,7 +704,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         ;#set order_down [open "${system}.ztwo.${condensed_name}.${coordsys}.order.dat" w]
     }
 
-    puts "Setup complete. Starting analysis now."	
+    puts "Setup complete. Starting analysis now."   
 
 
     set heads [atomselect top "name $beadname"]
@@ -682,6 +715,7 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set t1tiltsel [atomselect top "resname $species and name GL1 $tail_one"]
         set t2tiltsel [atomselect top "resname $species and name GL2 $tail_two"]
         set sellist [list $heads $interface $t1tiltsel $t2tiltsel]
+        #puts [[lindex $sellist 2] get name]
 
         for {set beadpair 0} {$beadpair < [llength $tail_list]} {incr beadpair} {
             set newsel [atomselect top "resname $species and name [lindex $tail_list $beadpair]"]
@@ -733,9 +767,26 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
         set thickness_list []
         set counter 0
         foreach bead [lrange $sellist 4 end] {
+<<<<<<< HEAD
+            #puts [$bead get z]
             set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
             incr counter
+=======
+            if {[llength [lsort -unique [$bead get name]]] == 2} {
+                set thickness_list "$thickness_list [vecexpr [$bead get z] $ref_height sub]"
+                incr counter
+            } elseif { [llength [lsort -unique [$bead get name]]] == 1 } {
+                set bead2 []
+                foreach num [$bead get z] {
+                    lappend bead2 $num
+                    lappend bead2 0
+                }
+                set thickness_list "$thickness_list [vecexpr $bead2 $ref_height sub]"
+                incr counter
+                }
+>>>>>>> 33091c91a7aa0b42d8650a9f945f3f1c85d097fb
         }
+
         if {$counter > 1} {
             set mins_list [vecexpr $thickness_list $counter min_ew]
             ;# there is no max_ew in vecexpr, so multiply by -1, do min_ew, then multiply by -1 again
@@ -744,7 +795,6 @@ proc run_nougat {system beadname coordsys important_variables polar separate_bea
             set mins_list $thickness_list
             set maxs_list $thickness_list
         }
-
         foreach bead $blist {
 
             set x_vals [$bead get x]

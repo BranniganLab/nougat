@@ -5,7 +5,11 @@ import warnings
 
 readbeads = False
 inclusion_drawn = False
+<<<<<<< HEAD
 polar = True
+=======
+polar = False
+>>>>>>> bb1c42ef7db32ea53336400e60637c52995ffab3
 name_list = ["PO"]
 bead_dict = {
   "DT" : ['C1A.C1B', 'C2A.C2B'],
