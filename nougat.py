@@ -536,8 +536,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   areas = np.load(sys_name+".areas.npy")
 
   for species in names_dict['species_list']:
-    zone = np.genfromtxt(sys_name+'.'+species+'zone.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
-    ztwo = np.genfromtxt(sys_name+'.'+species+'ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
+    zone = np.genfromtxt(sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
+    ztwo = np.genfromtxt(sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values=0)
 
     #create a new array that has each frame in a different array level
     density_up = np.zeros((N1_bins, N2_bins, Nframes))
