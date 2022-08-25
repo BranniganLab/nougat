@@ -549,14 +549,14 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     avgouter = np.mean(density_up, axis=2)
     avginner = np.mean(density_down, axis=2)
 
+    found = False
     with open(sys_name+'.density.normfactor.dat', 'r') as normfile:
-      norms = read(normfile)
+      norms = normfile.readlines()
       while found is False:
         for line in norms:
-          vals = line.split(' ')
-          print(vals)
+          vals = line.strip().split(' ')
           if vals[0] == species:
-            normfactor = vals[1]
+            normfactor = float(vals[1])
             found = True
 
     #normalize
@@ -625,8 +625,8 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
       plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', order_max, order_min, inclusion, "avgOrder", False, polar)
 
       #save as file for debugging / analysis 
-      np.save(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', density_up)
-      np.save(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.npy', density_down)
+      np.save(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', order_up)
+      np.save(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.npy', order_down)
       np.savetxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.avgOrder.dat', avgouter,delimiter = ',',fmt='%10.5f')
       np.savetxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.avgOrder.dat', avginner,delimiter = ',',fmt='%10.5f')
 
