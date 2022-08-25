@@ -593,7 +593,6 @@ proc output_density_norm_info {start nframes step species system} {
     }
     set avgarea [vecexpr $arealist mean]
     set normfactor_outfile [open "${system}.density.normfactor.dat" w]
-    puts $normfactor_outfile "total avgarea $avgarea"
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set sample_resid [lindex [$sel get resid] 0]
@@ -603,9 +602,7 @@ proc output_density_norm_info {start nframes step species system} {
         $sel delete
         $sel2 delete
         set normfactor [expr $avgarea / [expr $Nb * $sb * 1.0]]
-        puts $normfactor_outfile "$spec NB $Nb"
-        puts $normfactor_outfile "$spec sb $sb"
-        puts $normfactor_outfile "$spec normfactor $normfactor"
+        puts $normfactor_outfile "$spec $normfactor"
     }
     
     close $normfactor_outfile
