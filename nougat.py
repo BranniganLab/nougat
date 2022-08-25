@@ -551,7 +551,13 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
 
     with open(sys_name+'.density.normfactor.dat', 'r') as normfile:
       norms = read(normfile)
-      for 
+      while found is False:
+        for line in norms:
+          vals = line.split(' ')
+          print(vals)
+          if vals[0] == species:
+            normfactor = vals[1]
+            found = True
 
     #normalize
     avgouter = (avgouter * normfactor) / areas
@@ -639,7 +645,7 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
 def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
 
-  if species not "all":
+  if species != "all":
     for leaflet in ['zone','ztwo']:
       tot_order = np.zeros((N1_bins, N2_bins, Nframes))
 
@@ -668,7 +674,7 @@ def bin_prep(sys_name, names_dict, coordsys, polar):
 
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
 
-def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar):
+def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name):
   
   areas = np.ones([N1_bins,N2_bins])
 
