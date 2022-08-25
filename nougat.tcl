@@ -147,7 +147,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     set min 0 
 
     ;# determine number and size of bins
-    set bindims [bin_prep $nframes $polar $min $d1]
+    set bindims [bin_prep $nframes $polar $min $d1 $N2]
 
     ;# add all these new values to important_values for easy transfer
     lappend important_variables $start 

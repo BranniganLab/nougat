@@ -503,7 +503,7 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
     return $outfiles
 }
 
-proc bin_prep {nframes polar min d1} {
+proc bin_prep {nframes polar min d1 N2} {
     #measure box size at final frame to get bin values
     set box_x [molinfo top get a frame [expr $nframes - 1]]
 
