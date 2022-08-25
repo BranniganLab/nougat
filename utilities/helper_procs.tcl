@@ -497,7 +497,7 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
                 dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
                 dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
-        } 
+        }
     }
     
     return $outfiles
