@@ -663,7 +663,7 @@ def bin_prep(sys_name, names_dict, coordsys, polar):
     dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
   dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
-  #create an array that represents the area per bin for normalizing density later
+  #save an array that represents the area per bin for normalizing density later
   save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name)
 
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
