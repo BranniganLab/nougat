@@ -4,7 +4,7 @@ import numpy as np
 import warnings
 import glob
 
-sys_name = 'lgPOtest'
+sys_name = 'PO'
 inclusion_drawn = 0
 polar = False
 
@@ -19,10 +19,10 @@ gauss_curv_min = -0.05
 gauss_curv_max = 0.05
 density_min = 0
 density_max = 2
-thick_min = 0
-thick_max = 10
-order_min = -1
-order_max = 1
+thick_min = 5
+thick_max = 15
+order_min = .2
+order_max = .6
 
 field_list = ["zone","ztwo"]
 
