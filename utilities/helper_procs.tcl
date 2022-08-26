@@ -497,7 +497,7 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
                 dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
                 dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
-        } 
+        }
     }
     
     return $outfiles
@@ -597,11 +597,13 @@ proc output_density_norm_info {start nframes step species system} {
         set sel [atomselect top "resname $spec"]
         set sample_resid [lindex [$sel get resid] 0]
         set sel2 [atomselect top "resname $spec and resid $sample_resid"]
-        set sb [llength [$sel2 get resid]]
-        set Nb [expr [llength [$sel get resid]] / [expr $sb * 1.0]]
+        set sb [llength [lsort -unique [$sel2 get resid]]]
+        set NL [llength [lsort -unique [$sel get resid]]]
+        set Nb [expr $NL / [expr $sb * 1.0]]
         $sel delete
         $sel2 delete
         set normfactor [expr $avgarea / [expr $Nb * $sb * 1.0]]
+    
         puts $normfactor_outfile "$spec $normfactor"
     }
     
