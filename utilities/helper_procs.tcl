@@ -673,29 +673,27 @@ proc tail_length_sorter {species acyl_names} {
     return [list $sellist $lengthlist]
 }
 
+proc get_costheta {i xvals yvals zvals} {
+    set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
+    set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
+    set r12 [vecsub $start $end]
+    set n12 [vecnorm $r12]
+    return [lindex $n12 2]
+}
+
 proc order_params {length xvals yvals zvals} {
     set order_list []
     set temp_list []
-    for {set i 1} {$i <= [llength $xvals]} {incr i} {
+    for {set i 1} {$i < [llength $xvals]} {incr i} {
         if {[expr $i % $length] == 0} {
             set avg [vecexpr $temp_list mean]
-            set step2 [expr $avg*3.0 - 1]
-            set order [expr $step2 / 2.0]
+            set order [expr [expr $avg*3.0 - 1] / 2.0]
             lappend order_list $order
             set temp_list []
             continue
-        } else {
-            set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
-            set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
-            set magn_a [vecdist $start $end]
-            set theta [expr [expr [lindex $zvals $i] - [lindex $zvals $i-1]] / $magn_a]
-            if {($theta > 1) || ($theta < -1)} {
-                puts "Something is wrong with your order params"
-                puts "This is out of the range allowed for arccos"
-                return
-            }
-            lappend temp_list [expr $theta * $theta]
         }
+        set costheta [get_costheta $i $xvals $yvals $zvals]
+        lappend temp_list [expr $costheta * $costheta]
     }
     set final_order_list []
     foreach item $order_list {
@@ -706,6 +704,8 @@ proc order_params {length xvals yvals zvals} {
 
 proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
     dict for {bin indices} $res_dict {
+        puts $bin
+        puts $indices
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
         set tiltlist []
