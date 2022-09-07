@@ -690,10 +690,10 @@ proc order_params {length xvals yvals zvals} {
             set order [expr [expr $avg*3.0 - 1] / 2.0]
             lappend order_list $order
             set temp_list []
-            continue
+        } else {
+            set costheta [get_costheta $i $xvals $yvals $zvals]
+            lappend temp_list [expr $costheta * $costheta]
         }
-        set costheta [get_costheta $i $xvals $yvals $zvals]
-        lappend temp_list [expr $costheta * $costheta]
     }
     set final_order_list []
     foreach item $order_list {
@@ -704,8 +704,6 @@ proc order_params {length xvals yvals zvals} {
 
 proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
     dict for {bin indices} $res_dict {
-        puts $bin
-        puts $indices
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
         set tiltlist []
