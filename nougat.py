@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 import glob
 
-sys_name = 'lgPOtest'
+sys_name = 'order-test'
 inclusion_drawn = 0
-polar = False
+polar = True
 
 
 # These determine the scale in your image files
@@ -702,7 +702,7 @@ def fetch_names(sys_name, coordsys):
   names_dict['species_list'] = [] 
   names_dict['beads_list'] = []
 
-  files = glob.glob(sys_name+'*.zone.*.tilt.dat')
+  files = glob.glob(sys_name+'*.zone.'+coordsys+'.tilt.dat')
 
   for filename in files:
     namefields = filename.split('.')
@@ -715,13 +715,12 @@ def fetch_names(sys_name, coordsys):
     else:
       names_dict[species].append(tail)
 
-  files = glob.glob(sys_name+'.zone.*.height.dat')
+  files = glob.glob(sys_name+'.zone.*.'+coordsys+'.height.dat')
   
   for filename in files:
     beadstart = len(sys_name)+6
     beadend = filename.find('.'+coordsys)
     beadname = filename[beadstart:beadend]
-
     if beadname not in names_dict['beads_list']:
       names_dict['beads_list'].append(beadname)
 
@@ -795,21 +794,21 @@ if __name__ == "__main__":
   dims = bin_prep(sys_name, names_dict, coordsys, polar)
 
   #analyze height
-  #analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
-  #for bead in names_dict['beads_list']:
+  for bead in names_dict['beads_list']:
   
     #calculate thickness
-    #calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
 
     #calculate curvature
-    #calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
 
   #analyze density
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze order
-  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze tilts
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
