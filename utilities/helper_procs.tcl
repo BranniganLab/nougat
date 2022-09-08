@@ -217,26 +217,21 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     set file [dict get $outfiles $selex $key fname]
 
     if {$polar == 1} {
-        set N2 [expr $N2-1]
+        set N2 [expr $N2 -1.0]
     }
 
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m <= $N1} {set m [expr $m + 1.0]} {
         print_line_init $file $m $d1 $min
         ;# prints bin values through penultimate value in one line
-        for {set n 0.0} {$n < $N2} {set n [expr $n + 1.0]} {
+        for {set n 0.0} {$n <= $N2} {set n [expr $n + 1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
             } else {
                 print_value $file "nan" 0
             }
         }
-        ;# prints final value and starts new line in outfile
-        if {[dict exists $outfiles $key bin "$m,$N2"]} {
-            print_value $file [dict get $outfiles $selex $key bin "$m,$N2"] 1
-        } else {
-            print_value $file "nan" 1
-        }
+        print_value $file " " 1
     }
 }
 
@@ -684,10 +679,10 @@ proc get_costheta {i xvals yvals zvals} {
 proc order_params {length xvals yvals zvals} {
     set order_list []
     set temp_list []
-    for {set i 1} {$i < [llength $xvals]} {incr i} {
+    for {set i 1} {$i <= [llength $xvals]} {incr i} {
         if {[expr $i % $length] == 0} {
             set avg [vecexpr $temp_list mean]
-            set order [expr [expr $avg*3.0 - 1] / 2.0]
+            set order [expr $avg*1.5 - 0.5]
             lappend order_list $order
             set temp_list []
         } else {
