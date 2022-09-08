@@ -306,7 +306,9 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
 
     ;# output density normalization info 
-    output_density_norm_info $start $nframes $step $species $system
+    if {$quantity_of_interest eq "height_density"} {
+        output_density_norm_info $start $nframes $step $species $system $headnames
+    }
 }
 
 ;# Need to rewrite so that it works with all the new settings

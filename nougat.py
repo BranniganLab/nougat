@@ -6,7 +6,7 @@ import glob
 
 sys_name = 'order-test'
 inclusion_drawn = 0
-polar = True
+polar = False
 
 
 # These determine the scale in your image files
@@ -180,7 +180,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
           norm_vec_y = -1*dely/normalization_factor
           norm_vec_z = 1/normalization_factor
 
-          curvature_outputs[row,col,frm] = del2x + del2y
+          curvature_outputs[row,col,frm] = (del2x + del2y)/2.0
           kgauss_outputs[row,col,frm] = del2x*del2y - delxy**2
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -202,7 +202,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
           norm_vec_y = -1*dely/normalization_factor
           norm_vec_z = 1/normalization_factor
 
-          curvature_outputs[row,col,frm] = del2x + del2y
+          curvature_outputs[row,col,frm] = (del2x + del2y)/2.0
           kgauss_outputs[row,col,frm] = np.nan
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -221,7 +221,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
 def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
   
-  #mean curvature: h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)
+  #mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
   #gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
 
   for frm in range(Nframes):
@@ -262,7 +262,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
           norm_vec_z = 1 / normalization_factor
 
           #calculate polar laplacian and gaussian curvature
-          curvature_outputs[row,col,frm] = del2r + c1*delr + c2*del2theta
+          curvature_outputs[row,col,frm] = (del2r + c1*delr + c2*del2theta)/2.0
           kgauss_outputs[row,col,frm] = c1*delr*del2r + 2*c3*delrdeltheta*deltheta - c4*deltheta**2 - c2*(delrdeltheta**2-del2r*del2theta)
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -296,7 +296,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
           norm_vec_y = (-1*c1*np.cos(theta)*deltheta) - (np.sin(theta)*delr) / normalization_factor
           norm_vec_z = 1 / normalization_factor
 
-          curvature_outputs[row,col,frm] = del2r + c1*delr ;# + c2*del2theta
+          curvature_outputs[row,col,frm] = (del2r + c1*delr + c2*del2theta)/2.0
           kgauss_outputs[row,col,frm] = np.nan
           normal_vector_outputs[row,col*3,frm] = norm_vec_x
           normal_vector_outputs[row,col*3+1,frm] = norm_vec_y
@@ -560,8 +560,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
             found = True
 
     #normalize
-    avgouter = (avgouter * normfactor) / areas
-    avginner = (avginner * normfactor) / areas 
+    avgouter = avgouter * normfactor / areas
+    avginner = avginner * normfactor / areas 
 
     #make plots!
     plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', density_max, density_min, inclusion, "avgDensity", False, polar)
@@ -680,8 +680,6 @@ def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name):
 
   areas = areas * d1 * d2 
   if polar is True:
-    #convert d2 from degrees to radians
-    areas = areas * 2 * np.pi / 360
     for row in range(N1_bins):
       dist_to_center = min_val + row*d1 + d1/2.0
       areas[row,:] = areas[row,:]*dist_to_center

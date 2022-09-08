@@ -581,7 +581,7 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
     return $res_dict
 }
 
-proc output_density_norm_info {start nframes step species system} {
+proc output_density_norm_info {start nframes step species system headnames} {
     set arealist []
     for {set frm $start} {$frm <= $nframes} {set frm [expr $frm + $step]} {
         lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
@@ -590,15 +590,16 @@ proc output_density_norm_info {start nframes step species system} {
     set normfactor_outfile [open "${system}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
-        set sample_resid [lindex [$sel get resid] 0]
-        set sel2 [atomselect top "resname $spec and resid $sample_resid"]
-        set sb [llength [lsort -unique [$sel2 get resid]]]
-        set NL [llength [lsort -unique [$sel get resid]]]
-        set Nb [expr $NL / [expr $sb * 1.0]]
+        set names [lsort -unique [$sel get name]]
+        set Sb 0
+        foreach name $names {
+            if {[lsearch $headnames $name] != -1} {
+                incr Sb
+            }
+        }
+        set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
-        $sel2 delete
-        set normfactor [expr $avgarea / [expr $Nb * $sb * 1.0]]
-    
+        set normfactor [expr $avgarea / [expr $Nb * $Sb * 1.0]]
         puts $normfactor_outfile "$spec $normfactor"
     }
     
