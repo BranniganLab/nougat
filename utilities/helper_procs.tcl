@@ -586,7 +586,6 @@ proc output_density_norm_info {start nframes step species system headnames coord
     for {set frm $start} {$frm < $nframes} {set frm [expr $frm + $step]} {
         lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
     }
-    puts $arealist
     set avgarea [vecexpr $arealist mean]
     set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
     foreach spec $species {
