@@ -598,11 +598,7 @@ proc output_density_norm_info {start nframes step species system headnames} {
                 incr Sb
             }
         }
-        puts $avgarea
-
-        puts $Sb 
         set Nb [llength [lsort -unique [$sel get resid]]]
-        puts $Nb 
         $sel delete
         set normfactor [expr $avgarea / [expr $Nb * $Sb / 2.0]]
         puts $normfactor_outfile "$spec $normfactor"
