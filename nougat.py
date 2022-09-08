@@ -550,7 +550,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     avginner = calc_avg_over_time(density_down)
 
     found = False
-    with open(sys_name+'.density.normfactor.dat', 'r') as normfile:
+    with open(sys_name+'.'+coordsys+'.density.normfactor.dat', 'r') as normfile:
       norms = normfile.readlines()
       while found is False:
         for line in norms:
