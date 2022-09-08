@@ -6,7 +6,7 @@ import glob
 
 sys_name = 'order-test'
 inclusion_drawn = 0
-polar = False
+polar = True
 
 
 # These determine the scale in your image files
