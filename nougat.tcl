@@ -32,7 +32,7 @@ proc cell_prep {system end} {
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "resname W ION 'CL-' 'NA+' lig"
+    set excluded_sel "resname W CHOL ION 'CL-' 'NA+' lig"
 
     ;# figures out which lipids are in the system
     ;# no edits required
@@ -48,14 +48,14 @@ proc cell_prep {system end} {
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    set align_sel "name BB"
+    #set align_sel "name BB"
 
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
     ;# the average position of resid 15
     ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
     ;# replace the text with "NULL"
-    set reference_point "name BB and resid 15"
+    set reference_point "NULL"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -65,7 +65,7 @@ proc cell_prep {system end} {
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
     Center_System "$wrap_sel"
-    Align "$align_sel"
+    #Align "$align_sel"
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work

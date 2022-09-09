@@ -606,42 +606,6 @@ proc output_density_norm_info {start nframes step species system headnames coord
     close $normfactor_outfile
 }
 
-proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list} {
-    dict for {bin indices} $res_dict {
-        set leaf [string range $bin end end]
-        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-        set newlist []
-        foreach indx $indices {
-            if {$leaf == 1} {
-                set field_key "z1z2"
-                set dens_key "density_up_[lindex $lipid_list $indx]"
-                set height_key "heights_up"
-            } elseif {$leaf == 2} {
-                set field_key "z1z2"
-                set dens_key "density_down_[lindex $lipid_list $indx]"
-                set height_key "heights_down"
-            } elseif {$leaf == 3} {
-                set field_key "z0"
-                set dens_key "density_zzero_[lindex $lipid_list $indx]"
-                set height_key "heights_zzero"
-            } else {
-                puts "something has gone wrong with the binning"
-                return
-            }
-            lappend newlist [lindex $zvals_list $indx]
-        }
-        if {[llength $newlist] == 1} {
-            dict set outfiles $field_key $height_key bin $correct_bin [lindex $newlist 0]
-            dict set outfiles $field_key $dens_key bin $correct_bin 1
-        } elseif {[llength $newlist] > 1} {
-            set avg [vecexpr $newlist mean]
-            dict set outfiles $field_key $height_key bin $correct_bin $avg 
-            dict set outfiles $field_key $dens_key bin $correct_bin [llength $newlist]
-        }
-    }
-    return $outfiles
-}
-
 proc tail_length_sorter {species acyl_names} {
     set lenlist []
     for {set i 0} {$i < [llength $acyl_names]} {incr i} {
@@ -705,12 +669,14 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
         set tiltlist []
         set orderlist []
         foreach indx $indices {
+            set tailnum [expr int([expr [lindex $tail_list $indx] - 1])]
+            set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
-                set tilt_key "tilts_up_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
-                set order_key "order_up_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
+                set tilt_key "tilts_up_${species}_tail${tailnum}"
+                set order_key "order_up_${species}_tail${tailnum}"
             } else {
-                set tilt_key "tilts_down_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
-                set order_key "order_down_[lindex $lipid_list $indx]_tail[expr int([expr [lindex $tail_list $indx] - 1])]"
+                set tilt_key "tilts_down_${species}_tail${tailnum}"
+                set order_key "order_down_${species}_tail${tailnum}"
             }
             lappend tiltlist [lindex [lindex $tilts 0] $indx]
             lappend orderlist [lindex [lindex $orders 0] $indx]
@@ -727,6 +693,42 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
             dict set outfiles $selex $tilt_key bin $correct_bin $tiltavg
             set orderavg [vecexpr $orderlist mean] 
             dict set outfiles $selex $order_key bin $correct_bin $orderavg
+        }
+    }
+    return $outfiles
+}
+
+proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list} {
+    dict for {bin indices} $res_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+        set newlist []
+        foreach indx $indices {
+            if {$leaf == 1} {
+                set field_key "z1z2"
+                set dens_key "density_up_[lindex $lipid_list $indx]"
+                set height_key "heights_up"
+            } elseif {$leaf == 2} {
+                set field_key "z1z2"
+                set dens_key "density_down_[lindex $lipid_list $indx]"
+                set height_key "heights_down"
+            } elseif {$leaf == 3} {
+                set field_key "z0"
+                set dens_key "density_zzero_[lindex $lipid_list $indx]"
+                set height_key "heights_zzero"
+            } else {
+                puts "something has gone wrong with the binning"
+                return
+            }
+            lappend newlist [lindex $zvals_list $indx]
+        }
+        if {[llength $newlist] == 1} {
+            dict set outfiles $field_key $height_key bin $correct_bin [lindex $newlist 0]
+            dict set outfiles $field_key $dens_key bin $correct_bin 1
+        } elseif {[llength $newlist] > 1} {
+            set avg [vecexpr $newlist mean]
+            dict set outfiles $field_key $height_key bin $correct_bin $avg 
+            dict set outfiles $field_key $dens_key bin $correct_bin [llength $newlist]
         }
     }
     return $outfiles

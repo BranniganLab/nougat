@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 import glob
 
-sys_name = 'order-test'
+sys_name = 'nougat_test'
 inclusion_drawn = 0
-polar = True
+polar = False
 
 
 # These determine the scale in your image files
