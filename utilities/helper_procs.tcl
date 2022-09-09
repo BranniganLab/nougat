@@ -663,6 +663,11 @@ proc order_params {length xvals yvals zvals} {
 }
 
 proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
+    foreach tail [lsort -unique $tail_list] species [lsort -unique $lipid_list] {
+        set tailnum [expr int([expr $tail - 1])]
+        dict set $species tilt $tailnum "test"
+        dict set $species order $tailnum "test"
+    }
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
@@ -678,13 +683,18 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set tilt_key "tilts_down_${species}_tail${tailnum}"
                 set order_key "order_down_${species}_tail${tailnum}"
             }
-            lappend tiltlist [lindex [lindex $tilts 0] $indx]
-            lappend orderlist [lindex [lindex $orders 0] $indx]
+            puts [lindex [lindex $tilts 0] $indx]
+            dict append $species tilt $tailnum [lindex [lindex $tilts 0] $indx]
+            dict append $species order $tailnum [lindex [lindex $orders 0] $indx]
+            puts "test"
         }
-        if {[llength $tiltlist] == 1} {
+        puts [dict get species]
+        puts "test2"
+        set dictlength [llength [dict get $tails quant tilt $tailnum]]
+        if {$dictlength == 1} {
             dict set outfiles $selex $tilt_key bin $correct_bin [lindex $tiltlist 0]
             dict set outfiles $selex $order_key bin $correct_bin [lindex $orderlist 0]
-        } elseif {[llength $tiltlist] > 1} {
+        } elseif {$dictlength > 1} {
             set tiltsum [list 0 0 0]
             for {set i 0} {$i < [llength $tiltlist]} {incr i} {
                 set tiltsum [vecexpr [lindex $tiltlist $i] $tiltsum add]
@@ -704,31 +714,35 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
         set newlist []
         foreach indx $indices {
+            set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
                 set field_key "z1z2"
-                set dens_key "density_up_[lindex $lipid_list $indx]"
+                set dens_key "density_up_${species}"
                 set height_key "heights_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
-                set dens_key "density_down_[lindex $lipid_list $indx]"
+                set dens_key "density_down_${species}"
                 set height_key "heights_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
-                set dens_key "density_zzero_[lindex $lipid_list $indx]"
+                set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
             } else {
                 puts "something has gone wrong with the binning"
                 return
             }
-            lappend newlist [lindex $zvals_list $indx]
-        }
-        if {[llength $newlist] == 1} {
-            dict set outfiles $field_key $height_key bin $correct_bin [lindex $newlist 0]
-            dict set outfiles $field_key $dens_key bin $correct_bin 1
-        } elseif {[llength $newlist] > 1} {
-            set avg [vecexpr $newlist mean]
-            dict set outfiles $field_key $height_key bin $correct_bin $avg 
-            dict set outfiles $field_key $dens_key bin $correct_bin [llength $newlist]
+            if {[dict exists $outfiles $field_key $height_key bin $correct_bin} {
+                set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                set newcount [expr $oldcount + 1.0]
+                set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
+                set newsum [expr $oldavg * $oldcount + [lindex $zvals_list $indx]]
+                set newavg [expr $newsum / $newcount]
+                dict set outfiles $field_key $height_key bin $correct_bin $newavg
+                dict set outfiles $field_key $dens_key bin $correct_bin $newcount
+            } else {
+                dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
+                dict set outfiles $field_key $dens_key bin $correct_bin 1.0
+            }
         }
     }
     return $outfiles

@@ -253,7 +253,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set zvals_list [$sel get z]
             }   
             
-            
             ;# user contains a 1 or 2 for outer or inner leaflet, respectively
             set leaflet_list [$sel get user]
 
