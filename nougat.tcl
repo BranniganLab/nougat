@@ -5,13 +5,13 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-set UTILS "~/PolarHeightBinning/utilities"
+set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
 
 source ${UTILS}/helper_procs.tcl
-load ${UTILS}/qwrap.so
-load ${UTILS}/vecexpr.so
-#load ~/qwrap/qwrap.so 
-#load ~/vecexpr/vecexpr.so 
+#load ${UTILS}/qwrap.so
+#load ${UTILS}/vecexpr.so
+load ~/qwrap/qwrap.so 
+load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system end} {
 
@@ -285,11 +285,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             dict for {key val} [dict get $outfiles $selex] {
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar $selex
 
-                ;# precautionary cleanup before next step
+                ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
             } 
 
-            ;# precautionary cleanup before next step
+            ;# cleanup before next step
             dict remove res_dict
         }
     }

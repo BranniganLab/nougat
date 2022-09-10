@@ -4,7 +4,7 @@ import numpy as np
 import warnings
 import glob
 
-sys_name = 'nougat_test'
+sys_name = 'order_test'
 inclusion_drawn = 0
 polar = False
 

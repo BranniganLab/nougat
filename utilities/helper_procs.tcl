@@ -223,7 +223,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m <= $N1} {set m [expr $m + 1.0]} {
         print_line_init $file $m $d1 $min
-        ;# prints bin values through penultimate value in one line
+        ;# prints bin values through ultimate value in one line
         for {set n 0.0} {$n <= $N2} {set n [expr $n + 1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
@@ -231,6 +231,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
                 print_value $file "nan" 0
             }
         }
+        ;# starts a new line
         print_value $file " " 1
     }
 }
@@ -663,11 +664,7 @@ proc order_params {length xvals yvals zvals} {
 }
 
 proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
-    foreach tail [lsort -unique $tail_list] species [lsort -unique $lipid_list] {
-        set tailnum [expr int([expr $tail - 1])]
-        dict set $species tilt $tailnum "test"
-        dict set $species order $tailnum "test"
-    }
+    dict set counts placeholder "dummy"
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
@@ -683,28 +680,26 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set tilt_key "tilts_down_${species}_tail${tailnum}"
                 set order_key "order_down_${species}_tail${tailnum}"
             }
-            puts [lindex [lindex $tilts 0] $indx]
-            dict append $species tilt $tailnum [lindex [lindex $tilts 0] $indx]
-            dict append $species order $tailnum [lindex [lindex $orders 0] $indx]
-            puts "test"
-        }
-        puts [dict get species]
-        puts "test2"
-        set dictlength [llength [dict get $tails quant tilt $tailnum]]
-        if {$dictlength == 1} {
-            dict set outfiles $selex $tilt_key bin $correct_bin [lindex $tiltlist 0]
-            dict set outfiles $selex $order_key bin $correct_bin [lindex $orderlist 0]
-        } elseif {$dictlength > 1} {
-            set tiltsum [list 0 0 0]
-            for {set i 0} {$i < [llength $tiltlist]} {incr i} {
-                set tiltsum [vecexpr [lindex $tiltlist $i] $tiltsum add]
+            if {[dict exists $counts $selex $order_key bin $correct_bin]} {
+                set oldcount [dict get $counts $selex $order_key bin $correct_bin]
+                set newcount [expr $oldcount + 1.0]
+                set oldorder [dict get $outfiles $selex $order_key bin $correct_bin]
+                set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
+                set neworder [expr $newordersum / $newcount]
+                set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
+                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex [lindex $tilts 0] $indx] add]
+                set newtilt [vecexpr $newtiltsum $newcount div]
+                dict set outfiles $selex $order_key bin $correct_bin $neworder
+                dict set counts $selex $order_key bin $correct_bin $newcount
+                dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
+            } else {
+                dict set outfiles $selex $order_key bin $correct_bin [lindex [lindex $orders 0] $indx]
+                dict set outfiles $selex $tilt_key bin $correct_bin [lindex [lindex $tilts 0] $indx]
+                dict set counts $selex $order_key bin $correct_bin 1.0
             }
-            set tiltavg [vecexpr $tiltsum [llength $tiltlist] div]
-            dict set outfiles $selex $tilt_key bin $correct_bin $tiltavg
-            set orderavg [vecexpr $orderlist mean] 
-            dict set outfiles $selex $order_key bin $correct_bin $orderavg
         }
     }
+    dict unset counts $selex
     return $outfiles
 }
 
@@ -731,7 +726,7 @@ proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_
                 puts "something has gone wrong with the binning"
                 return
             }
-            if {[dict exists $outfiles $field_key $height_key bin $correct_bin} {
+            if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
                 set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
                 set newcount [expr $oldcount + 1.0]
                 set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
