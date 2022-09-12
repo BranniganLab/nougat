@@ -312,25 +312,28 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 }
 
 ;# Need to rewrite so that it works with all the new settings
-proc run_mult {list_of_systems polar} {
-    foreach item $list_of_systems {
-        set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
-        set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
-        #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
-        #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
-        
-        #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
-        #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
-        mol new $gro
-        mol addfile $xtc waitfor all
-        puts $gro
-        puts $xtc
-        animate delete beg 0 end 0 skip 0 top
-        if {$polar == 1} {
+proc run_mult {list_of_systems} {
+    foreach directory "5x29" {
+        cd $directory
+        foreach item $list_of_systems {
+            cd $item 
+            set gro "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.gro"
+            set xtc "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.xtc"
+            #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
+            #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
+            
+            #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
+            #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
+            mol new $gro
+            mol addfile $xtc waitfor all
+            puts $gro
+            puts $xtc
+            animate delete beg 0 end 0 skip 0 top
             start_nougat $item 12 30 200 -1 1 1
-        } elseif {$polar == 0} {
             start_nougat $item 12 30 200 -1 1 0
+            mol delete top
+            cd ..
         }
-        mol delete top
+        cd ..
     }
 }
