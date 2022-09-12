@@ -5,13 +5,13 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
+set UTILS "~/PolarHeightBinning/utilities"
 
 source ${UTILS}/helper_procs.tcl
-#load ${UTILS}/qwrap.so
-#load ${UTILS}/vecexpr.so
-load ~/qwrap/qwrap.so 
-load ~/vecexpr/vecexpr.so 
+load ${UTILS}/qwrap.so
+load ${UTILS}/vecexpr.so
+#load ~/qwrap/qwrap.so 
+#load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system end} {
 
@@ -260,6 +260,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# E.G. POPC will have 0 or 1 (it has two tails)
             ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
             set tail_list [$sel get user3]
+            set tail_list [vecexpr $tail_list 1 sub]
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
