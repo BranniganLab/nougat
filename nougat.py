@@ -21,13 +21,8 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-<<<<<<< HEAD
 order_min = .2
 order_max = .6
-=======
-order_min = -1
-order_max = 1
->>>>>>> 610ae048a6f91aefe820253e711f23a09bf2c72d
 
 field_list = ["zone","ztwo"]
 
@@ -800,21 +795,21 @@ if __name__ == "__main__":
   dims = bin_prep(sys_name, names_dict, coordsys, polar)
 
   #analyze height
-  #analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
-  #for bead in names_dict['beads_list']:
+  for bead in names_dict['beads_list']:
   
     #calculate thickness
-    #calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
 
     #calculate curvature
-    #calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
 
   #analyze density
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze order
-  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze tilts
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)

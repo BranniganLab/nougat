@@ -27,12 +27,12 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "(resname AU and resid 1)"
+    set inclusion_sel "resname POPC"
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "(resname W ION 'CL-' 'NA+' lig AU)"
+    set excluded_sel "(resname W ION 'CL-' 'NA+' lig)"
 
     ;# figures out which lipids are in the system
     ;# no edits required
@@ -44,7 +44,8 @@ proc cell_prep {system end} {
     ;# usually, this would be name BB for proteins
     ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-    set wrap_sel "resname AU and resid 1"
+    
+    set wrap_sel "resname POPC"
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
@@ -55,7 +56,7 @@ proc cell_prep {system end} {
     ;# the average position of resid 15
     ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
     ;# replace the text with "NULL"
-    set reference_point "index 0"
+    set reference_point "NULL"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
