@@ -5,13 +5,17 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
+<<<<<<< HEAD
 set UTILS "/home/jahmalennis/Documents/nougat/utilities"
+=======
+set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
+>>>>>>> 7d8ce124baa1f020ff5bc803a5bceeaf049c1197
 
 source ${UTILS}/helper_procs.tcl
-load ${UTILS}/qwrap.so
-load ${UTILS}/vecexpr.so
-#load ~/qwrap/qwrap.so 
-#load ~/vecexpr/vecexpr.so 
+#load ${UTILS}/qwrap.so
+#load ${UTILS}/vecexpr.so
+load ~/qwrap/qwrap.so 
+load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system end} {
 
@@ -32,6 +36,7 @@ proc cell_prep {system end} {
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
+
     set excluded_sel "resname W ION 'CL-' 'NA+' lig AU"
 
     ;# figures out which lipids are in the system
@@ -55,7 +60,9 @@ proc cell_prep {system end} {
     ;# the average position of resid 15
     ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
     ;# replace the text with "NULL"
-    set reference_point "index 727"
+
+    set reference_point "NULL"
+
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -253,7 +260,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
                 set zvals_list [$sel get z]
             }   
             
-            
             ;# user contains a 1 or 2 for outer or inner leaflet, respectively
             set leaflet_list [$sel get user]
 
@@ -286,11 +292,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             dict for {key val} [dict get $outfiles $selex] {
                 print_frame $N1 $outfiles $key $d1 $min $N2 $polar $selex
 
-                ;# precautionary cleanup before next step
+                ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
             } 
 
-            ;# precautionary cleanup before next step
+            ;# cleanup before next step
             dict remove res_dict
         }
     }
@@ -306,11 +312,13 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
 
     ;# output density normalization info 
-    output_density_norm_info $start $nframes $step $species $system
+    if {$quantity_of_interest eq "height_density"} {
+        output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
+    }
 }
 
 ;# Need to rewrite so that it works with all the new settings
-proc run_field_mult {list_of_systems polar} {
+proc run_mult {list_of_systems polar} {
     foreach item $list_of_systems {
         set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
         set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
@@ -325,9 +333,9 @@ proc run_field_mult {list_of_systems polar} {
         puts $xtc
         animate delete beg 0 end 0 skip 0 top
         if {$polar == 1} {
-            nougatByField $item 12 30 200 -1 1 1
+            start_nougat $item 12 30 200 -1 1 1
         } elseif {$polar == 0} {
-            nougatByField $item 12 30 200 -1 1 0
+            start_nougat $item 12 30 200 -1 1 0
         }
         mol delete top
     }
