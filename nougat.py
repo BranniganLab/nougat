@@ -4,7 +4,7 @@ import numpy as np
 import warnings
 import glob
 
-sys_name = 'lgPOtest'
+sys_name = 'PO'
 inclusion_drawn = 0
 polar = False
 
@@ -795,21 +795,21 @@ if __name__ == "__main__":
   dims = bin_prep(sys_name, names_dict, coordsys, polar)
 
   #analyze height
-  #analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
-  #for bead in names_dict['beads_list']:
+  for bead in names_dict['beads_list']:
   
     #calculate thickness
-    #calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
 
     #calculate curvature
-    #calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
 
   #analyze density
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze order
-  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   #analyze tilts
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
