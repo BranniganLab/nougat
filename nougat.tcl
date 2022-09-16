@@ -5,17 +5,14 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-<<<<<<< HEAD
+
 set UTILS "/home/jahmalennis/Documents/nougat/utilities"
-=======
-set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
->>>>>>> 7d8ce124baa1f020ff5bc803a5bceeaf049c1197
 
 source ${UTILS}/helper_procs.tcl
-#load ${UTILS}/qwrap.so
-#load ${UTILS}/vecexpr.so
-load ~/qwrap/qwrap.so 
-load ~/vecexpr/vecexpr.so 
+load ${UTILS}/qwrap.so
+load ${UTILS}/vecexpr.so
+#load ~/qwrap/qwrap.so 
+#load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system end} {
 
@@ -31,7 +28,7 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "(resname AU and resid 6)"
+    set inclusion_sel "resname AU"
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
@@ -49,7 +46,7 @@ proc cell_prep {system end} {
     ;# usually, this would be name BB for proteins
     ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-    set wrap_sel "resname AU and resid 6"
+    set wrap_sel "resname $species"
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
@@ -61,7 +58,7 @@ proc cell_prep {system end} {
     ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
     ;# replace the text with "NULL"
 
-    set reference_point "NULL"
+    set reference_point "index 0"
 
 
     ;# provide the beadnames that you consider to form the surface of your membrane
