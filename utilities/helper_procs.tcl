@@ -31,10 +31,43 @@ proc fit_all_tails { tail_length list_of_tail_coords lsqnormfactor} {
   return $vectors
 }
 
-#written in 2022 to be fast and dirty
-# just relies on whether the bottom of each tail is above/below the top of each tail
-# to sort leaflets
+proc cat_list { inputlist delimiter} {
+    if {$delimiter eq "NULL"} {
+        set output [lindex $inputlist 0]
+    } else {
+        set output "([lindex $inputlist 0])"
+    }
+    
+    for {set i 1} {$i < [llength $inputlist]} {incr i} {
+        if {$delimiter eq "NULL"} {
+            set output "${output} [lindex $inputlist $i]"
+        } else {
+            set element "([lindex $inputlist $i])"
+            set output "${output} or ${element}"
+        }
+    }
+    return $output
+}
+
+proc heads_and_tails {species taillist} {
+    for {set i 0} {$i < [llength $taillist]} {incr i} {
+        set startbead []
+        set endbead []
+        foreach tail [lindex $taillist $i] {
+            lappend startbead [lindex $tail 0]
+            lappend endbead [lindex $tail end]
+        }
+        lappend startsellist "resname [lindex $species $i] and name [cat_list $startbead "NULL"]"
+        lappend endsellist "resname [lindex $species $i] and name [cat_list $endbead "NULL"]"
+    }
+    set startbeadseltext [cat_sel $startsellist "or"]
+    set endbeadseltext [cat_sel $endsellist "or"]
+}
+
+# leaflet_check checks whether a lipid has flipped from one leaflet to another.
+# It solely relies on whether the end-bead of each tail is above/below the first bead of each tail.
 proc leaflet_check {frm species taillist} {
+
     set counter 0
     foreach lipidtype $species {
         set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
@@ -74,18 +107,6 @@ proc leaflet_check {frm species taillist} {
         }
         incr counter
     }
-
-    #remove pore lipids
-    #rewrite to make this useable for you
-
-    #set sel [atomselect top "name BB and resid 30" frame $frm]
-    #set com [measure center $sel]
-    #set x [lindex $com 0]
-    #set y [lindex $com 1]
-    #$sel delete
-    #set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
-    #$porelipids set chain "Z"
-    #$porelipids delete
 
     set upper [atomselect top "chain U" frame $frm]
     $upper set user 1
@@ -344,13 +365,25 @@ proc leaflet_sorter {species taillist analysis_start} {
         $downsel delete
         incr counter
     }
-
+    puts "test"
     for {set frm 0} {$frm <= $analysis_start} {incr frm} {
         leaflet_check $frm $species $taillist
     }
     
     puts "Leaflet sorting complete!"
 }
+
+# tail_analyzer returns $taillist, a nested list: 
+# top level is by species
+# mid level is by tail in species
+# bottom level is by beads in tail
+# e.g. a membrane with DO and DP lipids would be: 
+
+# |-------------------------------------taillist------------------------------------|
+#   |------------------DO-----------------| |------------------DP-----------------|
+#     |-----tail0-----| |-----tail1-----|     |-----tail0-----| |-----tail1-----|
+#
+# { { {C1A C2A C3A C4A} {C1B C2B C3B C4B} } { {C1A D2A C3A C4A} {C1B D2B C3B C4B} } } 
 
 proc tail_analyzer { species } {
     set taillist []
@@ -378,9 +411,13 @@ proc tail_analyzer { species } {
             lappend taillist $tails
         }
     }
-    
-    ;# change user3 to match tail number
-    ;# makes tails separable for tilt/order analysis
+
+    return $taillist
+}
+
+;# tail_numberer changes user3 to hold a tail number.
+;# This makes different tails easily separable for tilt/order analysis
+proc tail_numberer { species taillist } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
         for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
             set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
@@ -392,8 +429,6 @@ proc tail_analyzer { species } {
             $sel delete
         }
     }
-
-    return $taillist
 }
 
 proc calc_lsq_normfactor { length } {

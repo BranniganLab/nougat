@@ -34,16 +34,16 @@ proc cell_prep {system end} {
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
     set excluded_sel "resname W CHOL ION 'CL-' 'NA+' lig"
 
-    ;# figures out which lipids are in the system
+    ;# figures out which lipids and beads are in the system
     ;# no edits required
     set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
     set species [lsort -unique [$lipidsel get resname]]
+    set acyl_names [tail_analyzer $species]
     $lipidsel delete
 
     ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
     ;# usually, this would be name BB for proteins
     ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
-
     set wrap_sel "resname $species"
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
@@ -72,20 +72,6 @@ proc cell_prep {system end} {
     ;# comment this out or customize it for your inclusion
     #set_occupancy top 
 
-    ;# figures out which beads are in your lipids
-    ;# then assigns lipids to user value 1 or 2, depending on leaflet
-    ;# no edits required
-    set acyl_names [tail_analyzer $species]
-    set full_tails []
-    foreach lipidtype $acyl_names {
-        foreach tail $lipidtype {
-            foreach bead $tail {
-                lappend full_tails $bead
-            }
-        }
-    }
-    leaflet_sorter $species $acyl_names $lastframe
-
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
@@ -94,6 +80,22 @@ proc cell_prep {system end} {
     ;#**********************************************************
     ;#          MAKE EDITS ABOVE BEFORE STARTING
     ;#********************************************************** 
+
+    ;# set user3 to hold a unique tail number for easy separation of tails later
+    tail_numberer $species $acyl_names
+
+    ;# sets user to 1 or 2 (or 3) depending on if the lipid is in the outer or inner leaflet (or if you want to exclude it) 
+    leaflet_sorter $species $acyl_names $lastframe
+
+    ;# one list with all the bead names for convenience
+    set full_tails []
+    foreach lipidtype $acyl_names {
+        foreach tail $lipidtype {
+            foreach bead $tail {
+                lappend full_tails $bead
+            }
+        }
+    }
 
     set return_list [] 
     lappend return_list $species 
@@ -149,7 +151,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1 $N2]
 
-    ;# add all these new values to important_values for easy transfer
+    ;# add all these new values to important_variables for easy transfer
     lappend important_variables $start 
     lappend important_variables $nframes 
     lappend important_variables $step 
@@ -273,7 +275,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
 
-            ;# Make necessary calculations (if any) and then bin them
+            ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
@@ -308,32 +310,5 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# output density normalization info 
     if {$quantity_of_interest eq "height_density"} {
         output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
-    }
-}
-
-;# Need to rewrite so that it works with all the new settings
-proc run_mult {list_of_systems} {
-    foreach directory "5x29" {
-        cd $directory
-        foreach item $list_of_systems {
-            cd $item 
-            set gro "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.gro"
-            set xtc "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.xtc"
-            #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
-            #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
-            
-            #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
-            #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
-            mol new $gro
-            mol addfile $xtc waitfor all
-            puts $gro
-            puts $xtc
-            animate delete beg 0 end 0 skip 0 top
-            start_nougat $item 12 30 200 -1 1 1
-            start_nougat $item 12 30 200 -1 1 0
-            mol delete top
-            cd ..
-        }
-        cd ..
     }
 }
