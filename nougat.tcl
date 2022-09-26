@@ -28,7 +28,7 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "resname POPC"
+    set inclusion_sel "resname W"
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane

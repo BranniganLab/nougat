@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import matplotlib
+#import matplotlib
 import numpy as np
 import warnings
 import glob
@@ -23,7 +23,7 @@ density_max = 2
 thick_min = 5
 thick_max = 15
 order_min = .2
-order_max = .6
+order_max = .4
 
 field_list = ["zone","ztwo"]
 
