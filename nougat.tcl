@@ -122,17 +122,6 @@ proc start_nougat {system d1 N2 start end step polar} {
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
     set full_tails [lindex $important_variables 3]
-    set reference_point [lindex $important_variables 4]
-
-    #need to calculate heights relative to some point (usually on the inclusion):
-    if {$reference_point ne "NULL"} {
-        set ref_bead [atomselect top "$reference_point"]
-        set ref_height [$ref_bead get z]
-        $ref_bead delete
-        set ref_height [vecexpr $ref_height mean]
-    } else {
-        set ref_height "NULL"
-    }
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
@@ -155,7 +144,6 @@ proc start_nougat {system d1 N2 start end step polar} {
     lappend important_variables $start 
     lappend important_variables $nframes 
     lappend important_variables $step 
-    lappend important_variables $ref_height
     lappend important_variables $min
 
     ;# run nougat twice, once to compute height and density and once to compute
@@ -172,11 +160,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     set headnames [lindex $important_variables 1]
     set acyl_names [lindex $important_variables 2]
     set full_tails [lindex $important_variables 3]
+    set reference_point [lindex $important_variables 4]
     set start [lindex $important_variables 5]
     set nframes [lindex $important_variables 6]
     set step [lindex $important_variables 7]
-    set ref_height [lindex $important_variables 8]
-    set min [lindex $important_variables 9]
+    set min [lindex $important_variables 8]
     
     ;# unpack bindims
     set d1 [lindex $bindims 0]
@@ -229,6 +217,16 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         }
 
         puts "$system $quantity_of_interest $frm"
+
+        #need to calculate heights relative to some point (usually on the inclusion):
+        if {$reference_point ne "NULL"} {
+            set ref_bead [atomselect top "$reference_point" frame $frm]
+            set ref_height [$ref_bead get z]
+            $ref_bead delete
+            set ref_height [vecexpr $ref_height mean]
+        } else {
+            set ref_height "NULL"
+        }        
         
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
@@ -238,7 +236,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             
             ;# $selex is a dict key that holds an atomselection as its value
             set sel [dict get $selections $selex]
-            
+
             $sel frame $frm 
             $sel update
 
@@ -248,13 +246,19 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set lipid_list [$sel get resname]
             set name_list [$sel get name]
 
+            ;# warn the user if a selection is empty
+            if {[llength $xvals_list] == 0} {
+                puts "selection $selex has no atoms in it"
+                continue
+            }
+
             ;# the z vals are subtracted by a reference height provided in cell_prep 
             if {$ref_height ne "NULL"} {
                 set zvals_list [vecexpr [$sel get z] $ref_height sub]
             } else {
                 set zvals_list [$sel get z]
             }   
-            
+
             ;# user contains a 1 or 2 for outer or inner leaflet, respectively
             set leaflet_list [$sel get user]
 
@@ -277,7 +281,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
+                set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list $name_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
@@ -297,6 +301,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         }
     }
 
+    ;# output density normalization info 
+    if {$quantity_of_interest eq "height_density"} {
+        output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
+    }
+
     ;# close all outfiles
     foreach channel [file channels "file*"] {
         close $channel
@@ -305,10 +314,5 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# delete all atomselections in scope
     foreach selection [atomselect list] {
         $selection delete
-    }
-
-    ;# output density normalization info 
-    if {$quantity_of_interest eq "height_density"} {
-        output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
     }
 }

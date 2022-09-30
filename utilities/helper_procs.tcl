@@ -1,34 +1,48 @@
+
+# Converts radians to degrees
 proc RtoD {r} {
     global M_PI
     return [expr $r*180.0/$M_PI]
 }
 
-#  returns a least squares fit for each lipid tail in the system at once
-#  Fit the points x to x = ai + b, i=0...N-1, and return the value of a 
-# a = 12/( (N(N^2 - 1)) ) sum[ (i-(N-1)/2) * xi]
-# reference: Bevington
-proc lsq_vec { X differences } {
-  #Multiply X and the differences. stack=1vec
-  #sum over the vector. stack=1scalar
-  #store the scalar in tot
-  set tot [vecexpr [vecexpr $X $differences mult] sum]
-  
-  return $tot
+# Returns a least squares fit for each lipid tail in the system
+# Fit the points x to x = ai + b, i=0...N-1, and return the value 
+# a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
+# $lsqnormfactor is a list of values (i-(N-1)/2)
+proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
+    set fit_values []
+    set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
+    set start_idx 0
+
+    # iterate through list of all tail coords, separating them into one 
+    # lipid tail at a time with lrange
+    for {set i 0} {$i < $N_lipids} {incr i} {
+        set start_idx [expr $i * $tail_length]
+        set end_idx [expr $start_idx + $tail_length - 1]
+        set coords [lrange $list_of_tail_coords $start_idx $end_idx]
+
+        # Perform least squares fitting:
+        # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
+        # Sum over the vector. stack=1scalar
+        # Append to $fit_values
+        lappend fit_values [vecexpr [vecexpr $coords $lsqnormfactor mult] sum]
+    }
+    return $fit_values
 }
 
-proc fit_all_tails { tail_length list_of_tail_coords lsqnormfactor} {
-  set vectors []
-  set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
-  set start_idx 0
-  for {set i 0} {$i < $N_lipids} {incr i} {
-    set next_idx [expr $start_idx + $tail_length]
-    set end_idx [expr $next_idx - 1]
-    set coords [lrange $list_of_tail_coords $start_idx $end_idx]
-    lappend vectors [lsq_vec $coords $lsqnormfactor]
-    set start_idx $next_idx
-  }
+proc calc_lsq_normfactor { length } {
+    set diff [expr $length-1]
+    set d [expr 0.5*$diff] ;#normalization factor
+    set I {}
 
-  return $vectors
+    #Make a list from 0 to len
+    for {set k 0} {$k < $length} {incr k} {
+        lappend I $k
+    }
+
+    set lsqnormfactor [vecexpr $I $d sub]
+
+    return $lsqnormfactor
 }
 
 # Concatenates list items into one long string, separated by 
@@ -36,7 +50,7 @@ proc fit_all_tails { tail_length list_of_tail_coords lsqnormfactor} {
 # "NULL" wil result in a single space as the delimiter
 # "or" will also enclose list items in parentheses for use as 
 # atomselection text. 
-proc cat_list { inputlist delimiter} {
+proc cat_list {inputlist delimiter} {
     if {$delimiter eq "or"} {
         set output "([lindex $inputlist 0])"
     } else {
@@ -74,6 +88,29 @@ proc heads_and_tails {species taillist} {
     return [list $startsellist $endsellist]
 }
 
+# WIP - this is to test whether leaflet_check and new_leaflet_check yield the same result.
+# Spoiler alert: they don't right now.
+proc leaflet_test {frm species heads_and_tails window taillist} {
+    leaflet_check $frm $species $taillist 
+    set sel [atomselect top "resname $species" frame $frm]
+    set oldvals [$sel get user]
+    set resids [$sel get resid]
+    new_leaflet_check $frm $species $heads_and_tails 0
+    $sel update
+    set newvals [$sel get user]
+    if {$oldvals != $newvals} {
+        puts "failure"
+        for {set i 0} {$i < [llength $oldvals]} {incr i} {
+            if {[lindex $oldvals $i] != [lindex $newvals $i]} {
+                puts [lindex $resids $i]
+            }
+        }
+    } else {
+        puts "success"
+    }
+}
+
+
 proc new_leaflet_check {frm species heads_and_tails window} {
     set starts [lindex $heads_and_tails 0]
     set ends [lindex $heads_and_tails 1]
@@ -103,7 +140,8 @@ proc new_leaflet_check {frm species heads_and_tails window} {
                 lappend userlist [lrepeat $species_bead_num 3.0]
             }
         }
-        $total_sel set user [cat_list $userlist "NULL"]
+        set user_vals [cat_list $userlist "NULL"]
+        $total_sel set user $user_vals
         $total_sel delete
     } 
 }
@@ -133,9 +171,9 @@ proc leaflet_check {frm species taillist} {
         set bottomavg [vecexpr $bottomsum [llength [lindex $taillist $counter]] div]
         set diff_top_to_bottom [vecexpr $topsum $bottomsum sub]
         for {set i 0} {$i < [llength $diff_top_to_bottom]} {incr i} {
-            if {[expr abs([lindex $diff_top_to_bottom $i])] > 40} {
+            if {[expr abs([lindex $diff_top_to_bottom $i])] > 100} {
                 set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-                $sel set chain "U"
+                $sel set chain "Z"
                 $sel delete
             } else {
                 if {[lindex $diff_top_to_bottom $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
@@ -249,6 +287,7 @@ proc Center_System {inpt} {
                 pbc wrap -centersel "$inpt" -all
             }
         } else {
+            qunwrap compound none
             qwrap sel all center "$inpt" ;#center entire system at ~0,0,0
         }
         set com [measure center $sel weight mass]
@@ -409,7 +448,7 @@ proc leaflet_sorter {species taillist analysis_start} {
         $downsel delete
         incr counter
     }
-    puts "test"
+
     for {set frm 0} {$frm <= $analysis_start} {incr frm} {
         leaflet_check $frm $species $taillist
     }
@@ -512,21 +551,6 @@ proc tail_numberer { species taillist } {
             $sel delete
         }
     }
-}
-
-proc calc_lsq_normfactor { length } {
-    set diff [expr $length-1]
-    set d [expr 0.5*$diff] ;#normalization factor
-    set I {}
-
-    #Make a list from 0 to len
-    for {set k 0} {$k < $length} {incr k} {
-        lappend I $k
-    }
-
-    set lsqnormfactor [vecexpr $I $d sub]
-
-    return $lsqnormfactor
 }
 
 proc tilt_angles {length xvals yvals zvals} {
@@ -663,7 +687,7 @@ proc concat_names { headnames } {
             set condensed_name "$condensed_name.$addname"
         }
     } elseif {[llength $headnames] == 1} {
-        set condensed_name $beadname
+        set condensed_name [lindex $headnames 0]
     } else {
         puts "headnames must contain a bead name"
         break
@@ -786,8 +810,7 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-        set tiltlist []
-        set orderlist []
+
         foreach indx $indices {
             set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
@@ -821,11 +844,11 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
     return $outfiles
 }
 
-proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list} {
+proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-        set newlist []
+
         foreach indx $indices {
             set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
