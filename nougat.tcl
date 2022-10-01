@@ -13,24 +13,17 @@ load ${UTILS}/vecexpr.so
 #load ~/qwrap/qwrap.so 
 #load ~/vecexpr/vecexpr.so 
 
-proc cell_prep {system end} {
-
-    ;# set lastframe based on $end input
-    if {$end == -1} {
-        set lastframe [expr [molinfo top get numframes] -1]
-    } else {
-        set lastframe $end
-    }
+proc cell_prep {system analysis_start} {
     
-    ;#**********************************************************
-    ;#          MAKE EDITS BELOW BEFORE STARTING
-    ;#********************************************************** 
+    ;#****************************************************;#
+    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
+    ;#****************************************************;# 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
     set inclusion_sel "name BB SC1 to SC4"
 
-    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
-    ;# or membrane
+    ;# provide atomselection-style text that defines anything that 
+    ;# isn't your inclusion_sel or membrane:
     ;# E.G. solvent, ions, other molecules that aren't membrane lipids
     set excluded_sel "resname W CHOL ION 'CL-' 'NA+' lig"
 
@@ -55,7 +48,7 @@ proc cell_prep {system end} {
     ;# the average position of resid 15
     ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
     ;# replace the text with "NULL"
-    set reference_point "NULL"
+    set reference_point "name BB and resid 15"
 
     ;# provide the beadnames that you consider to form the surface of your membrane
     ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -75,24 +68,26 @@ proc cell_prep {system end} {
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
+    ;# this proc is currently broken, anyways (yes, there is a github issue)
     ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
 
-    ;#**********************************************************
-    ;#          MAKE EDITS ABOVE BEFORE STARTING
-    ;#********************************************************** 
+    ;#****************************************************;#
+    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
+    ;#****************************************************;# 
 
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
 
-    if {$end == -1} {
+    ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
+    ;# sets user to 3 if the lipid is too horizontal to determine leaflet
+    ;# sets user to 4 if you have pore_sorter turned on
+    ;# TO USE PORE_SORTER YOU NEED TO CUSTOMIZE IT TO YOUR PROTEIN!!!
+    if {$analysis_start == -1} {
         set end [molinfo top get numframes]
+        for {set i 0} {$i < $end} {incr i} {
+            leaflet_check $i $species $acyl_names 1.0
+        }
     }
-
-    for {set i 0} {$i < $end} {incr i} {
-        new_leaflet_check $i $species $acyl_names 1.0
-    }
-    ;# sets user to 1 or 2 (or 3) depending on if the lipid is in the outer or inner leaflet (or if you want to exclude it) 
-    #leaflet_sorter $species $acyl_names $lastframe
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -134,7 +129,7 @@ proc start_nougat {system d1 N2 start end step polar} {
     set maxframes [molinfo top get numframes]
     if {$end == -1} {
         set nframes $maxframes
-    } elseif {($end <= $maxframes) || ($end > $start)} {
+    } elseif {($end < $maxframes) || ($end > $start)} {
         set nframes $end
     } else {
         puts "you specified a frame number that is outside the allowable range"
@@ -213,7 +208,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
         ;# update leaflets in case lipids have flip-flopped
-        new_leaflet_check $frm $species $acyl_names 1.0
+        leaflet_check $frm $species $acyl_names 1.0
 
         puts "$system $quantity_of_interest $frm"
 
@@ -311,7 +306,10 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
 
     ;# delete all atomselections in scope
+    ;# if the user defined atomselections in their VMD session,
+    ;# these will be out of scope and cause an error.
+    ;# catch will ignore this error, as it's not important to the user.
     foreach selection [atomselect list] {
-        $selection delete
+        catch [$selection delete]
     }
 }
