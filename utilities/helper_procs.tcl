@@ -112,29 +112,46 @@ proc heads_and_tails {species taillist} {
     return [list $startsellist $endsellist]
 }
 
-proc new_leaflet_check {frm species taillist window} {
+;# checks whether lipid tails are above/below the PO4 bead,
+;# and assigns user to 1 or 2 for outer or inner leaflet.
+;# Needs to be revised to just take the 'top' bead in a lipid
+;# rather than hard-code PO4
+proc leaflet_check {frm species taillist window} {
     set heads_and_tails [heads_and_tails $species $taillist]
     set starts [lindex $heads_and_tails 0]
     set ends [lindex $heads_and_tails 1]
 
+    ;# does leaflet check for different lipid species separately
+    ;# because bead names may conflict between species
     for {set i 0} {$i < [llength $species]} {incr i} {
         set lipidtype [lindex $species $i]
         set total_sel [atomselect top "resname $lipidtype" frame $frm]
-        set species_bead_num [llength [lsort -unique [$total_sel get name]]]
-        set startnames "PO4"
         set endnames [lindex $ends $i]
-        set numbeads [llength $endnames]
-        set start_sel [atomselect top "resname $lipidtype and name $startnames" frame $frm]
+
+        ;# how many beads are in the given lipid species?
+        set species_bead_num [llength [lsort -unique [$total_sel get name]]]
+        
+        ;# how many tails are in this lipid species?
+        set numtails [llength $endnames]
+
+        set start_sel [atomselect top "resname $lipidtype and name PO4" frame $frm]
         set end_sel [atomselect top "resname $lipidtype and name $endnames" frame $frm]
         set start_z [$start_sel get z]
         set end_z [$end_sel get z]
         $start_sel delete
         $end_sel delete
+        
         set userlist []
         set counter 0
-        for {set j 0} {$j < [llength $end_z]} {set j [expr $j+$numbeads]} {
-            set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numbeads-1]] mean]
+
+        ;# iterate through each lipid in the system and calc average height of the endbeads
+        for {set j 0} {$j < [llength $end_z]} {set j [expr $j+$numtails]} {
+            set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numtails-1]] mean]
+
+            ;# subtract $avgendheight from the PO4 bead's height
             set avgheight [expr [lindex $start_z $counter] - $avgendheight]
+
+            ;# assign user value accordingly
             if {$avgheight > $window} {
                 lappend userlist [lrepeat $species_bead_num 1.0]
             } elseif {$avgheight < -$window} {
@@ -144,188 +161,16 @@ proc new_leaflet_check {frm species taillist window} {
             }
             incr counter
         }
+
+        ;# convert list of lists into one long list
         set user_vals [cat_list $userlist "NULL"]
+        
         $total_sel set user $user_vals
         $total_sel delete
     }
-    set sel [atomselect top "name BB and resid 30" frame $frm]
-    set com [measure center $sel]
-    set x [lindex $com 0]
-    set y [lindex $com 1]
-    $sel delete
-    set porelipids [atomselect top "(resname $species and same residue as within 12 of (name BB and resid 30)) or (resname $species and same residue as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
-    set badresids [lsort -unique [$porelipids get resid]]
-    $porelipids delete
-    if {[llength $badresids] != 0} {
-        set porelipids [atomselect top "resname $species and resid $badresids" frame $frm]
-        $porelipids set user 4.0
-        $porelipids delete
-    } 
-}
 
-# leaflet_check checks whether a lipid has flipped from one leaflet to another.
-# It solely relies on whether the end-bead of each tail is above/below the first bead of each tail.
-proc leaflet_check {frm species taillist} {
-
-    set counter 0
-    foreach lipidtype $species {
-        set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
-        set resids [$sel get resid]
-        $sel delete
-        set topsum [lrepeat [llength $resids] 0.0]
-        set bottomsum [lrepeat [llength $resids] 0.0]
-        foreach tail [lindex $taillist $counter] {
-            set topsel [atomselect top "resname $lipidtype and name [lindex $tail 0]" frame 0]
-            set bottomsel [atomselect top "resname $lipidtype and name [lindex $tail end]" frame 0]
-            set topsum [vecexpr $topsum [$topsel get z] add]
-            set bottomsum [vecexpr $bottomsum [$bottomsel get z] add] 
-            set resids [$topsel get resid]
-            set chains [$topsel get chain]
-            $topsel delete
-            $bottomsel delete
-        } 
-        set topavg [vecexpr $topsum [llength [lindex $taillist $counter]] div]
-        set bottomavg [vecexpr $bottomsum [llength [lindex $taillist $counter]] div]
-        set diff_top_to_bottom [vecexpr $topsum $bottomsum sub]
-        for {set i 0} {$i < [llength $diff_top_to_bottom]} {incr i} {
-            if {[expr abs([lindex $diff_top_to_bottom $i])] > 100} {
-                set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-                $sel set chain "Z"
-                $sel delete
-            } else {
-                if {[lindex $diff_top_to_bottom $i] > 0 && ([lindex $chains $i] == "L" || [lindex $chains $i] == "Z")} {
-                    set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-                    $sel set chain "U"
-                    $sel delete
-                } elseif {[lindex $diff_top_to_bottom $i] < 0 && ([lindex $chains $i] == "U" || [lindex $chains $i] == "Z")} {
-                    set sel [atomselect top "resname $species and resid [lindex $resids $i]" frame $frm]
-                    $sel set chain "L"
-                    $sel delete
-                }
-            }
-        }
-        incr counter
-    }
-
-    set sel [atomselect top "name BB and resid 30" frame $frm]
-    set com [measure center $sel]
-    set x [lindex $com 0]
-    set y [lindex $com 1]
-    $sel delete
-    set porelipids [atomselect top "(resname $species and same residue as within 12 of (name BB and resid 30)) or (resname $species and same residue as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
-    set badresids [$porelipids get resid]
-    $porelipids delete
-    if {[llength $badresids] != 0} {
-        set porelipids [atomselect top "resname $species and resid $badresids"]
-        $porelipids set chain "Z"
-        $porelipids delete
-    }
-    
-    set upper [atomselect top "chain U" frame $frm]
-    $upper set user 1
-    $upper delete
-    set lower [atomselect top "chain L" frame $frm]
-    $lower set user 2
-    $lower delete
-    set bad_chains [atomselect top "chain Z" frame $frm]
-    $bad_chains set user 3
-    $bad_chains delete
-}
-
-proc get_theta {x y} {
-    set tmp  [expr {atan2($y,$x)}]
-    global M_PI
-    if {$tmp < 0} {
-        set theta [expr 2*$M_PI + $tmp]    
-    } else {
-        set theta $tmp
-    }
-    return [RtoD $theta]
-}
-
-;# Ouputs position of the centered protein in a membrane
-;# accross both leaflets
-;# only useful for analysis later - doesn't impact your polar density script
-proc Protein_Position {name hnames tnames} {
-    ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
-    set chain_names [list "A" "B" "C" "D" "E"]
-
-    set lastframe [expr [molinfo top get numframes] -1]
-
-    set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
-    set zone_zvals [$zone_sel get z]
-    set zone_Ht [vecexpr $zone_zvals mean]
-    $zone_sel delete
-
-    set ztwo_sel [atomselect top "(name $hnames and chain L) and within 6 of name BB"]
-    set ztwo_zvals [$ztwo_sel get z]
-    set ztwo_Ht [vecexpr $ztwo_zvals mean]
-    $ztwo_sel delete
-
-    set zmid_sel [atomselect top "name $tnames and within 6 of name BB"]
-    set zmid_zvals [$zmid_sel get z]
-    set zmid_Ht [vecexpr $zmid_zvals mean]
-    $zmid_sel delete
-
-    foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-	set fout [open "${name}_helcoords_${eqtxt}.dat" w]
-        puts $fout  "#These are the positions of your TMD helices in polar coords"
-        foreach chnm $chain_names {
-                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
-                set com [measure center $sel weight mass]
-                $sel delete
-                set x [lindex $com 0]
-                set y [lindex $com 1]
-                set r [expr sqrt($x*$x+$y*$y)]
-                set theta [get_theta $x $y]
-                puts "chain ${chnm} and $r $theta"
-
-                puts -nonewline $fout "$r $theta "
-            }
-            puts $fout ""
-        close $fout
-    }
-}
-
-proc Center_System {inpt} {
-    puts "${inpt}"
-    puts "Center_System now running"
-    ;# confirms your box is either square or paraelleogram-ish
-    ;# will preform qwrap or pbc wrap depending
-
-    set pbc_angles [molinfo top get {alpha beta gamma}]
-    
-    set sel [atomselect top "$inpt" frame 0]
-    set com [measure center $sel weight mass]
-    
-    set counter_i 0
-    ;# continues to try and recenter's box until ~ 0'ed out
-    while {[expr abs([lindex $com 0])] > 1.0 &&  [expr abs([lindex $com 1])] > 1.0} {
-        
-        if {$counter_i > 5} {
-            puts "Script was unable to converge system to (0,0,0)"
-            puts "Please check your system visually, there may be"
-            puts "unintended artifacts"
-            $sel delete
-            return
-        }
-        
-        if {([lindex $pbc_angles 0]!=90.0) && ([lindex $pbc_angles 1]!=90.0) && ([lindex $pbc_angles 2]!=90.0)} {
-            puts "qwrap may not be optimal for your system...\n"
-            puts "Running pbc wrap. To verify proper centering"
-            puts "pbc wrap will be run multiple times" ; after 100
-            foreach i {0 1 2 3} {
-                pbc wrap -centersel "$inpt" -all
-            }
-        } else {
-            #qunwrap compound none
-            qwrap sel all center "$inpt" ;#center entire system at ~0,0,0
-        }
-        set com [measure center $sel weight mass]
-        incr counter_i
-    }
-    $sel delete
-    puts "Center_System finished!"
+    ;# custom pore sorting proc for 5x29
+    pore_sorter_5x29
 }
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
@@ -345,8 +190,7 @@ proc print_value {file value end_line} {
     }
 }
 
-
-;#print an entire array (usually 1 frame) to file
+;#print an entire 2D array (usually 1 frame) to file
 proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
     set file [dict get $outfiles $selex $key fname]
@@ -370,6 +214,410 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
         print_value $file " " 1
     }
 }
+
+# tail_analyzer returns $taillist, a nested list: 
+# top level is by species
+# mid level is by tail in species
+# bottom level is by beads in tail
+# e.g. a membrane with DO and DP lipids would be: 
+
+# |-------------------------------------taillist------------------------------------|
+#   |------------------DO-----------------| |------------------DP-----------------|
+#     |-----tail0-----| |-----tail1-----|     |-----tail0-----| |-----tail1-----|
+#
+# { { {C1A C2A C3A C4A} {C1B C2B C3B C4B} } { {C1A D2A C3A C4A} {C1B D2B C3B C4B} } } 
+
+proc tail_analyzer { species } {
+    set taillist []
+    set letters "A B C D E F G H I J"
+    foreach lipidtype $species {
+        set tails []
+        set sel [atomselect top "resname $lipidtype"]
+        set res [$sel get resid]
+        $sel delete
+        set sel [atomselect top "resname $lipidtype and resid [lindex $res 0]"]
+        set names [$sel get name]
+        $sel delete
+        foreach letter $letters {
+            set tail []
+            foreach nm $names {
+                if {[string match ??${letter} $nm]} {
+                    lappend tail $nm
+                }
+            }
+            if {[llength $tail] != 0} {
+                lappend tails $tail
+            }
+        }
+        if {[llength $tails] != 0} {
+            lappend taillist $tails
+        }
+    }
+
+    return $taillist
+}
+
+;# tail_numberer changes user3 to hold a tail number.
+;# This makes different tails easily separable for tilt/order analysis
+proc tail_numberer { species taillist } {
+    for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
+        for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
+            set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
+            for {set frm 0} {$frm < [molinfo top get numframes]} {incr frm} {
+                $sel frame $frm 
+                $sel update
+                $sel set user3 [expr $tail+1]
+            }
+            $sel delete
+        }
+    }
+}
+
+;# creates two lists of bins along two dimensions based on the x,y values and the coordinate system
+proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
+    
+    if {$polar == 1} {
+        ;# use polar (r,theta) bins
+
+        ;#calculate r: distance from origin for all x,y pairs
+        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+        
+        ;#turn into bin numbers rather than r values
+        set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
+        
+        ;#calculate theta: use atan2 to get values for al x,y pairs
+        set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
+
+        ;#atan2 gives values from -180 to 180; shifting to 0 to 360
+        for {set i 0} {$i<[llength $theta_vals]} {incr i} {
+            if {[lindex $theta_vals $i] < 0} {
+                set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+            }
+        }
+
+        ;#turn into bin numbers rather than theta values
+        set dim2_bins [vecexpr [vecexpr $theta_vals $dthetadeg div] floor]
+        
+    } elseif {$polar == 0} {
+        ;# use cartesian (x,y) bins
+        
+        ;# shift all values so that they are temporarily positive
+        ;# no negative bin numbers allowed!
+        set xmin [vecexpr $x_vals min]
+        set ymin [vecexpr $y_vals min]
+        set x_vals [vecexpr $x_vals $xmin sub]
+        set y_vals [vecexpr $y_vals $ymin sub]
+
+        ;# turn into bin numbers rather than x,y values
+        set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
+        set dim2_bins [vecexpr [vecexpr $y_vals $d2 div] floor]
+    }
+
+    return [list $dim1_bins $dim2_bins]
+}
+
+;# create a dict containing all the outfile names/addresses
+;# density segregates by species
+;# tilt and order segregate by species and tail number
+proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
+
+    if {$quantity_of_interest eq "height_density"} {
+        dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        foreach lipidtype $species {
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+        }
+    } elseif {$quantity_of_interest eq "tilt_order"} {
+        for {set i 0} {$i < [llength $taillist]} {incr i} {
+            set lipidtype [lindex $species $i]
+            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
+                set tailnum "tail$j"
+                set taillength [llength [lindex [lindex $taillist $i] $j]]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+            }
+        }
+    }
+    
+    return $outfiles
+}
+
+;# determines the number of bins and the step length in each dimension
+proc bin_prep {nframes polar min d1 N2} {
+    #measure box size at final frame to get bin values
+    set box_x [molinfo top get a frame [expr $nframes - 1]]
+
+    if {$polar == 1} {
+        set box_r [expr int($box_x) / 2]
+        set range1 [expr $box_r - $min]
+    } elseif {$polar == 0} {
+        set range1 [expr int([vecexpr $box_x floor])]
+    }
+    
+    #calculate number of dim1 bins from d1 and range1
+    if {[expr $range1 % $d1] == 0} { 
+        set N1 [expr [expr $range1 / $d1] - 1] 
+    } else {
+        set N1 [expr $range1 / $d1]
+    }
+
+    #calculate dim2 values, based on whether polar or cartesian
+    if {$polar == 1} {
+        set dthetadeg [expr 360/$N2]
+        global M_PI
+        set d2 [expr 2 * $M_PI / $N2]
+    } elseif {$polar == 0} {
+        set d2 $d1
+        set box_y [molinfo top get b frame [expr $nframes - 1]]
+        set range2 [expr int([vecexpr $box_y floor])]
+        if {[expr $range2 % $d2] == 0} { 
+            set N2 [expr [expr $range2 / $d2] - 1] 
+        } else {
+            set N2 [expr $range2 / $d2]
+        }
+        set dthetadeg "NA"
+    }
+    return [list $d1 $d2 $N1 $N2 $dthetadeg]
+}
+
+;# concatenate all beadnames together for file naming purposes
+proc concat_names { headnames } {
+    if {[llength $headnames] > 1} {
+        set condensed_name [lindex $headnames 0]
+        for {set i 1} {$i < [llength $headnames]} {incr i} {
+            set addname [lindex $headnames $i]
+            set condensed_name "$condensed_name.$addname"
+        }
+    } elseif {[llength $headnames] == 1} {
+        set condensed_name [lindex $headnames 0]
+    } else {
+        puts "headnames must contain a bead name"
+        break
+    }
+    return $condensed_name
+}
+
+;# binning is controlled by the location of beads named as $headnames in cell_prep
+;# creates a nested dict with keys set to the name "bin1#,bin2#,leaflet#" and
+;# values corresponding to the indices of lipids in that bin
+proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
+    ;# initialize a nested dict with a dummy key and value
+    dict set res_dict dummy "dummy"
+    
+    if {$selex ne "z0"} {
+        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
+            if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
+                set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+                set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
+                if {[dict exists $res_dict $bin_leaf]} {
+                    dict append res_dict $bin_leaf " $i"
+                } else {
+                    dict set res_dict $bin_leaf $i                
+                }
+            }
+        }
+    } else {
+        ;# zzero needs to be handled separately; keys are set to "bin1#,bin2#,3"
+        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
+            set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+            set bin_leaf "$bin,3"
+            if {[dict exists $res_dict $bin_leaf]} {
+                dict append res_dict $bin_leaf " $i"
+            } else {
+                dict set res_dict $bin_leaf $i                
+            }
+        }
+    }
+
+    ;# delete the dummy
+    dict unset res_dict dummy
+    
+    return $res_dict
+}
+
+;# calculates the normalization factor for density enrichment calculations
+proc output_density_norm_info {start nframes step species system headnames coordsys} {
+    set arealist []
+    for {set frm $start} {$frm < $nframes} {set frm [expr $frm + $step]} {
+        lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
+    }
+    set avgarea [vecexpr $arealist mean]
+    set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
+    foreach spec $species {
+        set sel [atomselect top "resname $spec"]
+        set names [lsort -unique [$sel get name]]
+        set Sb 0
+        foreach name $names {
+            if {[lsearch $headnames $name] != -1} {
+                incr Sb
+            }
+        }
+        set Nb [llength [lsort -unique [$sel get resid]]]
+        $sel delete
+        set normfactor [expr $avgarea / [expr $Nb * $Sb / 2.0]]
+        puts $normfactor_outfile "$spec $normfactor"
+    }
+    
+    close $normfactor_outfile
+}
+
+;# nougat tilt and order calculations segregate by lipid species and tail.
+;# Several different tails in a system may be the same length as each other,
+;# and so their calculations can be combined in the same loop iteration.
+;# This proc determines the unique tail lengths in the system and creates a
+;# list of atomselection texts that correspond.
+proc tail_length_sorter {species acyl_names} {
+    set lenlist []
+    for {set i 0} {$i < [llength $acyl_names]} {incr i} {
+        foreach tail [lindex $acyl_names $i] {
+            lappend lenlist [llength $tail]
+        }
+    }
+    set lengthlist [lsort -unique $lenlist]
+    set sellist []
+    foreach length $lengthlist {
+        set resnamelist []
+        set namelist []
+        for {set i 0} {$i < [llength $acyl_names]} {incr i} {
+            foreach tail [lindex $acyl_names $i] {
+                if {[llength $tail] == $length} {
+                    lappend resnamelist [lindex $species $i]
+                    foreach nm $tail {
+                        lappend namelist $nm 
+                    }
+                }
+            }
+        }
+        lappend sellist "resname [lsort -unique $resnamelist] and name [lsort -unique $namelist]"
+    }
+    return [list $sellist $lengthlist]
+}
+
+;# cosine theta is the dot product of n_{1,2} and the vector [0 0 1]
+;# this corresponds to the 3rd value of n_{1,2} 
+proc get_costheta {start end} {    
+    set r12 [vecsub $start $end]
+    set n12 [vecnorm $r12]
+    return [lindex $n12 2]
+}
+
+;# calculates order parameter of each lipid tail of a given length 
+proc order_params {length xvals yvals zvals} {
+    set order_list []
+    set temp_list []
+    for {set i 1} {$i <= [llength $xvals]} {incr i} {
+        if {[expr $i % $length] == 0} {
+            ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
+            ;# now you need to average them
+            set avg [vecexpr $temp_list mean]
+            set order [expr $avg*1.5 - 0.5]
+            lappend order_list [lrepeat $length $order]
+            set temp_list []
+        } else {
+            ;# calculate cos2theta for each bond in the tail and append to a list
+            set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
+            set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
+            set costheta [get_costheta $start $end]
+            lappend temp_list [expr $costheta * $costheta]
+        }
+    }
+    set final_order_list [cat_list $order_list "NULL"]
+    return [list $final_order_list]
+}
+
+;# uses res_dict entries to compute bin averages, then assigns them to the correct outfile
+proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
+    dict set counts placeholder "dummy"
+    dict for {bin indices} $res_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+
+        foreach indx $indices {
+            set tailnum [expr int([lindex $tail_list $indx])]
+            set species [lindex $lipid_list $indx]
+            if {$leaf == 1} {
+                set tilt_key "tilts_up_${species}_tail${tailnum}"
+                set order_key "order_up_${species}_tail${tailnum}"
+            } elseif {$leaf == 2} {
+                set tilt_key "tilts_down_${species}_tail${tailnum}"
+                set order_key "order_down_${species}_tail${tailnum}"
+            } else {
+                puts "Something has gone wrong with the binning"
+                return
+            }
+            if {[dict exists $counts $selex $order_key bin $correct_bin]} {
+                set oldcount [dict get $counts $selex $order_key bin $correct_bin]
+                set newcount [expr $oldcount + 1.0]
+                set oldorder [dict get $outfiles $selex $order_key bin $correct_bin]
+                set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
+                set neworder [expr $newordersum / $newcount]
+                set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
+                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex [lindex $tilts 0] $indx] add]
+                set newtilt [vecexpr $newtiltsum $newcount div]
+                dict set outfiles $selex $order_key bin $correct_bin $neworder
+                dict set counts $selex $order_key bin $correct_bin $newcount
+                dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
+            } else {
+                dict set outfiles $selex $order_key bin $correct_bin [lindex [lindex $orders 0] $indx]
+                dict set outfiles $selex $tilt_key bin $correct_bin [lindex [lindex $tilts 0] $indx]
+                dict set counts $selex $order_key bin $correct_bin 1.0
+            }
+        }
+    }
+    dict unset counts $selex
+    dict unset counts placeholder
+    return $outfiles
+}
+
+;# uses res_dict entries to compute bin averages, then assigns them to the correct outfile
+proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
+    dict for {bin indices} $res_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+
+        foreach indx $indices {
+            set species [lindex $lipid_list $indx]
+            if {$leaf == 1} {
+                set field_key "z1z2"
+                set dens_key "density_up_${species}"
+                set height_key "heights_up"
+            } elseif {$leaf == 2} {
+                set field_key "z1z2"
+                set dens_key "density_down_${species}"
+                set height_key "heights_down"
+            } elseif {$leaf == 3} {
+                set field_key "z0"
+                set dens_key "density_zzero_${species}"
+                set height_key "heights_zzero"
+            } else {
+                puts "something has gone wrong with the binning"
+                return
+            }
+            if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
+                set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                set newcount [expr $oldcount + 1.0]
+                set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
+                set newsum [expr $oldavg * $oldcount + [lindex $zvals_list $indx]]
+                set newavg [expr $newsum / $newcount]
+                dict set outfiles $field_key $height_key bin $correct_bin $newavg
+                dict set outfiles $field_key $dens_key bin $correct_bin $newcount
+            } else {
+                dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
+                dict set outfiles $field_key $dens_key bin $correct_bin 1.0
+            }
+        }
+    }
+    return $outfiles
+}
+
+;#********************************;#
+;# Liam scripts or custom scripts ;#
+;#********************************;#
 
 ;# Alignment based off vmd alignment
 proc Align { stuff } {
@@ -438,461 +686,130 @@ proc set_occupancy {molid} {
 
 }
 
+;# gets theta value from x and y pair
+;# this is only used by Protein_Position
+proc get_theta {x y} {
+    set tmp  [expr {atan2($y,$x)}]
+    global M_PI
 
-proc leaflet_sorter {species taillist analysis_start} {
-    puts "Starting leaflet sorting"
-    set counter 0
-    foreach lipidtype $species {
-        set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
-        set resids [$sel get resid]
-        $sel delete
-        set topsum [lrepeat [llength $resids] 0.0]
-        set bottomsum [lrepeat [llength $resids] 0.0]
-        foreach tail [lindex $taillist $counter] {
-            set topsel [atomselect top "resname $lipidtype and name [lindex $tail 0]" frame 0]
-            set bottomsel [atomselect top "resname $lipidtype and name [lindex $tail end]" frame 0]
-            set topsum [vecexpr $topsum [$topsel get z] add]
-            set bottomsum [vecexpr $bottomsum [$bottomsel get z] add] 
-            set resids [$topsel get resid]
-            $topsel delete
-            $bottomsel delete
-        } 
-        set topavg [vecexpr $topsum [llength [lindex $taillist $counter]] div]
-        set bottomavg [vecexpr $bottomsum [llength [lindex $taillist $counter]] div]
-        set diff_top_to_bottom [vecexpr $topsum $bottomsum sub]
-        set uplist []
-        set downlist []
-        for {set i 0} {$i < [llength $diff_top_to_bottom]} {incr i} {
-            if {[lindex $diff_top_to_bottom $i] > 0} {
-                lappend uplist [lindex $resids $i]
-            } elseif {[lindex $diff_top_to_bottom $i] < 0} {
-                lappend downlist [lindex $resids $i]
+    ;# atan2 returns in a range of -pi to pi
+    ;# shift it to 0 to 2pi
+    if {$tmp < 0} {
+        set theta [expr 2*$M_PI + $tmp]    
+    } else {
+        set theta $tmp
+    }
+
+    ;# change to degrees
+    return [RtoD $theta]
+}
+
+;# Ouputs position of the centered protein in a membrane
+;# accross both leaflets
+;# only useful for analysis later - doesn't impact your polar density script
+proc Protein_Position {name hnames tnames} {
+    ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
+    set chain_names [list "A" "B" "C" "D" "E"]
+
+    set lastframe [expr [molinfo top get numframes] -1]
+
+    set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
+    set zone_zvals [$zone_sel get z]
+    set zone_Ht [vecexpr $zone_zvals mean]
+    $zone_sel delete
+
+    set ztwo_sel [atomselect top "(name $hnames and chain L) and within 6 of name BB"]
+    set ztwo_zvals [$ztwo_sel get z]
+    set ztwo_Ht [vecexpr $ztwo_zvals mean]
+    $ztwo_sel delete
+
+    set zmid_sel [atomselect top "name $tnames and within 6 of name BB"]
+    set zmid_zvals [$zmid_sel get z]
+    set zmid_Ht [vecexpr $zmid_zvals mean]
+    $zmid_sel delete
+
+    foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
+    set fout [open "${name}_helcoords_${eqtxt}.dat" w]
+        puts $fout  "#These are the positions of your TMD helices in polar coords"
+        foreach chnm $chain_names {
+                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
+                set com [measure center $sel weight mass]
+                $sel delete
+                set x [lindex $com 0]
+                set y [lindex $com 1]
+                set r [expr sqrt($x*$x+$y*$y)]
+                set theta [get_theta $x $y]
+                puts "chain ${chnm} and $r $theta"
+
+                puts -nonewline $fout "$r $theta "
             }
-        }
-        set upsel [atomselect top "resid $uplist"]
-        set downsel [atomselect top "resid $downlist"]
-        $upsel set user 1
-        $upsel set chain "U"
-        $downsel set user 2
-        $downsel set chain "L"
-        $upsel delete
-        $downsel delete
-        incr counter
+            puts $fout ""
+        close $fout
     }
+}
 
-    for {set frm 0} {$frm <= $analysis_start} {incr frm} {
-        leaflet_check $frm $species $taillist
-    }
+proc Center_System {inpt} {
+    puts "${inpt}"
+    puts "Center_System now running"
+    ;# confirms your box is either square or paraelleogram-ish
+    ;# will preform qwrap or pbc wrap depending
+
+    set pbc_angles [molinfo top get {alpha beta gamma}]
     
-    puts "Leaflet sorting complete!"
-}
-
-# tail_analyzer returns $taillist, a nested list: 
-# top level is by species
-# mid level is by tail in species
-# bottom level is by beads in tail
-# e.g. a membrane with DO and DP lipids would be: 
-
-# |-------------------------------------taillist------------------------------------|
-#   |------------------DO-----------------| |------------------DP-----------------|
-#     |-----tail0-----| |-----tail1-----|     |-----tail0-----| |-----tail1-----|
-#
-# { { {C1A C2A C3A C4A} {C1B C2B C3B C4B} } { {C1A D2A C3A C4A} {C1B D2B C3B C4B} } } 
-
-proc tail_analyzer { species } {
-    set taillist []
-    set letters "A B C D E F G H I J"
-    foreach lipidtype $species {
-        set tails []
-        set sel [atomselect top "resname $lipidtype"]
-        set res [$sel get resid]
-        $sel delete
-        set sel [atomselect top "resname $lipidtype and resid [lindex $res 0]"]
-        set names [$sel get name]
-        $sel delete
-        foreach letter $letters {
-            set tail []
-            foreach nm $names {
-                if {[string match ??${letter} $nm]} {
-                    lappend tail $nm
-                }
-            }
-            if {[llength $tail] != 0} {
-                lappend tails $tail
-            }
-        }
-        if {[llength $tails] != 0} {
-            lappend taillist $tails
-        }
-    }
-
-    return $taillist
-}
-
-proc lipid_analyzer {species acyl_names} {
-    set numlist []
-    foreach lipid $species {
-        set sel [atomselect top "resname $lipid"]
-        set numbeads [llength [lsort -unique [$sel get name]]]
-        $sel delete
-        lappend numlist $numbeads
-    }
-
-    set starts_and_ends [heads_and_tails $species $acyl_names]
-    set starts [lindex $starts_and_ends 0]
-    set ends [lindex $starts_and_ends 1]
+    set sel [atomselect top "$inpt" frame 0]
+    set com [measure center $sel weight mass]
     
-    ;# figure out how many tails are in each lipid
-    set lenlist []
-    for {set i 0} {$i < [llength $species]} {incr i} {
-        lappend lenlist [llength [lindex $starts $i]]
-    }
-    set uniquelengths [lsort -unique $lenlist]
-
-    foreach length $uniquelengths {
-        set startsel []
-        set endsel []
-        set indices [lsearch -all $lenlist $length]
-        foreach index $indices {
-            set startseltext "resname [lindex $species $index] and name [lindex $starts $i]"
-            set endseltext "resname [lindex $species $index] and name [lindex $ends $i]"
-            lappend startsel $startseltext
-            lappend endsel $endseltext
-        }
-        set uniquelengthstartseltext [cat_list $startsel "or"]
-        set uniquelengthendseltext [cat_list $endsel "or"]
-        dict set lipids $length start $uniquelengthstartseltext
-        dict set lipids $length end $uniquelengthendseltext
-    }
-
-    return $lipids
-}
-
-;# tail_numberer changes user3 to hold a tail number.
-;# This makes different tails easily separable for tilt/order analysis
-proc tail_numberer { species taillist } {
-    for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
-        for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
-            set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
-            for {set frm 0} {$frm < [molinfo top get numframes]} {incr frm} {
-                $sel frame $frm 
-                $sel update
-                $sel set user3 [expr $tail+1]
-            }
+    set counter_i 0
+    ;# continues to try and recenter's box until ~ 0'ed out
+    while {[expr abs([lindex $com 0])] > 1.0 &&  [expr abs([lindex $com 1])] > 1.0} {
+        
+        if {$counter_i > 5} {
+            puts "Script was unable to converge system to (0,0,0)"
+            puts "Please check your system visually, there may be"
+            puts "unintended artifacts"
             $sel delete
+            return
         }
-    }
-}
-
-proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
-    
-    if {$polar == 1} {
-        ;# use polar (r,theta) bins
-
-        ;#calculate r: distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
         
-        ;#turn into bin numbers rather than r values
-        set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
-        
-        ;#calculate theta: use atan2 to get values for al x,y pairs
-        set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
-
-        ;#atan2 gives values from -180 to 180; shifting to 0 to 360
-        for {set i 0} {$i<[llength $theta_vals]} {incr i} {
-            if {[lindex $theta_vals $i] < 0} {
-                set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
+        if {([lindex $pbc_angles 0]!=90.0) && ([lindex $pbc_angles 1]!=90.0) && ([lindex $pbc_angles 2]!=90.0)} {
+            puts "qwrap may not be optimal for your system...\n"
+            puts "Running pbc wrap. To verify proper centering"
+            puts "pbc wrap will be run multiple times" ; after 100
+            foreach i {0 1 2 3} {
+                pbc wrap -centersel "$inpt" -all
             }
-        }
-
-        ;#turn into bin numbers rather than theta values
-        set dim2_bins [vecexpr [vecexpr $theta_vals $dthetadeg div] floor]
-        
-    } elseif {$polar == 0} {
-        ;# use cartesian (x,y) bins
-        
-        ;# shift all values so that they are temporarily positive
-        ;# no negative bin numbers allowed!
-        set xmin [vecexpr $x_vals min]
-        set ymin [vecexpr $y_vals min]
-        set x_vals [vecexpr $x_vals $xmin sub]
-        set y_vals [vecexpr $y_vals $ymin sub]
-
-        ;# turn into bin numbers rather than x,y values
-        set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
-        set dim2_bins [vecexpr [vecexpr $y_vals $d2 div] floor]
-    }
-
-    return [list $dim1_bins $dim2_bins]
-}
-
-proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
-
-    if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-        foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
-        }
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        for {set i 0} {$i < [llength $taillist]} {incr i} {
-            set lipidtype [lindex $species $i]
-            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
-                set tailnum "tail$j"
-                set taillength [llength [lindex [lindex $taillist $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
-            }
-        }
-    }
-    
-    return $outfiles
-}
-
-proc bin_prep {nframes polar min d1 N2} {
-    #measure box size at final frame to get bin values
-    set box_x [molinfo top get a frame [expr $nframes - 1]]
-
-    if {$polar == 1} {
-        set box_r [expr int($box_x) / 2]
-        set range1 [expr $box_r - $min]
-    } elseif {$polar == 0} {
-        set range1 [expr int([vecexpr $box_x floor])]
-    }
-    
-    #calculate number of dim1 bins from d1 and range1
-    if {[expr $range1 % $d1] == 0} { 
-        set N1 [expr [expr $range1 / $d1] - 1] 
-    } else {
-        set N1 [expr $range1 / $d1]
-    }
-
-    #calculate dim2 values, based on whether polar or cartesian
-    if {$polar == 1} {
-        set dthetadeg [expr 360/$N2]
-        global M_PI
-        set d2 [expr 2 * $M_PI / $N2]
-    } elseif {$polar == 0} {
-        set d2 $d1
-        set box_y [molinfo top get b frame [expr $nframes - 1]]
-        set range2 [expr int([vecexpr $box_y floor])]
-        if {[expr $range2 % $d2] == 0} { 
-            set N2 [expr [expr $range2 / $d2] - 1] 
         } else {
-            set N2 [expr $range2 / $d2]
+            #qunwrap compound none
+            qwrap sel all center "$inpt" ;#center entire system at ~0,0,0
         }
-        set dthetadeg "NA"
+        set com [measure center $sel weight mass]
+        incr counter_i
     }
-    return [list $d1 $d2 $N1 $N2 $dthetadeg]
+    $sel delete
+    puts "Center_System finished!"
 }
 
-proc concat_names { headnames } {
-    ;# concatenate all beadnames together for file naming purposes
-    if {[llength $headnames] > 1} {
-        set condensed_name [lindex $headnames 0]
-        for {set i 1} {$i < [llength $headnames]} {incr i} {
-            set addname [lindex $headnames $i]
-            set condensed_name "$condensed_name.$addname"
-        }
-    } elseif {[llength $headnames] == 1} {
-        set condensed_name [lindex $headnames 0]
-    } else {
-        puts "headnames must contain a bead name"
-        break
-    }
-    return $condensed_name
-}
-
-proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
-    dict set res_dict dummy "dummy"
-    if {$selex ne "z0"} {
-        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-            if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
-                set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
-                set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
-                if {[dict exists $res_dict $bin_leaf]} {
-                    dict append res_dict $bin_leaf " $i"
-                } else {
-                    dict set res_dict $bin_leaf $i                
-                }
-            }
-        }
-    } else {
-        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-            set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
-            set bin_leaf "$bin,3"
-            if {[dict exists $res_dict $bin_leaf]} {
-                dict append res_dict $bin_leaf " $i"
-            } else {
-                dict set res_dict $bin_leaf $i                
-            }
-        }
-    }
-    dict unset res_dict dummy
-    return $res_dict
-}
-
-proc output_density_norm_info {start nframes step species system headnames coordsys} {
-    set arealist []
-    for {set frm $start} {$frm < $nframes} {set frm [expr $frm + $step]} {
-        lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
-    }
-    set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
-    foreach spec $species {
-        set sel [atomselect top "resname $spec"]
-        set names [lsort -unique [$sel get name]]
-        set Sb 0
-        foreach name $names {
-            if {[lsearch $headnames $name] != -1} {
-                incr Sb
-            }
-        }
-        set Nb [llength [lsort -unique [$sel get resid]]]
-        $sel delete
-        set normfactor [expr $avgarea / [expr $Nb * $Sb / 2.0]]
-        puts $normfactor_outfile "$spec $normfactor"
-    }
+;# removes lipids from analysis (by setting user to 4)
+;# current removal criteria:
+;# within 5 angstroms of the pore center
+;# within 30 angstroms of protein BB resid 30 (upper pore-lining residue)
+proc pore_sorter_5x29 {} {
     
-    close $normfactor_outfile
-}
+    ;# define pore center
+    set sel [atomselect top "name BB and resid 30" frame $frm]
+    set com [measure center $sel]
+    set x [lindex $com 0]
+    set y [lindex $com 1]
+    $sel delete
 
-proc tail_length_sorter {species acyl_names} {
-    set lenlist []
-    for {set i 0} {$i < [llength $acyl_names]} {incr i} {
-        foreach tail [lindex $acyl_names $i] {
-            lappend lenlist [llength $tail]
-        }
-    }
-    set lengthlist [lsort -unique $lenlist]
-    set sellist []
-    foreach length $lengthlist {
-        set resnamelist []
-        set namelist []
-        for {set i 0} {$i < [llength $acyl_names]} {incr i} {
-            foreach tail [lindex $acyl_names $i] {
-                if {[llength $tail] == $length} {
-                    lappend resnamelist [lindex $species $i]
-                    foreach nm $tail {
-                        lappend namelist $nm 
-                    }
-                }
-            }
-        }
-        lappend sellist "resname [lsort -unique $resnamelist] and name [lsort -unique $namelist]"
-    }
-    return [list $sellist $lengthlist]
-}
-
-proc get_costheta {i xvals yvals zvals} {
-    set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
-    set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
-    set r12 [vecsub $start $end]
-    set n12 [vecnorm $r12]
-    return [lindex $n12 2]
-}
-
-proc order_params {length xvals yvals zvals} {
-    set order_list []
-    set temp_list []
-    for {set i 1} {$i <= [llength $xvals]} {incr i} {
-        if {[expr $i % $length] == 0} {
-            set avg [vecexpr $temp_list mean]
-            set order [expr $avg*1.5 - 0.5]
-            lappend order_list $order
-            set temp_list []
-        } else {
-            set costheta [get_costheta $i $xvals $yvals $zvals]
-            lappend temp_list [expr $costheta * $costheta]
-        }
-    }
-    set final_order_list []
-    foreach item $order_list {
-        set final_order_list [concat $final_order_list [lrepeat $length $item]]
-    }
-    return [list $final_order_list]
-}
-
-proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
-    dict set counts placeholder "dummy"
-    dict for {bin indices} $res_dict {
-        set leaf [string range $bin end end]
-        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-
-        foreach indx $indices {
-            set tailnum [expr int([lindex $tail_list $indx])]
-            set species [lindex $lipid_list $indx]
-            if {$leaf == 1} {
-                set tilt_key "tilts_up_${species}_tail${tailnum}"
-                set order_key "order_up_${species}_tail${tailnum}"
-            } else {
-                set tilt_key "tilts_down_${species}_tail${tailnum}"
-                set order_key "order_down_${species}_tail${tailnum}"
-            }
-            if {[dict exists $counts $selex $order_key bin $correct_bin]} {
-                set oldcount [dict get $counts $selex $order_key bin $correct_bin]
-                set newcount [expr $oldcount + 1.0]
-                set oldorder [dict get $outfiles $selex $order_key bin $correct_bin]
-                set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
-                set neworder [expr $newordersum / $newcount]
-                set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
-                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex [lindex $tilts 0] $indx] add]
-                set newtilt [vecexpr $newtiltsum $newcount div]
-                dict set outfiles $selex $order_key bin $correct_bin $neworder
-                dict set counts $selex $order_key bin $correct_bin $newcount
-                dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
-            } else {
-                dict set outfiles $selex $order_key bin $correct_bin [lindex [lindex $orders 0] $indx]
-                dict set outfiles $selex $tilt_key bin $correct_bin [lindex [lindex $tilts 0] $indx]
-                dict set counts $selex $order_key bin $correct_bin 1.0
-            }
-        }
-    }
-    dict unset counts $selex
-    return $outfiles
-}
-
-proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
-    dict for {bin indices} $res_dict {
-        set leaf [string range $bin end end]
-        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-
-        foreach indx $indices {
-            set species [lindex $lipid_list $indx]
-            if {$leaf == 1} {
-                set field_key "z1z2"
-                set dens_key "density_up_${species}"
-                set height_key "heights_up"
-            } elseif {$leaf == 2} {
-                set field_key "z1z2"
-                set dens_key "density_down_${species}"
-                set height_key "heights_down"
-            } elseif {$leaf == 3} {
-                set field_key "z0"
-                set dens_key "density_zzero_${species}"
-                set height_key "heights_zzero"
-            } else {
-                puts "something has gone wrong with the binning"
-                return
-            }
-            if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
-                set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
-                set newcount [expr $oldcount + 1.0]
-                set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
-                set newsum [expr $oldavg * $oldcount + [lindex $zvals_list $indx]]
-                set newavg [expr $newsum / $newcount]
-                dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $dens_key bin $correct_bin $newcount
-            } else {
-                dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
-                dict set outfiles $field_key $dens_key bin $correct_bin 1.0
-            }
-        }
-    }
-    return $outfiles
+    ;# "same resid as" doesn't work and "same residue as" has no meaning in CG trajs,
+    ;# so have to do this in two steps
+    set porebeads [atomselect top "(resname $species and within 12 of (name BB and resid 30)) or (resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+    set badresids [lsort -unique [$porebeads get resid]]
+    $porebeads delete
+    if {[llength $badresids] != 0} {
+        set porelipids [atomselect top "resname $species and resid $badresids" frame $frm]
+        $porelipids set user 4.0
+        $porelipids delete
+    } 
 }
