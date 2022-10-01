@@ -112,29 +112,6 @@ proc heads_and_tails {species taillist} {
     return [list $startsellist $endsellist]
 }
 
-# WIP - this is to test whether leaflet_check and new_leaflet_check yield the same result.
-# Spoiler alert: they don't right now.
-proc leaflet_test {frm species heads_and_tails window taillist} {
-    leaflet_check $frm $species $taillist 
-    set sel [atomselect top "resname $species" frame $frm]
-    set oldvals [$sel get user]
-    set resids [$sel get resid]
-    new_leaflet_check $frm $species $heads_and_tails 0
-    $sel update
-    set newvals [$sel get user]
-    if {$oldvals != $newvals} {
-        puts "failure"
-        for {set i 0} {$i < [llength $oldvals]} {incr i} {
-            if {[lindex $oldvals $i] != [lindex $newvals $i]} {
-                puts [lindex $resids $i]
-            }
-        }
-    } else {
-        puts "success"
-    }
-}
-
-
 proc new_leaflet_check {frm species taillist window} {
     set heads_and_tails [heads_and_tails $species $taillist]
     set starts [lindex $heads_and_tails 0]
