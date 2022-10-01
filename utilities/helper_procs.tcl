@@ -5,10 +5,49 @@ proc RtoD {r} {
     return [expr $r*180.0/$M_PI]
 }
 
-# Returns a least squares fit for each lipid tail in the system
+# Returns a least squares fit for each lipid tail with N_beads = $length
+# in the system. This allows you to use 1 instance of $lsqnormfactor only,
+# rather than calculate it on the fly each time. 
+# $lsqnormfactor is a list of values (i-(N-1)/2)
+proc tilt_angles {length xvals yvals zvals} {
+    set tilt_list []
+    set lsqnormfactor [calc_lsq_normfactor $length]
+    set xvec [fit_all_tails $length $xvals $lsqnormfactor]
+    set yvec [fit_all_tails $length $yvals $lsqnormfactor]
+    set zvec [fit_all_tails $length $zvals $lsqnormfactor]
+    for {set i 0} {$i < [llength $xvec]} {incr i} {
+        set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
+        set norm [vecnorm $vector]
+
+        # it is desirable to have a list that is the same length as $xvals
+        # for ease of indexing in the binning process; hence lrepeat
+        lappend tilt_list [lrepeat $length $norm]
+    }
+
+    # this is now a list of lists, but we want it all in one level
+    set final_tilt_list [cat_list $tilt_list "NULL"]
+    
+    return $final_tilt_list
+}
+
+# returns a list of (i-(N-1)/2)
+proc calc_lsq_normfactor { length } {
+    set diff [expr $length-1]
+    set d [expr 0.5*$diff] ;#normalization factor
+    set I []
+
+    #Make a list from 0 to length
+    for {set k 0} {$k < $length} {incr k} {
+        lappend I $k
+    }
+
+    set lsqnormfactor [vecexpr $I $d sub]
+
+    return $lsqnormfactor
+}
+
 # Fit the points x to x = ai + b, i=0...N-1, and return the value 
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
-# $lsqnormfactor is a list of values (i-(N-1)/2)
 proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
     set fit_values []
     set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
@@ -30,24 +69,9 @@ proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
     return $fit_values
 }
 
-proc calc_lsq_normfactor { length } {
-    set diff [expr $length-1]
-    set d [expr 0.5*$diff] ;#normalization factor
-    set I {}
-
-    #Make a list from 0 to len
-    for {set k 0} {$k < $length} {incr k} {
-        lappend I $k
-    }
-
-    set lsqnormfactor [vecexpr $I $d sub]
-
-    return $lsqnormfactor
-}
-
 # Concatenates list items into one long string, separated by 
 # spaces on either side of the $delimiter.
-# "NULL" wil result in a single space as the delimiter
+# "NULL" will result in no delimiter with a single space separating elements.
 # "or" will also enclose list items in parentheses for use as 
 # atomselection text. 
 proc cat_list {inputlist delimiter} {
@@ -581,24 +605,6 @@ proc tail_numberer { species taillist } {
             $sel delete
         }
     }
-}
-
-proc tilt_angles {length xvals yvals zvals} {
-    set tilt_list []
-    set lsqnormfactor [calc_lsq_normfactor $length]
-    set xvec [fit_all_tails $length $xvals $lsqnormfactor]
-    set yvec [fit_all_tails $length $yvals $lsqnormfactor]
-    set zvec [fit_all_tails $length $zvals $lsqnormfactor]
-    for {set i 0} {$i < [llength $xvec]} {incr i} {
-        set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
-        set norm [vecnorm $vector]
-        lappend tilt_list $norm
-    }
-    set final_tilt_list []
-    foreach item $tilt_list {
-        set final_tilt_list [concat $final_tilt_list [lrepeat $length $item]]
-    }
-    return [list $final_tilt_list]
 }
 
 proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
