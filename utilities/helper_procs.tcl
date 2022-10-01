@@ -111,7 +111,8 @@ proc leaflet_test {frm species heads_and_tails window taillist} {
 }
 
 
-proc new_leaflet_check {frm species heads_and_tails window} {
+proc new_leaflet_check {frm species taillist window} {
+    set heads_and_tails [heads_and_tails $species $taillist]
     set starts [lindex $heads_and_tails 0]
     set ends [lindex $heads_and_tails 1]
 
@@ -119,19 +120,20 @@ proc new_leaflet_check {frm species heads_and_tails window} {
         set lipidtype [lindex $species $i]
         set total_sel [atomselect top "resname $lipidtype" frame $frm]
         set species_bead_num [llength [lsort -unique [$total_sel get name]]]
-        set startnames [lindex $starts $i]
+        set startnames "PO4"
         set endnames [lindex $ends $i]
-        set numbeads [llength $startnames]
+        set numbeads [llength $endnames]
         set start_sel [atomselect top "resname $lipidtype and name $startnames" frame $frm]
         set end_sel [atomselect top "resname $lipidtype and name $endnames" frame $frm]
         set start_z [$start_sel get z]
         set end_z [$end_sel get z]
         $start_sel delete
         $end_sel delete
-        set diff [vecexpr $start_z $end_z sub]
         set userlist []
-        for {set j 0} {$j < [llength $start_z]} {set j [expr $j+$numbeads]} {
-            set avgheight [vecexpr [lrange $diff $j [expr $j+$numbeads-1]] mean]
+        set counter 0
+        for {set j 0} {$j < [llength $end_z]} {set j [expr $j+$numbeads]} {
+            set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numbeads-1]] mean]
+            set avgheight [expr [lindex $start_z $counter] - $avgendheight]
             if {$avgheight > $window} {
                 lappend userlist [lrepeat $species_bead_num 1.0]
             } elseif {$avgheight < -$window} {
@@ -139,10 +141,24 @@ proc new_leaflet_check {frm species heads_and_tails window} {
             } else {
                 lappend userlist [lrepeat $species_bead_num 3.0]
             }
+            incr counter
         }
         set user_vals [cat_list $userlist "NULL"]
         $total_sel set user $user_vals
         $total_sel delete
+    }
+    set sel [atomselect top "name BB and resid 30" frame $frm]
+    set com [measure center $sel]
+    set x [lindex $com 0]
+    set y [lindex $com 1]
+    $sel delete
+    set porelipids [atomselect top "(resname $species and same residue as within 12 of (name BB and resid 30)) or (resname $species and same residue as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+    set badresids [lsort -unique [$porelipids get resid]]
+    $porelipids delete
+    if {[llength $badresids] != 0} {
+        set porelipids [atomselect top "resname $species and resid $badresids" frame $frm]
+        $porelipids set user 4.0
+        $porelipids delete
     } 
 }
 
@@ -190,6 +206,20 @@ proc leaflet_check {frm species taillist} {
         incr counter
     }
 
+    set sel [atomselect top "name BB and resid 30" frame $frm]
+    set com [measure center $sel]
+    set x [lindex $com 0]
+    set y [lindex $com 1]
+    $sel delete
+    set porelipids [atomselect top "(resname $species and same residue as within 12 of (name BB and resid 30)) or (resname $species and same residue as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+    set badresids [$porelipids get resid]
+    $porelipids delete
+    if {[llength $badresids] != 0} {
+        set porelipids [atomselect top "resname $species and resid $badresids"]
+        $porelipids set chain "Z"
+        $porelipids delete
+    }
+    
     set upper [atomselect top "chain U" frame $frm]
     $upper set user 1
     $upper delete
@@ -287,7 +317,7 @@ proc Center_System {inpt} {
                 pbc wrap -centersel "$inpt" -all
             }
         } else {
-            qunwrap compound none
+            #qunwrap compound none
             qwrap sel all center "$inpt" ;#center entire system at ~0,0,0
         }
         set com [measure center $sel weight mass]

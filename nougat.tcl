@@ -48,7 +48,7 @@ proc cell_prep {system end} {
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    #set align_sel "name BB"
+    set align_sel "name BB"
 
     ;# provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.
     ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
@@ -65,7 +65,7 @@ proc cell_prep {system end} {
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
     Center_System "$wrap_sel"
-    #Align "$align_sel"
+    Align "$align_sel"
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
@@ -84,8 +84,15 @@ proc cell_prep {system end} {
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
 
+    if {$end == -1} {
+        set end [molinfo top get numframes]
+    }
+
+    for {set i 0} {$i < $end} {incr i} {
+        new_leaflet_check $i $species $acyl_names 1.0
+    }
     ;# sets user to 1 or 2 (or 3) depending on if the lipid is in the outer or inner leaflet (or if you want to exclude it) 
-    leaflet_sorter $species $acyl_names $lastframe
+    #leaflet_sorter $species $acyl_names $lastframe
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -206,15 +213,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
         ;# update leaflets in case lipids have flip-flopped
-        if {$step == 1} {
-            leaflet_check $frm $species $acyl_names
-        } elseif {$step > 1} {
-            if {$frm != $start} {
-                for {set frame [expr $step - 1]} {$frame >= 0} {set frame [expr $frame - 1]} {
-                    leaflet_check [expr $frm - $frame] $species $acyl_names
-                }
-            }
-        }
+        new_leaflet_check $frm $species $acyl_names 1.0
 
         puts "$system $quantity_of_interest $frm"
 
