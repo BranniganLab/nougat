@@ -26,7 +26,7 @@ proc tilt_angles {length xvals yvals zvals} {
 
     # this is now a list of lists, but we want it all in one level
     set final_tilt_list [cat_list $tilt_list "NULL"]
-    
+    puts [lindex $final_tilt_list 1]
     return $final_tilt_list
 }
 
@@ -170,7 +170,7 @@ proc leaflet_check {frm species taillist window} {
     }
 
     ;# custom pore sorting proc for 5x29
-    pore_sorter_5x29
+    pore_sorter_5x29 $frm $species
 }
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
@@ -411,7 +411,9 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
     
     if {$selex ne "z0"} {
         for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-            if {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
+            if {([lindex $leaflet_list $i] == 3) || ([lindex $leaflet_list $i] == 4)} {
+                continue
+            } elseif {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
                 set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
                 set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
                 if {[dict exists $res_dict $bin_leaf]} {
@@ -536,7 +538,7 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-
+        puts $bin 
         foreach indx $indices {
             set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
@@ -557,6 +559,8 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
                 set neworder [expr $newordersum / $newcount]
                 set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
+                puts $oldtilt
+                puts [lindex [lindex $tilts 0] $indx]
                 set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex [lindex $tilts 0] $indx] add]
                 set newtilt [vecexpr $newtiltsum $newcount div]
                 dict set outfiles $selex $order_key bin $correct_bin $neworder
@@ -793,7 +797,7 @@ proc Center_System {inpt} {
 ;# current removal criteria:
 ;# within 5 angstroms of the pore center
 ;# within 30 angstroms of protein BB resid 30 (upper pore-lining residue)
-proc pore_sorter_5x29 {} {
+proc pore_sorter_5x29 {frm species} {
     
     ;# define pore center
     set sel [atomselect top "name BB and resid 30" frame $frm]

@@ -5,13 +5,13 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-set UTILS "~/PolarHeightBinning/utilities"
+set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
 
 source ${UTILS}/helper_procs.tcl
-load ${UTILS}/qwrap.so
-load ${UTILS}/vecexpr.so
-#load ~/qwrap/qwrap.so 
-#load ~/vecexpr/vecexpr.so 
+#load ${UTILS}/qwrap.so
+#load ${UTILS}/vecexpr.so
+load ~/qwrap/qwrap.so 
+load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system analysis_start} {
     
@@ -220,7 +220,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             set ref_height [vecexpr $ref_height mean]
         } else {
             set ref_height "NULL"
-        }        
+        }   
         
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
@@ -277,9 +277,13 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list $name_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
+                puts "test0"
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
+                puts "test1"
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
+                puts "test2"
                 set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
+                puts "test3"
             }
 
             ;# Now that all information has been binned, print it to files
@@ -310,6 +314,6 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# these will be out of scope and cause an error.
     ;# catch will ignore this error, as it's not important to the user.
     foreach selection [atomselect list] {
-        catch [$selection delete]
+        catch {$selection delete}
     }
 }
