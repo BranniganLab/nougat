@@ -24,9 +24,9 @@ proc tilt_angles {length xvals yvals zvals} {
         lappend tilt_list [lrepeat $length $norm]
     }
 
-    # this is now a list of lists, but we want it all in one level
+    # this is now a list of lists of lists, but we want a list of lists
     set final_tilt_list [cat_list $tilt_list "NULL"]
-    puts [lindex $final_tilt_list 1]
+
     return $final_tilt_list
 }
 
@@ -515,20 +515,23 @@ proc order_params {length xvals yvals zvals} {
     for {set i 1} {$i <= [llength $xvals]} {incr i} {
         if {[expr $i % $length] == 0} {
             ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
-            ;# now you need to average them
+            ;# already and now you need to average them
             set avg [vecexpr $temp_list mean]
             set order [expr $avg*1.5 - 0.5]
             lappend order_list [lrepeat $length $order]
             set temp_list []
         } else {
-            ;# calculate cos2theta for each bond in the tail and append to a list
+            ;# calculate cos2theta for each bond in the tail and append to a temp list
             set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
             set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
             set costheta [get_costheta $start $end]
             lappend temp_list [expr $costheta * $costheta]
         }
     }
+
+    ;# this is a list of lists, but we want just a list
     set final_order_list [cat_list $order_list "NULL"]
+    
     return [list $final_order_list]
 }
 
@@ -538,7 +541,6 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
-        puts $bin 
         foreach indx $indices {
             set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
@@ -559,16 +561,14 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
                 set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
                 set neworder [expr $newordersum / $newcount]
                 set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
-                puts $oldtilt
-                puts [lindex [lindex $tilts 0] $indx]
-                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex [lindex $tilts 0] $indx] add]
+                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex $tilts $indx] add]
                 set newtilt [vecexpr $newtiltsum $newcount div]
                 dict set outfiles $selex $order_key bin $correct_bin $neworder
                 dict set counts $selex $order_key bin $correct_bin $newcount
                 dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
             } else {
                 dict set outfiles $selex $order_key bin $correct_bin [lindex [lindex $orders 0] $indx]
-                dict set outfiles $selex $tilt_key bin $correct_bin [lindex [lindex $tilts 0] $indx]
+                dict set outfiles $selex $tilt_key bin $correct_bin [lindex $tilts $indx]
                 dict set counts $selex $order_key bin $correct_bin 1.0
             }
         }

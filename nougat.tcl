@@ -5,13 +5,13 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-set UTILS "~/Bending/scripts/PolarHeightBinning/utilities"
+set UTILS "~/PolarHeightBinning/utilities"
 
 source ${UTILS}/helper_procs.tcl
-#load ${UTILS}/qwrap.so
-#load ${UTILS}/vecexpr.so
-load ~/qwrap/qwrap.so 
-load ~/vecexpr/vecexpr.so 
+load ${UTILS}/qwrap.so
+load ${UTILS}/vecexpr.so
+#load ~/qwrap/qwrap.so 
+#load ~/vecexpr/vecexpr.so 
 
 proc cell_prep {system analysis_start} {
     
