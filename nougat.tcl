@@ -79,7 +79,7 @@ proc cell_prep {leaf_check} {
     tail_numberer $species $acyl_names
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [heads_and_tails $species $taillist]
+    set heads_and_tails [heads_and_tails $species $acyl_names]
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
