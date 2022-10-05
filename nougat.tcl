@@ -13,7 +13,7 @@ load ${UTILS}/vecexpr.so
 #load ~/qwrap/qwrap.so 
 #load ~/vecexpr/vecexpr.so 
 
-proc cell_prep {system analysis_start} {
+proc cell_prep {leaf_check} {
     
     ;#****************************************************;#
     ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
@@ -78,14 +78,18 @@ proc cell_prep {system analysis_start} {
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
 
+    ;# returns top/bottom beads in lipid tails for leaflet sorting
+    set heads_and_tails [heads_and_tails $species $taillist]
+
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
     ;# sets user to 4 if you have pore_sorter turned on
     ;# TO USE PORE_SORTER YOU NEED TO CUSTOMIZE IT TO YOUR PROTEIN!!!
-    if {$analysis_start == -1} {
+    if {$leaf_check == 1} {
         set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
-            leaflet_check $i $species $acyl_names 1.0
+            puts $i
+            leaflet_check $i $species $heads_and_tails 1.0
         }
     }
 
@@ -105,6 +109,7 @@ proc cell_prep {system analysis_start} {
     lappend return_list $acyl_names
     lappend return_list $full_tails
     lappend return_list $reference_point
+    lappend return_list $heads_and_tails
     return $return_list  
 }
 
@@ -117,7 +122,7 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set important_variables [cell_prep $system $start]
+    set important_variables [cell_prep $start]
     
     ;# unpack user-provided info from cell_prep
     set species [lindex $important_variables 0]
@@ -163,10 +168,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     set acyl_names [lindex $important_variables 2]
     set full_tails [lindex $important_variables 3]
     set reference_point [lindex $important_variables 4]
-    set start [lindex $important_variables 5]
-    set nframes [lindex $important_variables 6]
-    set step [lindex $important_variables 7]
-    set min [lindex $important_variables 8]
+    set heads_and_tails [lindex $important_variables 5]
+    set start [lindex $important_variables 6]
+    set nframes [lindex $important_variables 7]
+    set step [lindex $important_variables 8]
+    set min [lindex $important_variables 9]
     
     ;# unpack bindims
     set d1 [lindex $bindims 0]
@@ -188,19 +194,8 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
      
-    ;#atomselections setup as dict
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
-        dict set selections z0 [atomselect top "resname $species and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter $species $acyl_names]
-        set sellist [lindex $lists 0]
-        set lenlist [lindex $lists 1]
-        foreach sel $sellist len $lenlist {
-            dict set selections $len [atomselect top "$sel"] 
-        }
-    }
-
+    ;# atomselection setup as dict 
+    set selections [create_atomselections $quantity_of_interest $species $acyl_names $full_tails]
 
     puts "Setup complete. Starting frame analysis now."   
 
@@ -208,7 +203,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     for {set frm $start} {$frm < $nframes} {incr frm $step} {
         
         ;# update leaflets in case lipids have flip-flopped
-        leaflet_check $frm $species $acyl_names 1.0
+        leaflet_check $frm $species $heads_and_tails 1.0
 
         puts "$system $quantity_of_interest $frm"
 
