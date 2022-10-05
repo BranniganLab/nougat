@@ -270,11 +270,11 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list $name_list]
+                set outfiles [height_density_averaging $res_dict $outfiles $leaflet_list $lipid_list $zvals_list $name_list]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
                 set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
+                set outfiles [tilt_order_averaging $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
             }
 
             ;# Now that all information has been binned, print it to files

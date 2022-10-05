@@ -94,7 +94,8 @@ proc cat_list {inputlist delimiter} {
     return $output
 }
 
-proc create_atomselections {} {
+;# creates atomselections for the fields within the two different quantities and stores them in a dict
+proc create_atomselections {quantity_of_interest species acyl_names full_tails} {
     ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
@@ -551,7 +552,7 @@ proc order_params {length xvals yvals zvals} {
 }
 
 ;# uses res_dict entries to compute bin averages, then assigns them to the correct outfile
-proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
+proc tilt_order_averaging {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
     dict set counts placeholder "dummy"
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
@@ -594,7 +595,7 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
 }
 
 ;# uses res_dict entries to compute bin averages, then assigns them to the correct outfile
-proc do_height_density_binning {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
+proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
