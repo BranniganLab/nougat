@@ -94,23 +94,6 @@ proc cat_list {inputlist delimiter} {
     return $output
 }
 
-;# creates atomselections for the fields within the two different quantities and stores them in a dict
-proc create_atomselections {quantity_of_interest species acyl_names full_tails} {
-    ;#atomselections setup as dict
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
-        dict set selections z0 [atomselect top "resname $species and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter $species $acyl_names]
-        set sellist [lindex $lists 0]
-        set lenlist [lindex $lists 1]
-        foreach sel $sellist len $lenlist {
-            dict set selections $len [atomselect top "$sel"] 
-        }
-    }
-    return $selections
-}
-
 # Returns a list of lists containing the starting beads and ending beads for a 
 # given lipid's acyl chains.
 # E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
