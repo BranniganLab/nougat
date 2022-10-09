@@ -671,7 +671,7 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
         set tiltlist []
         set orderlist []
         foreach indx $indices {
-            set tailnum [expr int([expr [lindex $tail_list $indx] - 1])]
+            set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
                 set tilt_key "tilts_up_${species}_tail${tailnum}"

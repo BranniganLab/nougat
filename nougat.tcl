@@ -5,7 +5,6 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-
 set UTILS "/home/jahmalennis/Documents/nougat/utilities"
 
 source ${UTILS}/helper_procs.tcl
@@ -28,7 +27,7 @@ proc cell_prep {system end} {
     ;#********************************************************** 
 
     ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "resname AU"
+    set inclusion_sel "(resname AU)"
 
     ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
     ;# or membrane
@@ -46,7 +45,7 @@ proc cell_prep {system end} {
     ;# usually, this would be name BB for proteins
     ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-    set wrap_sel "resname $species"
+    set wrap_sel "(resname AU)"
 
     ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
     ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
@@ -264,6 +263,7 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             ;# E.G. POPC will have 0 or 1 (it has two tails)
             ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
             set tail_list [$sel get user3]
+            set tail_list [vecexpr $tail_list 1 sub]
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
@@ -315,25 +315,28 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 }
 
 ;# Need to rewrite so that it works with all the new settings
-proc run_mult {list_of_systems polar} {
-    foreach item $list_of_systems {
-        set gro "/u1/home/js2746/Bending/PC/${item}/${item}.gro"
-        set xtc "/u1/home/js2746/Bending/PC/${item}/${item}.xtc"
-        #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
-        #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
-        
-        #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
-        #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
-        mol new $gro
-        mol addfile $xtc waitfor all
-        puts $gro
-        puts $xtc
-        animate delete beg 0 end 0 skip 0 top
-        if {$polar == 1} {
+proc run_mult {list_of_systems} {
+    foreach directory "5x29" {
+        cd $directory
+        foreach item $list_of_systems {
+            cd $item 
+            set gro "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.gro"
+            set xtc "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.xtc"
+            #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
+            #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
+            
+            #set gro "/home/jesse/Bending/sims/PG/${item}.gro"
+            #set xtc "/home/jesse/Bending/sims/PG/${item}.xtc"
+            mol new $gro
+            mol addfile $xtc waitfor all
+            puts $gro
+            puts $xtc
+            animate delete beg 0 end 0 skip 0 top
             start_nougat $item 12 30 200 -1 1 1
-        } elseif {$polar == 0} {
             start_nougat $item 12 30 200 -1 1 0
+            mol delete top
+            cd ..
         }
-        mol delete top
+        cd ..
     }
 }
