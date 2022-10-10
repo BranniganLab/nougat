@@ -31,7 +31,10 @@ proc cell_prep {leaf_check} {
     ;# no edits required
     set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
     set species [lsort -unique [$lipidsel get resname]]
-    set acyl_names [tail_analyzer $species]
+    set tail_info [tail_analyzer $species]
+    set acyl_names [lindex $tail_info 0]
+    set heads_and_tails [lindex $tail_info 1]
+    set full_tails [lindex $tail_info 2]
     $lipidsel delete
 
     ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
@@ -78,9 +81,6 @@ proc cell_prep {leaf_check} {
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
 
-    ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [heads_and_tails $species $acyl_names]
-
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
     ;# sets user to 4 if you have pore_sorter turned on
@@ -90,16 +90,6 @@ proc cell_prep {leaf_check} {
         for {set i 0} {$i < $end} {incr i} {
             puts $i
             leaflet_check $i $species $heads_and_tails 1.0
-        }
-    }
-
-    ;# one list with all the bead names for convenience
-    set full_tails []
-    foreach lipidtype $acyl_names {
-        foreach tail $lipidtype {
-            foreach bead $tail {
-                lappend full_tails $bead
-            }
         }
     }
 
@@ -122,7 +112,7 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set important_variables [cell_prep $start]
+    set important_variables [cell_prep 0]
     
     ;# unpack user-provided info from cell_prep
     set species [lindex $important_variables 0]
