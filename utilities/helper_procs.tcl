@@ -168,8 +168,8 @@ proc leaflet_check {frm species heads_and_tails window} {
         $total_sel delete
     }
 
-    ;# custom pore sorting proc for 5x29
-    pore_sorter_5x29 $frm $species
+    ;# custom pore sorting proc for 5x29 and 7k3g
+    pore_sorter_custom $frm $species "7k3g"
 }
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
@@ -796,7 +796,7 @@ proc Center_System {inpt} {
 ;# current removal criteria:
 ;# within 5 angstroms of the pore center
 ;# within 30 angstroms of protein BB resid 30 (upper pore-lining residue)
-proc pore_sorter_5x29 {frm species} {
+proc pore_sorter_custom {frm species inc} {
     
     ;# define pore center
     set sel [atomselect top "name BB and resid 30" frame $frm]
@@ -807,7 +807,11 @@ proc pore_sorter_5x29 {frm species} {
 
     ;# "same resid as" doesn't work and "same residue as" has no meaning in CG trajs,
     ;# so have to do this in two steps
-    set porebeads [atomselect top "(resname $species and within 12 of (name BB and resid 30)) or (resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+    if {$inc eq "5x29"} {
+        set porebeads [atomselect top "(resname $species and within 12 of (name BB and resid 30)) or (resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+    } elseif {$inc eq "7k3g"} {
+        set porebeads [atomselect top "resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25)" frame $frm]
+    }
     set badresids [lsort -unique [$porebeads get resid]]
     $porebeads delete
     if {[llength $badresids] != 0} {
