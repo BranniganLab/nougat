@@ -48,7 +48,7 @@ Edit all of the indicated fields in cell_prep proc
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
-cell_prep -1
+cell_prep 1
 ```
 - After completion, visually inspect your trajectory in VMD for the following:
 ```
