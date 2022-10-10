@@ -653,8 +653,6 @@ def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, po
         tot_order = tot_order + order_per_tail
         #weight average by density!
 
-
-
 def bin_prep(sys_name, names_dict, coordsys, polar):
   sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
   N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, polar)
@@ -802,13 +800,9 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
 
 if __name__ == "__main__": 
-  #run_nougat("lgPO", True, False)
-  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]: 
-    os.chdir(system)
-    os.chdir('12A_fulltraj_cart')
-    run_nougat(system, False, False)
-    os.chdir('../12A_fulltraj_polar')
-    run_nougat(system, True, False)
-    os.chdir('../6A_fulltraj_polar')
-    run_nougat(system, True, False)
-    os.chdir('../..')
+  run_nougat("lgPO", True, False)
+  #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]: 
+  #  os.chdir(system)
+  #  os.chdir('newleaf_polar')
+  #  run_nougat(system, True, False)
+  #  os.chdir('../..')

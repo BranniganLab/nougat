@@ -188,12 +188,12 @@ for name in allsys:
 		
 		plt.plot(x,z_vals,color=colordict[name],linestyle=fielddict[field])
 		for bead in bead_dict[name]:
-			if field != "zzero":
-				data = np.load(name+"."+bead+"."+field+".avgheight.npy")
-				with warnings.catch_warnings():
-					warnings.simplefilter("ignore", category=RuntimeWarning)
-					z_vals=np.nanmean(data, axis=1)
-				plt.plot(x,z_vals,color=beadcolordict[bead],linestyle=fielddict[field])
+			#if field != "zzero":
+			data = np.load(name+"."+bead+"."+field+".avgheight.npy")
+			with warnings.catch_warnings():
+				warnings.simplefilter("ignore", category=RuntimeWarning)
+				z_vals=np.nanmean(data, axis=1)
+			plt.plot(x,z_vals,color=beadcolordict[bead],linestyle=fielddict[field])
 
 	X = [28.116,28.116]
 	Y = [-1,5]
