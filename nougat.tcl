@@ -1,35 +1,22 @@
 package require pbctools
 
-# EDIT THE PATHS HERE
-# TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-#set QWRAP "~/qwrap-master"
-#set VEC "~/utilities/vecexpr"
-
+# EDIT THE PATH HERE
+# TELL nougat WHERE TO FIND YOUR UTILITIES FOLDER
 set UTILS "~/PolarHeightBinning/utilities"
-
 source ${UTILS}/helper_procs.tcl
-load ${UTILS}/qwrap.so
-load ${UTILS}/vecexpr.so
-#load ~/qwrap/qwrap.so 
-#load ~/vecexpr/vecexpr.so 
 
-proc cell_prep {leaf_check} {
-    
-    ;#****************************************************;#
-    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
-    ;#****************************************************;# 
+set CONFIG_PATH "~/PolarHeightBinning/nougat_config.txt"
 
-    ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "name BB SC1 to SC4"
+proc cell_prep {config_path leaf_check} {
 
-    ;# provide atomselection-style text that defines anything that 
-    ;# isn't your inclusion_sel or membrane:
-    ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "resname W CHOL ION 'CL-' 'NA+' lig"
+    set config_dict [read_config_file $config_path]
+
+    load [dict get $config_dict qwrap_path]/qwrap.so
+    load [dict get $config_dict vecexpr_path]/vecexpr.so
 
     ;# figures out which lipids and beads are in the system
     ;# no edits required
-    set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
+    set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
     set species [lsort -unique [$lipidsel get resname]]
     set tail_info [tail_analyzer $species]
     set acyl_names [lindex $tail_info 0]
@@ -37,31 +24,17 @@ proc cell_prep {leaf_check} {
     set full_tails [lindex $tail_info 2]
     $lipidsel delete
 
-    ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
-    ;# usually, this would be name BB for proteins
-    ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
-    set wrap_sel "resname $species"
+    ;# need to manually substitute $species into the config_dict now that it has been created
+    dict set config_dict wrap_sel [subst [dict get $config_dict wrap_sel]]
 
-    ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
-    ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    set align_sel "name BB"
-
-    ;# provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.
-    ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
-    ;# the average position of resid 15
-    ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
-    ;# replace the text with "NULL"
-    set reference_point "name BB and resid 15"
-
-    ;# provide the beadnames that you consider to form the surface of your membrane
-    ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
-    ;# in our opinion
-    set headnames "C1A C1B"
+    ;#****************************************************;#
+    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
+    ;#****************************************************;# 
 
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
-    Center_System "$wrap_sel"
-    Align "$align_sel"
+    Center_System [dict get $config_dict wrap_sel]
+    Align [dict get $config_dict align_sel]
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
@@ -73,10 +46,6 @@ proc cell_prep {leaf_check} {
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
     ;# this proc is currently broken, anyways (yes, there is a github issue)
     ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
-
-    ;#****************************************************;#
-    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
-    ;#****************************************************;# 
 
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
@@ -93,14 +62,16 @@ proc cell_prep {leaf_check} {
         }
     }
 
-    set return_list [] 
-    lappend return_list $species 
-    lappend return_list $headnames 
-    lappend return_list $acyl_names
-    lappend return_list $full_tails
-    lappend return_list $reference_point
-    lappend return_list $heads_and_tails
-    return $return_list  
+    ;#****************************************************;#
+    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
+    ;#****************************************************;# 
+
+    dict set config_dict species $species 
+    dict set config_dict acyl_names $acyl_names
+    dict set config_dict full_tails $full_tails
+    dict set config_dict heads_and_tails $heads_and_tails
+    
+    return $config_dict  
 }
 
 
@@ -112,13 +83,7 @@ proc start_nougat {system d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set important_variables [cell_prep 0]
-    
-    ;# unpack user-provided info from cell_prep
-    set species [lindex $important_variables 0]
-    set headnames [lindex $important_variables 1]
-    set acyl_names [lindex $important_variables 2]
-    set full_tails [lindex $important_variables 3]
+    set important_variables [cell_prep $CONFIG_PATH 0]
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
@@ -138,31 +103,18 @@ proc start_nougat {system d1 N2 start end step polar} {
     set bindims [bin_prep $nframes $polar $min $d1 $N2]
 
     ;# add all these new values to important_variables for easy transfer
-    lappend important_variables $start 
-    lappend important_variables $nframes 
-    lappend important_variables $step 
-    lappend important_variables $min
+    dict set config_dict start $start 
+    dict set config_dict nframes $nframes 
+    dict set config_dict step $step 
+    dict set config_dict min $min
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $important_variables $bindims $polar "height_density" 
-    run_nougat $system $important_variables $bindims $polar "tilt_order" 
-
+    run_nougat $system $config_dict $bindims $polar "height_density" 
+    run_nougat $system $config_dict $bindims $polar "tilt_order" 
 }
 
-proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
-
-    ;# unpack important_variables
-    set species [lindex $important_variables 0]
-    set headnames [lindex $important_variables 1]
-    set acyl_names [lindex $important_variables 2]
-    set full_tails [lindex $important_variables 3]
-    set reference_point [lindex $important_variables 4]
-    set heads_and_tails [lindex $important_variables 5]
-    set start [lindex $important_variables 6]
-    set nframes [lindex $important_variables 7]
-    set step [lindex $important_variables 8]
-    set min [lindex $important_variables 9]
+proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
     
     ;# unpack bindims
     set d1 [lindex $bindims 0]

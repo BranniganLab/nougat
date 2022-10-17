@@ -52,7 +52,7 @@ proc measure_APM {list_of_systems} {
 }
 
 proc run_mult {list_of_systems} {
-    foreach directory "7k3g" {
+    foreach directory "5x29" {
         cd $directory
         foreach item $list_of_systems {
             cd $item 

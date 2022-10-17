@@ -50,14 +50,14 @@ proc calc_lsq_normfactor { length } {
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
 proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
     set fit_values []
-    set N_lipids [expr [llength $list_of_tail_coords] / $tail_length]
+    set N_lipids [expr [llength $list_of_tail_coords]/$tail_length]
     set start_idx 0
 
     # iterate through list of all tail coords, separating them into one 
     # lipid tail at a time with lrange
     for {set i 0} {$i < $N_lipids} {incr i} {
-        set start_idx [expr $i * $tail_length]
-        set end_idx [expr $start_idx + $tail_length - 1]
+        set start_idx [expr $i*$tail_length]
+        set end_idx [expr $start_idx+$tail_length-1]
         set coords [lrange $list_of_tail_coords $start_idx $end_idx]
 
         # Perform least squares fitting:
@@ -148,7 +148,7 @@ proc leaflet_check {frm species heads_and_tails window} {
             set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numtails-1]] mean]
 
             ;# subtract $avgendheight from the PO4 bead's height
-            set avgheight [expr [lindex $start_z $counter] - $avgendheight]
+            set avgheight [expr [lindex $start_z $counter]-$avgendheight]
 
             ;# assign user value accordingly
             if {$avgheight > $window} {
@@ -174,7 +174,7 @@ proc leaflet_check {frm species heads_and_tails window} {
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
 proc print_line_init {file number d1 min} {
-    puts -nonewline $file "[format {%0.2f} [expr $number * $d1 + $min]]  [format {%0.2f} [expr ($number+1) * $d1 + $min]]  "
+    puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
 }
 
 ;# adds a value to the print file
@@ -195,14 +195,14 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     set file [dict get $outfiles $selex $key fname]
 
     if {$polar == 1} {
-        set N2 [expr $N2 -1.0]
+        set N2 [expr $N2-1.0]
     }
 
     ;# starts new line in outfile with bin values
-    for {set m 0.0} {$m <= $N1} {set m [expr $m + 1.0]} {
+    for {set m 0.0} {$m <= $N1} {set m [expr $m+1.0]} {
         print_line_init $file $m $d1 $min
         ;# prints bin values through ultimate value in one line
-        for {set n 0.0} {$n <= $N2} {set n [expr $n + 1.0]} {
+        for {set n 0.0} {$n <= $N2} {set n [expr $n+1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
             } else {
@@ -362,35 +362,35 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
 ;# determines the number of bins and the step length in each dimension
 proc bin_prep {nframes polar min d1 N2} {
     #measure box size at final frame to get bin values
-    set box_x [molinfo top get a frame [expr $nframes - 1]]
+    set box_x [molinfo top get a frame [expr $nframes-1]]
 
     if {$polar == 1} {
-        set box_r [expr int($box_x) / 2]
-        set range1 [expr $box_r - $min]
+        set box_r [expr int($box_x)/2]
+        set range1 [expr $box_r-$min]
     } elseif {$polar == 0} {
         set range1 [expr int([vecexpr $box_x floor])]
     }
     
     #calculate number of dim1 bins from d1 and range1
-    if {[expr $range1 % $d1] == 0} { 
-        set N1 [expr [expr $range1 / $d1] - 1] 
+    if {[expr $range1%$d1] == 0} { 
+        set N1 [expr [expr $range1/$d1]-1] 
     } else {
-        set N1 [expr $range1 / $d1]
+        set N1 [expr $range1/$d1]
     }
 
     #calculate dim2 values, based on whether polar or cartesian
     if {$polar == 1} {
         set dthetadeg [expr 360/$N2]
         global M_PI
-        set d2 [expr 2 * $M_PI / $N2]
+        set d2 [expr 2*$M_PI/$N2]
     } elseif {$polar == 0} {
         set d2 $d1
-        set box_y [molinfo top get b frame [expr $nframes - 1]]
+        set box_y [molinfo top get b frame [expr $nframes-1]]
         set range2 [expr int([vecexpr $box_y floor])]
         if {[expr $range2 % $d2] == 0} { 
-            set N2 [expr [expr $range2 / $d2] - 1] 
+            set N2 [expr [expr $range2/$d2]-1] 
         } else {
-            set N2 [expr $range2 / $d2]
+            set N2 [expr $range2/$d2]
         }
         set dthetadeg "NA"
     }
@@ -457,8 +457,8 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
 ;# calculates the normalization factor for density enrichment calculations
 proc output_density_norm_info {start nframes step species system headnames coordsys} {
     set arealist []
-    for {set frm $start} {$frm < $nframes} {set frm [expr $frm + $step]} {
-        lappend arealist [expr [molinfo top get a frame $frm] * [molinfo top get b frame $frm]]
+    for {set frm $start} {$frm < $nframes} {set frm [expr $frm+$step]} {
+        lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
     set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
@@ -473,7 +473,7 @@ proc output_density_norm_info {start nframes step species system headnames coord
         }
         set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
-        set normfactor [expr $avgarea / [expr $Nb * $Sb / 2.0]]
+        set normfactor [expr $avgarea/[expr $Nb*$Sb/2.0]]
         puts $normfactor_outfile "$spec $normfactor"
     }
     
@@ -525,11 +525,11 @@ proc order_params {length xvals yvals zvals} {
     set order_list []
     set temp_list []
     for {set i 1} {$i <= [llength $xvals]} {incr i} {
-        if {[expr $i % $length] == 0} {
+        if {[expr $i%$length] == 0} {
             ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
             ;# already and now you need to average them
             set avg [vecexpr $temp_list mean]
-            set order [expr $avg*1.5 - 0.5]
+            set order [expr {$avg * 1.5 - 0.5}]
             lappend order_list [lrepeat $length $order]
             set temp_list []
         } else {
@@ -537,7 +537,7 @@ proc order_params {length xvals yvals zvals} {
             set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
             set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
             set costheta [get_costheta $start $end]
-            lappend temp_list [expr $costheta * $costheta]
+            lappend temp_list [expr {$costheta * $costheta}]
         }
     }
 
@@ -552,7 +552,7 @@ proc tilt_order_averaging {res_dict outfiles leaflet_list lipid_list tilts order
     dict set counts placeholder "dummy"
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
-        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+        set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
         foreach indx $indices {
             set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
@@ -568,10 +568,10 @@ proc tilt_order_averaging {res_dict outfiles leaflet_list lipid_list tilts order
             }
             if {[dict exists $counts $selex $order_key bin $correct_bin]} {
                 set oldcount [dict get $counts $selex $order_key bin $correct_bin]
-                set newcount [expr $oldcount + 1.0]
+                set newcount [expr $oldcount+1.0]
                 set oldorder [dict get $outfiles $selex $order_key bin $correct_bin]
-                set newordersum [expr $oldorder * $oldcount + [lindex [lindex $orders 0] $indx]]
-                set neworder [expr $newordersum / $newcount]
+                set newordersum [expr {$oldorder * $oldcount + [lindex [lindex $orders 0] $indx]}]
+                set neworder [expr $newordersum/$newcount]
                 set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
                 set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex $tilts $indx] add]
                 set newtilt [vecexpr $newtiltsum $newcount div]
@@ -594,7 +594,7 @@ proc tilt_order_averaging {res_dict outfiles leaflet_list lipid_list tilts order
 proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
-        set correct_bin [string range $bin 0 [expr [string length $bin] - 3]]
+        set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
 
         foreach indx $indices {
             set species [lindex $lipid_list $indx]
@@ -616,10 +616,10 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
             }
             if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
                 set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
-                set newcount [expr $oldcount + 1.0]
+                set newcount [expr $oldcount+1.0]
                 set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
-                set newsum [expr $oldavg * $oldcount + [lindex $zvals_list $indx]]
-                set newavg [expr $newsum / $newcount]
+                set newsum [expr {$oldavg * $oldcount + [lindex $zvals_list $indx]}]
+                set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
                 dict set outfiles $field_key $dens_key bin $correct_bin $newcount
             } else {
@@ -629,6 +629,27 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
         }
     }
     return $outfiles
+}
+
+proc read_config_file {path} {
+    
+    set fp [open $path r]
+    set file_data [read $fp]
+    close $fp
+
+    set data [split $file_data "\n"]
+    foreach line $data {
+        if {[string match "#*" $line]} {
+            continue
+        }
+        if {$line eq ""} {
+            continue
+        }
+        set key_val [split $line "="]
+        dict set config_dict [string trim [lindex $key_val 0]] [string trim [lindex $key_val 1]]
+    }
+
+    return $config_dict
 }
 
 ;#********************************;#
@@ -711,7 +732,7 @@ proc get_theta {x y} {
     ;# atan2 returns in a range of -pi to pi
     ;# shift it to 0 to 2pi
     if {$tmp < 0} {
-        set theta [expr 2*$M_PI + $tmp]    
+        set theta [expr {2*$M_PI + $tmp}]    
     } else {
         set theta $tmp
     }
@@ -727,7 +748,7 @@ proc Protein_Position {name hnames tnames} {
     ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
     set chain_names [list "A" "B" "C" "D" "E"]
 
-    set lastframe [expr [molinfo top get numframes] -1]
+    set lastframe [expr [molinfo top get numframes]-1]
 
     set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
     set zone_zvals [$zone_sel get z]
@@ -748,7 +769,7 @@ proc Protein_Position {name hnames tnames} {
     set fout [open "${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chain_names {
-                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht + 5] and z > [expr $ht - 5])" frame $lastframe]
+                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
                 set com [measure center $sel weight mass]
                 $sel delete
                 set x [lindex $com 0]
