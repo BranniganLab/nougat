@@ -254,7 +254,7 @@ proc tail_analyzer { species } {
     }
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [heads_and_tails $species $acyl_names]
+    set heads_and_tails [heads_and_tails $species $taillist]
 
     ;# one list with all the bead names for convenience
     set full_tails []

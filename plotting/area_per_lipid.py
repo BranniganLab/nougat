@@ -120,7 +120,6 @@ def sum_over_K(systems):
 			else: 
 				style = "dashed"
 			plt.plot(avg_list,linestyle=style)
-		plt.show()
 		plt.savefig(system+".sum_over_K.pdf")
 
 def rollingavg(list_in, window_size):
@@ -181,4 +180,4 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	diff_mid_interface(sys_list)
+	sum_over_K(sys_list)
