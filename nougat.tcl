@@ -81,11 +81,11 @@ proc cell_prep {config_path leaf_check} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc start_nougat {system d1 N2 start end step polar} {
+proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set important_variables [cell_prep $CONFIG_PATH 0]
+    set config_dict [cell_prep $CONFIG_PATH 0]
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
@@ -136,14 +136,14 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
     }
     
     ;# outfiles setup as dict
-    set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
+    set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
      
     ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
-        dict set selections z0 [atomselect top "resname $species and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
+        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
     } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter $species $acyl_names]
+        set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
         set sellist [lindex $lists 0]
         set lenlist [lindex $lists 1]
         foreach sel $sellist len $lenlist {
@@ -154,16 +154,16 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
     puts "Setup complete. Starting frame analysis now."   
 
     ;# start frame looping here
-    for {set frm $start} {$frm < $nframes} {incr frm $step} {
+    for {set frm [dict get $config_dict start]} {$frm < [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
         
         ;# update leaflets in case lipids have flip-flopped
-        leaflet_check $frm $species $heads_and_tails 1.0
+        leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0
 
         puts "$system $quantity_of_interest $frm"
 
         #need to calculate heights relative to some point (usually on the inclusion):
-        if {$reference_point ne "NULL"} {
-            set ref_bead [atomselect top "$reference_point" frame $frm]
+        if {[dict get $config_dict reference_point] ne "NULL"} {
+            set ref_bead [atomselect top [dict get $config_dict reference_point] frame $frm]
             set ref_height [$ref_bead get z]
             $ref_bead delete
             set ref_height [vecexpr $ref_height mean]
@@ -220,7 +220,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
-            set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
+            set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
@@ -233,7 +233,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
             ;# Now that all information has been binned, print it to files
             dict for {key val} [dict get $outfiles $selex] {
-                print_frame $N1 $outfiles $key $d1 $min $N2 $polar $selex
+                print_frame $N1 $outfiles $key $d1 [dict get $config_dict min] $N2 $polar $selex
 
                 ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
@@ -246,7 +246,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
     ;# output density normalization info 
     if {$quantity_of_interest eq "height_density"} {
-        output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
+        output_density_norm_info [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys
     }
 
     ;# close all outfiles
