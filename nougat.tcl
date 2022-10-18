@@ -118,13 +118,6 @@ proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
     
-    ;# unpack bindims
-    set d1 [lindex $bindims 0]
-    set d2 [lindex $bindims 1]
-    set N1 [lindex $bindims 2]
-    set N2 [lindex $bindims 3]
-    set dthetadeg [lindex $bindims 4]
-
     ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
         set coordsys "polar"
@@ -155,6 +148,10 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
     ;# start frame looping here
     for {set frm [dict get $config_dict start]} {$frm < [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
+
+        if {$polar == 0} {
+            #set bindims [update_dims $bindims $frm]
+        }
         
         ;# update leaflets in case lipids have flip-flopped
         leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0
@@ -162,14 +159,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
         puts "$system $quantity_of_interest $frm"
 
         #need to calculate heights relative to some point (usually on the inclusion):
-        if {[dict get $config_dict reference_point] ne "NULL"} {
-            set ref_bead [atomselect top [dict get $config_dict reference_point] frame $frm]
-            set ref_height [$ref_bead get z]
-            $ref_bead delete
-            set ref_height [vecexpr $ref_height mean]
-        } else {
-            set ref_height "NULL"
-        }   
+        set ref_height [calc_ref_height $config_dict $frm]
         
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
@@ -183,57 +173,32 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
             $sel frame $frm 
             $sel update
 
-            set xvals_list [$sel get x]
-            set yvals_list [$sel get y]
-            set resid_list [$sel get resid]
-            set lipid_list [$sel get resname]
-            set name_list [$sel get name]
-
-            ;# warn the user if a selection is empty
-            if {[llength $xvals_list] == 0} {
-                puts "selection $selex has no atoms in it"
-                continue
-            }
-
-            ;# the z vals are subtracted by a reference height provided in cell_prep 
-            if {$ref_height ne "NULL"} {
-                set zvals_list [vecexpr [$sel get z] $ref_height sub]
-            } else {
-                set zvals_list [$sel get z]
-            }   
-
-            ;# user contains a 1 or 2 for outer or inner leaflet, respectively
-            set leaflet_list [$sel get user]
-
-            ;# user3 contains an int that describes which tail in the lipid this is
-            ;# E.G. POPC will have 0 or 1 (it has two tails)
-            ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
-            set tail_list [$sel get user3]
-            set tail_list [vecexpr $tail_list 1 sub]
+            ;# assemble all data (x,y,z,user, etc) into a dict of lists
+            set sel_info [grab_sel_info $sel $ref_height]
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
-            set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
+            set bins [bin_assigner [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
-            set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
+            set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] [dict get $sel_info resid_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [height_density_averaging $res_dict $outfiles $leaflet_list $lipid_list $zvals_list $name_list]
+                set outfiles [height_density_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] [dict get $sel_info zvals_list] [dict get $sel_info name_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
-                set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set outfiles [tilt_order_averaging $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
+                set tilts [tilt_angles [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
+                set orders [order_params [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
+                set outfiles [tilt_order_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] $tilts $orders [dict get $sel_info tail_list] $selex]
             }
 
             ;# Now that all information has been binned, print it to files
             dict for {key val} [dict get $outfiles $selex] {
-                print_frame $N1 $outfiles $key $d1 [dict get $config_dict min] $N2 $polar $selex
+                print_frame [dict get $bindims N1] $outfiles $key [dict get $bindims d1] [dict get $config_dict min] [dict get $bindims N2] $polar $selex
 
                 ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
@@ -241,6 +206,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
             ;# cleanup before next step
             dict remove res_dict
+            dict remove sel_info
         }
     }
 

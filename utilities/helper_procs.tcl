@@ -394,7 +394,58 @@ proc bin_prep {nframes polar min d1 N2} {
         }
         set dthetadeg "NA"
     }
-    return [list $d1 $d2 $N1 $N2 $dthetadeg]
+
+    dict set bindims d1 $d1 
+    dict set bindims d2 $d2 
+    dict set bindims N1 $N1 
+    dict set bindims N2 $N2 
+    dict set bindims dthetadeg $dthetadeg 
+
+    return $bindims
+}
+
+proc calc_ref_height {config_dict frm} {
+    if {[dict get $config_dict reference_point] ne "NULL"} {
+        set ref_bead [atomselect top [dict get $config_dict reference_point] frame $frm]
+        set ref_height [$ref_bead get z]
+        $ref_bead delete
+        set ref_height [vecexpr $ref_height mean]
+    } else {
+        set ref_height "NULL"
+    }
+    return $ref_height
+}
+
+proc grab_sel_info {sel ref_height} {
+    dict set sel_info xvals_list [$sel get x]
+    dict set sel_info yvals_list [$sel get y]
+    dict set sel_info resid_list [$sel get resid]
+    dict set sel_info lipid_list [$sel get resname]
+    dict set sel_info name_list [$sel get name]
+
+    ;# warn the user if a selection is empty
+    if {[llength [dict get $sel_info xvals_list]] == 0} {
+        puts "selection $selex has no atoms in it - frame $frm selection $selex"
+        break
+    }
+
+    ;# the z vals are subtracted by a reference height provided in cell_prep 
+    if {$ref_height ne "NULL"} {
+        dict set sel_info zvals_list [vecexpr [$sel get z] $ref_height sub]
+    } else {
+        dict set sel_info zvals_list [$sel get z]
+    }   
+
+    ;# user contains a 1 or 2 for outer or inner leaflet, respectively
+    dict set sel_info leaflet_list [$sel get user]
+
+    ;# user3 contains an int that describes which tail in the lipid this is
+    ;# E.G. POPC will have 0 or 1 (it has two tails)
+    ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
+    set tail_list [$sel get user3]
+    dict set sel_info tail_list [vecexpr $tail_list 1 sub]
+
+    return $sel_info
 }
 
 ;# concatenate all beadnames together for file naming purposes
