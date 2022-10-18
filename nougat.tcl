@@ -24,8 +24,10 @@ proc cell_prep {config_path leaf_check} {
     set full_tails [lindex $tail_info 2]
     $lipidsel delete
 
-    ;# need to manually substitute $species into the config_dict now that it has been created
-    dict set config_dict wrap_sel [subst [dict get $config_dict wrap_sel]]
+    ;# need to manually substitute variables into the config_dict when applicable
+    foreach key [dict keys $config_dict] {
+        dict set config_dict $key [subst [dict get $config_dict $key]]
+    }
 
     ;#****************************************************;#
     ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
