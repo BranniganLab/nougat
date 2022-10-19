@@ -64,13 +64,13 @@ proc cell_prep {config_path leaf_check} {
     ;# this proc is currently broken, anyways (yes, there is a github issue)
     ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
 
-    ;# set user3 to hold a unique tail number for easy separation of tails later
-    tail_numberer $species $acyl_names
+    ;#****************************************************;#
+    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
+    ;#****************************************************;# 
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
     ;# sets user to 4 if you have pore_sorter turned on
-    ;# TO USE PORE_SORTER YOU NEED TO CUSTOMIZE IT TO YOUR PROTEIN!!!
     if {$leaf_check == 1} {
         set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
@@ -79,9 +79,8 @@ proc cell_prep {config_path leaf_check} {
         }
     }
 
-    ;#****************************************************;#
-    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
-    ;#****************************************************;# 
+    ;# set user3 to hold a unique tail number for easy separation of tails later
+    tail_numberer $species $acyl_names
 
     dict set config_dict species $species 
     dict set config_dict acyl_names $acyl_names
