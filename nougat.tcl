@@ -1,8 +1,13 @@
 package require pbctools
 
-# EDIT THE PATH HERE
-# TELL nougat WHERE TO FIND YOUR UTILITIES FOLDER
-set UTILS "~/PolarHeightBinning/utilities"
+# EDIT THE PATHS HERE
+# TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
+#set QWRAP "~/qwrap-master"
+#set VEC "~/utilities/vecexpr"
+
+
+set UTILS "/home/jje63/Documents/Github_Repos/nougat/utilities"
+
 source ${UTILS}/helper_procs.tcl
 
 set CONFIG_PATH "~/PolarHeightBinning/nougat_config.txt"
@@ -14,7 +19,7 @@ proc cell_prep {config_path leaf_check} {
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
-    ;# figures out which lipids and beads are in the system
+    ;# figures out which lipids are in the system
     ;# no edits required
     set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
     set species [lsort -unique [$lipidsel get resname]]
@@ -32,6 +37,7 @@ proc cell_prep {config_path leaf_check} {
     ;#****************************************************;#
     ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
     ;#****************************************************;# 
+
 
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!

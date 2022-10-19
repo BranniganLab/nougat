@@ -18,8 +18,8 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-order_min = -1
-order_max = 1
+order_min = .15
+order_max = .45
 
 field_list = ["zone","ztwo", "zzero"]
 
