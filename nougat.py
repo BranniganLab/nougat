@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-#import matplotlib
+import matplotlib
 import numpy as np
 import warnings
 import glob
-
 
 sys_name = 'PO'
 inclusion_drawn = 0
@@ -22,8 +21,8 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-order_min = .2
-order_max = .4
+order_min = .15
+order_max = .45
 
 field_list = ["zone","ztwo"]
 

@@ -31,10 +31,87 @@ proc fit_all_tails { tail_length list_of_tail_coords lsqnormfactor} {
   return $vectors
 }
 
-#written in 2022 to be fast and dirty
-# just relies on whether the bottom of each tail is above/below the top of each tail
-# to sort leaflets
+# Concatenates list items into one long string, separated by 
+# spaces on either side of the $delimiter.
+# "NULL" wil result in a single space as the delimiter
+# "or" will also enclose list items in parentheses for use as 
+# atomselection text. 
+proc cat_list { inputlist delimiter} {
+    if {$delimiter eq "or"} {
+        set output "([lindex $inputlist 0])"
+    } else {
+        set output [lindex $inputlist 0]
+    }
+    
+    for {set i 1} {$i < [llength $inputlist]} {incr i} {
+        if {$delimiter eq "or"} {
+            set element "([lindex $inputlist $i])"
+            set output "${output} or ${element}"
+        } elseif {$delimiter eq "NULL"} {
+            set output "${output} [lindex $inputlist $i]"
+        } else {
+            set output "${output} $delimiter [lindex $inputlist $i]"
+        }
+    }
+    return $output
+}
+
+# Returns a list of lists containing the starting beads and ending beads for a 
+# given lipid's acyl chains.
+# E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
+proc heads_and_tails {species taillist} {
+    for {set i 0} {$i < [llength $taillist]} {incr i} {
+        set startbead []
+        set endbead []
+        foreach tail [lindex $taillist $i] {
+            lappend startbead [lindex $tail 0]
+            lappend endbead [lindex $tail end]
+        }
+        lappend startsellist [cat_list $startbead "NULL"]
+        lappend endsellist [cat_list $endbead "NULL"]
+    }
+
+    return [list $startsellist $endsellist]
+}
+
+proc new_leaflet_check {frm species heads_and_tails window} {
+    set starts [lindex $heads_and_tails 0]
+    set ends [lindex $heads_and_tails 1]
+
+    for {set i 0} {$i < [llength $species]} {incr i} {
+        set lipidtype [lindex $species $i]
+        set total_sel [atomselect top "resname $lipidtype" frame $frm]
+        set species_bead_num [llength [lsort -unique [$total_sel get name]]]
+        set startnames [lindex $starts $i]
+        set endnames [lindex $ends $i]
+        set numbeads [llength $startnames]
+        set start_sel [atomselect top "resname $lipidtype and name $startnames" frame $frm]
+        set end_sel [atomselect top "resname $lipidtype and name $endnames" frame $frm]
+        set start_z [$start_sel get z]
+        set end_z [$end_sel get z]
+        $start_sel delete
+        $end_sel delete
+        set diff [vecexpr $start_z $end_z sub]
+        set userlist []
+        for {set j 0} {$j < [llength $start_z]} {set j [expr $j+$numbeads]} {
+            set avgheight [vecexpr [lrange $diff $j [expr $j+$numbeads-1]] mean]
+            if {$avgheight > $window} {
+                lappend userlist [lrepeat $species_bead_num 1.0]
+            } elseif {$avgheight < -$window} {
+                lappend userlist [lrepeat $species_bead_num 2.0]
+            } else {
+                lappend userlist [lrepeat $species_bead_num 3.0]
+            }
+        }
+        $total_sel set user [cat_list $userlist "NULL"]
+        $total_sel delete
+    } 
+}
+
+# leaflet_check checks whether a lipid has flipped from one leaflet to another.
+# It solely relies on whether the end-bead of each tail is above/below the first bead of each tail.
 proc leaflet_check {frm species taillist} {
+
     set counter 0
     foreach lipidtype $species {
         set sel [atomselect top "resname $lipidtype and name [lindex [lindex [lindex $taillist $counter] 0] 0]"]
@@ -74,18 +151,6 @@ proc leaflet_check {frm species taillist} {
         }
         incr counter
     }
-
-    #remove pore lipids
-    #rewrite to make this useable for you
-
-    #set sel [atomselect top "name BB and resid 30" frame $frm]
-    #set com [measure center $sel]
-    #set x [lindex $com 0]
-    #set y [lindex $com 1]
-    #$sel delete
-    #set porelipids [atomselect top "(resname $species and same resid as within 9 of resid 30) or (resname $species and same resid as ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 16))" frame $frm]
-    #$porelipids set chain "Z"
-    #$porelipids delete
 
     set upper [atomselect top "chain U" frame $frm]
     $upper set user 1
@@ -344,13 +409,25 @@ proc leaflet_sorter {species taillist analysis_start} {
         $downsel delete
         incr counter
     }
-
+    puts "test"
     for {set frm 0} {$frm <= $analysis_start} {incr frm} {
         leaflet_check $frm $species $taillist
     }
     
     puts "Leaflet sorting complete!"
 }
+
+# tail_analyzer returns $taillist, a nested list: 
+# top level is by species
+# mid level is by tail in species
+# bottom level is by beads in tail
+# e.g. a membrane with DO and DP lipids would be: 
+
+# |-------------------------------------taillist------------------------------------|
+#   |------------------DO-----------------| |------------------DP-----------------|
+#     |-----tail0-----| |-----tail1-----|     |-----tail0-----| |-----tail1-----|
+#
+# { { {C1A C2A C3A C4A} {C1B C2B C3B C4B} } { {C1A D2A C3A C4A} {C1B D2B C3B C4B} } } 
 
 proc tail_analyzer { species } {
     set taillist []
@@ -378,9 +455,52 @@ proc tail_analyzer { species } {
             lappend taillist $tails
         }
     }
+
+    return $taillist
+}
+
+proc lipid_analyzer {species acyl_names} {
+    set numlist []
+    foreach lipid $species {
+        set sel [atomselect top "resname $lipid"]
+        set numbeads [llength [lsort -unique [$sel get name]]]
+        $sel delete
+        lappend numlist $numbeads
+    }
+
+    set starts_and_ends [heads_and_tails $species $acyl_names]
+    set starts [lindex $starts_and_ends 0]
+    set ends [lindex $starts_and_ends 1]
     
-    ;# change user3 to match tail number
-    ;# makes tails separable for tilt/order analysis
+    ;# figure out how many tails are in each lipid
+    set lenlist []
+    for {set i 0} {$i < [llength $species]} {incr i} {
+        lappend lenlist [llength [lindex $starts $i]]
+    }
+    set uniquelengths [lsort -unique $lenlist]
+
+    foreach length $uniquelengths {
+        set startsel []
+        set endsel []
+        set indices [lsearch -all $lenlist $length]
+        foreach index $indices {
+            set startseltext "resname [lindex $species $index] and name [lindex $starts $i]"
+            set endseltext "resname [lindex $species $index] and name [lindex $ends $i]"
+            lappend startsel $startseltext
+            lappend endsel $endseltext
+        }
+        set uniquelengthstartseltext [cat_list $startsel "or"]
+        set uniquelengthendseltext [cat_list $endsel "or"]
+        dict set lipids $length start $uniquelengthstartseltext
+        dict set lipids $length end $uniquelengthendseltext
+    }
+
+    return $lipids
+}
+
+;# tail_numberer changes user3 to hold a tail number.
+;# This makes different tails easily separable for tilt/order analysis
+proc tail_numberer { species taillist } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
         for {set tail 0} {$tail < [llength [lindex $taillist $lipidtype]]} {incr tail} {
             set sel [atomselect top "resname [lindex $species $lipidtype] and name [lindex [lindex $taillist $lipidtype] $tail]"]
@@ -392,8 +512,6 @@ proc tail_analyzer { species } {
             $sel delete
         }
     }
-
-    return $taillist
 }
 
 proc calc_lsq_normfactor { length } {
@@ -671,7 +789,7 @@ proc do_tilt_order_binning {res_dict outfiles leaflet_list lipid_list tilts orde
         set tiltlist []
         set orderlist []
         foreach indx $indices {
-            set tailnum [expr int([expr [lindex $tail_list $indx] - 1])]
+            set tailnum [expr int([lindex $tail_list $indx])]
             set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
                 set tilt_key "tilts_up_${species}_tail${tailnum}"
