@@ -3,14 +3,7 @@ import matplotlib
 import numpy as np
 import warnings
 import glob
-<<<<<<< HEAD
-
-sys_name = 'PO'
-inclusion_drawn = 0
-polar = False
-=======
 import os 
->>>>>>> f29f84d4eccb44eb79e73a6e25f2a8e413e322da
 
 
 # These determine the scale in your image files
