@@ -1,19 +1,24 @@
 package require pbctools
 
+;# read in the config file and save settings to dictionary key/value pairs
 proc read_config_file {path} {
     
+    ;# read file and close it
     set fp [open $path r]
     set file_data [read $fp]
     close $fp
 
     set data [split $file_data "\n"]
     foreach line $data {
+        ;# ignore comment lines
         if {[string match "#*" $line]} {
             continue
         }
+        ;# ignore empty lines
         if {$line eq ""} {
             continue
         }
+        ;# save what's left to config_dict
         set key_val [split $line "="]
         dict set config_dict [string trim [lindex $key_val 0]] [string trim [lindex $key_val 1]]
     }
@@ -87,6 +92,8 @@ proc cell_prep {config_path leaf_check} {
     dict set config_dict full_tails $full_tails
     dict set config_dict heads_and_tails $heads_and_tails
     
+    puts "cell_prep complete"
+
     return $config_dict  
 }
 
@@ -95,7 +102,7 @@ proc cell_prep {config_path leaf_check} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc start_nougat {system config_path d1 N2 start end step polar} {
+proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
@@ -116,11 +123,7 @@ proc start_nougat {system config_path d1 N2 start end step polar} {
     set min 0 
 
     ;# determine number and size of bins
-    set bindims [bin_prep $nframes $polar $min $d1 $N2]
-
-    if {$polar == 0} {
-        set bindims [update_dims $bindims 0]
-    }
+    set bindims [bin_prep $nframes $polar $min $dr_N1 $N2]
 
     ;# add all these new values to important_variables for easy transfer
     dict set config_dict start $start 

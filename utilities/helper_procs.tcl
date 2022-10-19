@@ -362,46 +362,41 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
 }
 
 ;# determines the number of bins and the step length in each dimension
-proc bin_prep {nframes polar min d1 N2} {
-    #measure box size at final frame to get bin values
-    set box_x [molinfo top get a frame [expr $nframes-1]]
-
-    if {$polar == 1} {
-        set box_r [expr int($box_x)/2]
-        set range1 [expr $box_r-$min]
-    } elseif {$polar == 0} {
-        set range1 [expr int([vecexpr $box_x floor])]
-    }
+proc bin_prep {nframes polar min dr_N1 N2} {
     
-    #calculate number of dim1 bins from d1 and range1
-    if {[expr $range1%$d1] == 0} { 
-        set N1 [expr [expr $range1/$d1]-1] 
-    } else {
-        set N1 [expr $range1/$d1]
-    }
-
-    #calculate dim2 values, based on whether polar or cartesian
     if {$polar == 1} {
-        set dthetadeg [expr 360/$N2]
-        global M_PI
-        set d2 [expr 2*$M_PI/$N2]
-    } elseif {$polar == 0} {
-        set d2 $d1
-        set box_y [molinfo top get b frame [expr $nframes-1]]
-        set range2 [expr int([vecexpr $box_y floor])]
-        if {[expr $range2 % $d2] == 0} { 
-            set N2 [expr [expr $range2/$d2]-1] 
-        } else {
-            set N2 [expr $range2/$d2]
-        }
-        set dthetadeg "NA"
-    }
+    
+        dict set bindims d1 $dr_N1
 
-    dict set bindims d1 $d1 
-    dict set bindims d2 $d2 
-    dict set bindims N1 $N1 
-    dict set bindims N2 $N2 
-    dict set bindims dthetadeg $dthetadeg 
+        #measure box size at final frame to get bin values
+        set box_x [molinfo top get a frame [expr $nframes-1]]
+
+        set box_r [expr int($box_x)/2]
+        set rrange [expr $box_r-$min]
+        
+        #calculate number of dim1 bins from d1 and range1
+        if {[expr $rrange%$d1] == 0} { 
+            dict set bindims N1 [expr [expr $rrange/$d1]-1] 
+        } else {
+            dict set bindims N1 [expr $rrange/$d1]
+        }
+
+        #calculate dtheta in degrees and radians
+        dict set bindims dthetadeg [expr 360/[expr $N2*1.0]]
+        global M_PI
+        dict set bindims d2 [expr 2*$M_PI/$N2]
+        dict set bindims N2 $N2
+    
+    } elseif {$polar == 0} {
+
+        dict set bindims N1 $dr_N1
+        ;# fix this if you ever want to implement rectangular systems
+        dict set bindims N2 $dr_N1
+        
+        set bindims [update_dims $bindims 0]
+
+        dict set bindims dthetadeg "NULL"
+    }
 
     return $bindims
 }
@@ -453,12 +448,6 @@ proc grab_sel_info {sel ref_height} {
 proc update_dims {bindims frm} {
     set x [molinfo top get a frame $frm]
     set y [molinfo top get b frame $frm]
-
-    if {$frm == 0} {
-        ;# interpret d1 to be N1 instead
-        dict set bindims N1 [dict get $bindims d1]
-        dict set bindims N2 [dict get $bindims N1] 
-    }
 
     dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
     dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
