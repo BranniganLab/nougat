@@ -195,14 +195,14 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
     set file [dict get $outfiles $selex $key fname]
 
     if {$polar == 1} {
-        set N2 [expr $N2-1.0]
+        set N2 [expr $N1+1.0]
     }
 
     ;# starts new line in outfile with bin values
-    for {set m 0.0} {$m <= $N1} {set m [expr $m+1.0]} {
+    for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
         print_line_init $file $m $d1 $min
         ;# prints bin values through ultimate value in one line
-        for {set n 0.0} {$n <= $N2} {set n [expr $n+1.0]} {
+        for {set n 0.0} {$n < $N2} {set n [expr $n+1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
             } else {
@@ -448,6 +448,22 @@ proc grab_sel_info {sel ref_height} {
     return $sel_info
 }
 
+proc update_dims {bindims frm} {
+    set x [molinfo top get a frame $frm]
+    set y [molinfo top get b frame $frm]
+
+    if {$frm == 0} {
+        ;# interpret d1 to be N1 instead
+        dict set bindims N1 [dict get $bindims d1]
+        dict set bindims N2 [dict get $bindims N1] 
+    }
+
+    dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
+    dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+
+    return $bindims
+}
+
 ;# concatenate all beadnames together for file naming purposes
 proc concat_names { headnames } {
     if {[llength $headnames] > 1} {
@@ -508,7 +524,7 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
 ;# calculates the normalization factor for density enrichment calculations
 proc output_density_norm_info {start nframes step species system headnames coordsys} {
     set arealist []
-    for {set frm $start} {$frm < $nframes} {set frm [expr $frm+$step]} {
+    for {set frm $start} {$frm <= $nframes} {set frm [expr $frm+$step]} {
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]

@@ -90,7 +90,7 @@ proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
     if {$end == -1} {
-        set nframes $maxframes
+        set nframes [expr $maxframes-1]
     } elseif {($end < $maxframes) || ($end > $start)} {
         set nframes $end
     } else {
@@ -103,6 +103,10 @@ proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
 
     ;# determine number and size of bins
     set bindims [bin_prep $nframes $polar $min $d1 $N2]
+
+    if {$polar == 0} {
+        set bindims [update_dims $bindims 0]
+    }
 
     ;# add all these new values to important_variables for easy transfer
     dict set config_dict start $start 
@@ -127,7 +131,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
         puts "polar must be 1 or 0"
         break
     }
-    
+
     ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
      
@@ -147,10 +151,10 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
     puts "Setup complete. Starting frame analysis now."   
 
     ;# start frame looping here
-    for {set frm [dict get $config_dict start]} {$frm < [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
+    for {set frm [dict get $config_dict start]} {$frm <= [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
 
         if {$polar == 0} {
-            #set bindims [update_dims $bindims $frm]
+            set bindims [update_dims $bindims $frm]
         }
         
         ;# update leaflets in case lipids have flip-flopped
