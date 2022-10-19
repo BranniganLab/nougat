@@ -1,7 +1,7 @@
 
 qwrap_path = ~/PolarHeightBinning/utilities
 vecexpr_path = ~/PolarHeightBinning/utilities
-
+utilities_path = ~/PolarHeightBinning/utilities
 
 
 
