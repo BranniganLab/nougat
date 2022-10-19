@@ -800,9 +800,11 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
 
 if __name__ == "__main__": 
-  run_nougat("lgPO", True, False)
-  #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]: 
-  #  os.chdir(system)
-  #  os.chdir('newleaf_polar')
-  #  run_nougat(system, True, False)
-  #  os.chdir('../..')
+  run_nougat("dicttest", False, False)
+  #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
+    #os.chdir("lgPO")
+    #os.chdir('newleaf_polar')
+    #run_nougat(system, True, False)
+    #os.chdir('newleaf_polar')
+    #run_nougat("lgPO", True, False)
+    #os.chdir('../..')
