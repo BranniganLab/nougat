@@ -3,10 +3,14 @@ import matplotlib
 import numpy as np
 import warnings
 import glob
+<<<<<<< HEAD
 
 sys_name = 'PO'
 inclusion_drawn = 0
 polar = False
+=======
+import os 
+>>>>>>> f29f84d4eccb44eb79e73a6e25f2a8e413e322da
 
 
 # These determine the scale in your image files
@@ -15,8 +19,8 @@ height_min = -60
 height_max = 60
 mean_curv_min = 0.05
 mean_curv_max = -0.05
-gauss_curv_min = -0.05
-gauss_curv_max = 0.05
+gauss_curv_min = -0.001
+gauss_curv_max = 0.001
 density_min = 0
 density_max = 2
 thick_min = 5
@@ -24,7 +28,7 @@ thick_max = 15
 order_min = .15
 order_max = .45
 
-field_list = ["zone","ztwo"]
+field_list = ["zone","ztwo", "zzero"]
 
 def dimensions_analyzer(data, polar):
   # figure out how many radial bins there are
@@ -165,7 +169,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
           del2y = curvature_inputs[row,col-1,frm] + curvature_inputs[row,col+1,frm] - 2*curvature_inputs[row,col,frm]
           del2y = del2y / (d2**2)
 
-          delxy = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
+          delxy = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + 2*curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
           delxy = delxy/(2*d1*d2)
 
           #delxy = curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm]
@@ -237,7 +241,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
           delr = (curvature_inputs[row+1,col,frm] - curvature_inputs[row-1,col,frm])/(2*d1)
           
           #calculate d2h/drdtheta
-          delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
+          delrdeltheta = (curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col,frm] - curvature_inputs[row,col+1,frm] + 2*curvature_inputs[row,col,frm] - curvature_inputs[row-1,col,frm] - curvature_inputs[row,col-1,frm] + curvature_inputs[row-1,col-1,frm])
           delrdeltheta = delrdeltheta/(2*d1*d2)
 
           #calculate dh/dtheta
@@ -465,7 +469,9 @@ def init_curvature_data(height, polar, dims):
 
 def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
-  for field in ["zone", "ztwo", "zzero", "zplus"]: 
+  leaflist = field_list.copy()
+  leaflist.append("zplus")
+  for field in leaflist: 
     field_height = np.load(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
 
     curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, dims)
@@ -654,8 +660,6 @@ def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, po
         tot_order = tot_order + order_per_tail
         #weight average by density!
 
-
-
 def bin_prep(sys_name, names_dict, coordsys, polar):
   sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
   N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, polar)
@@ -741,7 +745,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
 
     #do height analysis
     for bead in names_dict['beads_list']:
-      for field in ['zone', 'ztwo', 'zzero']:
+      for field in field_list:
 
         #import traj values
         height_data = np.genfromtxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
@@ -773,8 +777,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
 
   return 
 
-if __name__ == "__main__": 
-
+def run_nougat(sys_name, polar, inclusion_drawn):
   if inclusion_drawn is True:
     inclusion = add_inclusion(name, field_list)
   else:
@@ -795,18 +798,18 @@ if __name__ == "__main__":
   analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
   for bead in names_dict['beads_list']:
-  
-    #calculate thickness
     calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
-
-    #calculate curvature
     calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
-
-  #analyze density
+  
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-
-  #analyze order
   calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
-
-  #analyze tilts
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
+
+
+if __name__ == "__main__": 
+  run_nougat("lgPO", True, False)
+  #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]: 
+  #  os.chdir(system)
+  #  os.chdir('newleaf_polar')
+  #  run_nougat(system, True, False)
+  #  os.chdir('../..')

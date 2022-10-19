@@ -9,66 +9,40 @@ package require pbctools
 set UTILS "/home/jje63/Documents/Github_Repos/nougat/utilities"
 
 source ${UTILS}/helper_procs.tcl
-load ${UTILS}/qwrap.so
-load ${UTILS}/vecexpr.so
-#load ~/qwrap/qwrap.so 
-#load ~/vecexpr/vecexpr.so 
 
-proc cell_prep {system end} {
+set CONFIG_PATH "~/PolarHeightBinning/nougat_config.txt"
 
-    ;# set lastframe based on $end input
-    if {$end == -1} {
-        set lastframe [expr [molinfo top get numframes] -1]
-    } else {
-        set lastframe $end
-    }
-    
-    ;#**********************************************************
-    ;#          MAKE EDITS BELOW BEFORE STARTING
-    ;#********************************************************** 
+proc cell_prep {config_path leaf_check} {
 
-    ;# provide atomselection-style text that defines what is in your inclusion 
-    set inclusion_sel "(resname AU and resid 1)"
+    set config_dict [read_config_file $config_path]
 
-    ;# provide atomselection-style text that defines anything that isn't your inclusion_sel 
-    ;# or membrane
-    ;# E.G. solvent, ions, other molecules that aren't membrane lipids
-    set excluded_sel "resname W CHOL ION 'CL-' 'NA+' LIG lig AU"
+    load [dict get $config_dict qwrap_path]/qwrap.so
+    load [dict get $config_dict vecexpr_path]/vecexpr.so
 
     ;# figures out which lipids are in the system
     ;# no edits required
-    set lipidsel [atomselect top "not $inclusion_sel and not $excluded_sel"]
+    set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
     set species [lsort -unique [$lipidsel get resname]]
-    set acyl_names [tail_analyzer $species]
+    set tail_info [tail_analyzer $species]
+    set acyl_names [lindex $tail_info 0]
+    set heads_and_tails [lindex $tail_info 1]
+    set full_tails [lindex $tail_info 2]
     $lipidsel delete
 
-    ;# provide atomselection-style text that defines what bead(s) should be centered and wrapped around
-    ;# usually, this would be name BB for proteins
-    ;# for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
+    ;# need to manually substitute variables into the config_dict when applicable
+    foreach key [dict keys $config_dict] {
+        dict set config_dict $key [subst [dict get $config_dict $key]]
+    }
 
-    
-    set wrap_sel "(resname AU and resid 1)"
+    ;#****************************************************;#
+    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
+    ;#****************************************************;# 
 
-    ;# provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
-    ;# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
-    #set align_sel "name BB"
-
-    ;# provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.
-    ;# E.G. for 5x29 we decided resid 15 would be the 'zero-point' and all heights would be provided with reference to 
-    ;# the average position of resid 15
-    ;# IF YOU DO NOT WISH TO SET A REFERENCE POINT:
-    ;# replace the text with "NULL"
-    set reference_point "index 0"
-
-    ;# provide the beadnames that you consider to form the surface of your membrane
-    ;# we chose the top tail beads because they are what form the 'hydrophobic surface'
-    ;# in our opinion
-    set headnames "C1A C1B"
 
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
-    Center_System "$wrap_sel"
-    #Align "$align_sel"
+    Center_System [dict get $config_dict wrap_sel]
+    Align [dict get $config_dict align_sel]
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
@@ -78,35 +52,34 @@ proc cell_prep {system end} {
     ;# this will only work if your TMD helices are set to occupancy 1
     ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
+    ;# this proc is currently broken, anyways (yes, there is a github issue)
     ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
-
-    ;#**********************************************************
-    ;#          MAKE EDITS ABOVE BEFORE STARTING
-    ;#********************************************************** 
 
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
 
-    ;# sets user to 1 or 2 (or 3) depending on if the lipid is in the outer or inner leaflet (or if you want to exclude it) 
-    leaflet_sorter $species $acyl_names $lastframe
-
-    ;# one list with all the bead names for convenience
-    set full_tails []
-    foreach lipidtype $acyl_names {
-        foreach tail $lipidtype {
-            foreach bead $tail {
-                lappend full_tails $bead
-            }
+    ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
+    ;# sets user to 3 if the lipid is too horizontal to determine leaflet
+    ;# sets user to 4 if you have pore_sorter turned on
+    ;# TO USE PORE_SORTER YOU NEED TO CUSTOMIZE IT TO YOUR PROTEIN!!!
+    if {$leaf_check == 1} {
+        set end [molinfo top get numframes]
+        for {set i 0} {$i < $end} {incr i} {
+            puts $i
+            leaflet_check $i $species $heads_and_tails 1.0
         }
     }
 
-    set return_list [] 
-    lappend return_list $species 
-    lappend return_list $headnames 
-    lappend return_list $acyl_names
-    lappend return_list $full_tails
-    lappend return_list $reference_point
-    return $return_list  
+    ;#****************************************************;#
+    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
+    ;#****************************************************;# 
+
+    dict set config_dict species $species 
+    dict set config_dict acyl_names $acyl_names
+    dict set config_dict full_tails $full_tails
+    dict set config_dict heads_and_tails $heads_and_tails
+    
+    return $config_dict  
 }
 
 
@@ -114,34 +87,17 @@ proc cell_prep {system end} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc start_nougat {system d1 N2 start end step polar} {
+proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set important_variables [cell_prep $system $start]
-    
-    ;# unpack user-provided info from cell_prep
-    set species [lindex $important_variables 0]
-    set headnames [lindex $important_variables 1]
-    set acyl_names [lindex $important_variables 2]
-    set full_tails [lindex $important_variables 3]
-    set reference_point [lindex $important_variables 4]
-
-    #need to calculate heights relative to some point (usually on the inclusion):
-    if {$reference_point ne "NULL"} {
-        set ref_bead [atomselect top "$reference_point"]
-        set ref_height [$ref_bead get z]
-        $ref_bead delete
-        set ref_height [vecexpr $ref_height mean]
-    } else {
-        set ref_height "NULL"
-    }
+    set config_dict [cell_prep $CONFIG_PATH 0]
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
     if {$end == -1} {
         set nframes $maxframes
-    } elseif {($end <= $maxframes) || ($end > $start)} {
+    } elseif {($end < $maxframes) || ($end > $start)} {
         set nframes $end
     } else {
         puts "you specified a frame number that is outside the allowable range"
@@ -155,39 +111,19 @@ proc start_nougat {system d1 N2 start end step polar} {
     set bindims [bin_prep $nframes $polar $min $d1 $N2]
 
     ;# add all these new values to important_variables for easy transfer
-    lappend important_variables $start 
-    lappend important_variables $nframes 
-    lappend important_variables $step 
-    lappend important_variables $ref_height
-    lappend important_variables $min
+    dict set config_dict start $start 
+    dict set config_dict nframes $nframes 
+    dict set config_dict step $step 
+    dict set config_dict min $min
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $important_variables $bindims $polar "height_density" 
-    run_nougat $system $important_variables $bindims $polar "tilt_order" 
-
+    run_nougat $system $config_dict $bindims $polar "height_density" 
+    run_nougat $system $config_dict $bindims $polar "tilt_order" 
 }
 
-proc run_nougat {system important_variables bindims polar quantity_of_interest} {  
-
-    ;# unpack important_variables
-    set species [lindex $important_variables 0]
-    set headnames [lindex $important_variables 1]
-    set acyl_names [lindex $important_variables 2]
-    set full_tails [lindex $important_variables 3]
-    set start [lindex $important_variables 5]
-    set nframes [lindex $important_variables 6]
-    set step [lindex $important_variables 7]
-    set ref_height [lindex $important_variables 8]
-    set min [lindex $important_variables 9]
+proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
     
-    ;# unpack bindims
-    set d1 [lindex $bindims 0]
-    set d2 [lindex $bindims 1]
-    set N1 [lindex $bindims 2]
-    set N2 [lindex $bindims 3]
-    set dthetadeg [lindex $bindims 4]
-
     ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
         set coordsys "polar"
@@ -199,14 +135,14 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
     
     ;# outfiles setup as dict
-    set outfiles [create_outfiles $system $quantity_of_interest [concat_names $headnames] $species $acyl_names $coordsys]
+    set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
      
     ;#atomselections setup as dict
     if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname $species and name $full_tails"]
-        dict set selections z0 [atomselect top "resname $species and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
+        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
     } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter $species $acyl_names]
+        set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
         set sellist [lindex $lists 0]
         set lenlist [lindex $lists 1]
         foreach sel $sellist len $lenlist {
@@ -214,24 +150,22 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
         }
     }
 
-
     puts "Setup complete. Starting frame analysis now."   
 
     ;# start frame looping here
-    for {set frm $start} {$frm < $nframes} {incr frm $step} {
+    for {set frm [dict get $config_dict start]} {$frm < [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
+
+        if {$polar == 0} {
+            #set bindims [update_dims $bindims $frm]
+        }
         
         ;# update leaflets in case lipids have flip-flopped
-        if {$step == 1} {
-            leaflet_check $frm $species $acyl_names
-        } elseif {$step > 1} {
-            if {$frm != $start} {
-                for {set frame [expr $step - 1]} {$frame >= 0} {set frame [expr $frame - 1]} {
-                    leaflet_check [expr $frm - $frame] $species $acyl_names
-                }
-            }
-        }
+        leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0
 
         puts "$system $quantity_of_interest $frm"
+
+        #need to calculate heights relative to some point (usually on the inclusion):
+        set ref_height [calc_ref_height $config_dict $frm]
         
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
@@ -241,56 +175,36 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
             
             ;# $selex is a dict key that holds an atomselection as its value
             set sel [dict get $selections $selex]
-            
+
             $sel frame $frm 
             $sel update
 
-            set xvals_list [$sel get x]
-            set yvals_list [$sel get y]
-            set resid_list [$sel get resid]
-            set lipid_list [$sel get resname]
-            set name_list [$sel get name]
-
-            ;# the z vals are subtracted by a reference height provided in cell_prep 
-            if {$ref_height ne "NULL"} {
-                set zvals_list [vecexpr [$sel get z] $ref_height sub]
-            } else {
-                set zvals_list [$sel get z]
-            }   
-            
-            ;# user contains a 1 or 2 for outer or inner leaflet, respectively
-            set leaflet_list [$sel get user]
-
-            ;# user3 contains an int that describes which tail in the lipid this is
-            ;# E.G. POPC will have 0 or 1 (it has two tails)
-            ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
-            set tail_list [$sel get user3]
-            set tail_list [vecexpr $tail_list 1 sub]
+            ;# assemble all data (x,y,z,user, etc) into a dict of lists
+            set sel_info [grab_sel_info $sel $ref_height]
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
-            set bins [bin_assigner $xvals_list $yvals_list $d1 $d2 $dthetadeg $polar]
+            set bins [bin_assigner [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
-            set res_dict [create_res_dict $species $headnames $lipid_list $name_list $resid_list $dim1_bins_list $dim2_bins_list $leaflet_list $selex]
+            set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] [dict get $sel_info resid_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [do_height_density_binning $res_dict $outfiles $leaflet_list $lipid_list $zvals_list]
+                set outfiles [height_density_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] [dict get $sel_info zvals_list] [dict get $sel_info name_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
-                set tilts [tilt_angles [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set orders [order_params [dict keys $selections] $xvals_list $yvals_list $zvals_list]
-                set outfiles [do_tilt_order_binning $res_dict $outfiles $leaflet_list $lipid_list $tilts $orders $tail_list $selex]
-
+                set tilts [tilt_angles [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
+                set orders [order_params [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
+                set outfiles [tilt_order_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] $tilts $orders [dict get $sel_info tail_list] $selex]
             }
 
             ;# Now that all information has been binned, print it to files
             dict for {key val} [dict get $outfiles $selex] {
-                print_frame $N1 $outfiles $key $d1 $min $N2 $polar $selex
+                print_frame [dict get $bindims N1] $outfiles $key [dict get $bindims d1] [dict get $config_dict min] [dict get $bindims N2] $polar $selex
 
                 ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
@@ -298,7 +212,13 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
 
             ;# cleanup before next step
             dict remove res_dict
+            dict remove sel_info
         }
+    }
+
+    ;# output density normalization info 
+    if {$quantity_of_interest eq "height_density"} {
+        output_density_norm_info [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys
     }
 
     ;# close all outfiles
@@ -307,12 +227,10 @@ proc run_nougat {system important_variables bindims polar quantity_of_interest} 
     }
 
     ;# delete all atomselections in scope
+    ;# if the user defined atomselections in their VMD session,
+    ;# these will be out of scope and cause an error.
+    ;# catch will ignore this error, as it's not important to the user.
     foreach selection [atomselect list] {
-        $selection delete
-    }
-
-    ;# output density normalization info 
-    if {$quantity_of_interest eq "height_density"} {
-        output_density_norm_info $start $nframes $step $species $system $headnames $coordsys
+        catch {$selection delete}
     }
 }

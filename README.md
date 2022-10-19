@@ -21,6 +21,8 @@ Python3
 numpy
 matplotlib
 warnings
+glob
+os
 ```
 
 ### Github Dependencies:
@@ -32,21 +34,21 @@ github.com/jhenin/vecexpr
 
 ## How To Use Nougat:
 ### What will it do?
-nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame. nougat.py will read in those .dat files, extract curvature and thickness information from the heights, generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. Beadcolor.tcl will import curvature and density data into the user fields of the pdb file in VMD.
+nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame. nougat.py will read in those .dat files, extract curvature and thickness information from the heights, generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. 
 
 ### Make Edits and Check Your Work
 - Open nougat.tcl in the text editor of your choice and make edits to two sections:
 ```
-Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored (lines 6-7)
-Edit all of the indicated fields in cell_prep proc (lines 12-100)
+Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored 
+Edit all of the indicated fields in cell_prep proc
 ```
 - Open VMD and load your structure and trajectory files. 
-- Ideally, ensure that your first frame contains a flat bilayer IE the starting condition from your simulation
+- Delete frame 0
 - Open the tkConsole
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
-cell_prep [the name you wish to use for your files e.g. "PO" for a 100% POPC system] -1
+cell_prep 1
 ```
 - After completion, visually inspect your trajectory in VMD for the following:
 ```
