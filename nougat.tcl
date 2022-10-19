@@ -1,20 +1,31 @@
 package require pbctools
 
-# EDIT THE PATHS HERE
-# TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
-#set QWRAP "~/qwrap-master"
-#set VEC "~/utilities/vecexpr"
+proc read_config_file {path} {
+    
+    set fp [open $path r]
+    set file_data [read $fp]
+    close $fp
 
-set UTILS "/home/jje63/Documents/Github_Repos/nougat/utilities"
+    set data [split $file_data "\n"]
+    foreach line $data {
+        if {[string match "#*" $line]} {
+            continue
+        }
+        if {$line eq ""} {
+            continue
+        }
+        set key_val [split $line "="]
+        dict set config_dict [string trim [lindex $key_val 0]] [string trim [lindex $key_val 1]]
+    }
 
-source ${UTILS}/helper_procs.tcl
-
-set CONFIG_PATH "~/PolarHeightBinning/nougat_config.txt"
+    return $config_dict
+}
 
 proc cell_prep {config_path leaf_check} {
 
     set config_dict [read_config_file $config_path]
 
+    source [dict get $config_dict utilities_path]/helper_procs.tcl 
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
@@ -85,11 +96,11 @@ proc cell_prep {config_path leaf_check} {
 ;########################################################################################
 ;# polarHeight Functions
 
-proc start_nougat {system CONFIG_PATH d1 N2 start end step polar} {
+proc start_nougat {system config_path d1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
-    set config_dict [cell_prep $CONFIG_PATH 0]
+    set config_dict [cell_prep $config_path 0]
 
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
