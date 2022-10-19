@@ -5,7 +5,6 @@ package require pbctools
 #set QWRAP "~/qwrap-master"
 #set VEC "~/utilities/vecexpr"
 
-
 set UTILS "/home/jje63/Documents/Github_Repos/nougat/utilities"
 
 source ${UTILS}/helper_procs.tcl
@@ -37,7 +36,6 @@ proc cell_prep {config_path leaf_check} {
     ;#****************************************************;#
     ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
     ;#****************************************************;# 
-
 
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
@@ -191,6 +189,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
+
             set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] [dict get $sel_info resid_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
