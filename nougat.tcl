@@ -1,8 +1,12 @@
 package require pbctools
 
-# EDIT THE PATH HERE
-# TELL nougat WHERE TO FIND YOUR UTILITIES FOLDER
-set UTILS "~/PolarHeightBinning/utilities"
+# EDIT THE PATHS HERE
+# TELL nougat WHERE TO FIND YOUR VERSIONS OF qwrap AND vecexpr
+#set QWRAP "~/qwrap-master"
+#set VEC "~/utilities/vecexpr"
+
+set UTILS "/home/jje63/Documents/Github_Repos/nougat/utilities"
+
 source ${UTILS}/helper_procs.tcl
 
 set CONFIG_PATH "~/PolarHeightBinning/nougat_config.txt"
@@ -14,7 +18,7 @@ proc cell_prep {config_path leaf_check} {
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
-    ;# figures out which lipids and beads are in the system
+    ;# figures out which lipids are in the system
     ;# no edits required
     set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
     set species [lsort -unique [$lipidsel get resname]]
@@ -189,6 +193,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
+
             set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] [dict get $sel_info resid_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
