@@ -116,7 +116,7 @@ proc heads_and_tails {species taillist} {
 ;# and assigns user to 1 or 2 for outer or inner leaflet.
 ;# Needs to be revised to just take the 'top' bead in a lipid
 ;# rather than hard-code PO4
-proc leaflet_check {frm species heads_and_tails window} {
+proc leaflet_check {frm species heads_and_tails window pore_sort} {
     set starts [lindex $heads_and_tails 0]
     set ends [lindex $heads_and_tails 1]
 
@@ -168,8 +168,10 @@ proc leaflet_check {frm species heads_and_tails window} {
         $total_sel delete
     }
 
-    ;# custom pore sorting proc for 5x29 and 7k3g
-    pore_sorter_custom $frm $species "7k3g"
+    if {$pore_sort eq "ON"} {
+        ;# custom pore sorting proc for 5x29 and 7k3g
+        pore_sorter_custom $frm $species "5x29"
+    }
 }
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
@@ -696,27 +698,6 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
         }
     }
     return $outfiles
-}
-
-proc read_config_file {path} {
-    
-    set fp [open $path r]
-    set file_data [read $fp]
-    close $fp
-
-    set data [split $file_data "\n"]
-    foreach line $data {
-        if {[string match "#*" $line]} {
-            continue
-        }
-        if {$line eq ""} {
-            continue
-        }
-        set key_val [split $line "="]
-        dict set config_dict [string trim [lindex $key_val 0]] [string trim [lindex $key_val 1]]
-    }
-
-    return $config_dict
 }
 
 ;#********************************;#

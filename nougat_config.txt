@@ -48,3 +48,8 @@ reference_point = name BB and resid 15
 # in our opinion
 
 headnames = C1A C1B
+
+
+# custom pore sorter
+
+pore_sorter = ON

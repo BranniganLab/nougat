@@ -74,8 +74,8 @@ proc cell_prep {config_path leaf_check} {
     if {$leaf_check == 1} {
         set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
-            puts $i
-            leaflet_check $i $species $heads_and_tails 1.0
+            puts "leaflet check frame $i"
+            leaflet_check $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
         }
     }
 
@@ -173,7 +173,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
         }
         
         ;# update leaflets in case lipids have flip-flopped
-        leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0
+        leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
 
         puts "$system $quantity_of_interest $frm"
 
