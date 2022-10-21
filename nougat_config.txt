@@ -48,3 +48,9 @@ reference_point = NULL
 # in our opinion
 
 headnames = C1A C1B
+
+
+# custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
+# before turning this on!
+
+pore_sorter = ON
