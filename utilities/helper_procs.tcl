@@ -169,7 +169,7 @@ proc leaflet_check {frm species heads_and_tails window} {
     }
 
     ;# custom pore sorting proc for 5x29 and 7k3g
-    pore_sorter_custom $frm $species "7k3g"
+    #pore_sorter_custom $frm $species "7k3g"
 }
 
 ;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian

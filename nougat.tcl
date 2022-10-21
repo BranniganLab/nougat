@@ -51,7 +51,7 @@ proc cell_prep {config_path leaf_check} {
     ;# center, wrap, and align the system
     ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
     Center_System [dict get $config_dict wrap_sel]
-    Align [dict get $config_dict align_sel]
+    #Align [dict get $config_dict align_sel]
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
@@ -78,7 +78,6 @@ proc cell_prep {config_path leaf_check} {
             leaflet_check $i $species $heads_and_tails 1.0
         }
     }
-
     ;#****************************************************;#
     ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
     ;#****************************************************;# 
