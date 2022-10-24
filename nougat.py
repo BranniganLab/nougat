@@ -18,13 +18,13 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-order_min = .1
-order_max = .4
+order_min = -1
+order_max = 1
 
 field_list = ["zone","ztwo", "zzero"]
 
 def dimensions_analyzer(data, polar):
-  # figure out how many radial bins there are
+  # figure out how many radial or x bins there are
   counter = 1
   flag = True
   match_value = data[0,0]
@@ -38,17 +38,25 @@ def dimensions_analyzer(data, polar):
     except IndexError:
       flag = False
   N1_bins = counter
-  d1 = data[0,1] - data[0,0]
+  
 
-  #figure out how many azimuthal bins there are
+  #figure out how many azimuthal or y bins there are
   N2_bins = len(data[0,:]) - 2
-  if polar is True:
-    d2 = (np.pi*2)/N2_bins
-  elif polar is False:
-    d2 = d1
-
+  
   #figure out how many frames there are in the traj
   Nframes = int(len(data[:,0])/N1_bins)
+
+  if polar is True:
+    d1 = data[0,1] - data[0,0]
+    d2 = (np.pi*2)/N2_bins
+  elif polar is False:
+    #compute average d1, assume d2 is the same
+    d1list = []
+    for row in range(Nframes):
+      d1list.append(data[row*N1_bins,1])
+    d1 = np.mean(d1list)
+    d2 = d1
+
 
   return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
@@ -800,7 +808,7 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
 
 if __name__ == "__main__": 
-  run_nougat("dicttest", False, False)
+  run_nougat("avgtest", False, False)
   #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
     #os.chdir("lgPO")
     #os.chdir('newleaf_polar')

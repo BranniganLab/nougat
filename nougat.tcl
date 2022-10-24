@@ -173,7 +173,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
         if {$polar == 0} {
             set bindims [update_dims $bindims $frm]
         }
-        
+
         ;# update leaflets in case lipids have flip-flopped
         leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
 
@@ -186,8 +186,9 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
+
         foreach selex [dict keys $selections] {
-            
+
             ;# $selex is a dict key that holds an atomselection as its value
             set sel [dict get $selections $selex]
 
@@ -206,7 +207,6 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
             ;# Binning is controlled by the bead designated in $headnames.
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
-
             set res_dict [create_res_dict [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] [dict get $sel_info resid_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them

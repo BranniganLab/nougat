@@ -422,8 +422,7 @@ proc grab_sel_info {sel ref_height} {
 
     ;# warn the user if a selection is empty
     if {[llength [dict get $sel_info xvals_list]] == 0} {
-        puts "selection $selex has no atoms in it - frame $frm selection $selex"
-        break
+        puts "selection $sel has no atoms in it"
     }
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
