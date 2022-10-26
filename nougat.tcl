@@ -31,6 +31,7 @@ proc cell_prep {config_path leaf_check} {
     set config_dict [read_config_file $config_path]
 
     source [dict get $config_dict utilities_path]/helper_procs.tcl 
+    source [dict get $config_dict utilities_path]/JS_helpers.tcl
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
@@ -54,9 +55,14 @@ proc cell_prep {config_path leaf_check} {
     ;#****************************************************;# 
 
     ;# center, wrap, and align the system
-    ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
-    Center_System [dict get $config_dict wrap_sel]
-    Align [dict get $config_dict align_sel]
+    if {[dict exists $config_dict wrap_sel]} {
+        Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]
+    }
+    
+    
+    if {[dict exists $config_dict align_sel]} {
+        Align [dict get $config_dict align_sel]
+    }
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work

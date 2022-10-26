@@ -29,7 +29,7 @@ wrap_sel = resname $species
 
 
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
-# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
+# if your inclusion tumbles in the membrane (like a nanoparticle), comment out align_sel below
 
 align_sel = name BB
 
@@ -53,4 +53,4 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-pore_sorter = OFF
+pore_sorter = ON

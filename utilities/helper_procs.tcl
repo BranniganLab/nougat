@@ -688,6 +688,33 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
     return $outfiles
 }
 
+proc set_beta_vals {inclusion_sel species} {
+    
+    set inclusion [atomselect top $inclusion_sel]
+    $inclusion set beta 0
+    $inclusion delete 
+
+    set counter 1
+
+    set excl_sel [atomselect top "not $inclusion_sel"]
+    set other_resnames [lsort -unique [$excl_sel get resname]]
+    $excl_sel delete
+
+    foreach resnm $other_resnames {
+        set res_sel [atomselect top "resname $resnm"]
+        set resids [lsort -unique [$res_sel get resid]]
+        $res_sel delete
+
+        foreach resid $resids {
+            set sel [atomselect top "resname $resnm and resid $resid"]
+            $sel set beta $counter 
+            incr counter
+            $sel delete
+        }
+    }
+    return
+}
+
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
@@ -821,44 +848,14 @@ proc Protein_Position {name hnames tnames} {
     }
 }
 
-proc Center_System {inpt} {
-    puts "${inpt}"
+proc Center_System {wrap_sel species inclusion_sel} {
+    puts "${wrap_sel}"
     puts "Center_System now running"
-    ;# confirms your box is either square or paraelleogram-ish
-    ;# will preform qwrap or pbc wrap depending
+    
+    set_beta_vals $inclusion_sel $species
+    qunwrap sel $wrap_sel
+    qwrap sel all center $wrap_sel compound beta 
 
-    set pbc_angles [molinfo top get {alpha beta gamma}]
-    
-    set sel [atomselect top "$inpt" frame 0]
-    set com [measure center $sel weight mass]
-    
-    set counter_i 0
-    ;# continues to try and recenter's box until ~ 0'ed out
-    while {[expr abs([lindex $com 0])] > 1.0 &&  [expr abs([lindex $com 1])] > 1.0} {
-        
-        if {$counter_i > 5} {
-            puts "Script was unable to converge system to (0,0,0)"
-            puts "Please check your system visually, there may be"
-            puts "unintended artifacts"
-            $sel delete
-            return
-        }
-        
-        if {([lindex $pbc_angles 0]!=90.0) && ([lindex $pbc_angles 1]!=90.0) && ([lindex $pbc_angles 2]!=90.0)} {
-            puts "qwrap may not be optimal for your system...\n"
-            puts "Running pbc wrap. To verify proper centering"
-            puts "pbc wrap will be run multiple times" ; after 100
-            foreach i {0 1 2 3} {
-                pbc wrap -centersel "$inpt" -all
-            }
-        } else {
-            qunwrap sel $inpt
-            qwrap sel all center $inpt ;#center entire system at ~0,0,0
-        }
-        set com [measure center $sel weight mass]
-        incr counter_i
-    }
-    $sel delete
     puts "Center_System finished!"
 }
 
