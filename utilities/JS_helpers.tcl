@@ -80,3 +80,85 @@ proc run_mult {list_of_systems} {
         cd ..
     }
 }
+
+proc read_order_params {} {
+    set fp0 [open "~/Downloads/AVGPC1A.dat" r]
+    set fp1 [open "~/Downloads/AVGPC1B.dat" r]
+    set tail0 [read $fp0]
+    set tail1 [read $fp1]
+    close $fp0 
+    close $fp1 
+
+    set counter 0
+    foreach dataset [list $tail0 $tail1] {
+        
+        set line [split $dataset "\n"]
+        foreach row $line {
+            set cols [split $row]
+            set resd [lindex $cols 0]
+            set order [lindex $cols 1]
+            if {$resd eq "index"} {
+                continue
+            }
+            if {$resd ne ""} {
+                if {$counter == 0} {
+                    set sel [atomselect top "resname POPC and resid $resd and name C1A D2A C3A C4A" frame 354]
+                } elseif {$counter == 1} {
+                    set sel [atomselect top "resname POPC and resid $resd and name C1B C2B C3B C4B" frame 354]
+                } else {
+                    puts "something broke"
+                    break
+                }
+                $sel set user2 $order 
+
+                $sel delete
+            } else {
+                continue
+            }
+        }
+        set counter 1
+    }
+}
+
+proc compare_lists {orders_from_nougat resids names} {
+    read_order_params
+    set shadow_sel [atomselect top "resname POPC and name C1A C1B" frame 354]
+    set shadow_resid [$shadow_sel get resid]
+    set shadow_order [$shadow_sel get user2]
+    set shadow_name [$shadow_sel get name]
+    $shadow_sel delete
+
+    set orders [lindex $orders_from_nougat 0]
+    set C1Alist []
+    set C1Blist []
+
+    for {set i 0} {$i < [llength $shadow_order]} {incr i} {
+        set resid [lindex $shadow_resid $i]
+        set order [lindex $shadow_order $i]
+        set name [lindex $shadow_name $i]
+
+        set resmatch [lsearch -all $resids $resid]
+        set namematch [lsearch -all $names $name]
+        foreach index $resmatch {
+            if {$index in $namematch} {
+                set matchindex $index 
+            }
+        }
+
+        set diff [expr abs([expr $order - [lindex $orders $matchindex]])]
+        if {$diff > 0.000001} {
+            if {$name eq "C1B"} {
+                lappend C1Blist $resid 
+            } elseif {$name eq "C1A"} {
+                lappend C1Alist $resid
+            }
+        }
+    }
+    puts $C1Alist
+    puts $C1Blist
+}
+
+;# to use compare_lists insert the following into nougat.tcl:
+                #if {$frm == 354} {
+                #    compare_lists $orders [dict get $sel_info resid_list] [dict get $sel_info name_list]
+                #}

@@ -29,7 +29,7 @@ wrap_sel = resname AU
 
 
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
-# if your inclusion tumbles in the membrane (like a nanoparticle), comment out the align command below
+# if your inclusion tumbles in the membrane (like a nanoparticle), comment out align_sel below
 
 #align_sel = name BB
 
@@ -41,7 +41,6 @@ wrap_sel = resname AU
 # replace the text with "NULL"
 
 reference_point = index 0
-
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
