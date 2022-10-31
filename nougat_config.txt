@@ -7,7 +7,7 @@ utilities_path = /home/jje63/Documents/Github_Repos/nougat/utilities
 
 # provide atomselection-style text that defines what is in your inclusion 
 
-inclusion_sel = resname W
+inclusion_sel = resname AU
 
 
 # provide atomselection-style text that defines anything that 
@@ -21,7 +21,7 @@ excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig
 # usually, this would be name BB for proteins
 # for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-wrap_sel = resname POPC
+wrap_sel = resname AU 
 
 # IMPORTANT NOTE REGARDING VARIABLES! 
 # $species above needs to be manually substituted upon evaluation in cell_prep
@@ -40,7 +40,7 @@ wrap_sel = resname POPC
 # IF YOU DO NOT WISH TO SET A REFERENCE POINT:
 # replace the text with "NULL"
 
-reference_point = NULL
+reference_point = index 0
 
 
 # provide the beadnames that you consider to form the surface of your membrane
