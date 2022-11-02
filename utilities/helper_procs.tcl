@@ -689,29 +689,45 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
 }
 
 proc set_beta_vals {inclusion_sel species} {
-    
+    puts "starting to fill beta values"
     set inclusion [atomselect top $inclusion_sel]
     $inclusion set beta 0
     $inclusion delete 
 
     set counter 1
 
-    set excl_sel [atomselect top "not $inclusion_sel"]
+    set excl_sel [atomselect top "not $inclusion_sel and not resname W"]
     set other_resnames [lsort -unique [$excl_sel get resname]]
     $excl_sel delete
 
     foreach resnm $other_resnames {
         set res_sel [atomselect top "resname $resnm"]
         set resids [lsort -unique [$res_sel get resid]]
-        $res_sel delete
+        
+        set sel [atomselect top "resname $resnm and resid [lindex $resids 0]"]
+        set num [$sel num]
+        $sel delete
 
-        foreach resid $resids {
-            set sel [atomselect top "resname $resnm and resid $resid"]
-            $sel set beta $counter 
-            incr counter
-            $sel delete
+        set counterlist []
+
+        for {set i 0} {$i < [llength $resids]} {incr i} {
+            for {set j 0} {$j < $num} {incr j} {
+                lappend counterlist $counter
+            }
+            incr counter 
         }
+
+        $res_sel set beta $counterlist
+
+        $res_sel delete
     }
+
+    set water_sel [atomselect top "resname W"]
+    set indxs [$water_sel get index]
+    $water_sel set beta $indxs
+    $water_sel delete
+
+    puts "beta values complete"
     return
 }
 
@@ -851,10 +867,11 @@ proc Protein_Position {name hnames tnames} {
 proc Center_System {wrap_sel species inclusion_sel} {
     puts "${wrap_sel}"
     puts "Center_System now running"
-    
+
     set_beta_vals $inclusion_sel $species
-    qunwrap sel $wrap_sel
+    #qunwrap sel $wrap_sel
     qwrap sel all center $wrap_sel compound beta 
+
 
     puts "Center_System finished!"
 }
