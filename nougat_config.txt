@@ -31,7 +31,7 @@ wrap_sel = resname $species
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
 # if your inclusion tumbles in the membrane (like a nanoparticle), comment out align_sel below
 
-align_sel = name BB
+#align_sel = name BB
 
 
 # provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.

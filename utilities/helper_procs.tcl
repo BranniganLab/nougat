@@ -869,9 +869,9 @@ proc Center_System {wrap_sel species inclusion_sel} {
     puts "Center_System now running"
 
     set_beta_vals $inclusion_sel $species
-    #qunwrap sel $wrap_sel
-    qwrap sel all center $wrap_sel compound beta 
-
+    qunwrap compound beta
+    qwrap compound beta center $inclusion_sel 
+    qwrap compound beta center $wrap_sel
 
     puts "Center_System finished!"
 }
