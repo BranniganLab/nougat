@@ -288,7 +288,7 @@ proc tail_numberer { species taillist } {
 }
 
 ;# creates two lists of bins along two dimensions based on the x,y values and the coordinate system
-proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
+proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar frm} {
     
     if {$polar == 1} {
         ;# use polar (r,theta) bins
@@ -315,12 +315,28 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
         
-        ;# shift all values so that they are temporarily positive
-        ;# no negative bin numbers allowed!
-        set xmin [vecexpr $x_vals min]
-        set ymin [vecexpr $y_vals min]
+        ;# shift all values so that values within unitcell are greater than 0 and less than unitcell len
+        set xlen [molinfo top get a frame $frm]
+        set ylen [molinfo top get b frame $frm]
+        set xmin [expr -$xlen/2.0]
+        set ymin [expr -$ylen/2.0]
         set x_vals [vecexpr $x_vals $xmin sub]
         set y_vals [vecexpr $y_vals $ymin sub]
+
+        ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
+        ;# and should be put back for binning purposes (but not for order params purposes!)
+        for {set i 0} {$i < [llength $x_vals]} {incr i} {
+            if {[lindex $x_vals $i] < 0} {
+                lset x_vals $i [expr $xlen-1.0]
+            } elseif {[lindex $x_vals $i] > $xlen} {
+                lset x_vals $i 0
+            }
+            if {[lindex $y_vals $i] < 0} {
+                lset y_vals $i [expr $ylen-1.0]
+            } elseif {[lindex $y_vals $i] > $ylen} {
+                lset y_vals $i 0
+            }
+        }
 
         ;# turn into bin numbers rather than x,y values
         set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
@@ -359,6 +375,22 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
     }
     
     return $outfiles
+}
+
+;# a proc for measuring box size - necessitated by [molinfo top get a] being unreliable 
+;# for certain coarse-grain simulations 
+proc measure_box_size {frame dim} {
+    if {($dim ne "x") && ($dim ne "y") && ($dim ne "z")} {
+        puts "dim must be x, y, or z"
+        return
+    }
+    set sel [atomselect top all frame $frame]
+    set dimvals [$sel get $dim]
+    set max [lindex [lsort -real $dimvals] end]
+    set min [lindex [lsort -real $dimvals] 0]
+    set len [expr $max-$min]
+
+    return $len
 }
 
 ;# determines the number of bins and the step length in each dimension
