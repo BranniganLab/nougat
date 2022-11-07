@@ -146,11 +146,7 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
     
     set coordsys [read_polar $polar]
-
-    ;# outfiles setup as dict
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
-     
-    ;#atomselections setup as dict
     set selections [create_atomselections $quantity_of_interest $config_dict]
 
     puts "Setup complete. Starting frame analysis now."   
