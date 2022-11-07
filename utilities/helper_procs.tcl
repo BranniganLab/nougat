@@ -763,6 +763,19 @@ proc set_beta_vals {inclusion_sel species} {
     return
 }
 
+proc read_polar {polar} {
+    ;# generate string for polar or cartesian coordinates
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    } else {
+        puts "polar must be 1 or 0"
+        break
+    }
+    return coordsys
+}
+
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
