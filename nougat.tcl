@@ -151,17 +151,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
      
     ;#atomselections setup as dict
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
-        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
-        set sellist [lindex $lists 0]
-        set lenlist [lindex $lists 1]
-        foreach sel $sellist len $lenlist {
-            dict set selections $len [atomselect top "$sel"] 
-        }
-    }
+    set selections [create_atomselections $quantity_of_interest $config_dict]
 
     puts "Setup complete. Starting frame analysis now."   
 
