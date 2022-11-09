@@ -18,8 +18,8 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-order_min = -1
-order_max = 1
+order_min = .2 
+order_max = .4
 
 field_list = ["zone","ztwo", "zzero"]
 
@@ -624,6 +624,9 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
         order_up[:,:,frm] = zone[frm*N1_bins:(frm+1)*N1_bins,2:]
         order_down[:,:,frm] = ztwo[frm*N1_bins:(frm+1)*N1_bins,2:]
 
+      order_up = mostly_empty(order_up, N1_bins, N2_bins, Nframes)
+      order_down = mostly_empty(order_down, N1_bins, N2_bins, Nframes)
+
       avgouter = calc_avg_over_time(order_up)
       avginner = calc_avg_over_time(order_down)
 
@@ -808,11 +811,10 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
 
 if __name__ == "__main__": 
-  run_nougat("avgtest", False, False)
-  #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
-    #os.chdir("lgPO")
-    #os.chdir('newleaf_polar')
-    #run_nougat(system, True, False)
+  run_nougat("lgPO", False, False)
+#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO", "lgDG", "lgDT", "lgDY"]: 
+#    os.chdir(system)
+#    run_nougat(system, False, False)
     #os.chdir('newleaf_polar')
     #run_nougat("lgPO", True, False)
-    #os.chdir('../..')
+#    os.chdir('..')
