@@ -355,6 +355,9 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
         dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
         dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
         foreach lipidtype $species {
             dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
             dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
@@ -691,28 +694,38 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
                 set field_key "z1z2"
                 set dens_key "density_up_${species}"
                 set height_key "heights_up"
+                set counts_key "counts_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
                 set dens_key "density_down_${species}"
                 set height_key "heights_down"
+                set counts_key "counts_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
                 set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
+                set counts_key "counts_zzero"
             } else {
                 puts "something has gone wrong with the binning"
                 return
             }
             if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
-                set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                set oldcount [dict get $outfiles $field_key $counts_key bin $correct_bin]
                 set newcount [expr $oldcount+1.0]
                 set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
                 set newsum [expr {$oldavg * $oldcount + [lindex $zvals_list $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $dens_key bin $correct_bin $newcount
+                dict set outfiles $field_key $counts_key bin $correct_bin $newcount
+                if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
+                    set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                    dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]
+                } else {
+                    dict set outfiles $field_key $dens_key bin $correct_bin 1.0
+                }       
             } else {
                 dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
+                dict set outfiles $field_key $counts_key bin $correct_bin 1.0
                 dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
         }
@@ -722,15 +735,21 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
 
 proc set_beta_vals {inclusion_sel species} {
     puts "starting to fill beta values"
-    set inclusion [atomselect top $inclusion_sel]
-    $inclusion set beta 0
-    $inclusion delete 
+    
+    if {$inclusion_sel ne "NULL"} {
+        set inclusion [atomselect top $inclusion_sel]
+        $inclusion set beta 0
+        $inclusion delete 
 
-    set counter 1
-
-    set excl_sel [atomselect top "not $inclusion_sel and not resname W"]
+        set excl_sel [atomselect top "not $inclusion_sel and not resname W"]
+    } else {
+        set excl_sel [atomselect top "not resname W"]
+    }
+    
     set other_resnames [lsort -unique [$excl_sel get resname]]
     $excl_sel delete
+
+    set counter 1
 
     foreach resnm $other_resnames {
         set res_sel [atomselect top "resname $resnm"]
@@ -937,7 +956,9 @@ proc Center_System {wrap_sel species inclusion_sel} {
 
     set_beta_vals $inclusion_sel $species
     qunwrap compound beta
-    qwrap compound beta center $inclusion_sel 
+    if {$inclusion_sel ne "NULL"} {
+        qwrap compound beta center $inclusion_sel 
+    }
     qwrap compound beta center $wrap_sel
 
     puts "Center_System finished!"

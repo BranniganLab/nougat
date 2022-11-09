@@ -35,49 +35,43 @@ proc cell_prep {config_path leaf_check} {
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
-    ;# figures out which lipids are in the system
-    ;# no edits required
-    set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
+    ;# figure out which lipids are in the system
+    if {[dict get $config_dict inclusion_sel] ne "NULL"} {
+        set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
+    } else {
+        set lipidsel [atomselect top "not [dict get $config_dict excluded_sel]"]
+    }
     set species [lsort -unique [$lipidsel get resname]]
+    $lipidsel delete
+
     set tail_info [tail_analyzer $species]
     set acyl_names [lindex $tail_info 0]
     set heads_and_tails [lindex $tail_info 1]
     set full_tails [lindex $tail_info 2]
-    $lipidsel delete
-
+    
     ;# need to manually substitute variables into the config_dict when applicable
     foreach key [dict keys $config_dict] {
         dict set config_dict $key [subst [dict get $config_dict $key]]
     }
 
-    ;#****************************************************;#
-    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
-    ;#****************************************************;# 
-
     ;# center, wrap, and align the system
-    if {[dict exists $config_dict wrap_sel]} {
-        Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]
-    }
-    
-    
+    Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]   
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
-    ;# comment this out or customize it for your inclusion
-    #set_occupancy top 
+    if {[dict exists $config_dict custom_occupancy]} {
+        set_occupancy top 
+    }
 
     ;# this will only work if your TMD helices are set to occupancy 1
-    ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
     ;# this proc is currently broken, anyways (yes, there is a github issue)
-    ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
-
-    ;#****************************************************;#
-    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
-    ;#****************************************************;# 
+    if {[dict exists $config_dict custom_position]} {
+        Protein_Position $system $headnames $acyl_names ;# FIX ME
+    }
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet

@@ -6,9 +6,10 @@ utilities_path = ~/PolarHeightBinning/utilities
 
 
 # provide atomselection-style text that defines what is in your inclusion 
+# if no inclusion, change to NULL 
 
-inclusion_sel = name BB SC1 to SC4
-
+#inclusion_sel = name BB SC1 to SC4
+inclusion_sel = NULL
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
@@ -22,10 +23,6 @@ excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig
 # for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
 wrap_sel = resname $species
-
-# IMPORTANT NOTE REGARDING VARIABLES! 
-# $species above needs to be manually substituted upon evaluation in cell_prep
-# if you want to use variables like this, add subst to your code
 
 
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
@@ -53,4 +50,4 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-pore_sorter = ON
+pore_sorter = OFF
