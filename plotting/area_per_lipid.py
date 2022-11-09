@@ -206,5 +206,6 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT"], "5x29")
-	#diff_mid_interface(["lgPO"], "7k3g")
+	#diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT"], "5x29")
+	diff_mid_interface(["lgPO"], "7k3g")
+	#diff_mid_interface(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
