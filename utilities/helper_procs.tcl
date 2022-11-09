@@ -350,18 +350,18 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar frm} {
 ;# density segregates by species
 ;# tilt and order segregate by species and tail number
 proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
-
+    file mkdir "tcl_output"
     if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 counts_up fname [open "${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z1z2 counts_down fname [open "${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z0 counts_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 heights_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
@@ -369,10 +369,10 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
                 set tailnum "tail$j"
                 set taillength [llength [lindex [lindex $taillist $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
         }
     }
@@ -553,7 +553,7 @@ proc output_density_norm_info {start nframes step species system headnames coord
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
+    set normfactor_outfile [open "tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
