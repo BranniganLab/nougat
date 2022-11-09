@@ -80,19 +80,25 @@ def plot_area_per_lipid(systems):
 
 	plt.show()
 
-def diff_mid_interface(systems):
+def diff_mid_interface(systems, mol):
 	for system in systems:
+		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/'+system+'.'
+		filename_end = '.C1A.C1B.cart.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
-		zzero = np.load(system+'/newleaf_cart/'+system+'.zzero.C1A.C1B.cart.height.npy')
+		zzero = np.load(filename_start+'zzero'+filename_end)
 		dims = np.shape(zzero)
 		dim1 = np.linspace(0,dims[0],dims[0]+1)
 		dim2 = np.linspace(0,dims[1],dims[1]+1)
 		dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
-		zplus = np.load(system+'/newleaf_cart/'+system+'.zplus.C1A.C1B.cart.height.npy')
+		zplus = np.load(filename_start+'zplus'+filename_end)
 		diff = zzero-zplus
 		avgdiff = np.nanmean(diff,axis=2)
-		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=5,vmin=-5)
+		print(avgdiff)
+		t0 = measure_t0(filename_start,filename_end)
+		print(t0)
+		avgdiff = avgdiff/t0
+		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.5,vmin=-.5)
 		cbar = plt.colorbar(c)
 		plt.axis('off')
 		ax.set_xticklabels([])
@@ -102,6 +108,26 @@ def diff_mid_interface(systems):
 		plt.clf()
 		plt.close()
 
+
+def measure_t0(fname_start, fname_end):
+	z1 = np.load(fname_start+'zone'+fname_end)
+	z2 = np.load(fname_start+'ztwo'+fname_end)
+
+	thickness = z1-z2
+
+	avgthickness = np.nanmean(thickness,axis=2)
+
+	leftcol = np.mean(avgthickness[:,0])
+	rightcol =  np.mean(avgthickness[:,-1])
+	toprow =  np.mean(avgthickness[0,:])
+	botrow =   np.mean(avgthickness[-1,:])
+
+
+	avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+
+	avgt0 = avgt0/2.0
+
+	return avgt0
 
 def sum_over_K(systems):
 
@@ -180,4 +206,6 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	sum_over_K(sys_list)
+	#diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT"], "5x29")
+	diff_mid_interface(["lgPO"], "7k3g")
+	#diff_mid_interface(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")

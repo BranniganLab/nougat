@@ -18,8 +18,8 @@ density_min = 0
 density_max = 2
 thick_min = 5
 thick_max = 15
-order_min = -1
-order_max = 1
+order_min = .2 
+order_max = .4
 
 field_list = ["zone","ztwo", "zzero"]
 
@@ -142,9 +142,9 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   fig.set_size_inches(6,6)
 
   if bead is False:
-    plt.savefig(name+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
+    plt.savefig('pdf/'+name+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
   else:
-    plt.savefig(name+"_"+bead+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
+    plt.savefig('pdf/'+name+"_"+bead+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
   plt.clf()
   plt.close()
 
@@ -409,8 +409,8 @@ def gen_avg_tilt(name, field, polar):
 
 def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
-  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
-  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+  zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
 
   zplus=(zone+ztwo)/2
 
@@ -422,8 +422,8 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
   plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', height_max, height_min, inclusion, "avgHeight", bead, polar)
 
   #save as file for debugging / analysis AND make PDB!
-  np.save(sys_name+'.zplus.'+bead+'.'+coordsys+'.height.npy', zplus)
-  np.savetxt(sys_name+'.zplus.'+bead+'.'+coordsys+'.avgheight.dat', avgzplus,delimiter = ',',fmt='%10.5f')
+  np.save('npy/'+sys_name+'.zplus.'+bead+'.'+coordsys+'.height.npy', zplus)
+  np.savetxt('dat/'+sys_name+'.zplus.'+bead+'.'+coordsys+'.avgheight.dat', avgzplus,delimiter = ',',fmt='%10.5f')
   serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
   print(sys_name+' '+bead+" zplus height done!")
 
@@ -473,7 +473,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
   leaflist = field_list.copy()
   leaflist.append("zplus")
   for field in leaflist: 
-    field_height = np.load(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
+    field_height = np.load('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
 
     curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, dims)
 
@@ -506,19 +506,19 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, mean_curv_max, mean_curv_min, inclusion, "curvature", bead, polar)
 
     #save as files for debugging / analysis
-    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-    np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
-    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
-    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
-    np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
+    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
+    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+    np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
+    np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
+    np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)
     
     print(sys_name+' '+bead+' '+field+" curvatures done!")
 
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
-  zone = np.load(sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
-  ztwo = np.load(sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
-  zzero = np.load(sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
+  zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+  zzero = np.load('npy/'+sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
 
   outer_leaflet = zone-zzero
   inner_leaflet = zzero-ztwo
@@ -531,20 +531,20 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
 
   #save as file for debugging / analysis AND make PDB!
-  np.save(sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
-  np.save(sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
-  np.savetxt(sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
-  np.savetxt(sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
+  np.save('npy/'+sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
+  np.save('npy/'+sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
+  np.savetxt('dat/'+sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
+  np.savetxt('dat/'+sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
 
   print(sys_name+' '+bead+" thickness done!")
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
-  areas = np.load(sys_name+".areas.npy")
+  areas = np.load('npy/'+sys_name+".areas.npy")
 
   for species in names_dict['species_list']:
-    zone = np.genfromtxt(sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
-    ztwo = np.genfromtxt(sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
+    zone = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
+    ztwo = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
 
     #create a new array that has each frame in a different array level
     density_up = np.zeros((N1_bins, N2_bins, Nframes))
@@ -557,7 +557,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     avginner = calc_avg_over_time(density_down)
 
     found = False
-    with open(sys_name+'.'+coordsys+'.density.normfactor.dat', 'r') as normfile:
+    with open('tcl_output/'+sys_name+'.'+coordsys+'.density.normfactor.dat', 'r') as normfile:
       norms = normfile.readlines()
       while found is False:
         for line in norms:
@@ -575,10 +575,10 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.inner', density_max, density_min, inclusion, "avgDensity", False, polar)
 
     #save as file for debugging / analysis 
-    np.save(sys_name+'.'+species+'.zone.'+coordsys+'.density.npy', density_up)
-    np.save(sys_name+'.'+species+'.ztwo.'+coordsys+'.density.npy', density_down)
-    np.savetxt(sys_name+'.'+species+'.zone.'+coordsys+'.avgdensity.dat', avgouter,delimiter = ',',fmt='%10.5f')
-    np.savetxt(sys_name+'.'+species+'.ztwo.'+coordsys+'.avgdensity.dat', avginner,delimiter = ',',fmt='%10.5f')
+    np.save('npy/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.npy', density_up)
+    np.save('npy/'+sys_name+'.'+species+'.ztwo.'+coordsys+'.density.npy', density_down)
+    np.savetxt('dat/'+sys_name+'.'+species+'.zone.'+coordsys+'.avgdensity.dat', avgouter,delimiter = ',',fmt='%10.5f')
+    np.savetxt('dat/'+sys_name+'.'+species+'.ztwo.'+coordsys+'.avgdensity.dat', avginner,delimiter = ',',fmt='%10.5f')
 
     print(sys_name+' '+species+" density done!")
 
@@ -594,7 +594,7 @@ def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, di
     tot_density = np.zeros((N1_bins, N2_bins, Nframes))
     
     for species in names_dict['species_list']:
-      dens_per_species = np.load(sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.density.npy')
+      dens_per_species = np.load('npy/'+sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.density.npy')
       tot_density = tot_density + dens_per_species
       #normalize?
 
@@ -604,8 +604,8 @@ def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, di
     plot_maker(dim1vals, dim2vals, tot_avg_density, sys_name, species+'.'+leaflet, density_max, density_min, inclusion, "totAvgDensity", False, polar)
 
     #save as file for debugging / analysis
-    np.save(sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.totalDensity.npy', tot_density)
-    np.savetxt(sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.totalAvgDensity.dat', tot_avg_density, delimiter = ',', fmt='%10.5f')
+    np.save('npy/'+sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.totalDensity.npy', tot_density)
+    np.savetxt('dat/'+sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.totalAvgDensity.dat', tot_avg_density, delimiter = ',', fmt='%10.5f')
 
   print("Total density done!")
 
@@ -614,8 +614,8 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
   
   for species in names_dict['species_list']:
     for tail in names_dict[species]:
-      zone = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
-      ztwo = np.genfromtxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
+      zone = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
+      ztwo = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.dat',missing_values='nan',filling_values=np.nan)
 
       #create a new array that has each frame in a different array level
       order_up = np.zeros((N1_bins, N2_bins, Nframes))
@@ -623,6 +623,9 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
       for frm in range(Nframes):
         order_up[:,:,frm] = zone[frm*N1_bins:(frm+1)*N1_bins,2:]
         order_down[:,:,frm] = ztwo[frm*N1_bins:(frm+1)*N1_bins,2:]
+
+      order_up = mostly_empty(order_up, N1_bins, N2_bins, Nframes)
+      order_down = mostly_empty(order_down, N1_bins, N2_bins, Nframes)
 
       avgouter = calc_avg_over_time(order_up)
       avginner = calc_avg_over_time(order_down)
@@ -632,10 +635,10 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
       plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', order_max, order_min, inclusion, "avgOrder", False, polar)
 
       #save as file for debugging / analysis 
-      np.save(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', order_up)
-      np.save(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.npy', order_down)
-      np.savetxt(sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.avgOrder.dat', avgouter,delimiter = ',',fmt='%10.5f')
-      np.savetxt(sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.avgOrder.dat', avginner,delimiter = ',',fmt='%10.5f')
+      np.save('npy/'+sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', order_up)
+      np.save('npy/'+sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.order.npy', order_down)
+      np.savetxt('dat/'+sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.avgOrder.dat', avgouter,delimiter = ',',fmt='%10.5f')
+      np.savetxt('dat/'+sys_name+'.'+species+'.'+tail+'.ztwo.'+coordsys+'.avgOrder.dat', avginner,delimiter = ',',fmt='%10.5f')
 
       print(sys_name+' '+species+" "+tail+" order done!")
 
@@ -657,12 +660,12 @@ def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, po
       tot_order = np.zeros((N1_bins, N2_bins, Nframes))
 
       for tail in names_dict[species]:
-        order_per_tail = np.load(sys_name+'.'+species+'.'+tail+'.'+leaflet+'.'+coordsys+'.order.npy')
+        order_per_tail = np.load('npy/'+sys_name+'.'+species+'.'+tail+'.'+leaflet+'.'+coordsys+'.order.npy')
         tot_order = tot_order + order_per_tail
         #weight average by density!
 
 def bin_prep(sys_name, names_dict, coordsys, polar):
-  sample_data = np.genfromtxt(sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+  sample_data = np.genfromtxt('tcl_output/'+sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
   N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, polar)
   
   #prep plot dimensions
@@ -688,7 +691,7 @@ def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name):
     for row in range(N1_bins):
       dist_to_center = min_val + row*d1 + d1/2.0
       areas[row,:] = areas[row,:]*dist_to_center
-  np.save(sys_name+".areas.npy", areas)
+  np.save('npy/'+sys_name+".areas.npy", areas)
 
 def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
@@ -701,6 +704,7 @@ def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   return data_array
 
 def fetch_names(sys_name, coordsys):
+  os.chdir('tcl_output')
   names_dict = {}
   names_dict['species_list'] = [] 
   names_dict['beads_list'] = []
@@ -727,6 +731,8 @@ def fetch_names(sys_name, coordsys):
     if beadname not in names_dict['beads_list']:
       names_dict['beads_list'].append(beadname)
 
+    os.chdir('..')
+
   return names_dict
 
 def unpack_dims(dims):
@@ -749,7 +755,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
       for field in field_list:
 
         #import traj values
-        height_data = np.genfromtxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+        height_data = np.genfromtxt('tcl_output/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
 
         #create a new array that has each frame in a different array level
         height = np.zeros((N1_bins, N2_bins, Nframes))
@@ -766,8 +772,8 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
         plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, height_max, height_min, inclusion, "avgHeight", bead, polar)
 
         #save as file for debugging / analysis AND make PDB!
-        np.save(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
-        np.savetxt(sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
+        np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
+        np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
         serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
         print(sys_name+' '+bead+' '+field+" height done!")
 
@@ -779,8 +785,17 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
   return 
 
 def run_nougat(sys_name, polar, inclusion_drawn):
+  cwd = os.getcwd()
+
+  for filetype in ["npy", "dat", "pdf"]:
+    dirname = os.path.join(cwd, filetype)
+    try:
+      os.mkdir(dirname) 
+    except OSError as error:
+      continue
+
   if inclusion_drawn is True:
-    inclusion = add_inclusion(name, field_list)
+    inclusion = add_inclusion(name, field_list) #this proc doesn't exist yet!
   else:
     inclusion = False
 
@@ -813,6 +828,3 @@ if __name__ == "__main__":
     #os.chdir("lgPO")
     #os.chdir('newleaf_polar')
     #run_nougat(system, True, False)
-    #os.chdir('newleaf_polar')
-    #run_nougat("lgPO", True, False)
-    #os.chdir('../..')

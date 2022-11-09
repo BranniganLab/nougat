@@ -288,7 +288,7 @@ proc tail_numberer { species taillist } {
 }
 
 ;# creates two lists of bins along two dimensions based on the x,y values and the coordinate system
-proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
+proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar frm} {
     
     if {$polar == 1} {
         ;# use polar (r,theta) bins
@@ -315,12 +315,28 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
         
-        ;# shift all values so that they are temporarily positive
-        ;# no negative bin numbers allowed!
-        set xmin [vecexpr $x_vals min]
-        set ymin [vecexpr $y_vals min]
+        ;# shift all values so that values within unitcell are greater than 0 and less than unitcell len
+        set xlen [molinfo top get a frame $frm]
+        set ylen [molinfo top get b frame $frm]
+        set xmin [expr -$xlen/2.0]
+        set ymin [expr -$ylen/2.0]
         set x_vals [vecexpr $x_vals $xmin sub]
         set y_vals [vecexpr $y_vals $ymin sub]
+
+        ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
+        ;# and should be put back for binning purposes (but not for order params purposes!)
+        for {set i 0} {$i < [llength $x_vals]} {incr i} {
+            if {[lindex $x_vals $i] < 0} {
+                lset x_vals $i [expr $xlen-1.0]
+            } elseif {[lindex $x_vals $i] > $xlen} {
+                lset x_vals $i 0
+            }
+            if {[lindex $y_vals $i] < 0} {
+                lset y_vals $i [expr $ylen-1.0]
+            } elseif {[lindex $y_vals $i] > $ylen} {
+                lset y_vals $i 0
+            }
+        }
 
         ;# turn into bin numbers rather than x,y values
         set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
@@ -334,15 +350,18 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar} {
 ;# density segregates by species
 ;# tilt and order segregate by species and tail number
 proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
-
+    file mkdir "tcl_output"
     if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
@@ -350,15 +369,31 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
                 set tailnum "tail$j"
                 set taillength [llength [lindex [lindex $taillist $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
         }
     }
     
     return $outfiles
+}
+
+;# a proc for measuring box size - necessitated by [molinfo top get a] being unreliable 
+;# for certain coarse-grain simulations 
+proc measure_box_size {frame dim} {
+    if {($dim ne "x") && ($dim ne "y") && ($dim ne "z")} {
+        puts "dim must be x, y, or z"
+        return
+    }
+    set sel [atomselect top all frame $frame]
+    set dimvals [$sel get $dim]
+    set max [lindex [lsort -real $dimvals] end]
+    set min [lindex [lsort -real $dimvals] 0]
+    set len [expr $max-$min]
+
+    return $len
 }
 
 ;# determines the number of bins and the step length in each dimension
@@ -518,7 +553,7 @@ proc output_density_norm_info {start nframes step species system headnames coord
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${system}.${coordsys}.density.normfactor.dat" w]
+    set normfactor_outfile [open "tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
@@ -659,28 +694,38 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
                 set field_key "z1z2"
                 set dens_key "density_up_${species}"
                 set height_key "heights_up"
+                set counts_key "counts_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
                 set dens_key "density_down_${species}"
                 set height_key "heights_down"
+                set counts_key "counts_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
                 set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
+                set counts_key "counts_zzero"
             } else {
                 puts "something has gone wrong with the binning"
                 return
             }
             if {[dict exists $outfiles $field_key $height_key bin $correct_bin]} {
-                set oldcount [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                set oldcount [dict get $outfiles $field_key $counts_key bin $correct_bin]
                 set newcount [expr $oldcount+1.0]
                 set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
                 set newsum [expr {$oldavg * $oldcount + [lindex $zvals_list $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $dens_key bin $correct_bin $newcount
+                dict set outfiles $field_key $counts_key bin $correct_bin $newcount
+                if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
+                    set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                    dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]
+                } else {
+                    dict set outfiles $field_key $dens_key bin $correct_bin 1.0
+                }       
             } else {
                 dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
+                dict set outfiles $field_key $counts_key bin $correct_bin 1.0
                 dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
         }
@@ -689,30 +734,87 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
 }
 
 proc set_beta_vals {inclusion_sel species} {
+    puts "starting to fill beta values"
     
-    set inclusion [atomselect top $inclusion_sel]
-    $inclusion set beta 0
-    $inclusion delete 
+    if {$inclusion_sel ne "NULL"} {
+        set inclusion [atomselect top $inclusion_sel]
+        $inclusion set beta 0
+        $inclusion delete 
 
-    set counter 1
-
-    set excl_sel [atomselect top "not $inclusion_sel"]
+        set excl_sel [atomselect top "not $inclusion_sel and not resname W"]
+    } else {
+        set excl_sel [atomselect top "not resname W"]
+    }
+    
     set other_resnames [lsort -unique [$excl_sel get resname]]
     $excl_sel delete
+
+    set counter 1
 
     foreach resnm $other_resnames {
         set res_sel [atomselect top "resname $resnm"]
         set resids [lsort -unique [$res_sel get resid]]
-        $res_sel delete
+        
+        set sel [atomselect top "resname $resnm and resid [lindex $resids 0]"]
+        set num [$sel num]
+        $sel delete
 
-        foreach resid $resids {
-            set sel [atomselect top "resname $resnm and resid $resid"]
-            $sel set beta $counter 
-            incr counter
-            $sel delete
+        set counterlist []
+
+        for {set i 0} {$i < [llength $resids]} {incr i} {
+            for {set j 0} {$j < $num} {incr j} {
+                lappend counterlist $counter
+            }
+            incr counter 
+        }
+
+        $res_sel set beta $counterlist
+
+        $res_sel delete
+    }
+
+    set water_sel [atomselect top "resname W"]
+    set indxs [$water_sel get index]
+    $water_sel set beta $indxs
+    $water_sel delete
+
+    puts "beta values complete"
+    return
+}
+
+proc read_polar {polar} {
+    ;# generate string for polar or cartesian coordinates
+    if {$polar == 1} {
+        set coordsys "polar"
+    } elseif {$polar == 0} {
+        set coordsys "cart"
+    } else {
+        puts "polar must be 1 or 0"
+        break
+    }
+    return $coordsys
+}
+
+proc create_atomselections {quantity_of_interest config_dict} {
+    ;#atomselections setup as dict
+    if {$quantity_of_interest eq "height_density"} {
+        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
+        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+    } elseif {$quantity_of_interest eq "tilt_order"} {
+        set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
+        set sellist [lindex $lists 0]
+        set lenlist [lindex $lists 1]
+        foreach sel $sellist len $lenlist {
+            dict set selections $len [atomselect top "$sel"] 
         }
     }
-    return
+
+    foreach key [dict keys $selections] {
+        set sel [dict get $selections $key]
+        $sel uplevel 1
+    }
+
+    return $selections
 }
 
 ;#********************************;#
@@ -851,10 +953,13 @@ proc Protein_Position {name hnames tnames} {
 proc Center_System {wrap_sel species inclusion_sel} {
     puts "${wrap_sel}"
     puts "Center_System now running"
-    
+
     set_beta_vals $inclusion_sel $species
-    qunwrap sel $wrap_sel
-    qwrap sel all center $wrap_sel compound beta 
+    qunwrap compound beta
+    if {$inclusion_sel ne "NULL"} {
+        qwrap compound beta center $inclusion_sel 
+    }
+    qwrap compound beta center $wrap_sel
 
     puts "Center_System finished!"
 }

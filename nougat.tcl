@@ -1,4 +1,4 @@
-package require pbctools
+ package require pbctools
 
 ;# read in the config file and save settings to dictionary key/value pairs
 proc read_config_file {path} {
@@ -35,32 +35,27 @@ proc cell_prep {config_path leaf_check} {
     load [dict get $config_dict qwrap_path]/qwrap.so
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
-    ;# figures out which lipids are in the system
-    ;# no edits required
-    set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
+    ;# figure out which lipids are in the system
+    if {[dict get $config_dict inclusion_sel] ne "NULL"} {
+        set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
+    } else {
+        set lipidsel [atomselect top "not [dict get $config_dict excluded_sel]"]
+    }
     set species [lsort -unique [$lipidsel get resname]]
+    $lipidsel delete
+
     set tail_info [tail_analyzer $species]
     set acyl_names [lindex $tail_info 0]
     set heads_and_tails [lindex $tail_info 1]
     set full_tails [lindex $tail_info 2]
-    $lipidsel delete
-
+    
     ;# need to manually substitute variables into the config_dict when applicable
     foreach key [dict keys $config_dict] {
         dict set config_dict $key [subst [dict get $config_dict $key]]
     }
 
-    ;#****************************************************;#
-    ;#          MAKE EDITS BELOW BEFORE STARTING          ;#
-    ;#****************************************************;# 
-
     ;# center, wrap, and align the system
-    ;# if your inclusion 'tumbles' in the membrane (like a nanoparticle) comment out Align!
-    if {[dict exists $config_dict wrap_sel]} {
-        Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]
-    }
-    
-    
+    Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]   
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }
@@ -68,18 +63,16 @@ proc cell_prep {config_path leaf_check} {
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
-    ;# comment this out or customize it for your inclusion
-    #set_occupancy top 
+    if {[dict exists $config_dict custom_occupancy]} {
+        set_occupancy top 
+    }
 
     ;# this will only work if your TMD helices are set to occupancy 1
-    ;# otherwise, comment it out
     ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
     ;# this proc is currently broken, anyways (yes, there is a github issue)
-    ;#Protein_Position $system $headnames $acyl_names ;# FIX ME
-
-    ;#****************************************************;#
-    ;#          MAKE EDITS ABOVE BEFORE STARTING          ;#
-    ;#****************************************************;# 
+    if {[dict exists $config_dict custom_position]} {
+        Protein_Position $system $headnames $acyl_names ;# FIX ME
+    }
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
@@ -148,31 +141,9 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
     
-    ;# generate string for polar or cartesian coordinates
-    if {$polar == 1} {
-        set coordsys "polar"
-    } elseif {$polar == 0} {
-        set coordsys "cart"
-    } else {
-        puts "polar must be 1 or 0"
-        break
-    }
-
-    ;# outfiles setup as dict
+    set coordsys [read_polar $polar]
     set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
-     
-    ;#atomselections setup as dict
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
-        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
-        set sellist [lindex $lists 0]
-        set lenlist [lindex $lists 1]
-        foreach sel $sellist len $lenlist {
-            dict set selections $len [atomselect top "$sel"] 
-        }
-    }
+    set selections [create_atomselections $quantity_of_interest $config_dict]
 
     puts "Setup complete. Starting frame analysis now."   
 
@@ -209,7 +180,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
-            set bins [bin_assigner [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar]
+            set bins [bin_assigner [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar $frm]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 
