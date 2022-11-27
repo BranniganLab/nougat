@@ -8,8 +8,8 @@ utilities_path = ~/PolarHeightBinning/utilities
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
 
-#inclusion_sel = name BB SC1 to SC4
-inclusion_sel = NULL
+inclusion_sel = name BB SC1 to SC4
+#inclusion_sel = NULL
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
@@ -50,4 +50,4 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-pore_sorter = OFF
+pore_sorter = ON

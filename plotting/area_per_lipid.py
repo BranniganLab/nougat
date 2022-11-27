@@ -134,18 +134,23 @@ def sum_over_K(systems):
 	for system in systems:
 		fig,ax = plt.subplots()
 		for field in ["zone", "ztwo"]:
-			data = np.load(system+'/newleaf_cart/'+system+'.'+field+'.C1A.C1B.cart.gausscurvature.npy')
+			data = np.load(system+'/npy/'+system+'.'+field+'.C1A.C1B.cart.gausscurvature.npy')
 			k_list = []
 			for frame in range(np.shape(data)[2]):
 				frame_data = data[:,:,frame]
 				k_sum = np.nansum(frame_data)
 				k_list.append(k_sum)
 			avg_list = rollingavg(k_list,50)
+		#	if "lg" in system:
+		#		avg_list = avg_list/(40**2)
+			#else:
+			#	avg_list = avg_list/(12**2)
 			if field == "zone":
 				style = "solid"
 			else: 
 				style = "dashed"
 			plt.plot(avg_list,linestyle=style)
+			plt.ylim([0.0,.01])
 		plt.savefig(system+".sum_over_K.pdf")
 
 def rollingavg(list_in, window_size):
@@ -207,5 +212,7 @@ def plot_average_area_per_lipid(systems):
 
 if __name__ == "__main__": 
 	#diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT"], "5x29")
-	diff_mid_interface(["lgPO"], "7k3g")
+	#diff_mid_interface(["lgPO"], "7k3g")
 	#diff_mid_interface(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
+	sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
+	#sum_over_K(["lgPO"])
