@@ -154,7 +154,7 @@ def convert_to_cart(rval, thetaval):
   return xval, yval
 
 def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
   
   #mean curvature: Hxx + Hyy
   #gaussian curvature: HxxHyy - Hxy^2
@@ -224,7 +224,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
   return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
   
   #mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
   #gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
@@ -408,7 +408,7 @@ def gen_avg_tilt(name, field, polar):
   np.savetxt(name+'.'+field+'.avgtilt.dat',avgtilt,delimiter = ',',fmt='%10.7f')  
 
 def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pdb):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
   ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
 
@@ -434,7 +434,7 @@ def calc_avg_over_time(matrix_data):
     return avg
 
 def init_curvature_data(height, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
   #create arrays for storing curvature data
   if polar is True:
@@ -469,7 +469,7 @@ def init_curvature_data(height, polar, dims):
   return curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims)
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
   leaflist = field_list.copy()
   leaflist.append("zplus")
   for field in leaflist: 
@@ -515,7 +515,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     print(sys_name+' '+bead+' '+field+" curvatures done!")
 
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
   ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
   zzero = np.load('npy/'+sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
@@ -539,7 +539,7 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   print(sys_name+' '+bead+" thickness done!")
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   areas = np.load('npy/'+sys_name+".areas.npy")
 
   for species in names_dict['species_list']:
@@ -588,7 +588,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     print("Something is wrong with species_list!")
 
 def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
 
   for leaflet in ['zone', 'ztwo']:
     tot_density = np.zeros((N1_bins, N2_bins, Nframes))
@@ -610,7 +610,7 @@ def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, di
   print("Total density done!")
 
 def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   
   for species in names_dict['species_list']:
     for tail in names_dict[species]:
@@ -653,7 +653,7 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims):
   #  print("Something is wrong with your species_list!")
 
 def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims):
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
 
   if species != "all":
     for leaflet in ['zone','ztwo']:
@@ -735,13 +735,10 @@ def fetch_names(sys_name, coordsys):
 
   return names_dict
 
-def unpack_dims(dims):
-  return dims[0], dims[1], dims[2], dims[3], dims[4], dims[5], dims[6]
-
 def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
   serial = 1
 
-  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = unpack_dims(dims) 
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
 
   pdbname = sys_name+"."+coordsys+".avgheight.pdb"
 
