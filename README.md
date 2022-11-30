@@ -37,22 +37,22 @@ github.com/jhenin/vecexpr
 nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame. nougat.py will read in those .dat files, extract curvature and thickness information from the heights, generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. 
 
 ### Make Edits and Check Your Work
-- Open nougat.tcl in the text editor of your choice and make edits to two sections:
+- Open nougat_config.txt in the text editor of your choice and make edits:
 ```
 Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored 
-Edit all of the indicated fields in cell_prep proc
+Edit all of the indicated fields to match your system
 ```
 - Open VMD and load your structure and trajectory files. 
-- Delete frame 0
+- (optional) Delete frame 0
 - Open the tkConsole
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
-cell_prep 1
+cell_prep [path to nougat_config.txt] 1
 ```
 - After completion, visually inspect your trajectory in VMD for the following:
 ```
-Is the inclusion properly centered in your system?
+Is the inclusion (if present) properly centered in your system?
 Is the membrane relatively stable in the xy plane?
 Color by user with the value 1 and select "Update Selection Every Frame"
 Scroll through your trajectory: are you only seeing lipids in the outer leaflet?
@@ -63,17 +63,17 @@ Switch to user 2 and repeat; are you only seeing lipids in the inner leaflet?
 ### Run nougat.tcl
 
 ```
-start_nougat [system name] [dr|dx] [Ntheta] [start] [end] [step] [polar]
+start_nougat [system name] [path to nougat_config.txt] [dr|Nbins] [Ntheta] [start] [end] [step] [polar]
 ```
 An explanation of the options is as follows:
 ```
 - system name       the name you want your files/directories to be saved with
-- dr | dx           the bin width in A; depends on if you are analyzing polar or cartesian systems
-- Ntheta            the number of bins in the theta direction; will be ignored if cartesian
+- dr | Nbins        if using cartesian coords, the number of bins in the x/y directions | if polar coords, the radial bin width in Angstroms
+- Ntheta            will be ignored if cartesian; the number of bins in the theta direction 
 - start             the frame from which you would like to start analysis
 - end               the frame where you would like to stop analysis; -1 will run for the whole simulation
 - step              allows you to skip frames; otherwise use 1
-- polar             1 for polar system, 0 for cartesian system
+- polar             0 for cartesian system, 1 for polar system
 ```
 
 ### Edit & Run nougat.py
