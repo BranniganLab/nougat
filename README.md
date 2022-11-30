@@ -32,9 +32,13 @@ github.com/jhenin/qwrap
 github.com/jhenin/vecexpr
 ```
 
-## How To Use Nougat:
-### What will it do?
+
+## What will it do?
 nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame. nougat.py will read in those .dat files, extract curvature and thickness information from the heights, generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. 
+
+## How To Use Nougat:
+### Before You Start:
+Gromacs coarse-grain trajectories must be made whole using trjconv's `-pbc whole` command if you want your order parameters to make sense
 
 ### Make Edits and Check Your Work
 - Open nougat_config.txt in the text editor of your choice and make edits:
