@@ -820,7 +820,9 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
 
 if __name__ == "__main__": 
-  run_nougat("lgPO", False, False)
+#  run_nougat("lgPO", False, False)
+  for system in ["lgDT0", "lgDT1", "lgDT2"]:
+    run_nougat(system, False, False)
 #  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO", "lgDG", "lgDT", "lgDY"]: 
 #    os.chdir(system)
 #    run_nougat(system, False, False)
