@@ -37,14 +37,14 @@ wrap_sel = resname $species
 # IF YOU DO NOT WISH TO SET A REFERENCE POINT:
 # replace the text with "NULL"
 
-#reference_point = name BB and resid 15
-reference_point = NULL
+reference_point = name BB and resid 15
+#reference_point = NULL
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
 # in our opinion
 
-headnames = C1A C1B
+headnames = C1A C1B D1A D1B
 
 
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
