@@ -410,10 +410,10 @@ proc bin_prep {nframes polar min dr_N1 N2} {
         set rrange [expr $box_r-$min]
         
         #calculate number of dim1 bins from d1 and range1
-        if {[expr $rrange%$d1] == 0} { 
-            dict set bindims N1 [expr [expr $rrange/$d1]-1] 
+        if {[expr $rrange%$dr_N1] == 0} { 
+            dict set bindims N1 [expr [expr $rrange/$dr_N1]-1] 
         } else {
-            dict set bindims N1 [expr $rrange/$d1]
+            dict set bindims N1 [expr $rrange/$dr_N1]
         }
 
         #calculate dtheta in degrees and radians
@@ -752,6 +752,11 @@ proc set_beta_vals {inclusion_sel species} {
     set counter 1
 
     foreach resnm $other_resnames {
+        if {[string first - $resnm] != -1} {
+            set resnm \'$resnm\'
+        } elseif {[string first + $resnm] != -1} {
+            set resnm \'$resnm\'
+        }
         set res_sel [atomselect top "resname $resnm"]
         set resids [lsort -unique [$res_sel get resid]]
         

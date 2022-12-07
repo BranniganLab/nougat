@@ -44,7 +44,7 @@ reference_point = name BB and resid 15
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
 # in our opinion
 
-headnames = C1A C1B D1A D1B
+headnames = C1A C1B
 
 
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
