@@ -196,10 +196,6 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
     set file [dict get $outfiles $selex $key fname]
 
-    if {$polar == 1} {
-        set N2 [expr $N1+1.0]
-    }
-
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
         print_line_init $file $m $d1 $min
@@ -410,10 +406,10 @@ proc bin_prep {nframes polar min dr_N1 N2} {
         set rrange [expr $box_r-$min]
         
         #calculate number of dim1 bins from d1 and range1
-        if {[expr $rrange%$d1] == 0} { 
-            dict set bindims N1 [expr [expr $rrange/$d1]-1] 
+        if {[expr $rrange%$dr_N1] == 0} { 
+            dict set bindims N1 [expr [expr $rrange/$dr_N1]-1] 
         } else {
-            dict set bindims N1 [expr $rrange/$d1]
+            dict set bindims N1 [expr $rrange/$dr_N1]
         }
 
         #calculate dtheta in degrees and radians
@@ -687,7 +683,6 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
-
         foreach indx $indices {
             set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
@@ -752,6 +747,11 @@ proc set_beta_vals {inclusion_sel species} {
     set counter 1
 
     foreach resnm $other_resnames {
+        if {[string first - $resnm] != -1} {
+            set resnm \'$resnm\'
+        } elseif {[string first + $resnm] != -1} {
+            set resnm \'$resnm\'
+        }
         set res_sel [atomselect top "resname $resnm"]
         set resids [lsort -unique [$res_sel get resid]]
         

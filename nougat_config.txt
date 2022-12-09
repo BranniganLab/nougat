@@ -36,7 +36,9 @@ wrap_sel = resname AU
 # IF YOU DO NOT WISH TO SET A REFERENCE POINT:
 # replace the text with "NULL"
 
+
 reference_point = index 0
+
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -48,4 +50,6 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
+
 pore_sorter = OFF
+
