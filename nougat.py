@@ -4,22 +4,22 @@ import numpy as np
 import warnings
 import glob
 import os 
-
+#from code_review2 import *
 
 # These determine the scale in your image files
 # adjust as needed
 height_min = -60
 height_max = 60
-mean_curv_min = 0.05
-mean_curv_max = -0.05
+mean_curv_min = 0.01
+mean_curv_max = -0.01
 gauss_curv_min = -0.001
 gauss_curv_max = 0.001
 density_min = 0
 density_max = 2
-thick_min = 5
-thick_max = 15
-order_min = .2 
-order_max = .4
+thick_min = 0
+thick_max = 2
+order_min = 0. 
+order_max = .6
 
 field_list = ["zone","ztwo", "zzero"]
 
@@ -139,7 +139,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   ax.set_xticklabels([])
   ax.set_yticklabels([])
 
-  fig.set_size_inches(6,6)
+  #fig.set_size_inches(6,6)
 
   if bead is False:
     plt.savefig('pdf/'+name+"_"+field+"_"+coordsys+"_"+dataname+".pdf", dpi = 700)
@@ -222,6 +222,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
           normal_vector_outputs[row,col*3+2,frm] = np.nan
 
   return curvature_outputs, kgauss_outputs, normal_vector_outputs
+
 
 def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
@@ -483,6 +484,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     #measure the laplacian and gaussian curvatures
     if polar is True:
       curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
+      #curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(dims, curvature_inputs)
     elif polar is False:
       curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
 
@@ -514,6 +516,24 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     
     print(sys_name+' '+bead+' '+field+" curvatures done!")
 
+def measure_t0(zone, ztwo):
+
+  thickness = zone-ztwo
+
+  avgthickness = calc_avg_over_time(thickness)
+
+  leftcol = np.mean(avgthickness[:,0])
+  rightcol =  np.mean(avgthickness[:,-1])
+  toprow =  np.mean(avgthickness[0,:])
+  botrow =   np.mean(avgthickness[-1,:])
+
+
+  avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+
+  avgt0 = avgt0/2.0
+
+  return avgt0
+
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
@@ -523,8 +543,10 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   outer_leaflet = zone-zzero
   inner_leaflet = zzero-ztwo
 
-  avgouter = calc_avg_over_time(outer_leaflet)
-  avginner = calc_avg_over_time(inner_leaflet)
+  avgt0 = measure_t0(zone, ztwo)
+
+  avgouter = calc_avg_over_time(outer_leaflet)/avgt0
+  avginner = calc_avg_over_time(inner_leaflet)/avgt0
 
   #make plots!
   plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
@@ -540,8 +562,8 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
-  areas = np.load('npy/'+sys_name+".areas.npy")
-
+  areas = np.load('npy/'+sys_name+"."+coordsys+".areas.npy")
+  print(names_dict)
   for species in names_dict['species_list']:
     zone = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
     ztwo = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
@@ -678,20 +700,20 @@ def bin_prep(sys_name, names_dict, coordsys, polar):
   dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
   #save an array that represents the area per bin for normalizing density later
-  save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name)
+  save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name)
 
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
 
-def save_areas(N1_bins, d1, N2_bins, d2, min_val, polar, sys_name):
+def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
   
   areas = np.ones([N1_bins,N2_bins])
 
   areas = areas * d1 * d2 
-  if polar is True:
+  if coordsys == "polar":
     for row in range(N1_bins):
       dist_to_center = min_val + row*d1 + d1/2.0
       areas[row,:] = areas[row,:]*dist_to_center
-  np.save('npy/'+sys_name+".areas.npy", areas)
+  np.save('npy/'+sys_name+"."+coordsys+".areas.npy", areas)
 
 def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
@@ -815,17 +837,18 @@ def run_nougat(sys_name, polar, inclusion_drawn):
     calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
   
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
 
 if __name__ == "__main__": 
 #  run_nougat("lgPO", False, False)
-  for system in ["lgDT0", "lgDT1", "lgDT2"]:
-    run_nougat(system, False, False)
-#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO", "lgDG", "lgDT", "lgDY"]: 
-#    os.chdir(system)
+#  for system in ["lgDT0", "lgDP", "lgDX", "lgDB", "lgDL"]:
+  for system in ["lgDB"]:
 #    run_nougat(system, False, False)
+#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO", "lgDG", "lgDT", "lgDY"]: 
+    os.chdir(system)
+    run_nougat(system, True, False)
     #os.chdir('newleaf_polar')
     #run_nougat("lgPO", True, False)
-#    os.chdir('..')
+    os.chdir('..')
