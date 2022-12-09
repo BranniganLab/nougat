@@ -14,14 +14,14 @@ inclusion_sel = resname AU
 # isn't your inclusion_sel or membrane:
 # E.G. solvent, ions, other molecules that aren't membrane lipids
 
-excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig
+excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig AU
 
 
 # provide atomselection-style text that defines what bead(s) should be centered and wrapped around
 # usually, this would be name BB for proteins
 # for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-wrap_sel = resname AU 
+wrap_sel = resname AU
 
 
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results

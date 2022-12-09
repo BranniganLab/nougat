@@ -152,16 +152,17 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
         if {$polar == 0} {
             set bindims [update_dims $bindims $frm]
+            
         }
 
         ;# update leaflets in case lipids have flip-flopped
         leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
-
+	puts "yes"
         puts "$system $quantity_of_interest $frm"
 
         #need to calculate heights relative to some point (usually on the inclusion):
         set ref_height [calc_ref_height $config_dict $frm]
-        
+       
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are

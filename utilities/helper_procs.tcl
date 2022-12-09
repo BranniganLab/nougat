@@ -168,7 +168,7 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
         $total_sel delete
     }
 
-    #if {$pore_sort eq "ON"} {
+    if {$pore_sort eq "ON"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
         #pore_sorter_custom $frm $species "5x29"
     }
@@ -606,7 +606,7 @@ proc tail_length_sorter {species acyl_names} {
 
 ;# cosine theta is the dot product of n_{1,2} and the vector [0 0 1]
 ;# this corresponds to the 3rd value of n_{1,2} 
-proc get_costheta {start end} {    
+proc get_costheta {start end} {   
     set r12 [vecsub $start $end]
     set n12 [vecnorm $r12]
     return [lindex $n12 2]
