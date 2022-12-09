@@ -82,29 +82,38 @@ def plot_area_per_lipid(systems):
 
 def diff_mid_interface(systems, mol):
 	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/'+system+'.'
+		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.cart.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
-		zzero = np.load(filename_start+'zzero'+filename_end)
+		try:
+			zzero = np.load(filename_start+'zzero'+filename_end)
+			H1 = np.load(filename_start+'zone'+'.C1A.C1B.cart.meancurvature.npy')
+			H2 = np.load(filename_start+'ztwo'+'.C1A.C1B.cart.meancurvature.npy')
+		except:
+			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
+			zzero = np.load(filename_start+'zzero'+filename_end)
+			H1 = np.load(filename_start+'zone'+'.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
+			H2 = np.load(filename_start+'ztwo'+'.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
 		dims = np.shape(zzero)
 		dim1 = np.linspace(0,dims[0],dims[0]+1)
 		dim2 = np.linspace(0,dims[1],dims[1]+1)
 		dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 		zplus = np.load(filename_start+'zplus'+filename_end)
-		diff = zzero-zplus
+		diff = zplus-zzero
 		avgdiff = np.nanmean(diff,axis=2)
-		print(avgdiff)
+		H = H1+H2
+		avgH = np.nanmean(H,axis=2)
 		t0 = measure_t0(filename_start,filename_end)
-		print(t0)
 		avgdiff = avgdiff/t0
-		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.5,vmin=-.5)
+		avgcombo = avgdiff*avgH
+		c = plt.pcolormesh(dim1vals,dim2vals,avgcombo,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
 		cbar = plt.colorbar(c)
 		plt.axis('off')
 		ax.set_xticklabels([])
 		ax.set_yticklabels([])
 		#fig.set_size_inches(6,6)
-		plt.savefig(system+"_zzerozplusdiff_cart.pdf", dpi = 700)
+		plt.savefig(system+"_epsilonH_cart.pdf", dpi = 700)
 		plt.clf()
 		plt.close()
 
@@ -211,8 +220,8 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	#diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT"], "5x29")
+	diff_mid_interface(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
 	#diff_mid_interface(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
-	sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
+	#sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
 	#sum_over_K(["lgPO"])
