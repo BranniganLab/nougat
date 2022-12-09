@@ -196,10 +196,6 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
     set file [dict get $outfiles $selex $key fname]
 
-    if {$polar == 1} {
-        set N2 [expr $N1+1.0]
-    }
-
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
         print_line_init $file $m $d1 $min
@@ -687,7 +683,6 @@ proc height_density_averaging {res_dict outfiles leaflet_list lipid_list zvals_l
     dict for {bin indices} $res_dict {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
-
         foreach indx $indices {
             set species [lindex $lipid_list $indx]
             if {$leaf == 1} {
