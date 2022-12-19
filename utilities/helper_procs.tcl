@@ -174,23 +174,6 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
     }
 }
 
-;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
-proc print_line_init {file number d1 min} {
-    puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
-}
-
-;# adds a value to the print file
-proc print_value {file value end_line} {
-    if {$end_line == 0} {
-        puts -nonewline $file " $value" 
-    } elseif {$end_line == 1} {
-        puts $file " $value"
-    } else {
-        puts "Something went wrong - end_line should have value of 0 or 1 only"
-        break
-    }
-}
-
 ;#print an entire 2D array (usually 1 frame) to file
 proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
@@ -198,17 +181,19 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
-        print_line_init $file $m $d1 $min
+        set binstart [format {%0.2f} [expr $m*$d1+$min]]
+        set binend [format {%0.2f} [expr ($m+1)*$d1+$min]]
+        puts -nonewline $file "$binstart  $binend  "
         ;# prints bin values through ultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n+1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
-                print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
+                puts -nonewline $file " [dict get $outfiles $selex $key bin "$m,$n"]"
             } else {
-                print_value $file "nan" 0
+                puts -nonewline $file "nan"
             }
         }
         ;# starts a new line
-        print_value $file " " 1
+        puts $file " "
     }
 }
 
