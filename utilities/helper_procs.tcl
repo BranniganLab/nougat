@@ -189,7 +189,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 puts -nonewline $file " [dict get $outfiles $selex $key bin "$m,$n"]"
             } else {
-                puts -nonewline $file "nan"
+                puts -nonewline $file " nan"
             }
         }
         ;# starts a new line
