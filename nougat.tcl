@@ -63,6 +63,7 @@ proc cell_prep {config_path leaf_check} {
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy]} {
+        separate_chains top 15
         set_occupancy top 
     }
 
