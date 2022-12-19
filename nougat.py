@@ -844,11 +844,11 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 if __name__ == "__main__": 
 #  run_nougat("lgPO", False, False)
 #  for system in ["lgDT0", "lgDP", "lgDX", "lgDB", "lgDL"]:
-  for system in ["lgDB"]:
+#  for system in ["lgDB"]:
 #    run_nougat(system, False, False)
-#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO", "lgDG", "lgDT", "lgDY"]: 
-    os.chdir(system)
-    run_nougat(system, True, False)
+#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
+#    os.chdir(system)
+  run_nougat("lgDG", False, False)
     #os.chdir('newleaf_polar')
     #run_nougat("lgPO", True, False)
-    os.chdir('..')
+#    os.chdir('..')
