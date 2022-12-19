@@ -838,18 +838,22 @@ proc Align { stuff } {
     puts "Align end"
 }
 
-;# THIS IS FOR 5X29!
-proc set_occupancy {molid} {
+
+proc separate_chains {molid cutoff} {
+    ;# Multichain proteins default to chain X in martinize.py
+    ;# separate_chains will jump from atom to atom and anywhere the 
+    ;# distance is greater than $cutoff it will assume there is a new subunit.
 
     set sel [atomselect $molid "name BB SC1 to SC4"]
-    set residuelist [$sel get residue]
-    set resmax [::tcl::mathfunc::max {*}$residuelist]
+    set indxlist [$sel get index]
+    set indmin [::tcl::mathfunc::min {*}$indxlist]
+    set indmax [::tcl::mathfunc::max {*}$indxlist]
     $sel delete
 
-    set list1 0
+    set list1 [list $indmin]
 
-    for {set i 0} {$i < $resmax} {incr i} {
-        set sel1 [atomselect $molid "residue $i"]
+    for {set i $indmin} {$i < $indmax} {incr i} {
+        set sel1 [atomselect $molid "index $i"]
         set sel2 [atomselect $molid "residue [expr $i+1]"]
 
         set loc1 [lindex [$sel1 get {x y z}] 0]
@@ -857,7 +861,7 @@ proc set_occupancy {molid} {
 
         set dist [vecdist $loc1 $loc2]
 
-            if {$dist > 15} {
+            if {$dist > $cutoff} {
                 lappend list1 $i
                 lappend list1 [expr $i+1]
             }
@@ -867,14 +871,18 @@ proc set_occupancy {molid} {
 
     set chars [list A B C D E]
     set k 0
-    lappend list1 $resmax
+    lappend list1 $indmax
 
     foreach {i j} $list1 {
-        set sel [atomselect $molid "residue $i to $j"]
+        set sel [atomselect $molid "index $i to $j"]
         $sel set chain [lindex $chars $k]
         $sel delete
         set k [expr $k+1]
     }
+}
+
+;# THIS IS FOR 5X29!
+proc set_occupancy {molid} {
 
     set sel [atomselect $molid "resid 0 to 39"]
     $sel set occupancy 1
