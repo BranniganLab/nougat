@@ -18,8 +18,8 @@ density_min = 0
 density_max = 2
 thick_min = 0
 thick_max = 2
-order_min = 0. 
-order_max = .6
+order_min = 0.4 
+order_max = 0.2
 
 field_list = ["zone","ztwo", "zzero"]
 
@@ -837,13 +837,12 @@ def run_nougat(sys_name, polar, inclusion_drawn):
     calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
   
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
 
 if __name__ == "__main__": 
-<<<<<<< HEAD
-  run_nougat("PO", False, False)
+  run_nougat("PO", True, False)
   #for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
     #os.chdir("lgPO")
     #os.chdir('newleaf_polar')

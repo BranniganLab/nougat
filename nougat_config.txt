@@ -37,7 +37,7 @@ wrap_sel = resname AU
 # replace the text with "NULL"
 
 
-reference_point = index 0
+reference_point = Null
 
 
 # provide the beadnames that you consider to form the surface of your membrane
