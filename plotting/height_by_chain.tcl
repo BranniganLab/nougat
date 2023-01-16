@@ -1,7 +1,11 @@
+
+
 proc separate_chains {molid cutoff} {
 	;# Multichain proteins default to chain X in martinize.py.
-	;# Separate_chains will jump from atom to atom and anywhere the 
-	;# distance is greater than $cutoff it will assume there is a new subunit.
+	;# Separate_chains will jump from atom to atom measuring the distance
+	;# between beads. 
+	;# Anywhere the distance is greater than $cutoff 
+	;# it will assume there is a new subunit.
 	;# This makes the (large) assumption that consecutive indices will be 
 	;# assigned to consecutive residues in the sequence!
 
@@ -30,9 +34,10 @@ proc separate_chains {molid cutoff} {
         $sel2 delete
     }
 
+    lappend list1 $indmax
+
     set chars [list A B C D E]
     set k 0
-    lappend list1 $indmax
 
     foreach {i j} $list1 {
         set sel [atomselect $molid "index $i to $j"]
@@ -43,23 +48,41 @@ proc separate_chains {molid cutoff} {
 }
 
 
-proc contacts_by_residue {residlist molid lipid beadname cutoff chain frame} {
-	set resnamelist []
-	set residlist []
-	set contactnumlist []
-	set heightlist []
+proc contacts_by_residue {molid chain lipid beadname cutoff start step} {
 
-	foreach resid $residlist {
+	set sel [atomselect $molid "name BB and chain $chain"]
+	set residlist [$sel get resid]
+	set resnamelist [$sel get resname]
+	$sel delete
 
-		set incsel [atomselect $molid "name BB and resid $resid" frame $frame]
-		set lipidsel [atomselect $molid "name $lipid and name $beadname and within $cutoff of (chain $chain and resid $resid)" frame $frame]
+	set outfile [open "tcl_output/contacts_and_heights_chain_${chain}.dat" w]
 
-		lappend resnamelist [$incsel get resname]
-		lappend residlist $resid 
-		lappend contactnumlist [$lipidsel get num]
-		lappend heightlist [$incsel get z]
-
-		$incsel delete
+	foreach resid $residlist resname $resnamelist {
+		set contactnumlist []
+		set lipidsel [atomselect $molid "resname $lipid and name $beadname and (within $cutoff of (chain $chain and resid $resid))"]
+		for {set frm $start} {$frm < [molinfo $molid get numframes]} {set frm [expr $frm + $step]} {
+			$lipidsel frame $frm
+			$lipidsel update
+			lappend contactnumlist [llength [lsort -unique [$lipidsel get resid]]]
+		}
+		puts $outfile "$resid $resname $contactnumlist"
 		$lipidsel delete
+		puts "$resid finished"
+	}
+
+	close $outfile
+	return
+}
+
+
+proc contact_mapper {molid lipid cutoff start step} {
+	separate_chains $molid 25
+
+	set sel [atomselect $molid "name BB"]
+	set chain_list [lsort -unique [$sel get chain]]
+	$sel delete
+
+	foreach chain $chain_list {
+		contacts_by_residue $molid $chain $lipid "C1A C1B" $cutoff $start $step
 	}
 }
