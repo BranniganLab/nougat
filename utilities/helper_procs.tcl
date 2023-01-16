@@ -168,9 +168,9 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
         $total_sel delete
     }
 
-    if {$pore_sort eq "ON"} {
+    if {$pore_sort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
-        pore_sorter_custom $frm $species "5x29"
+        pore_sorter_custom $frm $species $pore_sort
     }
 }
 

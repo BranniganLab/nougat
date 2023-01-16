@@ -50,4 +50,5 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-pore_sorter = ON
+#pore_sorter = NULL
+pore_sorter = 5x29
