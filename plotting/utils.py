@@ -7,31 +7,7 @@ import os
 
 
 
-def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
-  resseqnum = 1
-  atom_name = 'SURF'
-  chain = 'X'
-  row,col = data.shape
-  beadnum = str(bead[1])
-  beadname = "C"+beadnum+"  "
 
-  for rbin in range(row):
-    for thetabin in range(col):
-      if str(data[rbin][thetabin]) != "nan":
-        seriallen = 5-(len(str(serial)))
-        resseqlen = 4-(len(str(resseqnum)))
-        x = (d1*rbin + .5*d1)*(np.cos(thetabin*d2 + 0.5*d2))
-        x = coord_format(x)
-        y = (d1*rbin + .5*d1)*(np.sin(thetabin*d2 + 0.5*d2))
-        y = coord_format(y)
-        z = coord_format(data[rbin][thetabin])
-        rnum = bin_format(rbin)
-        thetanum = bin_format(thetabin)
-        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+rnum+thetanum+'      '+field[:4]+'  ',file=f)
-        serial += 1
-        resseqnum +=1
-  return serial
-  
 
 def calc_avg_over_time(matrix_data):
   with warnings.catch_warnings():

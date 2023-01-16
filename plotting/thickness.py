@@ -1,0 +1,70 @@
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+import warnings
+import glob
+import os 
+from utils import *
+#from code_review2 import *
+
+# These determine the scale in your image files
+# adjust as needed
+height_min = -60
+height_max = 60
+mean_curv_min = 0.01
+mean_curv_max = -0.01
+gauss_curv_min = -0.001
+gauss_curv_max = 0.001
+density_min = 0
+density_max = 2
+thick_min = 0
+thick_max = 2
+order_min = 0. 
+order_max = .6
+
+field_list = ["zone","ztwo", "zzero"]
+
+def measure_t0(zone, ztwo):
+
+  thickness = zone-ztwo
+
+  avgthickness = calc_avg_over_time(thickness)
+
+  leftcol = np.mean(avgthickness[:,0])
+  rightcol =  np.mean(avgthickness[:,-1])
+  toprow =  np.mean(avgthickness[0,:])
+  botrow =   np.mean(avgthickness[-1,:])
+
+
+  avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+
+  avgt0 = avgt0/2.0
+
+  return avgt0
+
+def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
+  zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
+  ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
+  zzero = np.load('npy/'+sys_name+'.zzero.'+bead+'.'+coordsys+'.height.npy')
+
+  outer_leaflet = zone-zzero
+  inner_leaflet = zzero-ztwo
+
+  avgt0 = measure_t0(zone, ztwo)
+
+  avgouter = calc_avg_over_time(outer_leaflet)/avgt0
+  avginner = calc_avg_over_time(inner_leaflet)/avgt0
+
+  #make plots!
+  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
+
+  #save as file for debugging / analysis AND make PDB!
+  np.save('npy/'+sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
+  np.save('npy/'+sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
+  np.savetxt('dat/'+sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
+  np.savetxt('dat/'+sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
+
+  print(sys_name+' '+bead+" thickness done!")
+
