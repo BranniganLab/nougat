@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
@@ -49,7 +50,7 @@ def run_nougat(sys_name, polar, inclusion_drawn):
 
   if polar is True:
     coordsys = 'polar'
-  elif polar is False:
+  elif polar is None:
     coordsys = 'cart'
 
   #figure out all the file names that you'll need to fetch
@@ -66,18 +67,22 @@ def run_nougat(sys_name, polar, inclusion_drawn):
     calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
   
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
 
 
 if __name__ == "__main__": 
-#  run_nougat("lgPO", False, False)
-#  for system in ["lgDT0", "lgDP", "lgDX", "lgDB", "lgDL"]:
-#  for system in ["lgDB"]:
-#    run_nougat(system, False, False)
-#  for system in ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]: 
-#    os.chdir(system)
-  run_nougat("lgPO", False, False)
-    #os.chdir('newleaf_polar')
-    #run_nougat("lgPO", True, False)
-#    os.chdir('..')
+  parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
+  parser.add_argument("sys_name", help="what system do you want to run nougat.py on?")
+  parser.add_argument("-p", "--polar", help="add this flag if you ran nougat.tcl in polar coordinates")
+  parser.add_argument("-i", "--inclusion", help="add this flag if you want your inclusion to show up in images")
+  args = parser.parse_args()
+
+  if args.polar != True and args.polar != None:
+    print("You tried to specify something in your polar flag. Is that what you meant?")
+    exit()
+  if args.inclusion != True and args.inclusion != None:
+    print("You tried to specify something in your inclusion flag. Is that what you meant?")
+    exit()
+
+  run_nougat(args.sys_name, args.polar, args.inclusion)

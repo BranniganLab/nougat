@@ -24,7 +24,7 @@ def bin_prep(sys_name, names_dict, coordsys, polar):
   dim1 = np.append(dim1, sample_data[N1_bins-1,1])
   if polar is True:
     dim2 = np.linspace(0,2*np.pi,N2_bins+1)
-  elif polar is False:
+  elif polar is None:
     dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
   dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
@@ -93,7 +93,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     ax = plt.subplot(projection="polar")
     c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
     coordsys = "polar"
-  elif polar is False:
+  elif polar is None:
     ax = plt.subplot()
     c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
     coordsys = "cart"
@@ -105,7 +105,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     print(protein)
     for i in range(0,10,2):
       protein[i+1] = np.deg2rad(protein[i+1])
-      if polar is False:
+      if polar is None:
         protein[i], protein[i+1] = convert_to_cart(protein[i],protein[i+1])
       plt.scatter(protein[i+1],protein[i],c="black",linewidth=4,zorder=2)
     circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
@@ -175,7 +175,7 @@ def dimensions_analyzer(data, polar):
   if polar is True:
     d1 = data[0,1] - data[0,0]
     d2 = (np.pi*2)/N2_bins
-  elif polar is False:
+  elif polar is None:
     #compute average d1, assume d2 is the same
     d1list = []
     for row in range(Nframes):

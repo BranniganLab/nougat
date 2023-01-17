@@ -33,7 +33,7 @@ def init_curvature_data(height, polar, dims):
     curvature_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
     kgauss_outputs = np.zeros((N1_bins, N2_bins+2, Nframes))
     normal_vector_outputs = np.zeros((N1_bins, 3*(N2_bins+2), Nframes))
-  elif polar is False:
+  elif polar is None:
     curvature_inputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
     curvature_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
     kgauss_outputs = np.zeros((N1_bins+2, N2_bins+2, Nframes))
@@ -44,7 +44,7 @@ def init_curvature_data(height, polar, dims):
     curvature_inputs[:,1:(N2_bins+1),:] = height
     curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
     curvature_inputs[:,(N2_bins+1),:] = curvature_inputs[:,1,:]
-  elif polar is False:
+  elif polar is None:
     #if cartesian, wrap in both directions
     curvature_inputs[1:(N1_bins+1),1:(N2_bins+1),:] = height
     curvature_inputs[:,0,:] = curvature_inputs[:,N2_bins,:]
@@ -75,7 +75,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     if polar is True:
       curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
       #curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(dims, curvature_inputs)
-    elif polar is False:
+    elif polar is None:
       curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
 
     #unwrap along dim2 direction
@@ -84,7 +84,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     normal_vectors = normal_vector_outputs[:,3:3*(N2_bins+1),:]
 
     #if cartesian, unwrap along dim1 direction too
-    if polar is False:
+    if polar is None:
       meancurvature = meancurvature[1:N1_bins+1,:,:]
       kcurvature = kcurvature[1:N1_bins+1,:,:]
       normal_vectors = normal_vectors[1:N1_bins+1,:,:]
