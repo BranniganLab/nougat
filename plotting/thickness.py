@@ -42,7 +42,7 @@ def measure_t0(zone, ztwo):
 
   return avgt0
 
-def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
+def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_dict):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   zone = np.load('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.height.npy')
   ztwo = np.load('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.height.npy')
@@ -57,8 +57,8 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims):
   avginner = calc_avg_over_time(inner_leaflet)/avgt0
 
   #make plots!
-  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
-  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', thick_max, thick_min, inclusion, "avgThickness", bead, polar)
+  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, polar)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, polar)
 
   #save as file for debugging / analysis AND make PDB!
   np.save('npy/'+sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)

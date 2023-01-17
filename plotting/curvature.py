@@ -59,10 +59,12 @@ def init_curvature_data(height, polar, dims):
 
   return curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs
 
-def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
+def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, scale_dict):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+
   leaflist = field_list.copy()
   leaflist.append("zplus")
+  
   for field in leaflist: 
     field_height = np.load('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy')
 
@@ -94,8 +96,8 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims):
     avgkcurvature = calc_avg_over_time(kcurvature)
 
     #make plots!
-    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, gauss_curv_max, gauss_curv_min, inclusion, "gausscurvature", bead, polar)
-    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, mean_curv_max, mean_curv_min, inclusion, "curvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, polar)
 
     #save as files for debugging / analysis
     np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')

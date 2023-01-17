@@ -35,7 +35,7 @@ def normalize_vectors_in_array(array, Nr, Ntheta):
 
   return array 
 
-def gen_avg_tilt(name, field, polar):
+def gen_avg_tilt(name, field, polar, scale_dict):
   vector_data = np.genfromtxt(name+'.'+field+'.tilt.dat', missing_values='nan',filling_values=np.nan)
   height_data = np.genfromtxt(name+'.'+field+'.height.dat',missing_values='nan',filling_values=np.nan)
   normal_data = np.load(name+'.'+field+'.normal_vectors.npy')

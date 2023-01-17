@@ -69,7 +69,7 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
   serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
   print(sys_name+' '+bead+" zplus height done!")
 
-def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
+def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field_list, scale_dict):
   serial = 1
 
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
@@ -100,7 +100,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims):
         avgHeight = calc_avg_over_time(height)
 
         #make plots!
-        plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, height_max, height_min, inclusion, "avgHeight", bead, polar)
+        plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, polar)
 
         #save as file for debugging / analysis AND make PDB!
         np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)

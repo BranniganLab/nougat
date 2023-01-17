@@ -24,7 +24,7 @@ order_max = .6
 field_list = ["zone","ztwo", "zzero"]
 
 
-def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
+def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   areas = np.load('npy/'+sys_name+"."+coordsys+".areas.npy")
   print(names_dict)
@@ -57,8 +57,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
     avginner = avginner * normfactor / areas 
 
     #make plots!
-    plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', density_max, density_min, inclusion, "avgDensity", False, polar)
-    plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.inner', density_max, density_min, inclusion, "avgDensity", False, polar)
+    plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, polar)
+    plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, polar)
 
     #save as file for debugging / analysis 
     np.save('npy/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.npy', density_up)

@@ -14,26 +14,9 @@ from order import *
 from utils import *
 #from code_review2 import *
 
-# These determine the scale in your image files
-# adjust as needed
-height_min = -60
-height_max = 60
-mean_curv_min = 0.01
-mean_curv_max = -0.01
-gauss_curv_min = -0.001
-gauss_curv_max = 0.001
-density_min = 0
-density_max = 2
-thick_min = 0
-thick_max = 2
-order_min = 0. 
-order_max = .6
-
-field_list = ["zone","ztwo", "zzero"]
 
 
-
-def run_nougat(sys_name, polar, inclusion_drawn):
+def run_nougat(sys_name, polar, inclusion_drawn, scale_dict):
   cwd = os.getcwd()
 
   for filetype in ["npy", "dat", "pdf"]:
@@ -53,6 +36,8 @@ def run_nougat(sys_name, polar, inclusion_drawn):
   elif polar is None:
     coordsys = 'cart'
 
+  field_list = ["zone","ztwo", "zzero"]
+
   #figure out all the file names that you'll need to fetch
   names_dict = fetch_names(sys_name, coordsys)
 
@@ -60,15 +45,15 @@ def run_nougat(sys_name, polar, inclusion_drawn):
   dims = bin_prep(sys_name, names_dict, coordsys, polar)
 
   #analyze height
-  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field_list, scale_dict)
 
   for bead in names_dict['beads_list']:
-    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims)
-    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims)
+    calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_dict)
+    calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, scale_dict)
   
-  calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict)
+  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict)
+  #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict)
 
 
 if __name__ == "__main__": 
@@ -85,6 +70,23 @@ if __name__ == "__main__":
     print("You tried to specify something in your inclusion flag. Is that what you meant to do?")
     exit()
 
-  run_nougat(args.sys_name, args.polar, args.inclusion)
+  # These determine the scale in your image files
+  # adjust as needed
+  scale_dict = {
+    "height_min" : -60,
+    "height_max" : 60,
+    "mean_curv_min" : 0.01,
+    "mean_curv_max" : -0.01,
+    "gauss_curv_min" : -0.001,
+    "gauss_curv_max" : 0.001,
+    "density_min" : 0,
+    "density_max" : 2,
+    "thick_min" : 0,
+    "thick_max" : 2,
+    "order_min" : 0., 
+    "order_max" : .6
+  }
+
+  run_nougat(args.sys_name, args.polar, args.inclusion, scale_dict)
 
   print("Thank you for using nougat!")
