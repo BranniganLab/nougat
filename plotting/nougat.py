@@ -79,10 +79,12 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if args.polar != True and args.polar != None:
-    print("You tried to specify something in your polar flag. Is that what you meant?")
+    print("You tried to specify something in your polar flag. Is that what you meant to do?")
     exit()
   if args.inclusion != True and args.inclusion != None:
-    print("You tried to specify something in your inclusion flag. Is that what you meant?")
+    print("You tried to specify something in your inclusion flag. Is that what you meant to do?")
     exit()
 
   run_nougat(args.sys_name, args.polar, args.inclusion)
+
+  print("Thank you for using nougat!")
