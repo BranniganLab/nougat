@@ -7,22 +7,6 @@ import os
 from utils import *
 #from code_review2 import *
 
-# These determine the scale in your image files
-# adjust as needed
-height_min = -60
-height_max = 60
-mean_curv_min = 0.01
-mean_curv_max = -0.01
-gauss_curv_min = -0.001
-gauss_curv_max = 0.001
-density_min = 0
-density_max = 2
-thick_min = 0
-thick_max = 2
-order_min = 0. 
-order_max = .6
-
-field_list = ["zone","ztwo", "zzero"]
 
 def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
   resseqnum = 1

@@ -6,22 +6,6 @@ import glob
 import os 
 from utils import *
 
-# These determine the scale in your image files
-# adjust as needed
-height_min = -60
-height_max = 60
-mean_curv_min = 0.01
-mean_curv_max = -0.01
-gauss_curv_min = -0.001
-gauss_curv_max = 0.001
-density_min = 0
-density_max = 2
-thick_min = 0
-thick_max = 2
-order_min = 0. 
-order_max = .6
-
-field_list = ["zone","ztwo", "zzero"]
 
 def normalize_vectors_in_array(array, Nr, Ntheta):
   for row in range(Nr):

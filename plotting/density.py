@@ -6,23 +6,6 @@ import glob
 import os 
 from utils import *
 
-# These determine the scale in your image files
-# adjust as needed
-height_min = -60
-height_max = 60
-mean_curv_min = 0.01
-mean_curv_max = -0.01
-gauss_curv_min = -0.001
-gauss_curv_max = 0.001
-density_min = 0
-density_max = 2
-thick_min = 0
-thick_max = 2
-order_min = 0. 
-order_max = .6
-
-field_list = ["zone","ztwo", "zzero"]
-
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 

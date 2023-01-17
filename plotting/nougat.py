@@ -15,7 +15,6 @@ from utils import *
 #from code_review2 import *
 
 
-
 def run_nougat(sys_name, polar, inclusion_drawn, scale_dict):
   cwd = os.getcwd()
 
