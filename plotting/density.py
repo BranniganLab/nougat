@@ -10,7 +10,7 @@ from utils import *
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
   areas = np.load('npy/'+sys_name+"."+coordsys+".areas.npy")
-  print(names_dict)
+
   for species in names_dict['species_list']:
     zone = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
     ztwo = np.genfromtxt('tcl_output/'+sys_name+'.'+species+'.ztwo.'+coordsys+'.density.dat',missing_values='nan',filling_values="0")
@@ -40,8 +40,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
     avginner = avginner * normfactor / areas 
 
     #make plots!
-    plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, polar)
-    plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, polar)
+    plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys)
+    plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys)
 
     #save as file for debugging / analysis 
     np.save('npy/'+sys_name+'.'+species+'.zone.'+coordsys+'.density.npy', density_up)
@@ -51,10 +51,10 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
 
     print(sys_name+' '+species+" density done!")
 
-  if len(names_dict['species_list']) > 1:
-    calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  elif len(names_dict['species_list']) < 1:
-    print("Something is wrong with species_list!")
+  #if len(names_dict['species_list']) > 1:
+  #  calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
+  #elif len(names_dict['species_list']) < 1:
+  #  print("Something is wrong with species_list!")
 
 def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
