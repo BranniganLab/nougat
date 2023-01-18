@@ -58,16 +58,9 @@ def run_nougat(sys_name, polar, inclusion_drawn, scale_dict):
 if __name__ == "__main__": 
   parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
   parser.add_argument("sys_name", help="what system do you want to run nougat.py on?")
-  parser.add_argument("-p", "--polar", help="add this flag if you ran nougat.tcl in polar coordinates")
-  parser.add_argument("-i", "--inclusion", help="add this flag if you want your inclusion to show up in images")
+  parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
+  parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you want your inclusion to show up in images")
   args = parser.parse_args()
-
-  if args.polar != True and args.polar != None:
-    print("You tried to specify something in your polar flag. Is that what you meant to do?")
-    exit()
-  if args.inclusion != True and args.inclusion != None:
-    print("You tried to specify something in your inclusion flag. Is that what you meant to do?")
-    exit()
 
   # These determine the scale in your image files
   # adjust as needed
