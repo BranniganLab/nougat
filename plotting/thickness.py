@@ -8,7 +8,6 @@ from utils import *
 #from code_review2 import *
 
 def measure_t0(zone, ztwo, coordsys):
-
   thickness = zone-ztwo
 
   avgthickness = calc_avg_over_time(thickness)

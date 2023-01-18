@@ -15,21 +15,24 @@ def calc_avg_over_time(matrix_data):
     avg=np.nanmean(matrix_data, axis=2)
     return avg
 
-def bin_prep(sys_name, names_dict, coordsys, polar):
-  sample_data = np.genfromtxt('tcl_output/'+sys_name+'.zone.'+names_dict['beads_list'][0]+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
-  N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, polar)
+def bin_prep(sys_name, beadnames, coordsys, density):
+
+  sample_data = np.genfromtxt('tcl_output/'+sys_name+'.zone.'+beadnames+'.'+coordsys+'.height.dat',missing_values='nan',filling_values=np.nan)
+
+  N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, coordsys)
   
   #prep plot dimensions
   dim1 = sample_data[0:N1_bins,0]
   dim1 = np.append(dim1, sample_data[N1_bins-1,1])
-  if polar is True:
+  if coordsys == "polar":
     dim2 = np.linspace(0,2*np.pi,N2_bins+1)
-  elif polar is None:
+  elif coordsys == "cart":
     dim2 = np.linspace(0,N2_bins+1,N2_bins+1)
   dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
 
-  #save an array that represents the area per bin for normalizing density later
-  save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name)
+  if density == "ON":
+    #save an array that represents the area per bin for normalizing density later
+    save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name)
 
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
 
@@ -86,17 +89,15 @@ def fetch_names(sys_name, coordsys):
 
   return names_dict
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, polar):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
   fig = plt.figure()
-
-  if polar is True:
+  print(coordsys)
+  if coordsys == "polar":
     ax = plt.subplot(projection="polar")
     c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
-    coordsys = "polar"
-  elif polar is None:
+  elif coordsys == "cart":
     ax = plt.subplot()
     c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
-    coordsys = "cart"
     
   
   cbar = plt.colorbar(c)
@@ -105,7 +106,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     print(protein)
     for i in range(0,10,2):
       protein[i+1] = np.deg2rad(protein[i+1])
-      if polar is None:
+      if coordsys == "cart":
         protein[i], protein[i+1] = convert_to_cart(protein[i],protein[i+1])
       plt.scatter(protein[i+1],protein[i],c="black",linewidth=4,zorder=2)
     circle1 = plt.Circle((0,0),28.116, transform=ax.transData._b, color='black',linestyle='dashed',linewidth=4,fill=False)
@@ -149,7 +150,7 @@ def bin_format(value):
   return final_value
 
 
-def dimensions_analyzer(data, polar):
+def dimensions_analyzer(data, coordsys):
   # figure out how many radial or x bins there are
   counter = 1
   flag = True
@@ -172,17 +173,16 @@ def dimensions_analyzer(data, polar):
   #figure out how many frames there are in the traj
   Nframes = int(len(data[:,0])/N1_bins)
 
-  if polar is True:
+  if coordsys == "polar":
     d1 = data[0,1] - data[0,0]
     d2 = (np.pi*2)/N2_bins
-  elif polar is None:
+  elif coordsys == "cart":
     #compute average d1, assume d2 is the same
     d1list = []
     for row in range(Nframes):
       d1list.append(data[row*N1_bins,1])
     d1 = np.mean(d1list)
     d2 = d1
-
 
   return N1_bins, d1, N2_bins, d2, Nframes, match_value
 

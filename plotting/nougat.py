@@ -32,7 +32,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, scale_dict):
 
   if polar is True:
     coordsys = 'polar'
-  elif polar is None:
+  elif polar is False:
     coordsys = 'cart'
 
   field_list = ["zone","ztwo", "zzero"]
@@ -41,7 +41,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, scale_dict):
   names_dict = fetch_names(sys_name, coordsys)
 
   #get data dimensions and prep plots from one of your trajectories
-  dims = bin_prep(sys_name, names_dict, coordsys, polar)
+  dims = bin_prep(sys_name, names_dict['beads_list'][0], coordsys, polar, "ON")
 
   #analyze height
   analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field_list, scale_dict)
