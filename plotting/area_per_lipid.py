@@ -4,7 +4,10 @@ import numpy as np
 import warnings
 import glob
 import os 
-
+from thickness import measure_t0
+from utils import bin_prep
+from utils import dimensions_analyzer
+from utils import plot_maker
 
 colordict = {
 	"DT": "green",
@@ -80,43 +83,40 @@ def plot_area_per_lipid(systems):
 
 	plt.show()
 
-def diff_mid_interface(systems, sysnames, mol):
-	for system, name in zip(systems, sysnames):
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+name+'.'
-		filename_end = '.C1A.C1B.cart.height.npy'
+def diff_mid_interface(systems, mol, coordsys):
+	for system in systems:
+		os.chdir(system)
+		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
-		try:
-			zzero = np.load(filename_start+'zzero'+filename_end)
-			H1 = np.load(filename_start+'zone'+'.C1A.C1B.cart.meancurvature.npy')
-			H2 = np.load(filename_start+'ztwo'+'.C1A.C1B.cart.meancurvature.npy')
-		except:
-			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
-			zzero = np.load(filename_start+'zzero'+filename_end)
-			H1 = np.load(filename_start+'zone'+'.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
-			H2 = np.load(filename_start+'ztwo'+'.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
-		dims = np.shape(zzero)
-		dim1 = np.linspace(0,dims[0],dims[0]+1)
-		dim2 = np.linspace(0,dims[1],dims[1]+1)
-		dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
+		zzero = np.load(filename_start+'zzero'+filename_end)
+		zone = np.load(filename_start+'zone'+filename_end)
+		ztwo = np.load(filename_start+'ztwo'+filename_end)
+#		H1 = np.load(filename_start+'zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
+#		H2 = np.load(filename_start+'ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
 		zplus = np.load(filename_start+'zplus'+filename_end)
 		diff = zplus-zzero
 		avgdiff = np.nanmean(diff,axis=2)
-		H = H1+H2
-		avgH = np.nanmean(H,axis=2)
-		t0 = measure_t0(system, mol)
-		print(t0)
+#		H = H1+H2
+#		avgH = np.nanmean(H,axis=2)
+		t0 = measure_t0(zone, ztwo, coordsys)
 		avgdiff = avgdiff/t0
-		avgcombo = avgdiff*avgH
-		c = plt.pcolormesh(dim1vals,dim2vals,avgcombo,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
-		cbar = plt.colorbar(c)
-		plt.axis('off')
-		ax.set_xticklabels([])
-		ax.set_yticklabels([])
-		#fig.set_size_inches(6,6)
-		plt.savefig(system+"_"+name+"_epsilonH_cart.pdf", dpi = 700)
-		plt.clf()
-		plt.close()
+#		avgcombo = avgdiff*avgH
+
+		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
+		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
+		os.chdir('..')
+#		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
+#		cbar = plt.colorbar(c)
+#		plt.axis('off')
+#		ax.set_xticklabels([])
+#		ax.set_yticklabels([])
+#		#fig.set_size_inches(6,6)
+#		plt.savefig(system+"_epsilon_cart.pdf", dpi = 700)
+#		plt.clf()
+#		plt.close()
 
 
 def measure_H_epsilon_corr(systems, mol):
@@ -191,36 +191,36 @@ def sum_terms(systems, mol):
 		print(sumterm7)
 		print(sumavgH2)
 
-def measure_t0(systems, mol):
-	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
-		filename_end = '.C1A.C1B.cart.height.npy'
-		try:
-			z1 = np.load(filename_start+'zone'+filename_end)
-			z2 = np.load(filename_start+'ztwo'+filename_end)
-		except:
-			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
-			z1 = np.load(filename_start+'zone'+filename_end)
-			z2 = np.load(filename_start+'ztwo'+filename_end)
-
-		thickness = z1-z2
-
-		avgthickness = np.nanmean(thickness,axis=2)
-
-		leftcol = np.nanmean(avgthickness[:,0])
-		rightcol =  np.nanmean(avgthickness[:,-1])
-		toprow =  np.nanmean(avgthickness[0,:])
-		botrow =   np.nanmean(avgthickness[-1,:])
-
-
-		avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
-
-		avgt0 = avgt0/2.0
-
-		print(system)
-		print(avgt0*2.)
-
-	return avgt0
+#def measure_t0(systems, mol):
+#	for system in systems:
+#		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+#		filename_end = '.C1A.C1B.cart.height.npy'
+#		try:
+#			z1 = np.load(filename_start+'zone'+filename_end)
+#			z2 = np.load(filename_start+'ztwo'+filename_end)
+#		except:
+#			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
+#			z1 = np.load(filename_start+'zone'+filename_end)
+#			z2 = np.load(filename_start+'ztwo'+filename_end)
+#
+#		thickness = z1-z2
+#
+#		avgthickness = np.nanmean(thickness,axis=2)
+#
+#		leftcol = np.nanmean(avgthickness[:,0])
+#		rightcol =  np.nanmean(avgthickness[:,-1])
+#		toprow =  np.nanmean(avgthickness[0,:])
+#		botrow =   np.nanmean(avgthickness[-1,:])
+#
+#
+#		avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+#
+#		avgt0 = avgt0/2.0
+#
+#		print(system)
+#		print(avgt0*2.)
+#
+#	return avgt0
 
 def sum_over_K(systems):
 
@@ -304,9 +304,9 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	#diff_mid_interface(["lgPO"], ["lgPO"], "empty")
+	diff_mid_interface(["lgPO", "lgDL", "lgDP", "lgDO", "lgDX", "lgDB"], "5x29", "polar")
 	#measure_H_epsilon_corr(["lgPO"], "empty")
-	measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
+	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
 	#measure_H(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
 	#sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
