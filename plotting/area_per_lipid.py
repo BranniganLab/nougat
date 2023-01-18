@@ -86,7 +86,7 @@ def plot_area_per_lipid(systems):
 def diff_mid_interface(systems, mol, coordsys):
 	for system in systems:
 		os.chdir(system)
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
@@ -304,7 +304,7 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	diff_mid_interface(["lgPO", "lgDL", "lgDP", "lgDO", "lgDX", "lgDB"], "5x29", "polar")
+	diff_mid_interface(["lgDT", "lgDY"], "5x29", "polar")
 	#measure_H_epsilon_corr(["lgPO"], "empty")
 	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
