@@ -7,19 +7,20 @@ import os
 from utils import *
 #from code_review2 import *
 
-def measure_t0(zone, ztwo):
+def measure_t0(zone, ztwo, coordsys):
 
   thickness = zone-ztwo
 
   avgthickness = calc_avg_over_time(thickness)
 
-  leftcol = np.mean(avgthickness[:,0])
-  rightcol =  np.mean(avgthickness[:,-1])
-  toprow =  np.mean(avgthickness[0,:])
-  botrow =   np.mean(avgthickness[-1,:])
-
-
-  avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+  if coordsys == "cart":
+    leftcol = np.mean(avgthickness[:,0])
+    rightcol =  np.mean(avgthickness[:,-1])
+    toprow =  np.mean(avgthickness[0,:])
+    botrow =   np.mean(avgthickness[-1,:])
+    avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+  elif coordsys == "polar":
+    avgt0 = np.mean(avgthickness[-1:])
 
   avgt0 = avgt0/2.0
 
@@ -34,7 +35,7 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
   outer_leaflet = zone-zzero
   inner_leaflet = zzero-ztwo
 
-  avgt0 = measure_t0(zone, ztwo)
+  avgt0 = measure_t0(zone, ztwo, coordsys)
 
   avgouter = calc_avg_over_time(outer_leaflet)/avgt0
   avginner = calc_avg_over_time(inner_leaflet)/avgt0
