@@ -132,16 +132,20 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     dict set config_dict step $step 
     dict set config_dict min $min
 
+    set coordsys [read_polar $polar]
+    set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
+    file mkdir $foldername
+
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $config_dict $bindims $polar "height_density" 
-    run_nougat $system $config_dict $bindims $polar "tilt_order" 
+    run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
+    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 }
 
-proc run_nougat {system config_dict bindims polar quantity_of_interest} {  
+proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
     
     set coordsys [read_polar $polar]
-    set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys]
+    set outfiles [create_outfiles $system $quantity_of_interest [concat_names [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys $foldername]
     set selections [create_atomselections $quantity_of_interest $config_dict]
 
     puts "Setup complete. Starting frame analysis now."   
@@ -213,7 +217,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest} {
 
     ;# output density normalization info 
     if {$quantity_of_interest eq "height_density"} {
-        output_density_norm_info [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys
+        output_density_norm_info [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername
     }
 
     ;# close all outfiles

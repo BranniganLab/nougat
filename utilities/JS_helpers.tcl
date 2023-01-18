@@ -56,8 +56,8 @@ proc run_mult {list_of_systems} {
         cd $directory
         foreach item $list_of_systems {
             cd $item 
-            set gro "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.gro"
-            set xtc "/u1/home/js2746/Bending/PC/latest_data/${directory}/${item}/${item}.xtc"
+            set gro "/u1/home/js2746/Bending/PC/whole_mols/${directory}/${item}/${item}.gro"
+            set xtc "/u1/home/js2746/Bending/PC/whole_mols/${directory}/${item}/${item}.xtc"
             #set gro "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/insane.gro"
             #set xtc "/u1/home/js2746/Bending/Jam_test/nougattest/${item}/md_reduced.xtc"
             
@@ -68,12 +68,7 @@ proc run_mult {list_of_systems} {
             puts $gro
             puts $xtc
             animate delete beg 0 end 0 skip 0 top
-            cd newleaf_polar
-            start_nougat $item 12 30 200 -1 1 1
-            cd ..
-            cd newleaf_cart
-            start_nougat $item 12 30 200 -1 1 0
-            cd ..
+            start_nougat ${item} ~/PolarHeightBinning/nougat_config.txt 10 30 200 -1 1 1
             mol delete top
             cd ..
         }
