@@ -80,8 +80,8 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
     avgkcurvature = calc_avg_over_time(kcurvature)
 
     #make plots!
-    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, polar)
-    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, polar)
+    plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys)
+    plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys)
 
     #save as files for debugging / analysis
     np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')

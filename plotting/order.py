@@ -29,8 +29,8 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, scal
       avginner = calc_avg_over_time(order_down)
 
       #make plots!
-      plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.'+tail+'.zone', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, polar)
-      plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, polar)
+      plot_maker(dim1vals, dim2vals, avgouter, sys_name, species+'.'+tail+'.zone', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys)
+      plot_maker(dim1vals, dim2vals, avginner, sys_name, species+'.'+tail+'.ztwo', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys)
 
       #save as file for debugging / analysis 
       np.save('npy/'+sys_name+'.'+species+'.'+tail+'.zone.'+coordsys+'.order.npy', order_up)

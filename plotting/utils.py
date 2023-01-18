@@ -91,14 +91,15 @@ def fetch_names(sys_name, coordsys):
 
 def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
   fig = plt.figure()
-  print(coordsys)
+
   if coordsys == "polar":
     ax = plt.subplot(projection="polar")
     c = plt.pcolormesh(dim2vals,dim1vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
   elif coordsys == "cart":
     ax = plt.subplot()
     c = plt.pcolormesh(dim1vals,dim2vals,data,cmap="RdBu_r",zorder=0,vmax=Vmax,vmin=Vmin)
-    
+  else:
+    print("something's wrong with coordsys")
   
   cbar = plt.colorbar(c)
 
