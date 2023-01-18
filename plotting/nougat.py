@@ -59,7 +59,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
   parser.add_argument("sys_name", help="what system do you want to run nougat.py on?")
   parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
-  parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you want your inclusion to show up in images")
+  parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
   args = parser.parse_args()
 
   # These determine the scale in your image files
