@@ -83,6 +83,47 @@ def plot_area_per_lipid(systems):
 
 	plt.show()
 
+def zoom_in(systems):
+	max_scale_dict = {
+		"height":60,
+		"thickness":2,
+		"curvature":0.01,
+		"Kcurvature":0.001,
+		"tail1":0.6,
+		"tail0":0.6,
+		"density":2
+	}
+	min_scale_dict = {
+		"height":-60,
+		"thickness":0,
+		"curvature":-0.01,
+		"Kcurvature":-0.001,
+		"tail1":0.0,
+		"tail0":0.0,
+		"density":0
+	}
+	values = ["height", "thickness", "curvature", "Kcurvature", "tail1", "tail0"]
+	#values = ["height"]
+	for system in systems:
+		#os.chdir("dm1/"+system)
+		os.chdir(system)
+		os.chdir(system+'_polar_5_10_100_-1_1/')
+		for field in ["zone", "ztwo"]:
+			for value in values:
+				print(value)
+				if value == "tail0" or value == "tail1":
+					data = np.genfromtxt('dat/'+system+'.'+system[2:]+'PC.'+value+'.'+field+'.polar.avgOrder.dat', delimiter=",", missing_values="nan", filling_values=np.nan)
+				else:
+					data = np.genfromtxt('dat/'+system+'.'+field+'.C1A.C1B.polar.avg'+value+'.dat', delimiter=",", missing_values="nan", filling_values=np.nan)
+				dim1 = np.linspace(0,50,16)
+				dim2 = np.linspace(0,2*np.pi,11)
+				dim1vals,dim2vals=np.meshgrid(dim1, dim2, indexing='ij')
+				print(data[:15,:].shape)
+				plot_maker(dim1vals, dim2vals, data[:15,:], system, field, max_scale_dict[value], min_scale_dict[value], False, value, False, "polar")
+		os.chdir('../..')
+
+
+
 def diff_mid_interface(systems, mol, coordsys):
 	for system in systems:
 		os.chdir(system)
@@ -304,7 +345,7 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	diff_mid_interface(["lgDT", "lgDY"], "5x29", "polar")
+	#diff_mid_interface(["lgDT", "lgDY"], "5x29", "polar")
 	#measure_H_epsilon_corr(["lgPO"], "empty")
 	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
@@ -312,3 +353,5 @@ if __name__ == "__main__":
 	#sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
 	#sum_over_K(["lgPO"])
 	#sum_terms(["lgDG"], "5x29")
+	#zoom_in(["lgDB","lgDL","lgDP","lgDX"])
+	#zoom_in(["lgDT"])
