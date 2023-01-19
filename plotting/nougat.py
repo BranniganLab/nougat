@@ -67,8 +67,8 @@ if __name__ == "__main__":
   scale_dict = {
     "height_min" : -60,
     "height_max" : 60,
-    "mean_curv_min" : 0.01,
-    "mean_curv_max" : -0.01,
+    "mean_curv_min" : -0.01,
+    "mean_curv_max" : 0.01,
     "gauss_curv_min" : -0.001,
     "gauss_curv_max" : 0.001,
     "density_min" : 0,
