@@ -101,7 +101,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   else:
     print("something's wrong with coordsys")
   
-  cbar = plt.colorbar(c)
+  #cbar = plt.colorbar(c)
 
   if protein is not False:
     print(protein)

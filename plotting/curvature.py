@@ -84,8 +84,8 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
     plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys)
 
     #save as files for debugging / analysis
-    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.7f')
-    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.7f')
+    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgcurvature.dat',avgcurvature,delimiter = ',',fmt='%10.5f')
+    np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgKcurvature.dat',avgkcurvature,delimiter = ',',fmt='%10.5f')
     np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.meancurvature.npy',meancurvature)
     np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.gausscurvature.npy',kcurvature)
     np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.normal_vectors.npy',normal_vectors)

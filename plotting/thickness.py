@@ -40,14 +40,14 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
   avginner = calc_avg_over_time(inner_leaflet)/avgt0
 
   #make plots!
-  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'outer', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
-  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'inner', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
+  plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
 
   #save as file for debugging / analysis AND make PDB!
-  np.save('npy/'+sys_name+'.outer.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
-  np.save('npy/'+sys_name+'.inner.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
-  np.savetxt('dat/'+sys_name+'.outer.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
-  np.savetxt('dat/'+sys_name+'.inner.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
+  np.save('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
+  np.save('npy/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.thickness.npy', inner_leaflet)
+  np.savetxt('dat/'+sys_name+'.zone.'+bead+'.'+coordsys+'.avgthickness.dat', avgouter,delimiter = ',',fmt='%10.5f')
+  np.savetxt('dat/'+sys_name+'.ztwo.'+bead+'.'+coordsys+'.avgthickness.dat', avginner,delimiter = ',',fmt='%10.5f')
 
   print(sys_name+' '+bead+" thickness done!")
 
