@@ -76,6 +76,21 @@ proc run_mult {list_of_systems} {
     }
 }
 
+proc rotate_system {angle axis mol} {
+    set nframes [molinfo $mol get numframes]
+    set sel [atomselect $mol all]
+    for {set i 0} {$i <= $nframes} {incr i} {
+        $sel frame $i
+        $sel update
+        set com [measure center $sel weight mass]
+        set matrix [transaxis $axis $angle]
+        $sel moveby [vecscale -1.0 $com]
+        $sel move $matrix
+        $sel moveby $com 
+    }
+
+}
+
 proc read_order_params {} {
     set fp0 [open "~/Downloads/AVGPC1A.dat" r]
     set fp1 [open "~/Downloads/AVGPC1B.dat" r]
