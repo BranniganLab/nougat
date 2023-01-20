@@ -21,6 +21,7 @@ Python3
 numpy
 matplotlib
 warnings
+argparse
 glob
 os
 ```
@@ -80,14 +81,10 @@ An explanation of the options is as follows:
 - polar             0 for cartesian system, 1 for polar system
 ```
 
-### Edit & Run nougat.py
-- Open nougat.py in the text editor of your choice
-- Edit sys_name to match what you set "system name" to in nougat.tcl
-- If you _did not_ comment out Protein_Position, set **inclusion_drawn** to 1
-- If you set $polar to 1 in nougat.tcl, set polar to True in nougat.py
-- run nougat.py from the command line
+###  Run nougat.py
+- python3 [path-to]/nougat/plotting/nougat.py [system name] [-p for polar]
 
 ### Explore your results!
-All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat.py (lines 12-25).
+All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat.py (lines 68-79).
 
 You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
