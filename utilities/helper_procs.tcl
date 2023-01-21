@@ -168,9 +168,9 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
         $total_sel delete
     }
 
-    if {$pore_sort eq "ON"} {
+    if {$pore_sort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
-        #pore_sorter_custom $frm $species "5x29"
+
     }
 }
 
@@ -188,6 +188,9 @@ proc print_value {file value end_line} {
     } else {
         puts "Something went wrong - end_line should have value of 0 or 1 only"
         break
+
+        pore_sorter_custom $frm $species $pore_sort
+
     }
 }
 
@@ -198,17 +201,19 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
 
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
-        print_line_init $file $m $d1 $min
+        set binstart [format {%0.2f} [expr $m*$d1+$min]]
+        set binend [format {%0.2f} [expr ($m+1)*$d1+$min]]
+        puts -nonewline $file "$binstart  $binend  "
         ;# prints bin values through ultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n+1.0]} {
             if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
-                print_value $file [dict get $outfiles $selex $key bin "$m,$n"] 0
+                puts -nonewline $file " [dict get $outfiles $selex $key bin "$m,$n"]"
             } else {
-                print_value $file "nan" 0
+                puts -nonewline $file " nan"
             }
         }
         ;# starts a new line
-        print_value $file " " 1
+        puts $file " "
     }
 }
 
@@ -345,19 +350,19 @@ proc bin_assigner {x_vals y_vals d1 d2 dthetadeg polar frm} {
 ;# create a dict containing all the outfile names/addresses
 ;# density segregates by species
 ;# tilt and order segregate by species and tail number
-proc create_outfiles {system quantity_of_interest headnames species taillist coordsys} {
-    file mkdir "tcl_output"
+proc create_outfiles {system quantity_of_interest headnames species taillist coordsys foldername} {
+    file mkdir "${foldername}/tcl_output"
     if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 counts_up fname [open "tcl_output/${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z1z2 counts_down fname [open "tcl_output/${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z0 counts_zzero fname [open "tcl_output/${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 heights_up fname [open "${foldername}/tcl_output/${system}.zone.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headnames}.${coordsys}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "${foldername}/tcl_output/${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "tcl_output/${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
@@ -365,10 +370,10 @@ proc create_outfiles {system quantity_of_interest headnames species taillist coo
             for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
                 set tailnum "tail$j"
                 set taillength [llength [lindex [lindex $taillist $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
             }
         }
     }
@@ -543,13 +548,13 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
 }
 
 ;# calculates the normalization factor for density enrichment calculations
-proc output_density_norm_info {start nframes step species system headnames coordsys} {
+proc output_density_norm_info {start nframes step species system headnames coordsys foldername} {
     set arealist []
     for {set frm $start} {$frm <= $nframes} {set frm [expr $frm+$step]} {
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
+    set normfactor_outfile [open "${foldername}/tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
@@ -800,6 +805,7 @@ proc create_atomselections {quantity_of_interest config_dict} {
     if {$quantity_of_interest eq "height_density"} {
         dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
         dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+
     } elseif {$quantity_of_interest eq "tilt_order"} {
         set lists [tail_length_sorter [dict get $config_dict species] [dict get $config_dict acyl_names]]
         set sellist [lindex $lists 0]
@@ -838,18 +844,22 @@ proc Align { stuff } {
     puts "Align end"
 }
 
-;# THIS IS FOR 5X29!
-proc set_occupancy {molid} {
+
+proc separate_chains {molid cutoff} {
+    ;# Multichain proteins default to chain X in martinize.py
+    ;# separate_chains will jump from atom to atom and anywhere the 
+    ;# distance is greater than $cutoff it will assume there is a new subunit.
 
     set sel [atomselect $molid "name BB SC1 to SC4"]
-    set residuelist [$sel get residue]
-    set resmax [::tcl::mathfunc::max {*}$residuelist]
+    set indxlist [$sel get index]
+    set indmin [::tcl::mathfunc::min {*}$indxlist]
+    set indmax [::tcl::mathfunc::max {*}$indxlist]
     $sel delete
 
-    set list1 0
+    set list1 [list $indmin]
 
-    for {set i 0} {$i < $resmax} {incr i} {
-        set sel1 [atomselect $molid "residue $i"]
+    for {set i $indmin} {$i < $indmax} {incr i} {
+        set sel1 [atomselect $molid "index $i"]
         set sel2 [atomselect $molid "residue [expr $i+1]"]
 
         set loc1 [lindex [$sel1 get {x y z}] 0]
@@ -857,7 +867,7 @@ proc set_occupancy {molid} {
 
         set dist [vecdist $loc1 $loc2]
 
-            if {$dist > 15} {
+            if {$dist > $cutoff} {
                 lappend list1 $i
                 lappend list1 [expr $i+1]
             }
@@ -867,14 +877,18 @@ proc set_occupancy {molid} {
 
     set chars [list A B C D E]
     set k 0
-    lappend list1 $resmax
+    lappend list1 $indmax
 
     foreach {i j} $list1 {
-        set sel [atomselect $molid "residue $i to $j"]
+        set sel [atomselect $molid "index $i to $j"]
         $sel set chain [lindex $chars $k]
         $sel delete
         set k [expr $k+1]
     }
+}
+
+;# THIS IS FOR 5X29!
+proc set_occupancy {molid} {
 
     set sel [atomselect $molid "resid 0 to 39"]
     $sel set occupancy 1

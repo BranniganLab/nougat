@@ -11,12 +11,14 @@ fivebeads = ["DB","DG"]
 fourbeads = ["DP", "DO", "PO"]
 threebeads = {"DL","DY"}
 
-sys_list = [allsys, satsys, monounsatsys, fivebeads, fourbeads, threebeads]
-sys_name_list = ["allsys", "satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
+sys_list = [satsys]
+sys_name_list = ['saturated']
+#sys_list = [allsys, satsys, monounsatsys, fivebeads, fourbeads, threebeads]
+#sys_name_list = ["allsys", "satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
-#field_list = ['zone', 'ztwo']
+field_list = ['ztwo']
 #field_list = ['zone', 'ztwo', 'zzero']
-field_list = ['zone', 'ztwo', 'zzero', 'zplus']
+#field_list = ['zone', 'ztwo', 'zzero', 'zplus']
 
 colordict = {
 	"DT": "green",
@@ -132,18 +134,22 @@ for name in allsys:
 	plt.close()
 
 plot combined systems zone and ztwo
+'''
 counter = 0
 for system in sys_list:
-	fig = plt.figure(figsize = (5,5))
-	plt.xlim(0,70)
-	plt.ylim(-50,20)
-	plt.gca().set_aspect('equal',adjustable='box')
+	fig = plt.figure()
+	plt.xlim(0,180)
+	plt.ylim(-.005,.005)
+	#plt.gca().set_aspect('equal',adjustable='box')
 
-	x = np.arange(3,70,6)
+	
 
 	for name in system:
 		for field in field_list:
-			data = np.load(name+"."+field+".avgheight.npy")
+			if name == "DT":
+				data = np.genfromtxt("dm1/lg"+name+"/dat/lg"+name+"."+field+".C1A.C1B.polar.avgKcurvature.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
+			else:
+				data = np.genfromtxt("lg"+name+"/dat/lg"+name+"."+field+".C1A.C1B.polar.avgKcurvature.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
 			#for row in range(data.shape[0]):
 			#	nonzerocount = np.count_nonzero(data[row,:])
 			#	nancount = np.count_nonzero(np.isnan(data[row,:]))
@@ -152,20 +158,21 @@ for system in sys_list:
 			with warnings.catch_warnings():
 				warnings.simplefilter("ignore", category=RuntimeWarning)
 				z_vals=np.nanmean(data, axis=1)
-			
+			maxval = len(z_vals)
+			x = np.arange(5,(maxval*10+5),10)
 			plt.plot(x,z_vals,color=colordict[name])
-			X = [28.116,28.116]
-			Y = [-1,5]
-			plt.plot(X,Y,'k:')
+			#X = [28.116,28.116]
+			#Y = [-1,5]
+			#plt.plot(X,Y,'k:')
 
 
-	fig.set_size_inches(6,6)
-	plt.savefig(sys_name_list[counter]+"_avgovertheta.png", dpi = 700)
+	#fig.set_size_inches(6,6)
+	plt.savefig(sys_name_list[counter]+"_avgkcurvatureovertheta_"+field+".png", dpi = 700)
 	plt.clf()
 	plt.close()
 	counter += 1
-'''
 
+'''
 #plot all bead variations of zone, ztwo, and zplus, as well as orig zzero
 for name in allsys:
 	fig = plt.figure(figsize = (5,5))
@@ -204,3 +211,4 @@ for name in allsys:
 	plt.savefig(name+"_avgovertheta_allbeads.png", dpi = 700)
 	plt.clf()
 	plt.close()
+	'''

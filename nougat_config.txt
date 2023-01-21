@@ -51,5 +51,7 @@ headnames = C1A C1B
 # before turning this on!
 
 
-pore_sorter = OFF
+
+pore_sorter = NULL
+
 
