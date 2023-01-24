@@ -5,45 +5,55 @@ import warnings
 import glob
 import os 
 from thickness import measure_t0
-from utils import bin_prep
-from utils import dimensions_analyzer
-from utils import plot_maker
+from utils import *
 
-colordict = {
+sys_dict = {
 	"DT": "green",
-	"DL": "blue",
-	"DX": "purple",
-	"DB": "red",
-	"DY": "limegreen",
-	"DO": "mistyrose",
-	"PO": "darkorange",
-	"DP": "deepskyblue",
-	"DG": "orchid",
-	"lgPO" : "darkorange",
 	"lgDT" : "green",
+	"DL": "blue",
+	"lgDL": "blue",
+	"DX": "purple",
+	"lgDX": "purple",
+	"DB": "red",
+	"lgDB": "red",
+	"DY": "limegreen",
 	"lgDY" : "limegreen",
+	"DO": "mistyrose",
+	"lgDO": "mistyrose",
+	"PO": "darkorange",
+	"lgPO" : "darkorange",
+	"DP": "deepskyblue",
+	"lgDP": "deepskyblue",
+	"DG": "orchid",
 	"lgDG" : "orchid"
 }
 
-linetypedict = {
-	"DT": "solid",
-	"DL": "solid",
-	"DX": "solid",
-	"DB": "solid",
-	"DY": "solid",
-	"DO": "solid",
-	"PO": "solid",
-	"DP": "solid",
-	"DG": "solid",
-	"lgPO" : "dotted",
-	"lgDT" : "dotted",
-	"lgDY" : "dotted",
-	"lgDG" : "dotted"
+box_dict = {
+	"large": "solid",
+	"small" : "dotted"
 }
 
+field_dict = {
+	"zone" : "solid",
+	"ztwo" : "solid",
+	"zzero" : "dotted",
+	"zplus" : "dashed"
+}
 
-sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]
-#sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO"]
+bead_dict = {
+  "DT" : ['C2A.C2B'],
+  "DL" : ['C2A.C2B', 'C3A.C3B'],
+  "DY" : ['D2A.D2B', 'C3A.C3B'],
+  "DO" : ['D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
+  "PO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DP" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DB" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
+  "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
+  "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
+}
+
+small_sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]
+large_sys_list = ["lgDT", "lgDY", "lgDL", "lgDO", "lgDP", "lgPO", "lgDG", "lgDB", "lgDX"]
 
 def plot_area_per_lipid(systems):
 	
