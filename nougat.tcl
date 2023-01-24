@@ -101,7 +101,7 @@ proc cell_prep {config_path leaf_check} {
 
 
 ;########################################################################################
-;# polarHeight Functions
+;# nougat main functions
 
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
@@ -135,11 +135,12 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     set coordsys [read_polar $polar]
     set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
     file mkdir $foldername
+    file copy $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
-    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
+    #run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
+    #run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 }
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
