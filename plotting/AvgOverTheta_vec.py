@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-
+from utils import *
 
 
 allsys = ["DL", "DT", "DG", "DX", "PO", "DB", "DY", "DO", "DP"]
@@ -9,14 +9,14 @@ satsys = ["DL", "DT", "DX", "DB", "DP"]
 monounsatsys = ["DG", "DY", "DO"]
 fivebeads = ["DB","DG"]
 fourbeads = ["DP", "DO", "PO"]
-threebeads = {"DL","DY"}
+threebeads = ["DL","DY"]
 
 sys_list = [satsys]
 sys_name_list = ['saturated']
 #sys_list = [allsys, satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["allsys", "satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
-field_list = ['ztwo']
+field_list = ['ztwo',"zone"]
 #field_list = ['zone', 'ztwo', 'zzero']
 #field_list = ['zone', 'ztwo', 'zzero', 'zplus']
 
@@ -137,19 +137,37 @@ plot combined systems zone and ztwo
 '''
 counter = 0
 for system in sys_list:
-	fig = plt.figure()
-	plt.xlim(0,180)
-	plt.ylim(-.005,.005)
-	#plt.gca().set_aspect('equal',adjustable='box')
 
+	#plt.gca().set_aspect('equal',adjustable='box')
+	max_scale_dict = {
+		"height":60,
+		"thickness":2,
+		"curvature":0.01,
+		"Kcurvature":0.001,
+		"tail1":0.6,
+		"tail0":0.6,
+		"density":2
+	}
+	min_scale_dict = {
+		"height":-60,
+		"thickness":0,
+		"curvature":-0.01,
+		"Kcurvature":-0.001,
+		"tail1":0.0,
+		"tail0":0.0,
+		"density":0
+	}
 	
 
-	for name in system:
-		for field in field_list:
+	for field in field_list:
+		fig = plt.figure()
+		plt.xlim(0,180)
+		plt.ylim(-30,10)
+		for name in system:
 			if name == "DT":
-				data = np.genfromtxt("dm1/lg"+name+"/dat/lg"+name+"."+field+".C1A.C1B.polar.avgKcurvature.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
+				data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/lg"+name+"."+field+".C1A.C1B.polar.avgheight.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
 			else:
-				data = np.genfromtxt("lg"+name+"/dat/lg"+name+"."+field+".C1A.C1B.polar.avgKcurvature.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
+				data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/lg"+name+"."+field+".C1A.C1B.polar.avgheight.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
 			#for row in range(data.shape[0]):
 			#	nonzerocount = np.count_nonzero(data[row,:])
 			#	nancount = np.count_nonzero(np.isnan(data[row,:]))
@@ -158,6 +176,8 @@ for system in sys_list:
 			with warnings.catch_warnings():
 				warnings.simplefilter("ignore", category=RuntimeWarning)
 				z_vals=np.nanmean(data, axis=1)
+			first_val = find_first_val(z_vals)
+			z_vals = z_vals - first_val
 			maxval = len(z_vals)
 			x = np.arange(5,(maxval*10+5),10)
 			plt.plot(x,z_vals,color=colordict[name])
@@ -166,10 +186,10 @@ for system in sys_list:
 			#plt.plot(X,Y,'k:')
 
 
-	#fig.set_size_inches(6,6)
-	plt.savefig(sys_name_list[counter]+"_avgkcurvatureovertheta_"+field+".png", dpi = 700)
-	plt.clf()
-	plt.close()
+		#fig.set_size_inches(6,6)
+		plt.savefig(sys_name_list[counter]+"_avgheightovertheta_"+field+".png", dpi = 700)
+		plt.clf()
+		plt.close()
 	counter += 1
 
 '''
