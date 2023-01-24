@@ -139,8 +139,8 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    #run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
-    #run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
+    run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
+    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 }
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
