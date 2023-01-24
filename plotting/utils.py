@@ -6,7 +6,27 @@ import glob
 import os 
 
 
+def strip_blank_lines(f):
+  for l in f:
+    line = l.strip()
+    if line:
+      yield line
 
+
+def read_config(path):
+  config_dict = {}
+  with open(path, "r+") as config_file:
+    for line in strip_blank_lines(config_file):
+      if line.startswith("#") is True:
+        continue
+      else:
+        line = line.partition('#')[0]
+        if line.rstrip():
+          key = line.partition('=')[0].strip()
+          value = line.partition('=')[2].strip()
+          config_dict.update({key : value})
+
+  return config_dict
 
 
 def calc_avg_over_time(matrix_data):
@@ -14,6 +34,7 @@ def calc_avg_over_time(matrix_data):
     warnings.simplefilter("ignore", category=RuntimeWarning)
     avg=np.nanmean(matrix_data, axis=2)
     return avg
+
 
 def bin_prep(sys_name, beadnames, coordsys, density):
 
@@ -36,6 +57,7 @@ def bin_prep(sys_name, beadnames, coordsys, density):
 
   return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
 
+
 def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
   
   areas = np.ones([N1_bins,N2_bins])
@@ -47,6 +69,7 @@ def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
       areas[row,:] = areas[row,:]*dist_to_center
   np.save('npy/'+sys_name+"."+coordsys+".areas.npy", areas)
 
+
 def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   #if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
   for row in range(N1_bins):
@@ -56,6 +79,7 @@ def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
       if (zerocount-count)/Nframes <= .1:
         data_array[row,col,:] = np.nan
   return data_array
+
 
 def fetch_names(sys_name, coordsys):
   os.chdir('tcl_output')
@@ -88,6 +112,7 @@ def fetch_names(sys_name, coordsys):
     os.chdir('..')
 
   return names_dict
+
 
 def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
   fig = plt.figure()
@@ -143,6 +168,7 @@ def coord_format(value):
     leftside = (' '*(4-len(leftside)))+leftside
   final_value = leftside+'.'+rightside
   return final_value
+
 
 def bin_format(value):
   strval = str(value)
