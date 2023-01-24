@@ -64,6 +64,6 @@ if __name__ == "__main__":
 
   config_dict = read_config(args.config)
 
-  #run_nougat(args.sys_name, args.polar, args.inclusion, config_dict)
+  run_nougat(args.sys_name, args.polar, args.inclusion, config_dict)
 
   print("Thank you for using nougat!")
