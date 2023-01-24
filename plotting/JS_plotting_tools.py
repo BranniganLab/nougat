@@ -232,37 +232,6 @@ def sum_terms(systems, mol):
 		print(sumterm7)
 		print(sumavgH2)
 
-#def measure_t0(systems, mol):
-#	for system in systems:
-#		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
-#		filename_end = '.C1A.C1B.cart.height.npy'
-#		try:
-#			z1 = np.load(filename_start+'zone'+filename_end)
-#			z2 = np.load(filename_start+'ztwo'+filename_end)
-#		except:
-#			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
-#			z1 = np.load(filename_start+'zone'+filename_end)
-#			z2 = np.load(filename_start+'ztwo'+filename_end)
-#
-#		thickness = z1-z2
-#
-#		avgthickness = np.nanmean(thickness,axis=2)
-#
-#		leftcol = np.nanmean(avgthickness[:,0])
-#		rightcol =  np.nanmean(avgthickness[:,-1])
-#		toprow =  np.nanmean(avgthickness[0,:])
-#		botrow =   np.nanmean(avgthickness[-1,:])
-#
-#
-#		avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
-#
-#		avgt0 = avgt0/2.0
-#
-#		print(system)
-#		print(avgt0*2.)
-#
-#	return avgt0
-
 def sum_over_K(systems):
 
 	for system in systems:
