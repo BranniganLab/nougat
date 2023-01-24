@@ -28,6 +28,14 @@ def read_config(path):
 
   return config_dict
 
+def find_first_val(l):
+  for value in l:
+    if np.isnan(value):
+      continue
+    else:
+      return value 
+  return np.nan
+
 
 def calc_avg_over_time(matrix_data):
   with warnings.catch_warnings():
