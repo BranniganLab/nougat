@@ -135,31 +135,28 @@ for name in allsys:
 
 plot combined systems zone and ztwo
 '''
+max_scale_dict = {
+	"height":10,
+	"thickness":1.5,
+	"curvature":0.1,
+	"Kcurvature":0.04,
+	"tail1":0.6,
+	"tail0":0.6,
+	"density":2
+}
+min_scale_dict = {
+	"height":-30,
+	"thickness":0,
+	"curvature":-0.1,
+	"Kcurvature":-0.04,
+	"tail1":-0.1,
+	"tail0":-0.1,
+	"density":0
+}
+
 for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
 	counter = 0
 	for system in sys_list:
-
-		#plt.gca().set_aspect('equal',adjustable='box')
-		max_scale_dict = {
-			"height":10,
-			"thickness":1.5,
-			"curvature":0.1,
-			"Kcurvature":0.04,
-			"tail1":0.6,
-			"tail0":0.6,
-			"density":2
-		}
-		min_scale_dict = {
-			"height":-30,
-			"thickness":0,
-			"curvature":-0.1,
-			"Kcurvature":-0.04,
-			"tail1":-0.1,
-			"tail0":-0.1,
-			"density":0
-		}
-		
-
 		for field in field_list:
 			fig = plt.figure()
 			plt.xlim(0,180)
