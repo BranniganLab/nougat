@@ -135,62 +135,64 @@ for name in allsys:
 
 plot combined systems zone and ztwo
 '''
-counter = 0
-for system in sys_list:
+for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
+	counter = 0
+	for system in sys_list:
 
-	#plt.gca().set_aspect('equal',adjustable='box')
-	max_scale_dict = {
-		"height":60,
-		"thickness":2,
-		"curvature":0.01,
-		"Kcurvature":0.001,
-		"tail1":0.6,
-		"tail0":0.6,
-		"density":2
-	}
-	min_scale_dict = {
-		"height":-60,
-		"thickness":0,
-		"curvature":-0.01,
-		"Kcurvature":-0.001,
-		"tail1":0.0,
-		"tail0":0.0,
-		"density":0
-	}
-	
+		#plt.gca().set_aspect('equal',adjustable='box')
+		max_scale_dict = {
+			"height":10,
+			"thickness":1.5,
+			"curvature":0.1,
+			"Kcurvature":0.04,
+			"tail1":0.6,
+			"tail0":0.6,
+			"density":2
+		}
+		min_scale_dict = {
+			"height":-30,
+			"thickness":0,
+			"curvature":-0.1,
+			"Kcurvature":-0.04,
+			"tail1":-0.1,
+			"tail0":-0.1,
+			"density":0
+		}
+		
 
-	for field in field_list:
-		fig = plt.figure()
-		plt.xlim(0,180)
-		plt.ylim(-30,10)
-		for name in system:
-			if name == "DT":
-				data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/lg"+name+"."+field+".C1A.C1B.polar.avgheight.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
-			else:
-				data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/lg"+name+"."+field+".C1A.C1B.polar.avgheight.dat",delimiter=",",missing_values='nan',filling_values=np.nan)
-			#for row in range(data.shape[0]):
-			#	nonzerocount = np.count_nonzero(data[row,:])
-			#	nancount = np.count_nonzero(np.isnan(data[row,:]))
-			#	if (nancount/nonzerocount) >= 0.2:
-			#		data[row,:] = np.nan
-			with warnings.catch_warnings():
-				warnings.simplefilter("ignore", category=RuntimeWarning)
-				z_vals=np.nanmean(data, axis=1)
-			first_val = find_first_val(z_vals)
-			z_vals = z_vals - first_val
-			maxval = len(z_vals)
-			x = np.arange(5,(maxval*10+5),10)
-			plt.plot(x,z_vals,color=colordict[name])
-			#X = [28.116,28.116]
-			#Y = [-1,5]
-			#plt.plot(X,Y,'k:')
+		for field in field_list:
+			fig = plt.figure()
+			plt.xlim(0,180)
+			plt.ylim(min_scale_dict[measure],max_scale_dict[measure])
+			for name in system:
+				if name == "DT":
+					data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				else:
+					data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				#for row in range(data.shape[0]):
+				#	nonzerocount = np.count_nonzero(data[row,:])
+				#	nancount = np.count_nonzero(np.isnan(data[row,:]))
+				#	if (nancount/nonzerocount) >= 0.2:
+				#		data[row,:] = np.nan
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", category=RuntimeWarning)
+					z_vals=np.nanmean(data, axis=1)
+				if measure == "height":
+					first_val = find_first_val(z_vals)
+					z_vals = z_vals - first_val
+				maxval = len(z_vals)
+				x = np.arange(5,(maxval*10+5),10)
+				plt.plot(x,z_vals,color=colordict[name])
+				#X = [28.116,28.116]
+				#Y = [-1,5]
+				#plt.plot(X,Y,'k:')
 
 
-		#fig.set_size_inches(6,6)
-		plt.savefig(sys_name_list[counter]+"_avgheightovertheta_"+field+".png", dpi = 700)
-		plt.clf()
-		plt.close()
-	counter += 1
+			#fig.set_size_inches(6,6)
+			plt.savefig(sys_name_list[counter]+"_avg"+measure+"overtheta_"+field+".pdf", dpi = 700)
+			plt.clf()
+			plt.close()
+		counter += 1
 
 '''
 #plot all bead variations of zone, ztwo, and zplus, as well as orig zzero
