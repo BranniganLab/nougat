@@ -38,6 +38,16 @@ def find_first_val(l):
   return np.nan
 
 
+def find_last_val(l):
+  last_index = len(l)-1
+  while last_index >= 0:
+    if not np.isnan(l[last_index]):
+      return l[last_index]
+    else:
+      last_index -= 1
+  return "this didnt work"
+
+
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
   if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
     if dtype == "dat":

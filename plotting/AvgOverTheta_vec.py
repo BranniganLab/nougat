@@ -140,8 +140,8 @@ max_scale_dict = {
 	"thickness":1.5,
 	"curvature":0.1,
 	"Kcurvature":0.04,
-	"tail1":0.6,
-	"tail0":0.6,
+	"tail1":1.2,
+	"tail0":1.2,
 	"density":2
 }
 min_scale_dict = {
@@ -149,8 +149,8 @@ min_scale_dict = {
 	"thickness":0,
 	"curvature":-0.1,
 	"Kcurvature":-0.04,
-	"tail1":-0.1,
-	"tail0":-0.1,
+	"tail1":-0.2,
+	"tail0":-0.2,
 	"density":0
 }
 
@@ -177,6 +177,9 @@ for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail
 				if measure == "height":
 					first_val = find_first_val(z_vals)
 					z_vals = z_vals - first_val
+				if measure == "tail0" or measure == "tail1":
+					last_val = find_last_val(z_vals)
+					z_vals = z_vals/last_val
 				maxval = len(z_vals)
 				x = np.arange(5,(maxval*10+5),10)
 				plt.plot(x,z_vals,color=colordict[name])
