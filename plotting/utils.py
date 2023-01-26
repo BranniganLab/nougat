@@ -28,6 +28,7 @@ def read_config(path):
 
   return config_dict
 
+
 def find_first_val(l):
   for value in l:
     if np.isnan(value):
@@ -35,6 +36,33 @@ def find_first_val(l):
     else:
       return value 
   return np.nan
+
+
+def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
+  if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
+    if dtype == "dat":
+      fullmeasure = "avg"+measure
+    elif dtype == "npy":
+      if measure == "curvature":
+        fullmeasure = "meancurvature"
+      elif measure == "Kcurvature":
+        fullmeasure = "gausscurvature"
+      else:
+        fullmeasure = measure 
+    filename = sys_name+"."+field+"."+beadname+"."+coordsys+"."+fullmeasure+"."+dtype
+  elif measure == "density":
+    if dtype == "dat":
+      filename = sys_name+"."+lipid_name+"."+field+"."+coordsys+".avg"+measure+"."+dtype
+    elif dtype == "npy":
+      filename = sys_name+"."+lipid_name+"."+field+"."+coordsys+"."+measure+"."+dtype
+  elif measure == "tail1" or measure == "tail0":
+    if dtype == "dat":
+      filename = sys_name+"."+lipid_name+"."+measure+"."+field+"."+coordsys+".avgOrder."+dtype
+    elif dtype == "npy":
+      filename = sys_name+"."+lipid_name+"."+measure+"."+field+"."+coordsys+".order."+dtype
+  if measure not in ["height", "curvature", "Kcurvature", "thickness", "density", "tail1", "tail0"]:
+    raise RuntimeWarning('You used \"'+measure+'\" but that is not an allowed measurement')
+  return filename
 
 
 def calc_avg_over_time(matrix_data):
