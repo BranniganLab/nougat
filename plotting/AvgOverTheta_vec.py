@@ -137,9 +137,9 @@ plot combined systems zone and ztwo
 '''
 max_scale_dict = {
 	"height":10,
-	"thickness":1.5,
-	"curvature":0.1,
-	"Kcurvature":0.04,
+	"thickness":1.2,
+	"curvature":0.05,
+	"Kcurvature":0.0075,
 	"tail1":1.2,
 	"tail0":1.2,
 	"density":2
@@ -147,8 +147,8 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.1,
-	"Kcurvature":-0.04,
+	"curvature":-0.05,
+	"Kcurvature":-0.0075,
 	"tail1":-0.2,
 	"tail0":-0.2,
 	"density":0
@@ -162,10 +162,11 @@ for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail
 			plt.xlim(0,180)
 			plt.ylim(min_scale_dict[measure],max_scale_dict[measure])
 			for name in system:
-				if name == "DT":
-					data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-				else:
-					data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				#if name == "DT":
+				#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				#else:
+				#	data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 				#for row in range(data.shape[0]):
 				#	nonzerocount = np.count_nonzero(data[row,:])
 				#	nancount = np.count_nonzero(np.isnan(data[row,:]))
