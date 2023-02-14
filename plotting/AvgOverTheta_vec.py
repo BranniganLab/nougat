@@ -139,7 +139,7 @@ max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
 	"curvature":0.02,
-	"Kcurvature":0.0001,
+	"Kcurvature":0.002,
 	"tail1":1.2,
 	"tail0":1.2,
 	"density":2
@@ -148,7 +148,7 @@ min_scale_dict = {
 	"height":-30,
 	"thickness":0,
 	"curvature":-0.02,
-	"Kcurvature":-0.0001,
+	"Kcurvature":-0.002,
 	"tail1":-0.2,
 	"tail0":-0.2,
 	"density":0
