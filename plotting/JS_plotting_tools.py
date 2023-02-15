@@ -342,7 +342,8 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	diff_mid_interface(["lgDT", "lgDY", "lgDG", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29", "polar")
+	#diff_mid_interface(["lgDT", "lgDY", "lgDG", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29", "polar")
+	avg_eps_t0_over_theta("DT", "DL", "DP", "DB", "DX")
 	#measure_H_epsilon_corr(["lgPO"], "empty")
 	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
