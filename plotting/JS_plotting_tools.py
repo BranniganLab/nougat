@@ -154,24 +154,12 @@ def diff_mid_interface(systems, mol, coordsys):
 		t0 = measure_t0(zone, ztwo, coordsys)
 		avgdiff = avgdiff/t0
 #		avgcombo = avgdiff*avgH
-		print(np.shape(avgdiff))
 
 		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
 		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
-		print(np.shape(dim1vals))
-		print(np.shape(dim2vals))
 		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
-		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+sys_name+'.epsilon_t0.npy',avgdiff)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+system+'.epsilon_t0.npy',avgdiff)
 		os.chdir('../..')
-#		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
-#		cbar = plt.colorbar(c)
-#		plt.axis('off')
-#		ax.set_xticklabels([])
-#		ax.set_yticklabels([])
-#		#fig.set_size_inches(6,6)
-#		plt.savefig(system+"_epsilon_cart.pdf", dpi = 700)
-#		plt.clf()
-#		plt.close()
 
 
 def measure_H_epsilon_corr(systems, mol):
