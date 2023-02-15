@@ -158,7 +158,7 @@ def diff_mid_interface(systems, mol, coordsys):
 		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
 		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
-		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+system+'.epsilon_t0.npy',avgdiff)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.epsilon_t0.npy',avgdiff)
 		os.chdir('../..')
 
 
