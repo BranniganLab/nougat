@@ -137,7 +137,7 @@ def zoom_in(systems):
 def diff_mid_interface(systems, mol, coordsys):
 	for system in systems:
 		os.chdir(system)
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.'
 		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
@@ -158,7 +158,7 @@ def diff_mid_interface(systems, mol, coordsys):
 		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
 		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
-		np.save('/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+sys_name+'.epsilon_t0.npy',avgdiff)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+sys_name+'.epsilon_t0.npy',avgdiff)
 		os.chdir('..')
 #		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
 #		cbar = plt.colorbar(c)
@@ -173,7 +173,7 @@ def diff_mid_interface(systems, mol, coordsys):
 
 def measure_H_epsilon_corr(systems, mol):
 	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.cart.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
@@ -213,7 +213,7 @@ def measure_H_epsilon_corr(systems, mol):
 
 def sum_terms(systems, mol):
 	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.cart.height.npy'
 		try:
 			zzero = np.load(filename_start+'zzero'+filename_end)
