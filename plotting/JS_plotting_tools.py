@@ -182,7 +182,7 @@ def avg_eps_t0_over_theta(systems):
 			z_vals=np.nanmean(eps_data, axis=1)
 		maxval = len(z_vals)
 		x = np.arange(5,(maxval*10+5),10) / 10
-		axs.plot(x,z_vals,color=colordict[name])
+		axs.plot(x,z_vals,color=colordict[system])
 	plt.savefig("satsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
 	plt.clf()
 	plt.close()
