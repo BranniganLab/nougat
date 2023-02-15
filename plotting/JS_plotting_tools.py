@@ -161,6 +161,32 @@ def diff_mid_interface(systems, mol, coordsys):
 		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.epsilon_t0.npy',avgdiff)
 		os.chdir('../..')
 
+def avg_eps_t0_over_theta(systems):
+	fig, axs = plt.subplots()
+	colordict = {
+		"DT": "green",
+		"DL": "blue",
+		"DX": "purple",
+		"DB": "red",
+		"DY": "limegreen",
+		"DO": "mistyrose",
+		"PO": "darkorange",
+		"DP": "deepskyblue",
+		"DG": "orchid"
+	}
+
+	for system in systems:
+		eps_data = np.load("lg"+system+"/lg"+system+"_polar_5_10_100_-1_1/npy/lg"+system+'.epsilon_t0.npy')
+		with warnings.catch_warnings():
+			warnings.simplefilter("ignore", category=RuntimeWarning)
+			z_vals=np.nanmean(eps_data, axis=1)
+		maxval = len(z_vals)
+		x = np.arange(5,(maxval*10+5),10) / 10
+		axs.plot(x,z_vals,color=colordict[name])
+	plt.savefig("satsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
+	plt.clf()
+	plt.close()
+
 
 def measure_H_epsilon_corr(systems, mol):
 	for system in systems:
