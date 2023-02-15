@@ -135,7 +135,7 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     set coordsys [read_polar $polar]
     set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
     file mkdir $foldername
-    file copy $config_path $foldername
+    file copy -force $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
