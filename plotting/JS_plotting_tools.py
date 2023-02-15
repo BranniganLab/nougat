@@ -154,6 +154,7 @@ def diff_mid_interface(systems, mol, coordsys):
 		t0 = measure_t0(zone, ztwo, coordsys)
 		avgdiff = avgdiff/t0
 #		avgcombo = avgdiff*avgH
+		print(np.shape(avgdiff))
 
 		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
 		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
