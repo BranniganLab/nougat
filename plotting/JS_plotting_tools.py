@@ -136,7 +136,7 @@ def zoom_in(systems):
 
 def diff_mid_interface(systems, mol, coordsys):
 	for system in systems:
-		os.chdir(system)
+		os.chdir(system+'/'+system+'_polar_5_10_100_-1_1')
 		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.'
 		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
 		fig = plt.figure()
@@ -162,7 +162,7 @@ def diff_mid_interface(systems, mol, coordsys):
 		print(np.shape(dim2vals))
 		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
 		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+sys_name+'.epsilon_t0.npy',avgdiff)
-		os.chdir('..')
+		os.chdir('../..')
 #		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
 #		cbar = plt.colorbar(c)
 #		plt.axis('off')
