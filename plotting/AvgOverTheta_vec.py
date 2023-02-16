@@ -138,7 +138,7 @@ plot combined systems zone and ztwo
 max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
-	"curvature":0.04,
+	"curvature":0.03,
 	"Kcurvature":0.002,
 	"tail1":1.2,
 	"tail0":1.2,
@@ -147,7 +147,7 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.04,
+	"curvature":-0.03,
 	"Kcurvature":-0.002,
 	"tail1":-0.2,
 	"tail0":-0.2,

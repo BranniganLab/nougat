@@ -163,6 +163,7 @@ def diff_mid_interface(systems, mol, coordsys):
 
 def avg_eps_t0_over_theta(systems):
 	fig, axs = plt.subplots()
+	axs.set_xlim(0,18)
 	colordict = {
 		"DT": "green",
 		"DL": "blue",
