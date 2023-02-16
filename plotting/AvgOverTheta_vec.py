@@ -21,15 +21,15 @@ field_list = ["zone","ztwo"]
 #field_list = ['zone', 'ztwo', 'zzero', 'zplus']
 
 colordict = {
-	"DT": "green",
-	"DL": "blue",
+	"DT": "red",
+	"DL": "orange",
 	"DX": "purple",
-	"DB": "red",
-	"DY": "limegreen",
-	"DO": "mistyrose",
-	"PO": "darkorange",
-	"DP": "deepskyblue",
-	"DG": "orchid",
+	"DB": "blue",
+	"DY": "orange",
+	"DO": "green",
+	"PO": "green",
+	"DP": "green",
+	"DG": "blue",
 	"../../scripts/PolarHeightBinning/results/DB": "deepskyblue"
 }
 
