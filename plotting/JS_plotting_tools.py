@@ -165,15 +165,15 @@ def avg_eps_t0_over_theta(systems):
 	fig, axs = plt.subplots()
 	axs.set_xlim(0,18)
 	colordict = {
-		"DT": "green",
-		"DL": "blue",
+		"DT": "red",
+		"DL": "orange",
 		"DX": "purple",
-		"DB": "red",
-		"DY": "limegreen",
-		"DO": "mistyrose",
-		"PO": "darkorange",
-		"DP": "deepskyblue",
-		"DG": "orchid"
+		"DB": "blue",
+		"DY": "orange",
+		"DO": "green",
+		"PO": "green",
+		"DP": "green",
+		"DG": "blue"
 	}
 
 	for system in systems:
