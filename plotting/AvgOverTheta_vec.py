@@ -10,9 +10,10 @@ monounsatsys = ["DG", "DY", "DO"]
 fivebeads = ["DB","DG"]
 fourbeads = ["DP", "DO"]
 threebeads = ["DL","DY"]
+custom = ['DX']
 
-sys_list = [satsys]
-sys_name_list = ['satsys']
+sys_list = [custom]
+sys_name_list = ['customDX']
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
@@ -29,8 +30,7 @@ colordict = {
 	"DO": "green",
 	"PO": "green",
 	"DP": "green",
-	"DG": "blue",
-	"../../scripts/PolarHeightBinning/results/DB": "deepskyblue"
+	"DG": "blue"
 }
 
 fielddict = {
