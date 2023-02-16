@@ -11,10 +11,10 @@ fivebeads = ["DB","DG"]
 fourbeads = ["DP", "DO"]
 threebeads = ["DL","DY"]
 
-#sys_list = [threebeads]
-#sys_name_list = ['threebeads']
-sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
-sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
+sys_list = [satsys]
+sys_name_list = ['satsys']
+#sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
+#sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
 field_list = ["zone","ztwo"]
 #field_list = ['zone', 'ztwo', 'zzero']
@@ -138,7 +138,7 @@ plot combined systems zone and ztwo
 max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
-	"curvature":0.02,
+	"curvature":0.04,
 	"Kcurvature":0.002,
 	"tail1":1.2,
 	"tail0":1.2,
@@ -147,7 +147,7 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.02,
+	"curvature":-0.04,
 	"Kcurvature":-0.002,
 	"tail1":-0.2,
 	"tail0":-0.2,
@@ -183,7 +183,7 @@ for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail
 				#	last_val = find_last_val(z_vals)
 				#	z_vals = z_vals/last_val
 				maxval = len(z_vals)
-				x = np.arange(5,(maxval*10+5),10) / 10
+				x = np.arange(2.5,(maxval*5+2.5),5) / 10
 				axs[counter].plot(x,z_vals,color=colordict[name])
 				#X = [28.116,28.116]
 				#Y = [-1,5]
