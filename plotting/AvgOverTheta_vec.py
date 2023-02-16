@@ -12,8 +12,8 @@ fourbeads = ["DP", "DO"]
 threebeads = ["DL","DY"]
 custom = ['DX']
 
-sys_list = [custom]
-sys_name_list = ['customDX']
+sys_list = [satsys]
+sys_name_list = ['satsys']
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
@@ -160,7 +160,7 @@ for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail
 		fig, axs = plt.subplots(2, sharex=True, sharey=True)
 		counter = 0
 		for field in field_list:
-			axs[counter].set_xlim(0,18)
+			axs[counter].set_xlim(0,6)
 			axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
 			for name in system:
 				data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
