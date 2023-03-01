@@ -12,8 +12,8 @@ fourbeads = ["DP", "DO"]
 threebeads = ["DL","DY"]
 custom = ['DX']
 
-sys_list = [satsys]
-sys_name_list = ['satsys']
+sys_list = [monounsatsys]
+sys_name_list = ['monounsatsys']
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
@@ -138,8 +138,8 @@ plot combined systems zone and ztwo
 max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
-	"curvature":0.03,
-	"Kcurvature":0.002,
+	"curvature":0.025,
+	"Kcurvature":0.0075,
 	"tail1":1.2,
 	"tail0":1.2,
 	"density":2
@@ -147,8 +147,8 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.03,
-	"Kcurvature":-0.002,
+	"curvature":-0.05,
+	"Kcurvature":-0.0075,
 	"tail1":-0.2,
 	"tail0":-0.2,
 	"density":0

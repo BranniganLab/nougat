@@ -163,7 +163,7 @@ def diff_mid_interface(systems, mol, coordsys):
 
 def avg_eps_t0_over_theta(systems):
 	fig, axs = plt.subplots()
-	axs.set_xlim(0,18)
+	axs.set_xlim(0,6)
 	colordict = {
 		"DT": "red",
 		"DL": "orange",
@@ -185,7 +185,7 @@ def avg_eps_t0_over_theta(systems):
 		print(maxval)
 		x = np.arange(2.5,(maxval*5+2.5),5) / 10
 		axs.plot(x,z_vals,color=colordict[system])
-	plt.savefig("satsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
+	plt.savefig("unsatsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
 	plt.clf()
 	plt.close()
 
@@ -345,9 +345,9 @@ def plot_average_area_per_lipid(systems):
 
 if __name__ == "__main__": 
 	#diff_mid_interface(["lgDT", "lgDY", "lgDG", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29", "polar")
-	avg_eps_t0_over_theta(["DT", "DL", "DP", "DB", "DX"])
+	#avg_eps_t0_over_theta(["DT", "DL", "DP", "DB", "DX"])
 	#measure_H_epsilon_corr(["lgPO"], "empty")
-	#avg_eps_t0_over_theta(["DY", "DO", "DG"])
+	avg_eps_t0_over_theta(["DY", "DO", "DG"])
 	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
 	#measure_H(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
