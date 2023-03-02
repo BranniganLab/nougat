@@ -11,9 +11,10 @@ fivebeads = ["DB","DG"]
 fourbeads = ["DP", "DO"]
 threebeads = ["DL","DY"]
 custom = ['DX']
+comparison = ['PO']
 
-sys_list = [satsys]
-sys_name_list = ['satsys']
+sys_list = [comparison]
+sys_name_list = ['comparison']
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
