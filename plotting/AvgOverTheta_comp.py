@@ -13,10 +13,8 @@ threebeads = ["DL","DY"]
 custom = ['DX']
 comparison = ['PO']
 
-
 sys_list = [comparison]
 sys_name_list = ['comparison']
-
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
@@ -34,6 +32,11 @@ colordict = {
 	"PO": "green",
 	"DP": "green",
 	"DG": "blue"
+}
+
+sysdict = {
+	"5x29": "red",
+	"7k3g": "blue"
 }
 
 fielddict = {
@@ -141,8 +144,8 @@ plot combined systems zone and ztwo
 max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
-	"curvature":0.025,
-	"Kcurvature":0.0075,
+	"curvature":0.03,
+	"Kcurvature":0.002,
 	"tail1":1.2,
 	"tail0":1.2,
 	"density":2
@@ -150,8 +153,8 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.05,
-	"Kcurvature":-0.0075,
+	"curvature":-0.03,
+	"Kcurvature":-0.002,
 	"tail1":-0.2,
 	"tail0":-0.2,
 	"density":0
@@ -159,14 +162,14 @@ min_scale_dict = {
 
 for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
 	nmcount = 0 
-	for system in sys_list:
-		fig, axs = plt.subplots(2, sharex=True, sharey=True)
+	fig, axs = plt.subplots(2, sharex=True, sharey=True)
+	for system in ["5x29", "7k3g"]:
 		counter = 0
 		for field in field_list:
 			axs[counter].set_xlim(0,6)
 			axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
-			for name in system:
-				data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+			for name in ["PO"]:
+				data = np.genfromtxt(system+"/lg"+name+"/lg"+name+"_polar_5_10_0_-1_10/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 				#if name == "DT":
 				#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 				#else:
@@ -187,17 +190,17 @@ for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail
 				#	z_vals = z_vals/last_val
 				maxval = len(z_vals)
 				x = np.arange(2.5,(maxval*5+2.5),5) / 10
-				axs[counter].plot(x,z_vals,color=colordict[name])
+				axs[counter].plot(x,z_vals,color=sysdict[system])
 				#X = [28.116,28.116]
 				#Y = [-1,5]
 				#plt.plot(X,Y,'k:')
 			counter += 1
 
 			#fig.set_size_inches(6,6)
-		plt.savefig(sys_name_list[nmcount]+"_avg"+measure+"overtheta_combo.pdf", dpi = 700)
-		plt.clf()
-		plt.close()
-		nmcount += 1
+	plt.savefig("comparison_PO_avg"+measure+"overtheta_combo.pdf", dpi = 700)
+	plt.clf()
+	plt.close()
+	nmcount += 1
 
 '''
 #plot all bead variations of zone, ztwo, and zplus, as well as orig zzero
