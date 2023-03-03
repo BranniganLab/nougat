@@ -1,0 +1,30 @@
+
+# SCALE BAR ON/OFF
+scale_bar = OFF
+
+# COLOR SCALE
+color_scale = RdBu_r
+
+# SCALES FOR ALL PLOTS
+
+height_min = -60
+height_max = 60
+
+mean_curv_min = -0.01
+mean_curv_max = 0.01
+
+gauss_curv_min = -0.001
+gauss_curv_max = 0.001
+
+density_min = 0
+density_max = 2
+
+thick_min = 0
+thick_max = 2
+
+order_min = 0. 
+order_max = .6
+
+
+# SCALE BAR FONT
+#to be added later

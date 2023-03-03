@@ -41,7 +41,7 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
 
   #make plots!
   plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
-  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
+  plot_maker(dim1vals, dim2vals, avginner, sys_name, 'ztwo', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
 
   #save as file for debugging / analysis AND make PDB!
   np.save('npy/'+sys_name+'.zone.'+bead+'.'+coordsys+'.thickness.npy', outer_leaflet)
