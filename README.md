@@ -85,6 +85,6 @@ An explanation of the options is as follows:
 - python3 [path-to]/nougat/plotting/nougat.py [path-to]/nougat/plotting/nougat_plot_config.txt [system name] [-p for polar]
 
 ### Explore your results!
-All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat.py (lines 68-79).
+All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat_plot_config.txt.
 
 You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
