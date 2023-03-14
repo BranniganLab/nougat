@@ -5,6 +5,10 @@
 source ~/PolarHeightBinning/nougat.tcl
 
 proc count {sel} {
+	;# in martini systems, this is the most reliable way to count how many
+	;# solvent mols are in a selection (not appropriate for proteins or other
+	;# mols that have multiple resids per molecule)
+
 	return [llength [lsort -unique [$sel get resid]]]
 }
 
@@ -15,6 +19,8 @@ proc pick_rand {n} {
 }
 
 proc cleanup_sels {} {
+	;# deletes all atomselections in current scope. catch is necessary!
+
 	foreach selection [atomselect list] {
         catch {$selection delete}
     }
@@ -57,7 +63,8 @@ proc leaf_sym {desired_asymm} {
 
 	puts $delete_list
 	set sel [atomselect top "not (user $userval and resid $delete_list)"]
-	$sel writepdb new.pdb
+	set fname "${desired_asymm}_new.pdb"
+	$sel writepdb $fname
 
 	cleanup_sels
 }
