@@ -9,29 +9,29 @@ proc RtoD {r} {
 # in the system. This allows you to use 1 instance of $lsqnormfactor only,
 # rather than calculate it on the fly each time. 
 # $lsqnormfactor is a list of values (i-(N-1)/2)
-proc tilt_angles {length xvals yvals zvals} {
-    set tilt_list []
-    set lsqnormfactor [calc_lsq_normfactor $length]
-    set xvec [fit_all_tails $length $xvals $lsqnormfactor]
-    set yvec [fit_all_tails $length $yvals $lsqnormfactor]
-    set zvec [fit_all_tails $length $zvals $lsqnormfactor]
+proc calculateTiltAngles {length xvals yvals zvals} {
+    set tiltList []
+    set lsqNormFactor [calculateLsqNormFactor $length]
+    set xvec [fitTailVectors $length $xvals $lsqNormFactor]
+    set yvec [fitTailVectors $length $yvals $lsqNormFactor]
+    set zvec [fitTailVectors $length $zvals $lsqNormFactor]
     for {set i 0} {$i < [llength $xvec]} {incr i} {
         set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
         set norm [vecnorm $vector]
 
         # it is desirable to have a list that is the same length as $xvals
         # for ease of indexing in the binning process; hence lrepeat
-        lappend tilt_list [lrepeat $length $norm]
+        lappend tiltList [lrepeat $length $norm]
     }
 
     # this is now a list of lists of lists, but we want a list of lists
-    set final_tilt_list [cat_list $tilt_list "NULL"]
+    set finalTiltList [cat_list $tiltList "NULL"]
 
-    return $final_tilt_list
+    return $finalTiltList
 }
 
 # returns a list of (i-(N-1)/2)
-proc calc_lsq_normfactor { length } {
+proc calculateLsqNormFactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
     set I []
@@ -41,32 +41,32 @@ proc calc_lsq_normfactor { length } {
         lappend I $k
     }
 
-    set lsqnormfactor [vecexpr $I $d sub]
+    set lsqNormFactor [vecexpr $I $d sub]
 
-    return $lsqnormfactor
+    return $lsqNormFactor
 }
 
 # Fit the points x to x = ai + b, i=0...N-1, and return the value 
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
-proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
-    set fit_values []
-    set N_lipids [expr [llength $list_of_tail_coords]/$tail_length]
-    set start_idx 0
+proc fitTailVectors {tail_length list_of_tail_coords lsqnormfactor} {
+    set fitValues []
+    set NumLipids [expr [llength $listTailCoords]/$tailLength]
+    set startIdx 0
 
     # iterate through list of all tail coords, separating them into one 
     # lipid tail at a time with lrange
-    for {set i 0} {$i < $N_lipids} {incr i} {
-        set start_idx [expr $i*$tail_length]
-        set end_idx [expr $start_idx+$tail_length-1]
-        set coords [lrange $list_of_tail_coords $start_idx $end_idx]
+    for {set i 0} {$i < $NumLipids} {incr i} {
+        set startIdx [expr $i*$tailLength]
+        set endIdx [expr $startIdx+$tailLength-1]
+        set coords [lrange $listTailCoords $startIdx $endIdx]
 
         # Perform least squares fitting:
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
         # Sum over the vector. stack=1scalar
         # Append to $fit_values
-        lappend fit_values [vecexpr [vecexpr $coords $lsqnormfactor mult] sum]
+        lappend fitValues [vecexpr [vecexpr $coords $lsqNormFactor mult] sum]
     }
-    return $fit_values
+    return $fitValues
 }
 
 # Concatenates list items into one long string, separated by 
