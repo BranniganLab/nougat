@@ -1,4 +1,4 @@
-package require pbctools
+ package require pbctools
 
 ;# read in the config file and save settings to dictionary key/value pairs
 proc read_config_file {path} {
@@ -60,6 +60,7 @@ proc cell_prep {config_path leaf_check} {
         Align [dict get $config_dict align_sel]
     }
 
+
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy]} {
@@ -87,6 +88,7 @@ proc cell_prep {config_path leaf_check} {
 
     ;# set user3 to hold a unique tail number for easy separation of tails later
     tail_numberer $species $acyl_names
+
 
     dict set config_dict species $species 
     dict set config_dict acyl_names $acyl_names
@@ -139,8 +141,10 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    run_nougat $system $config_dict $bindims $polar "height_density" $foldername 
-    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
+
+    run_nougat $system $config_dict $bindims $polar "height_density" 
+    run_nougat $system $config_dict $bindims $polar "tilt_order" 
+
 }
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
@@ -156,16 +160,17 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
         if {$polar == 0} {
             set bindims [update_dims $bindims $frm]
+            
         }
 
         ;# update leaflets in case lipids have flip-flopped
         leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
-
+	puts "yes"
         puts "$system $quantity_of_interest $frm"
 
         #need to calculate heights relative to some point (usually on the inclusion):
         set ref_height [calc_ref_height $config_dict $frm]
-        
+       
         ;# height_density has two selections, so this will execute twice.
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
