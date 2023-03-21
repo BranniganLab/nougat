@@ -187,7 +187,27 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
 
     if {$pore_sort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
+
+    }
+}
+
+;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
+proc print_line_init {file number d1 min} {
+    puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
+}
+
+;# adds a value to the print file
+proc print_value {file value end_line} {
+    if {$end_line == 0} {
+        puts -nonewline $file " $value" 
+    } elseif {$end_line == 1} {
+        puts $file " $value"
+    } else {
+        puts "Something went wrong - end_line should have value of 0 or 1 only"
+        break
+
         pore_sorter_custom $frm $species $pore_sort
+
     }
 }
 
@@ -604,7 +624,7 @@ proc tail_length_sorter {species acyl_names} {
 
 ;# cosine theta is the dot product of n_{1,2} and the vector [0 0 1]
 ;# this corresponds to the 3rd value of n_{1,2} 
-proc get_costheta {start end} {    
+proc get_costheta {start end} {   
     set r12 [vecsub $start $end]
     set n12 [vecnorm $r12]
     return [lindex $n12 2]
