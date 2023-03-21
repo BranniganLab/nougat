@@ -163,22 +163,13 @@ min_scale_dict = {
 for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
 	nmcount = 0 
 	fig, axs = plt.subplots(2, sharex=True, sharey=True)
-	for system in ["5x29", "7k3g"]:
+	for system in ["5x29"]:
 		counter = 0
 		for field in field_list:
 			axs[counter].set_xlim(0,6)
 			axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
 			for name in ["PO"]:
-				data = np.genfromtxt(system+"/lg"+name+"/lg"+name+"_polar_5_10_0_-1_10/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-				#if name == "DT":
-				#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-				#else:
-				#	data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-				#for row in range(data.shape[0]):
-				#	nonzerocount = np.count_nonzero(data[row,:])
-				#	nancount = np.count_nonzero(np.isnan(data[row,:]))
-				#	if (nancount/nonzerocount) >= 0.2:
-				#		data[row,:] = np.nan
+				data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_0_-1_10/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 				with warnings.catch_warnings():
 					warnings.simplefilter("ignore", category=RuntimeWarning)
 					z_vals=np.nanmean(data, axis=1)
