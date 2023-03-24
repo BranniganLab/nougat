@@ -1,14 +1,14 @@
 
-qwrap_path = /home/jje63/Documents/Github_Repos/nougat/utilities
-vecexpr_path = /home/jje63/Documents/Github_Repos/nougat/utilities
-utilities_path = /home/jje63/Documents/Github_Repos/nougat/utilities
+qwrap_path = /home/js2746/PolarHeightBinning/utilities
+vecexpr_path = /home/js2746/PolarHeightBinning/utilities
+utilities_path = /home/js2746/PolarHeightBinning/utilities
 
 
 
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
 
-inclusion_sel = resname AU
+inclusion_sel = name BB SC1 to SC4
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
@@ -21,7 +21,7 @@ excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig AU
 # usually, this would be name BB for proteins
 # for 5x29 we had absolute position restraints and a small box z dimension, so I'm using the membrane itself here
 
-wrap_sel = resname AU
+wrap_sel = resname $species
 
 
 # provide atomselection-style text that defines what beads to align around if you want to prevent xy rotation from interfering with results
@@ -37,7 +37,7 @@ wrap_sel = resname AU
 # replace the text with "NULL"
 
 
-reference_point = Null
+reference_point = name BB and resid 15
 
 
 # provide the beadnames that you consider to form the surface of your membrane
@@ -50,13 +50,6 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-<<<<<<< HEAD
 #pore_sorter = NULL
 pore_sorter = 5x29
-=======
 
-
-pore_sorter = NULL
-
-
->>>>>>> origin/Unit_Testing
