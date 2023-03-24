@@ -187,7 +187,7 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
 
     if {$pore_sort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
-
+        pore_sorter_custom $frm $species $pore_sort
     }
 }
 
@@ -205,9 +205,6 @@ proc print_value {file value end_line} {
     } else {
         puts "Something went wrong - end_line should have value of 0 or 1 only"
         break
-
-        pore_sorter_custom $frm $species $pore_sort
-
     }
 }
 

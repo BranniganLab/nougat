@@ -13,7 +13,8 @@ proc count {sel} {
 }
 
 proc pick_rand {n} {
-;# source: https://wiki.tcl-lang.org/page/rand
+	;# picks a random int between 0 and $n
+	;# source: https://wiki.tcl-lang.org/page/rand
 
 	return [expr {int(rand() * $n)}]
 }
@@ -27,7 +28,8 @@ proc cleanup_sels {} {
 }
 
 
-proc leaf_sym {desired_asymm} {
+proc leaf_sym {desired_asymm name} {
+	;# run leaflet sorter to identify leaflets
 	cell_prep ~/PolarHeightBinning/nougat_config.txt 1
 	
 	;# this step is needed bc cell_prep renumbered the beta fields and will
@@ -48,6 +50,7 @@ proc leaf_sym {desired_asymm} {
 	} elseif {$number_to_delete > 0} {
 		set userval 1
 	} else {
+		cleanup_sels
 		return
 	}
 
@@ -61,9 +64,8 @@ proc leaf_sym {desired_asymm} {
 		set resids [lreplace $resids $ind $ind]
 	}
 
-	puts $delete_list
 	set sel [atomselect top "not (user $userval and resid $delete_list)"]
-	set fname "${desired_asymm}_new.pdb"
+	set fname "${name}_${desired_asymm}_new.pdb"
 	$sel writepdb $fname
 
 	cleanup_sels

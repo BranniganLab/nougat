@@ -162,7 +162,8 @@ def plot_total_thickness():
 	for system in sys_list:
 		fig, axs = plt.subplots()
 		axs.set_xlim(0,6)
-		axs.set_ylim(min_scale_dict["thickness"],max_scale_dict["thickness"])
+		axs.set_ylim(0,20)
+		#axs.set_ylim(min_scale_dict["thickness"],max_scale_dict["thickness"])
 		for name in system:
 			upper = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "zone", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 			lower = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "ztwo", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
@@ -263,5 +264,5 @@ for name in allsys:
 	'''
 
 if __name__ == "__main__":
-	#make_avg_over_theta_plots():
+	#make_avg_over_theta_plots()
 	plot_total_thickness()
