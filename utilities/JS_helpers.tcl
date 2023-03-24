@@ -88,8 +88,28 @@ proc rotate_system {angle axis mol} {
         $sel move $matrix
         $sel moveby $com 
     }
-
 }
+
+
+proc transform_to_ref_height {ref} {
+    set nframes [molinfo top get numframes]
+    set refsel [atomselect top "$ref"]
+    set totsel [atomselect top all]
+
+    for {set i 0} {$i<$nframes} {incr i} {
+        $refsel frame $i 
+        $totsel frame $i 
+        $refsel update
+        $totsel update
+
+        set zvals [$refsel get z]
+        set avgz [vecexpr $zvals mean]
+        $totsel moveby "0 0 -$avgz"
+    }
+    $refsel delete
+    $totsel delete
+}
+
 
 proc read_order_params {} {
     set fp0 [open "~/Downloads/AVGPC1A.dat" r]
