@@ -1,0 +1,13 @@
+package require tcltest
+namespace import ::tcltest::*
+
+# Software under test
+source ../utilities/helper_procs.tcl
+
+ test BasicAggregate {
+    Test: Move outward
+} -setup {
+   mol new cluster0.gro
+} -body {
+    return [FindCluster {1 2 3 4 5} 15 2 "AUC AUSL AUL ETHY THSLK" 0]
+} -result {{} {1 2 3 4 5}}
