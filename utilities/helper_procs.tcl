@@ -25,7 +25,7 @@ proc calculateTiltAngles {length xvals yvals zvals} {
     }
 
     # this is now a list of lists of lists, but we want a list of lists
-    set finalTiltList [cat_list $tiltList "NULL"]
+    set finalTiltList [concatenateList $tiltList "NULL"]
 
     return $finalTiltList
 }
@@ -48,9 +48,9 @@ proc calculateLsqNormFactor { length } {
 
 # Fit the points x to x = ai + b, i=0...N-1, and return the value 
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
-proc fitTailVectors {tail_length list_of_tail_coords lsqnormfactor} {
+proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
     set fitValues []
-    set NumLipids [expr [llength $listTailCoords]/$tailLength]
+    set NumLipids [expr [llength $listOfTailCoords]/$tailLength]
     set startIdx 0
 
     # iterate through list of all tail coords, separating them into one 
@@ -58,7 +58,7 @@ proc fitTailVectors {tail_length list_of_tail_coords lsqnormfactor} {
     for {set i 0} {$i < $NumLipids} {incr i} {
         set startIdx [expr $i*$tailLength]
         set endIdx [expr $startIdx+$tailLength-1]
-        set coords [lrange $listTailCoords $startIdx $endIdx]
+        set coords [lrange $listOfTailCoords $startIdx $endIdx]
 
         # Perform least squares fitting:
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
@@ -74,21 +74,21 @@ proc fitTailVectors {tail_length list_of_tail_coords lsqnormfactor} {
 # "NULL" will result in no delimiter with a single space separating elements.
 # "or" will also enclose list items in parentheses for use as 
 # atomselection text. 
-proc cat_list {inputlist delimiter} {
+proc concatenateList {inputList delimiter} {
     if {$delimiter eq "or"} {
-        set output "([lindex $inputlist 0])"
+        set output "([lindex $inputList 0])"
     } else {
-        set output [lindex $inputlist 0]
+        set output [lindex $inputList 0]
     }
     
-    for {set i 1} {$i < [llength $inputlist]} {incr i} {
+    for {set i 1} {$i < [llength $inputList]} {incr i} {
         if {$delimiter eq "or"} {
-            set element "([lindex $inputlist $i])"
+            set element "([lindex $inputList $i])"
             set output "${output} or ${element}"
         } elseif {$delimiter eq "NULL"} {
-            set output "${output} [lindex $inputlist $i]"
+            set output "${output} [lindex $inputList $i]"
         } else {
-            set output "${output} $delimiter [lindex $inputlist $i]"
+            set output "${output} $delimiter [lindex $inputList $i]"
         }
     }
     return $output
@@ -97,16 +97,16 @@ proc cat_list {inputlist delimiter} {
 # Returns a list of lists containing the starting beads and ending beads for a 
 # given lipid's acyl chains.
 # E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
-proc heads_and_tails {species taillist} {
-    for {set i 0} {$i < [llength $taillist]} {incr i} {
-        set startbead []
-        set endbead []
-        foreach tail [lindex $taillist $i] {
-            lappend startbead [lindex $tail 0]
-            lappend endbead [lindex $tail end]
+proc findHeadsAndTails {species tailList} {
+    for {set i 0} {$i < [llength $tailList]} {incr i} {
+        set startBead []
+        set endBead []
+        foreach tail [lindex $tailList $i] {
+            lappend startBead [lindex $tail 0]
+            lappend endBead [lindex $tail end]
         }
-        lappend startsellist [cat_list $startbead "NULL"]
-        lappend endsellist [cat_list $endbead "NULL"]
+        lappend startSelList [concatenateList $startBead "NULL"]
+        lappend endSelList [concatenateList $endBead "NULL"]
     }
 
     return [list $startsellist $endsellist]
@@ -116,9 +116,9 @@ proc heads_and_tails {species taillist} {
 ;# and assigns user to 1 or 2 for outer or inner leaflet.
 ;# Needs to be revised to just take the 'top' bead in a lipid
 ;# rather than hard-code PO4
-proc leaflet_check {frm species heads_and_tails window pore_sort} {
-    set starts [lindex $heads_and_tails 0]
-    set ends [lindex $heads_and_tails 1]
+proc leaflet_check {frm species findHeadsAndTails window pore_sort} {
+    set starts [lindex $findHeadsAndTails 0]
+    set ends [lindex $findHeadsAndTails 1]
 
     ;# does leaflet check for different lipid species separately
     ;# because bead names may conflict between species
@@ -162,7 +162,7 @@ proc leaflet_check {frm species heads_and_tails window pore_sort} {
         }
 
         ;# convert list of lists into one long list
-        set user_vals [cat_list $userlist "NULL"]
+        set user_vals [concatenateList $userlist "NULL"]
         
         $total_sel set user $user_vals
         $total_sel delete
@@ -257,7 +257,7 @@ proc tail_analyzer { species } {
     }
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [heads_and_tails $species $taillist]
+    set heads_and_tails [findHeadsAndTails $species $taillist]
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -635,7 +635,7 @@ proc order_params {length xvals yvals zvals} {
     }
 
     ;# this is a list of lists, but we want just a list
-    set final_order_list [cat_list $order_list "NULL"]
+    set final_order_list [concatenateList $order_list "NULL"]
     
     return [list $final_order_list]
 }
