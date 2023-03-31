@@ -1,13 +1,167 @@
 package require tcltest
 namespace import ::tcltest::*
 
+configure -verbose pbt
 # Software under test
 source ../utilities/helper_procs.tcl
+load ../utilities/vecexpr.so
 
- test BasicAggregate {
-    Test: Move outward
+ test tailtiltA {
+    Test: tilt_angles
 } -setup {
-   mol new cluster0.gro
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
 } -body {
-    return [FindCluster {1 2 3 4 5} 15 2 "AUC AUSL AUL ETHY THSLK" 0]
-} -result {{} {1 2 3 4 5}}
+    return [tilt_angles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643}} -cleanup {
+   mol delete top
+}
+
+test tailtiltB {
+    Test: tilt_angles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [tilt_angles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253}} -cleanup {
+   mol delete top
+}
+
+test tailtilt90 {
+    Test: tilt_angles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/90degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [tilt_angles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434}} -cleanup {
+   mol delete top
+}
+
+test tailtilt30 {
+    Test: tilt_angles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/30degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [tilt_angles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251}} -cleanup {
+   mol delete top
+}
+
+test tailtilt180 {
+    Test: tilt_angles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [tilt_angles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383}} -cleanup {
+   mol delete top
+}
+
+test fittailszshift {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get z] 1]
+} -result -6.0 -cleanup {
+   mol delete top
+}
+
+test fittailssinglepoint {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechainstacked.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get z] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailsdoublelength {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechaindoublelength.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get z] 1]
+} -result -12.0 -cleanup {
+   mol delete top
+}
+
+test fittailscheckx {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get x] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailschecky {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get y] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailssquarez {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/squarechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get z] 1]
+} -result 20.0 -cleanup {
+   mol delete top
+}
+
+test fittailssquarex {
+    Test: fit_all_tails
+} -setup {
+   mol new ../testing_materials/Single_chain/squarechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fit_all_tails 4 [$sel1 get x] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test joinvcatlist {
+    Test: cat_list
+} -setup {
+   set data {1 2 3 4 5}
+   set test [join $data " , "] 
+    set test2 [cat_list $data ,]
+    if {$test == $test2} {
+    set l 0
+    } else {
+    set l 1
+    }
+} -body {
+    return $l
+} -result 0 -cleanup {}
+
+test catlistorfunc {
+    Test: cat_list
+} -setup {
+   set data {1 2 3 4 5}
+} -body {
+    return [cat_list $data "or"]
+} -result "(1) or (2) or (3) or (4) or (5)" -cleanup {}
