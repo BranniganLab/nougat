@@ -79,7 +79,7 @@ proc run_mult {list_of_systems} {
 proc rotate_system {angle axis mol} {
     set nframes [molinfo $mol get numframes]
     set sel [atomselect $mol all]
-    for {set i 0} {$i <= $nframes} {incr i} {
+    for {set i 0} {$i < $nframes} {incr i} {
         $sel frame $i
         $sel update
         set com [measure center $sel weight mass]
