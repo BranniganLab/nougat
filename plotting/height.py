@@ -16,19 +16,23 @@ def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
   beadnum = str(bead[1])
   beadname = "C"+beadnum+"  "
 
-  for rbin in range(row):
-    for thetabin in range(col):
-      if str(data[rbin][thetabin]) != "nan":
+  for d1bin in range(row):
+    for d2bin in range(col):
+      if str(data[d1bin][d2bin]) != "nan":
         seriallen = 5-(len(str(serial)))
         resseqlen = 4-(len(str(resseqnum)))
-        x = (d1*rbin + .5*d1)*(np.cos(thetabin*d2 + 0.5*d2))
+        if polar == 1:
+          x = (d1*d1bin + .5*d1)*(np.cos(d2bin*d2 + 0.5*d2))
+          y = (d1*d1bin + .5*d1)*(np.sin(d2bin*d2 + 0.5*d2))
+        else:
+          x = (d1*d1bin + .5*d1)
+          y = (d2*d2bin + .5*d2)
         x = coord_format(x)
-        y = (d1*rbin + .5*d1)*(np.sin(thetabin*d2 + 0.5*d2))
         y = coord_format(y)
-        z = coord_format(data[rbin][thetabin])
-        rnum = bin_format(rbin)
-        thetanum = bin_format(thetabin)
-        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+rnum+thetanum+'      '+field[:4]+'  ',file=f)
+        z = coord_format(data[d1bin][d2bin])
+        d1num = bin_format(d1bin)
+        d2num = bin_format(d2bin)
+        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+d1num+d2num+'      '+field[:4]+'  ',file=f)
         serial += 1
         resseqnum +=1
   return serial
