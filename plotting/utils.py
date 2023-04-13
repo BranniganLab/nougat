@@ -51,7 +51,10 @@ def find_last_val(l):
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
   if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
     if dtype == "dat":
-      fullmeasure = "avg"+measure
+      if measure == "thickness":
+        fullmeasure = "normthickness"
+      else:
+        fullmeasure = "avg"+measure
     elif dtype == "npy":
       if measure == "curvature":
         fullmeasure = "meancurvature"
