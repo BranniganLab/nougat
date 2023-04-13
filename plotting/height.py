@@ -25,8 +25,10 @@ def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
           x = (d1*d1bin + .5*d1)*(np.cos(d2bin*d2 + 0.5*d2))
           y = (d1*d1bin + .5*d1)*(np.sin(d2bin*d2 + 0.5*d2))
         else:
-          x = (d1*d1bin + .5*d1)
-          y = (d2*d2bin + .5*d2)
+          L1 = d1*row
+          L2 = d2*col 
+          x = (d1*d1bin + .5*d1) - L1/2
+          y = (d2*d2bin + .5*d2) - L2/2
         x = coord_format(x)
         y = coord_format(y)
         z = coord_format(data[d1bin][d2bin])
