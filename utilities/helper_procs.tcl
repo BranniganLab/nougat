@@ -112,6 +112,23 @@ proc findHeadsAndTails {species tailList} {
     return [list $startsellist $endsellist]
 }
 
+proc rotate_system {axis degree start stop} {
+    if {$stop == -1} {
+        set stop [molinfo top get numframes]    
+    } 
+    set sel [atomselect top all]
+    for {set i $start} {$i<$stop} {incr i} {
+        $sel frame $i 
+        $sel update 
+        set com [measure center $sel weight mass]
+        set matrix [transaxis $axis $degree]
+        $sel moveby [vecscale -1.0 $com]
+        $sel move $matrix
+        $sel moveby $com
+    }
+    $sel delete
+}
+
 ;# checks whether lipid tails are above/below the PO4 bead,
 ;# and assigns user to 1 or 2 for outer or inner leaflet.
 ;# Needs to be revised to just take the 'top' bead in a lipid
@@ -170,7 +187,7 @@ proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
 
     if {$pore_sort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
-
+        pore_sorter_custom $frm $species $pore_sort
     }
 }
 
@@ -188,9 +205,6 @@ proc print_value {file value end_line} {
     } else {
         puts "Something went wrong - end_line should have value of 0 or 1 only"
         break
-
-        pore_sorter_custom $frm $species $pore_sort
-
     }
 }
 

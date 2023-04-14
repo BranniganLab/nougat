@@ -103,7 +103,7 @@ proc cell_prep {config_path leaf_check} {
 
 
 ;########################################################################################
-;# polarHeight Functions
+;# nougat main functions
 
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
@@ -137,12 +137,13 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     set coordsys [read_polar $polar]
     set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
     file mkdir $foldername
+    file copy -force $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
 
-    run_nougat $system $config_dict $bindims $polar "height_density" 
-    run_nougat $system $config_dict $bindims $polar "tilt_order" 
+    run_nougat $system $config_dict $bindims $polar "height_density" $foldername
+    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
 }
 
@@ -163,8 +164,9 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         }
 
         ;# update leaflets in case lipids have flip-flopped
+
         assignLeaflet $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
-	puts "yes"
+
         puts "$system $quantity_of_interest $frm"
 
         #need to calculate heights relative to some point (usually on the inclusion):
