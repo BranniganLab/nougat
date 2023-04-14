@@ -82,7 +82,7 @@ proc cell_prep {config_path leaf_check} {
         set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
             puts "leaflet check frame $i"
-            leaflet_check $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
+            assignLeaflet $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
         }
     }
 
@@ -164,7 +164,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         }
 
         ;# update leaflets in case lipids have flip-flopped
-        leaflet_check $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
+
+        assignLeaflet $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
 
         puts "$system $quantity_of_interest $frm"
 
@@ -202,7 +203,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             if {$quantity_of_interest eq "height_density"} {
                 set outfiles [height_density_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] [dict get $sel_info zvals_list] [dict get $sel_info name_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
-                set tilts [tilt_angles [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
+                set tilts [calculateTiltAngles [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set orders [order_params [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set outfiles [tilt_order_averaging $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] $tilts $orders [dict get $sel_info tail_list] $selex]
             }

@@ -9,29 +9,29 @@ proc RtoD {r} {
 # in the system. This allows you to use 1 instance of $lsqnormfactor only,
 # rather than calculate it on the fly each time. 
 # $lsqnormfactor is a list of values (i-(N-1)/2)
-proc tilt_angles {length xvals yvals zvals} {
-    set tilt_list []
-    set lsqnormfactor [calc_lsq_normfactor $length]
-    set xvec [fit_all_tails $length $xvals $lsqnormfactor]
-    set yvec [fit_all_tails $length $yvals $lsqnormfactor]
-    set zvec [fit_all_tails $length $zvals $lsqnormfactor]
+proc calculateTiltAngles {length xvals yvals zvals} {
+    set tiltList []
+    set lsqNormFactor [calculateLsqNormFactor $length]
+    set xvec [fitTailVectors $length $xvals $lsqNormFactor]
+    set yvec [fitTailVectors $length $yvals $lsqNormFactor]
+    set zvec [fitTailVectors $length $zvals $lsqNormFactor]
     for {set i 0} {$i < [llength $xvec]} {incr i} {
         set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
         set norm [vecnorm $vector]
 
         # it is desirable to have a list that is the same length as $xvals
         # for ease of indexing in the binning process; hence lrepeat
-        lappend tilt_list [lrepeat $length $norm]
+        lappend tiltList [lrepeat $length $norm]
     }
 
     # this is now a list of lists of lists, but we want a list of lists
-    set final_tilt_list [cat_list $tilt_list "NULL"]
+    set finalTiltList [concatenateList $tiltList "NULL"]
 
-    return $final_tilt_list
+    return $finalTiltList
 }
 
 # returns a list of (i-(N-1)/2)
-proc calc_lsq_normfactor { length } {
+proc calculateLsqNormFactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
     set I []
@@ -41,32 +41,32 @@ proc calc_lsq_normfactor { length } {
         lappend I $k
     }
 
-    set lsqnormfactor [vecexpr $I $d sub]
+    set lsqNormFactor [vecexpr $I $d sub]
 
-    return $lsqnormfactor
+    return $lsqNormFactor
 }
 
 # Fit the points x to x = ai + b, i=0...N-1, and return the value 
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
-proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
-    set fit_values []
-    set N_lipids [expr [llength $list_of_tail_coords]/$tail_length]
-    set start_idx 0
+proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
+    set fitValues []
+    set NumLipids [expr [llength $listOfTailCoords]/$tailLength]
+    set startIdx 0
 
     # iterate through list of all tail coords, separating them into one 
     # lipid tail at a time with lrange
-    for {set i 0} {$i < $N_lipids} {incr i} {
-        set start_idx [expr $i*$tail_length]
-        set end_idx [expr $start_idx+$tail_length-1]
-        set coords [lrange $list_of_tail_coords $start_idx $end_idx]
+    for {set i 0} {$i < $NumLipids} {incr i} {
+        set startIdx [expr $i*$tailLength]
+        set endIdx [expr $startIdx+$tailLength-1]
+        set coords [lrange $listOfTailCoords $startIdx $endIdx]
 
         # Perform least squares fitting:
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
         # Sum over the vector. stack=1scalar
         # Append to $fit_values
-        lappend fit_values [vecexpr [vecexpr $coords $lsqnormfactor mult] sum]
+        lappend fitValues [vecexpr [vecexpr $coords $lsqNormFactor mult] sum]
     }
-    return $fit_values
+    return $fitValues
 }
 
 # Concatenates list items into one long string, separated by 
@@ -74,21 +74,21 @@ proc fit_all_tails {tail_length list_of_tail_coords lsqnormfactor} {
 # "NULL" will result in no delimiter with a single space separating elements.
 # "or" will also enclose list items in parentheses for use as 
 # atomselection text. 
-proc cat_list {inputlist delimiter} {
+proc concatenateList {inputList delimiter} {
     if {$delimiter eq "or"} {
-        set output "([lindex $inputlist 0])"
+        set output "([lindex $inputList 0])"
     } else {
-        set output [lindex $inputlist 0]
+        set output [lindex $inputList 0]
     }
     
-    for {set i 1} {$i < [llength $inputlist]} {incr i} {
+    for {set i 1} {$i < [llength $inputList]} {incr i} {
         if {$delimiter eq "or"} {
-            set element "([lindex $inputlist $i])"
+            set element "([lindex $inputList $i])"
             set output "${output} or ${element}"
         } elseif {$delimiter eq "NULL"} {
-            set output "${output} [lindex $inputlist $i]"
+            set output "${output} [lindex $inputList $i]"
         } else {
-            set output "${output} $delimiter [lindex $inputlist $i]"
+            set output "${output} $delimiter [lindex $inputList $i]"
         }
     }
     return $output
@@ -97,19 +97,19 @@ proc cat_list {inputlist delimiter} {
 # Returns a list of lists containing the starting beads and ending beads for a 
 # given lipid's acyl chains.
 # E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
-proc heads_and_tails {species taillist} {
-    for {set i 0} {$i < [llength $taillist]} {incr i} {
-        set startbead []
-        set endbead []
-        foreach tail [lindex $taillist $i] {
-            lappend startbead [lindex $tail 0]
-            lappend endbead [lindex $tail end]
+proc findHeadsAndTails {species tailList} {
+    for {set i 0} {$i < [llength $tailList]} {incr i} {
+        set startBead []
+        set endBead []
+        foreach tail [lindex $tailList $i] {
+            lappend startBead [lindex $tail 0]
+            lappend endBead [lindex $tail end]
         }
-        lappend startsellist [cat_list $startbead "NULL"]
-        lappend endsellist [cat_list $endbead "NULL"]
+        lappend startSelList [concatenateList $startBead "NULL"]
+        lappend endSelList [concatenateList $endBead "NULL"]
     }
 
-    return [list $startsellist $endsellist]
+    return [list $startSelList $endSelList]
 }
 
 proc rotate_system {axis degree start stop} {
@@ -133,56 +133,56 @@ proc rotate_system {axis degree start stop} {
 ;# and assigns user to 1 or 2 for outer or inner leaflet.
 ;# Needs to be revised to just take the 'top' bead in a lipid
 ;# rather than hard-code PO4
-proc leaflet_check {frm species heads_and_tails window pore_sort} {
-    set starts [lindex $heads_and_tails 0]
-    set ends [lindex $heads_and_tails 1]
+proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
+    set starts [lindex $findHeadsAndTails 0]
+    set ends [lindex $findHeadsAndTails 1]
 
     ;# does leaflet check for different lipid species separately
     ;# because bead names may conflict between species
     for {set i 0} {$i < [llength $species]} {incr i} {
-        set lipidtype [lindex $species $i]
-        set total_sel [atomselect top "resname $lipidtype" frame $frm]
-        set endnames [lindex $ends $i]
+        set lipidType [lindex $species $i]
+        set totalSel [atomselect top "resname $lipidType" frame $frm]
+        set endNames [lindex $ends $i]
 
         ;# how many beads are in the given lipid species?
-        set species_bead_num [llength [lsort -unique [$total_sel get name]]]
+        set speciesBeadNum [llength [lsort -unique [$totalSel get name]]]
         
         ;# how many tails are in this lipid species?
-        set numtails [llength $endnames]
+        set numTails [llength $endNames]
 
-        set start_sel [atomselect top "resname $lipidtype and name PO4" frame $frm]
-        set end_sel [atomselect top "resname $lipidtype and name $endnames" frame $frm]
-        set start_z [$start_sel get z]
-        set end_z [$end_sel get z]
-        $start_sel delete
-        $end_sel delete
+        set startSel [atomselect top "resname $lipidType and name PO4" frame $frm]
+        set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
+        set startZ [$startSel get z]
+        set endZ [$endSel get z]
+        $startSel delete
+        $endSel delete
         
-        set userlist []
+        set userList []
         set counter 0
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
-        for {set j 0} {$j < [llength $end_z]} {set j [expr $j+$numtails]} {
-            set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numtails-1]] mean]
+        for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
+            set avgEndHeight [vecexpr [lrange $endZ $j [expr $j+$numTails-1]] mean]
 
             ;# subtract $avgendheight from the PO4 bead's height
-            set avgheight [expr [lindex $start_z $counter]-$avgendheight]
+            set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
 
             ;# assign user value accordingly
-            if {$avgheight > $window} {
-                lappend userlist [lrepeat $species_bead_num 1.0]
-            } elseif {$avgheight < -$window} {
-                lappend userlist [lrepeat $species_bead_num 2.0]
+            if {$avgHeight > $window} {
+                lappend userList [lrepeat $speciesBeadNum 1.0]
+            } elseif {$avgHeight < -$window} {
+                lappend userList [lrepeat $speciesBeadNum 2.0]
             } else {
-                lappend userlist [lrepeat $species_bead_num 3.0]
+                lappend userList [lrepeat $speciesBeadNum 3.0]
             }
             incr counter
         }
 
         ;# convert list of lists into one long list
-        set user_vals [cat_list $userlist "NULL"]
+        set userVals [concatenateList $userList "NULL"]
         
-        $total_sel set user $user_vals
-        $total_sel delete
+        $totalSel set user $userVals
+        $totalSel delete
     }
 
     if {$pore_sort ne "NULL"} {
@@ -271,7 +271,7 @@ proc tail_analyzer { species } {
     }
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [heads_and_tails $species $taillist]
+    set heads_and_tails [findHeadsAndTails $species $taillist]
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -649,7 +649,7 @@ proc order_params {length xvals yvals zvals} {
     }
 
     ;# this is a list of lists, but we want just a list
-    set final_order_list [cat_list $order_list "NULL"]
+    set final_order_list [concatenateList $order_list "NULL"]
     
     return [list $final_order_list]
 }
