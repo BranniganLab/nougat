@@ -109,7 +109,7 @@ proc findHeadsAndTails {species tailList} {
         lappend endSelList [concatenateList $endBead "NULL"]
     }
 
-    return [list $startsellist $endsellist]
+    return [list $startSelList $endSelList]
 }
 
 proc rotate_system {axis degree start stop} {
@@ -141,7 +141,7 @@ proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
     ;# because bead names may conflict between species
     for {set i 0} {$i < [llength $species]} {incr i} {
         set lipidType [lindex $species $i]
-        set totalSel [atomselect top "resname $lipidtype" frame $frm]
+        set totalSel [atomselect top "resname $lipidType" frame $frm]
         set endNames [lindex $ends $i]
 
         ;# how many beads are in the given lipid species?
@@ -162,7 +162,7 @@ proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
         for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
-            set avgEndHeight [vecexpr [lrange $end_z $j [expr $j+$numTails-1]] mean]
+            set avgEndHeight [vecexpr [lrange $endZ $j [expr $j+$numTails-1]] mean]
 
             ;# subtract $avgendheight from the PO4 bead's height
             set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
