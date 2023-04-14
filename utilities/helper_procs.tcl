@@ -116,56 +116,56 @@ proc findHeadsAndTails {species tailList} {
 ;# and assigns user to 1 or 2 for outer or inner leaflet.
 ;# Needs to be revised to just take the 'top' bead in a lipid
 ;# rather than hard-code PO4
-proc leaflet_check {frm species findHeadsAndTails window pore_sort} {
+proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
     set starts [lindex $findHeadsAndTails 0]
     set ends [lindex $findHeadsAndTails 1]
 
     ;# does leaflet check for different lipid species separately
     ;# because bead names may conflict between species
     for {set i 0} {$i < [llength $species]} {incr i} {
-        set lipidtype [lindex $species $i]
-        set total_sel [atomselect top "resname $lipidtype" frame $frm]
-        set endnames [lindex $ends $i]
+        set lipidType [lindex $species $i]
+        set totalSel [atomselect top "resname $lipidtype" frame $frm]
+        set endNames [lindex $ends $i]
 
         ;# how many beads are in the given lipid species?
-        set species_bead_num [llength [lsort -unique [$total_sel get name]]]
+        set speciesBeadNum [llength [lsort -unique [$totalSel get name]]]
         
         ;# how many tails are in this lipid species?
-        set numtails [llength $endnames]
+        set numTails [llength $endNames]
 
-        set start_sel [atomselect top "resname $lipidtype and name PO4" frame $frm]
-        set end_sel [atomselect top "resname $lipidtype and name $endnames" frame $frm]
-        set start_z [$start_sel get z]
-        set end_z [$end_sel get z]
-        $start_sel delete
-        $end_sel delete
+        set startSel [atomselect top "resname $lipidType and name PO4" frame $frm]
+        set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
+        set startZ [$startSel get z]
+        set endZ [$endSel get z]
+        $startSel delete
+        $endSel delete
         
-        set userlist []
+        set userList []
         set counter 0
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
-        for {set j 0} {$j < [llength $end_z]} {set j [expr $j+$numtails]} {
-            set avgendheight [vecexpr [lrange $end_z $j [expr $j+$numtails-1]] mean]
+        for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
+            set avgEndHeight [vecexpr [lrange $end_z $j [expr $j+$numTails-1]] mean]
 
             ;# subtract $avgendheight from the PO4 bead's height
-            set avgheight [expr [lindex $start_z $counter]-$avgendheight]
+            set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
 
             ;# assign user value accordingly
-            if {$avgheight > $window} {
-                lappend userlist [lrepeat $species_bead_num 1.0]
-            } elseif {$avgheight < -$window} {
-                lappend userlist [lrepeat $species_bead_num 2.0]
+            if {$avgHeight > $window} {
+                lappend userList [lrepeat $speciesBeadNum 1.0]
+            } elseif {$avgHeight < -$window} {
+                lappend userList [lrepeat $speciesBeadNum 2.0]
             } else {
-                lappend userlist [lrepeat $species_bead_num 3.0]
+                lappend userList [lrepeat $speciesBeadNum 3.0]
             }
             incr counter
         }
 
         ;# convert list of lists into one long list
-        set user_vals [concatenateList $userlist "NULL"]
+        set userVals [concatenateList $userList "NULL"]
         
-        $total_sel set user $user_vals
-        $total_sel delete
+        $totalSel set user $userVals
+        $totalSel delete
     }
 
     if {$pore_sort ne "NULL"} {
