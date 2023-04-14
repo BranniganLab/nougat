@@ -5,45 +5,55 @@ import warnings
 import glob
 import os 
 from thickness import measure_t0
-from utils import bin_prep
-from utils import dimensions_analyzer
-from utils import plot_maker
+from utils import *
 
-colordict = {
+sys_dict = {
 	"DT": "green",
-	"DL": "blue",
-	"DX": "purple",
-	"DB": "red",
-	"DY": "limegreen",
-	"DO": "mistyrose",
-	"PO": "darkorange",
-	"DP": "deepskyblue",
-	"DG": "orchid",
-	"lgPO" : "darkorange",
 	"lgDT" : "green",
+	"DL": "blue",
+	"lgDL": "blue",
+	"DX": "purple",
+	"lgDX": "purple",
+	"DB": "red",
+	"lgDB": "red",
+	"DY": "limegreen",
 	"lgDY" : "limegreen",
+	"DO": "mistyrose",
+	"lgDO": "mistyrose",
+	"PO": "darkorange",
+	"lgPO" : "darkorange",
+	"DP": "deepskyblue",
+	"lgDP": "deepskyblue",
+	"DG": "orchid",
 	"lgDG" : "orchid"
 }
 
-linetypedict = {
-	"DT": "solid",
-	"DL": "solid",
-	"DX": "solid",
-	"DB": "solid",
-	"DY": "solid",
-	"DO": "solid",
-	"PO": "solid",
-	"DP": "solid",
-	"DG": "solid",
-	"lgPO" : "dotted",
-	"lgDT" : "dotted",
-	"lgDY" : "dotted",
-	"lgDG" : "dotted"
+box_dict = {
+	"large": "solid",
+	"small" : "dotted"
 }
 
+field_dict = {
+	"zone" : "solid",
+	"ztwo" : "solid",
+	"zzero" : "dotted",
+	"zplus" : "dashed"
+}
 
-sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgDT", "lgDY", "lgDG", "lgPO"]
-#sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX", "lgPO"]
+bead_dict = {
+  "DT" : ['C2A.C2B'],
+  "DL" : ['C2A.C2B', 'C3A.C3B'],
+  "DY" : ['D2A.D2B', 'C3A.C3B'],
+  "DO" : ['D2A.D2B', 'C3A.C3B', 'C4A.C4B'],
+  "PO" : ['D2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DP" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B'],
+  "DB" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B'],
+  "DG" : ['C2A.C2B', 'D3A.D3B', 'C4A.C4B', 'C5A.C5B'],
+  "DX" : ['C2A.C2B', 'C3A.C3B', 'C4A.C4B', 'C5A.C5B', 'C6A.C6B']
+}
+
+small_sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]
+large_sys_list = ["lgDT", "lgDY", "lgDL", "lgDO", "lgDP", "lgPO", "lgDG", "lgDB", "lgDX"]
 
 def plot_area_per_lipid(systems):
 	
@@ -126,43 +136,67 @@ def zoom_in(systems):
 
 def diff_mid_interface(systems, mol, coordsys):
 	for system in systems:
-		os.chdir(system)
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/npy/'+system+'.'
+		os.chdir(system+'/'+system+'_polar_5_10_0_-1_1')
+		#filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.'
 		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
 		zzero = np.load(filename_start+'zzero'+filename_end)
 		zone = np.load(filename_start+'zone'+filename_end)
 		ztwo = np.load(filename_start+'ztwo'+filename_end)
-#		H1 = np.load(filename_start+'zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
-#		H2 = np.load(filename_start+'ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
+		H1 = np.load(filename_start+'zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
+		H2 = np.load(filename_start+'ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
 		zplus = np.load(filename_start+'zplus'+filename_end)
 		diff = zplus-zzero
 		avgdiff = np.nanmean(diff,axis=2)
-#		H = H1+H2
-#		avgH = np.nanmean(H,axis=2)
+		H = H1+H2
+		avgH = np.nanmean(H,axis=2)
 		t0 = measure_t0(zone, ztwo, coordsys)
 		avgdiff = avgdiff/t0
-#		avgcombo = avgdiff*avgH
+		avgcombo = avgdiff*avgH
 
 		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
 		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
-		os.chdir('..')
-#		c = plt.pcolormesh(dim1vals,dim2vals,avgdiff,cmap="RdBu_r",zorder=0,vmax=.001,vmin=-.001)
-#		cbar = plt.colorbar(c)
-#		plt.axis('off')
-#		ax.set_xticklabels([])
-#		ax.set_yticklabels([])
-#		#fig.set_size_inches(6,6)
-#		plt.savefig(system+"_epsilon_cart.pdf", dpi = 700)
-#		plt.clf()
-#		plt.close()
+		plot_maker(dim1vals, dim2vals, avgcombo, system, 'comb', .1, -.1, False, "avgEpsilonH", False, coordsys)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.avg_epsilon_t0.npy',avgdiff)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.epsilon_t0.npy',diff)
+		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.avg_epsilonH_t0.npy',avgcombo)
+		os.chdir('../..')
+
+def avg_eps_t0_over_theta(systems):
+	fig, axs = plt.subplots()
+	axs.set_xlim(0,6)
+	colordict = {
+		"DT": "red",
+		"DL": "orange",
+		"DX": "purple",
+		"DB": "blue",
+		"DY": "orange",
+		"DO": "green",
+		"PO": "green",
+		"DP": "green",
+		"DG": "blue"
+	}
+
+	for system in systems:
+		#eps_data = np.load("lg"+system+"/lg"+system+"_polar_5_10_100_-1_1/npy/lg"+system+'.avg_epsilonH_t0.npy')
+		eps_data = np.load(system+"PC/"+system+"PC_polar_5_10_0_-1_1/npy/"+system+'PC.avg_epsilon_t0.npy')
+		with warnings.catch_warnings():
+			warnings.simplefilter("ignore", category=RuntimeWarning)
+			z_vals=np.nanmean(eps_data, axis=1)
+		maxval = len(z_vals)
+		x = np.arange(2.5,(maxval*5+2.5),5) / 10
+		axs.plot(x,z_vals,color=colordict[system])
+	plt.savefig("unsatsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
+	plt.clf()
+	plt.close()
 
 
 def measure_H_epsilon_corr(systems, mol):
 	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.cart.height.npy'
 		fig = plt.figure()
 		ax = plt.subplot()
@@ -202,7 +236,7 @@ def measure_H_epsilon_corr(systems, mol):
 
 def sum_terms(systems, mol):
 	for system in systems:
-		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
+		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
 		filename_end = '.C1A.C1B.cart.height.npy'
 		try:
 			zzero = np.load(filename_start+'zzero'+filename_end)
@@ -231,37 +265,6 @@ def sum_terms(systems, mol):
 		print(sumterm6)
 		print(sumterm7)
 		print(sumavgH2)
-
-#def measure_t0(systems, mol):
-#	for system in systems:
-#		filename_start = '/u1/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
-#		filename_end = '.C1A.C1B.cart.height.npy'
-#		try:
-#			z1 = np.load(filename_start+'zone'+filename_end)
-#			z2 = np.load(filename_start+'ztwo'+filename_end)
-#		except:
-#			filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
-#			z1 = np.load(filename_start+'zone'+filename_end)
-#			z2 = np.load(filename_start+'ztwo'+filename_end)
-#
-#		thickness = z1-z2
-#
-#		avgthickness = np.nanmean(thickness,axis=2)
-#
-#		leftcol = np.nanmean(avgthickness[:,0])
-#		rightcol =  np.nanmean(avgthickness[:,-1])
-#		toprow =  np.nanmean(avgthickness[0,:])
-#		botrow =   np.nanmean(avgthickness[-1,:])
-#
-#
-#		avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
-#
-#		avgt0 = avgt0/2.0
-#
-#		print(system)
-#		print(avgt0*2.)
-#
-#	return avgt0
 
 def sum_over_K(systems):
 
@@ -345,8 +348,11 @@ def plot_average_area_per_lipid(systems):
 
 
 if __name__ == "__main__": 
-	#diff_mid_interface(["lgDT", "lgDY"], "5x29", "polar")
+	diff_mid_interface(["DTPC", "DYPC", "DGPC", "DOPC", "DPPC", "DLPC", "DXPC", "DBPC", "POPC"], "7k3g", "polar")
+	#avg_eps_t0_over_theta(["DT", "DL", "DP", "DB", "DX"])
+	avg_eps_t0_over_theta(["DY", "DO", "DG"])
 	#measure_H_epsilon_corr(["lgPO"], "empty")
+	#avg_eps_t0_over_theta(["DY", "DO", "DG"])
 	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
 	#diff_mid_interface(["lgPO"], "7k3g")
 	#measure_H(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")

@@ -13,10 +13,8 @@ threebeads = ["DL","DY"]
 custom = ['DX']
 comparison = ['PO']
 
-
-sys_list = [monounsatsys]
-sys_name_list = ['monounsatsys']
-
+sys_list = [comparison]
+sys_name_list = ['comparison']
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
 
@@ -34,6 +32,11 @@ colordict = {
 	"PO": "green",
 	"DP": "green",
 	"DG": "blue"
+}
+
+sysdict = {
+	"5x29": "red",
+	"7k3g": "blue"
 }
 
 fielddict = {
@@ -141,8 +144,8 @@ plot combined systems zone and ztwo
 max_scale_dict = {
 	"height":10,
 	"thickness":1.2,
-	"curvature":0.025,
-	"Kcurvature":0.0075,
+	"curvature":0.03,
+	"Kcurvature":0.002,
 	"tail1":1.2,
 	"tail0":1.2,
 	"density":2
@@ -150,78 +153,45 @@ max_scale_dict = {
 min_scale_dict = {
 	"height":-30,
 	"thickness":0,
-	"curvature":-0.05,
-	"Kcurvature":-0.0075,
+	"curvature":-0.03,
+	"Kcurvature":-0.002,
 	"tail1":-0.2,
 	"tail0":-0.2,
 	"density":0
 }
 
-def plot_total_thickness():
-	nmcount=0
-	for system in sys_list:
-		fig, axs = plt.subplots()
-		axs.set_xlim(0,6)
-		axs.set_ylim(0,20)
-		#axs.set_ylim(min_scale_dict["thickness"],max_scale_dict["thickness"])
-		for name in system:
-			upper = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "zone", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-			lower = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "ztwo", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-			total = (upper + lower)/2.
-			with warnings.catch_warnings():
-				warnings.simplefilter("ignore", category=RuntimeWarning)
-				z_vals=np.nanmean(total, axis=1)
-			maxval = len(z_vals)
-			x = np.arange(2.5,(maxval*5+2.5),5) / 10
-			axs.plot(x,z_vals,color=colordict[name])
-		plt.savefig(sys_name_list[nmcount]+"_totavgThicknessovertheta_combo.pdf", dpi = 700)
-		plt.clf()
-		plt.close()
-		nmcount+=1		
+for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
+	nmcount = 0 
+	fig, axs = plt.subplots(2, sharex=True, sharey=True)
+	for system in ["5x29"]:
+		counter = 0
+		for field in field_list:
+			axs[counter].set_xlim(0,6)
+			axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
+			for name in ["PO"]:
+				data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_0_-1_10/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", category=RuntimeWarning)
+					z_vals=np.nanmean(data, axis=1)
+				if measure == "height":
+					first_val = find_first_val(z_vals)
+					z_vals = z_vals - first_val
+				#if measure == "tail0" or measure == "tail1":
+				#	last_val = find_last_val(z_vals)
+				#	z_vals = z_vals/last_val
+				maxval = len(z_vals)
+				x = np.arange(2.5,(maxval*5+2.5),5) / 10
+				axs[counter].plot(x,z_vals,color=sysdict[system])
+				#X = [28.116,28.116]
+				#Y = [-1,5]
+				#plt.plot(X,Y,'k:')
+			counter += 1
 
-def make_avg_over_theta_plots():
-	for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
-		nmcount = 0 
-		for system in sys_list:
-			fig, axs = plt.subplots(2, sharex=True, sharey=True)
-			counter = 0
-			for field in field_list:
-				axs[counter].set_xlim(0,6)
-				axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
-				for name in system:
-					#data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					data = np.genfromtxt(name+"PC/"+name+"PC_polar_5_10_0_-1_1/dat/"+filename_generator(name+"PC", name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#if name == "DT":
-					#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#else:
-					#	data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#for row in range(data.shape[0]):
-					#	nonzerocount = np.count_nonzero(data[row,:])
-					#	nancount = np.count_nonzero(np.isnan(data[row,:]))
-					#	if (nancount/nonzerocount) >= 0.2:
-					#		data[row,:] = np.nan
-					with warnings.catch_warnings():
-						warnings.simplefilter("ignore", category=RuntimeWarning)
-						z_vals=np.nanmean(data, axis=1)
-					if measure == "height":
-						first_val = find_first_val(z_vals)
-						z_vals = z_vals - first_val
-					#if measure == "tail0" or measure == "tail1":
-					#	last_val = find_last_val(z_vals)
-					#	z_vals = z_vals/last_val
-					maxval = len(z_vals)
-					x = np.arange(2.5,(maxval*5+2.5),5) / 10
-					axs[counter].plot(x,z_vals,color=colordict[name])
-					#X = [28.116,28.116]
-					#Y = [-1,5]
-					#plt.plot(X,Y,'k:')
-				counter += 1
-
-				#fig.set_size_inches(6,6)
-			plt.savefig(sys_name_list[nmcount]+"_avg"+measure+"overtheta_combo.pdf", dpi = 700)
-			plt.clf()
-			plt.close()
-			nmcount += 1
+			#fig.set_size_inches(6,6)
+	plt.savefig("comparison_PO_avg"+measure+"overtheta_combo.pdf", dpi = 700)
+	plt.clf()
+	plt.close()
+	nmcount += 1
 
 '''
 #plot all bead variations of zone, ztwo, and zplus, as well as orig zzero
@@ -263,7 +233,3 @@ for name in allsys:
 	plt.clf()
 	plt.close()
 	'''
-
-if __name__ == "__main__":
-	make_avg_over_theta_plots()
-	#plot_total_thickness()
