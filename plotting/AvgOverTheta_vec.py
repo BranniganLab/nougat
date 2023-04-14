@@ -14,8 +14,8 @@ custom = ['DX']
 comparison = ['PO']
 
 
-sys_list = [satsys]
-sys_name_list = ['satsys']
+sys_list = [monounsatsys]
+sys_name_list = ['monounsatsys']
 
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
@@ -189,7 +189,8 @@ def make_avg_over_theta_plots():
 				axs[counter].set_xlim(0,6)
 				axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
 				for name in system:
-					data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+					#data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+					data = np.genfromtxt(name+"PC/"+name+"PC_polar_5_10_0_-1_1/dat/"+filename_generator(name+"PC", name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 					#if name == "DT":
 					#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 					#else:
@@ -264,5 +265,5 @@ for name in allsys:
 	'''
 
 if __name__ == "__main__":
-	#make_avg_over_theta_plots()
-	plot_total_thickness()
+	make_avg_over_theta_plots()
+	#plot_total_thickness()
