@@ -221,9 +221,9 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         }
     }
 
-    ;# output density normalization info 
+    ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height_density"} {
-        output_density_norm_info [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername
+        output_nougat_log [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername
     }
 
     ;# close all outfiles
@@ -231,8 +231,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         close $channel
     }
 
-    ;# delete all atomselections in scope
-    ;# if the user defined atomselections in their VMD session,
+    ;# delete all atomselections in scope.
+    ;# if the user has previously defined atomselections in their VMD session,
     ;# these will be out of scope and cause an error.
     ;# catch will ignore this error, as it's not important to the user.
     foreach selection [atomselect list] {

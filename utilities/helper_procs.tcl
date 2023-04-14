@@ -561,14 +561,25 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
     return $res_dict
 }
 
+
+proc output_nougat_log {start nframes step species system headnames coordsys foldername} {
+    set logfile [open "${foldername}/tcl_output/${system}.${coordsys}.log" w]
+    set density_norm_factor [calc_density_norm_factor $start $nframes $step $species $headnames]
+    foreach spec_norm_pair $density_norm_factor {
+        puts $logfile "$spec_norm_pair"
+    }
+    close $logfile
+}
+
+
 ;# calculates the normalization factor for density enrichment calculations
-proc output_density_norm_info {start nframes step species system headnames coordsys foldername} {
+proc calc_density_norm_factor {start nframes step species headnames} {
     set arealist []
+    set normlist []
     for {set frm $start} {$frm <= $nframes} {set frm [expr $frm+$step]} {
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${foldername}/tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
@@ -581,10 +592,9 @@ proc output_density_norm_info {start nframes step species system headnames coord
         set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
         set normfactor [expr $avgarea/[expr $Nb*$Sb/2.0]]
-        puts $normfactor_outfile "$spec $normfactor"
+        lappend normlist [list $spec $normfactor]
     }
-    
-    close $normfactor_outfile
+    return $normlist
 }
 
 ;# nougat tilt and order calculations segregate by lipid species and tail.
