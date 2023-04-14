@@ -562,24 +562,69 @@ proc create_res_dict { species headnames lipid_list name_list resid_list dim1_bi
 }
 
 
-proc output_nougat_log {start nframes step species system headnames coordsys foldername} {
+proc calc_bin_info {start end step N1 N2 coordsys d1 d2} {
+    if {$coordsys == "CART"} {
+        set d1list []
+        set d2list []
+        for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
+            lappend d1list [expr $L1/$N1*1.0]
+            lappend d2list [expr $L2/$N2*1.0]
+        }
+        set avgd1 [vecexpr $d1list mean]
+        set avgd2 [vecexpr $d2list mean]
+    } else {
+        set avgd1 $d1 
+        set avgd2 $d2
+    }
+
+    set arealist []
+    for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
+        set L1 [molinfo top get a frame $frm]
+        set L2 [molinfo top get b frame $frm]
+        lappend arealist [expr $L1*$L2]
+    }
+    set avgarea [vecexpr $arealist mean]
+    
+
+    return [list $avgarea $avgd1 $avgd2]
+}
+
+
+proc output_nougat_log {start end step species system headnames coordsys foldername N1 N2 d1 d2} {
     set logfile [open "${foldername}/tcl_output/${system}.${coordsys}.log" w]
-    set density_norm_factor [calc_density_norm_factor $start $nframes $step $species $headnames]
+
+    ;# calculate average area, d1, and d2
+    set bin_info [calc_bin_info $start $end $step $N1 $N2 $coordsys $d1 $d2]
+    set avgarea [lindex $bin_info 0]
+    set avgd1 [lindex $bin_info 1]
+    set avgd2 [lindex $bin_info 2]
+
+    ;# output species names and bead names
+    puts $logfile "#SYSTEM CONTENTS"
+    puts $logfile "$species" 
+    puts $logfile "$headnames"
+    puts $logfile ""
+
+    ;# output density normalization info
+    puts $logfile "#DENSITY NORMALIZATION"
+    set density_norm_factor [calc_density_norm_factor $species $headnames $avgarea]
     foreach spec_norm_pair $density_norm_factor {
         puts $logfile "$spec_norm_pair"
     }
+    puts $logfile ""
+
+    ;# output bin number
+    puts $logfile "#BIN INFO"
+    puts $logfile "$N1 $N2"
+    puts $logfile "$avgd1 $avgd2"
+
     close $logfile
 }
 
 
 ;# calculates the normalization factor for density enrichment calculations
-proc calc_density_norm_factor {start nframes step species headnames} {
-    set arealist []
+proc calc_density_norm_factor {species headnames avgarea} {
     set normlist []
-    for {set frm $start} {$frm <= $nframes} {set frm [expr $frm+$step]} {
-        lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
-    }
-    set avgarea [vecexpr $arealist mean]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
@@ -592,7 +637,7 @@ proc calc_density_norm_factor {start nframes step species headnames} {
         set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
         set normfactor [expr $avgarea/[expr $Nb*$Sb/2.0]]
-        lappend normlist [list $spec $normfactor]
+        lappend normlist "${spec}:${normfactor}"
     }
     return $normlist
 }

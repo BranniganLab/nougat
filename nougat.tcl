@@ -223,7 +223,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
     ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height_density"} {
-        output_nougat_log [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername
+        output_nougat_log [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
     }
 
     ;# close all outfiles
