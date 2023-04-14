@@ -5,10 +5,23 @@ proc RtoD {r} {
     return [expr $r*180.0/$M_PI]
 }
 
-# Returns a least squares fit for each lipid tail with N_beads = $length
-# in the system. This allows you to use 1 instance of $lsqnormfactor only,
-# rather than calculate it on the fly each time. 
-# $lsqnormfactor is a list of values (i-(N-1)/2)
+# calculateTiltAngles --
+#
+#       Performs a least squares fit for each lipid tail of N bead length
+#       given the x, y and z values in order. This allows you to use 1 instance 
+#       of $lsqnormfactor only,rather than calculate it on the fly each time.
+#
+# Arguments:
+#       length      {int}     Number of beads in a single lipid tail.
+#       xvals       {list}    Ordered list of x coordinates. 
+#       yvals       {list}    Ordered list of y coordinates. 
+#       zvals       {list}    Ordered list of z coordinates.
+#
+# Results:
+#       The result is a list of list that contains a normalized fitted vector 
+#       and the number of beads in an acyl chain. ex. 
+#       {{{0.534522 -0.801783 0.267261} 4} {0.527046 0.843274 0.105409} 4}...}   
+
 proc calculateTiltAngles {length xvals yvals zvals} {
     set tiltList []
     set lsqNormFactor [calculateLsqNormFactor $length]
@@ -31,6 +44,9 @@ proc calculateTiltAngles {length xvals yvals zvals} {
 }
 
 # returns a list of (i-(N-1)/2)
+# calculateLsqNormFactor -- 
+#       
+#       
 proc calculateLsqNormFactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
