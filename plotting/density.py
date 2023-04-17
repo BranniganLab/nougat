@@ -51,18 +51,18 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
 
     print(sys_name+' '+species+" density done!")
 
-  #if len(names_dict['species_list']) > 1:
-  #  calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims)
-  #elif len(names_dict['species_list']) < 1:
+  #if len(species_list) > 1:
+  #  calculate_total_density(sys_name, names_dict['species_list'], coordsys, inclusion, polar, dims)
+  #elif len(species_list) < 1:
   #  print("Something is wrong with species_list!")
 
-def calculate_total_density(sys_name, names_dict, coordsys, inclusion, polar, dims):
+def calculate_total_density(sys_name, species_list, coordsys, inclusion, polar, dims):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims 
 
   for leaflet in ['zone', 'ztwo']:
     tot_density = np.zeros((N1_bins, N2_bins, Nframes))
     
-    for species in names_dict['species_list']:
+    for species in species_list:
       dens_per_species = np.load('npy/'+sys_name+'.'+species+'.'+leaflet+'.'+coordsys+'.density.npy')
       tot_density = tot_density + dens_per_species
       #normalize?

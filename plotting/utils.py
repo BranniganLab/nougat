@@ -130,35 +130,23 @@ def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
   return data_array
 
 
-def fetch_names(sys_name, coordsys):
-  os.chdir('tcl_output')
+def read_log(sys_name, coordsys):
   names_dict = {}
-  names_dict['species_list'] = [] 
   names_dict['beads_list'] = []
+  #open log file
+  with open("tcl_output/"+sys_name+"."+coordsys+".log", "r+") as log_file:
+    lines = [line.rstrip('\n') for line in log_file]
 
-  files = glob.glob(sys_name+'*.zone.'+coordsys+'.tilt.dat')
+    #get contents of line 1 and save as species_list
+    names_dict['species_list'] = lines[1].split(' ')
 
-  for filename in files:
-    namefields = filename.split('.')
-    species = namefields[1]
-    tail = namefields[2]
-
-    if species not in names_dict['species_list']:
-      names_dict['species_list'].append(species)
-      names_dict[species] = [tail]
-    else:
-      names_dict[species].append(tail)
-
-  files = glob.glob(sys_name+'.zone.*.'+coordsys+'.height.dat')
-  
-  for filename in files:
-    beadstart = len(sys_name)+6
-    beadend = filename.find('.'+coordsys)
-    beadname = filename[beadstart:beadend]
-    if beadname not in names_dict['beads_list']:
-      names_dict['beads_list'].append(beadname)
-
-    os.chdir('..')
+    #get contents of line 2 and save as beads_list
+    headnames = lines[2].split(' ')
+    filename = headnames[0]
+    for indx in range(1,len(headnames)):
+      filename = filename+"."+headnames[indx]
+    if filename not in names_dict['beads_list']:
+      names_dict['beads_list'].append(filename)
 
   return names_dict
 
@@ -261,4 +249,3 @@ def dimensions_analyzer(data, coordsys):
     d2 = d1
 
   return N1_bins, d1, N2_bins, d2, Nframes, match_value
-

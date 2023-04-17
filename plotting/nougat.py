@@ -38,7 +38,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
   field_list = ["zone","ztwo", "zzero"]
 
   #figure out all the file names that you'll need to fetch
-  names_dict = fetch_names(sys_name, coordsys)
+  names_dict = read_log(sys_name, coordsys)
 
   #get data dimensions and prep plots from one of your trajectories
   dims = bin_prep(sys_name, names_dict['beads_list'][0], coordsys, "ON")
@@ -51,7 +51,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
     calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, config_dict)
   
   calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
-  calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
+  #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
 
 
