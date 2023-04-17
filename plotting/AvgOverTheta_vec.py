@@ -191,11 +191,6 @@ def make_avg_over_theta_plots():
 				for name in system:
 					#data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 					data = np.genfromtxt(name+"PC/"+name+"PC_polar_5_10_0_-1_1/dat/"+filename_generator(name+"PC", name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#if name == "DT":
-					#	data = np.genfromtxt("dm1/lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#else:
-					#	data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#for row in range(data.shape[0]):
 					#	nonzerocount = np.count_nonzero(data[row,:])
 					#	nancount = np.count_nonzero(np.isnan(data[row,:]))
 					#	if (nancount/nonzerocount) >= 0.2:
