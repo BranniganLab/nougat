@@ -192,3 +192,27 @@ proc compare_lists {orders_from_nougat resids names} {
                 #if {$frm == 354} {
                 #    compare_lists $orders [dict get $sel_info resid_list] [dict get $sel_info name_list]
                 #}
+
+proc count_lipids {sel} {
+    return [llength [lsort -unique [$sel get resid]]]
+}
+
+proc track_asymmetry_over_traj {sys_name nframes} {
+    set outfile [open "${sys_name}.asymm.traj" w]
+    set sel1 [atomselect top "user 1"]
+    set sel2 [atomselect top "user 2"]
+    set sel3 [atomselect top "user 3"]
+    set sel4 [atomselect top "user 4"]
+    for {set i 0} {$i < $nframes} {incr i} {
+        foreach sel {$sel1 $sel2 $sel3 $sel4} {
+            $sel frame $i 
+            $sel update
+        }
+        set num1 [count_lipids $sel1]
+        set num2 [count_lipids $sel2]
+        set num3 [count_lipids $sel3]
+        set num4 [count_lipids $sel4]
+        puts $outfile "$i    $num1    $num2    $num3    $num4"
+    }
+    close $outfile
+}
