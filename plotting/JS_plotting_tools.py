@@ -4,7 +4,6 @@ import numpy as np
 import warnings
 import glob
 import os 
-from thickness import measure_t0
 from utils import *
 
 sys_dict = {
@@ -328,17 +327,30 @@ satsys = ["DT", "DL", "DP", "DB", "DX"]
 monounsatsys = ["DY", "DO", "DG"]
 coordsys = "polar"
 #coordsys = "cart"
+#mol = "5x29"
+mol = "7k3g"
 
 if __name__ == "__main__": 
-
-	sys_names = []
-	for system in satsys:
-		sys_names.append(system+"PC")
-		#sys_names.append("lg"+system)
-	for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-		avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
-	for system in monounsatsys:
-		sys_names.append(system+"PC")
-		#sys_names.append("lg"+system)
-	for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-		avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
+	
+	if mol == "5x29":
+		sys_names = []
+		for system in satsys:
+			sys_names.append("lg"+system)
+		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+			avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append("lg"+system)
+		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+			avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29")
+	elif mol == "7k3g":
+		sys_names = []
+		for system in satsys:
+			sys_names.append(system+"PC")
+		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+			avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append(system+"PC")
+		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+			avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
