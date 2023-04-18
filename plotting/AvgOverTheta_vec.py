@@ -261,4 +261,4 @@ for name in allsys:
 
 if __name__ == "__main__":
 	make_avg_over_theta_plots()
-	#plot_total_thickness()
+	plot_total_thickness()
