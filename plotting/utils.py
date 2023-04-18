@@ -131,6 +131,8 @@ def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
 
 
 def read_log(sys_name, coordsys):
+  #this proc is not robust to multiple lipid species in the same system!!
+  #specifically, species with differing headnames
   names_dict = {}
   names_dict['beads_list'] = []
   #open log file
@@ -287,6 +289,7 @@ def calc_epsilon_and_H_terms(system, path, coordsys):
   #normalize by t0
   avg_epsilon_over_t0 = avg_epsilon/t0
   avg_epsilon_H_over_t0 = avg_epsilon_H/t0
+  avg_epsilon2_over_t02 = avg_epsilon2/t0**2
 
   #get proper plot dimensions
   dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
@@ -294,15 +297,19 @@ def calc_epsilon_and_H_terms(system, path, coordsys):
 
   #make pretty pictures
   plot_maker(dim1vals, dim2vals, avg_epsilon_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_t0", False, coordsys)
+  plot_maker(dim1vals, dim2vals, avg_epsilon2_over_t02, system, 'comb', .1, -.1, False, "avg_epsilon2_t02", False, coordsys)
   plot_maker(dim1vals, dim2vals, avg_epsilon_H_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_H_t0", False, coordsys)
   plot_maker(dim1vals, dim2vals, avg_epsilon2, system, 'comb', .1, -.1, False, "avg_epsilon2", False, coordsys)
   plot_maker(dim1vals, dim2vals, avg_H_plus2, system, 'comb', .1, -.1, False, "avgH2", False, coordsys)
+  plot_maker(dim1vals, dim2vals, avg_H_plus, system, 'comb', .1, -.1, False, "avgH", False, coordsys)
   
   #save data matrix for other analyses
   np.save(path+'/npy/'+system+'.avg_epsilon_t0.npy',avg_epsilon_over_t0)
+  np.save(path+'/npy/'+system+'.avg_epsilon2_t02.npy',avg_epsilon2_over_t02)
   np.save(path+'/npy/'+system+'.avg_epsilon_H_t0.npy',avg_epsilon_H_over_t0)
   np.save(path+'/npy/'+system+'.avg_epsilon2.npy',avg_epsilon2)
   np.save(path+'/npy/'+system+'.avg_H2.npy',avg_H_plus2)
+  np.save(path+'/npy/'+system+'.avg_H.npy',avg_H_plus)
 
 
 def measure_t0(zone, ztwo, coordsys):
@@ -311,7 +318,7 @@ def measure_t0(zone, ztwo, coordsys):
   ztwo (np array) : data for inner leaflet height
   coordsys (str)  : "polar" or "cart"
   """
-  
+
   thickness = zone-ztwo
 
   avgthickness = calc_avg_over_time(thickness)
