@@ -253,7 +253,7 @@ def dimensions_analyzer(data, coordsys):
   return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
-def calc_epsilon_and_H_terms(system, path, coordsys):
+def calc_elastic_terms(system, path, coordsys):
   """
   system (str)   : the same name you gave nougat.tcl and nougat.py
   path (str)     : should point to the folder housing your nougat outputs 
@@ -266,57 +266,56 @@ def calc_epsilon_and_H_terms(system, path, coordsys):
   z_plus = np.load(path+'/npy/'+system+'.zplus.C1A.C1B.'+coordsys+'.height.npy')
   H_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
   H_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
+
+  #measure t0
+  z_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.height.npy')
+  z_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.height.npy')
+  t0 = measure_t0(z_1, z_2, coordsys)
   
   #measure terms of interest
   epsilon = z_plus-z_0
   epsilon2 = epsilon**2
-  H_plus = H_1+H_2
+  H_plus = (H_1+H_2)/2
   H_plus2 = H_plus**2
+  H_minus = (H_1-H_2)/2
+  H_minus2 = H_minus**2
   epsilon_H = epsilon*H_plus
-
-  #measure t0 and total thickness
-  z_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.height.npy')
-  z_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.height.npy')
-  t0 = measure_t0(z_1, z_2, coordsys)
-  thickness = z_1-z_2
+  total_t = z_1-z_2
+  z_minus = (z_1-z_2-2*t0)/2
+  z_minus2 = z_minus**2
+  z_minus_H_minus = z_minus*H_minus
   
   #calculate averages
   avg_epsilon = calc_avg_over_time(epsilon)
   avg_epsilon2 = calc_avg_over_time(epsilon2)
   avg_H_plus = calc_avg_over_time(H_plus)
   avg_H_plus2 = calc_avg_over_time(H_plus2)
+  avg_H_minus = calc_avg_over_time(H_minus)
+  avg_H_minus2 = calc_avg_over_time(H_minus2)
   avg_epsilon_H = calc_avg_over_time(epsilon_H)
-  avg_total_t = calc_avg_over_time(thickness)
+  avg_total_t = calc_avg_over_time(total_t)
+  avg_z_minus = calc_avg_over_time(z_minus)
+  avg_z_minus2 = calc_avg_over_time(z_minus2)
+  avg_z_minus_H_minus = calc_avg_over_time(z_minus_H_minus)
 
-  #normalize by t0
+  #normalize by t0 where appropriate
   avg_epsilon_over_t0 = avg_epsilon/t0
   avg_epsilon_H_over_t0 = avg_epsilon_H/t0
   avg_epsilon2_over_t02 = avg_epsilon2/t0**2
-  avg_tilde_t = avg_total_t/t0
+  avg_tilde_t = avg_total_t/(2*t0)
+  avg_z_minus2_over_t02 = avg_z_minus2/t0**2
+  avg_z_minus_H_minus_over_t0 = avg_z_minus_H_minus/t0
 
   #get proper plot dimensions
   dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
-  #make pretty pictures
-  plot_maker(dim1vals, dim2vals, avg_epsilon_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_t0", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_epsilon2_over_t02, system, 'comb', .1, -.1, False, "avg_epsilon2_t02", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_epsilon_H_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_H_t0", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_epsilon2, system, 'comb', .1, -.1, False, "avg_epsilon2", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_H_plus2, system, 'comb', .1, -.1, False, "avg_H_plus2", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_H_plus, system, 'comb', .1, -.1, False, "avg_H_plus", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_tilde_t, system, 'comb', .1, -.1, False, "avg_tilde_t", False, coordsys)
-  plot_maker(dim1vals, dim2vals, avg_total_t, system, 'comb', .1, -.1, False, "avg_total_t", False, coordsys)
-  
-  #save 2d array for other analyses
-  np.save(path+'/npy/'+system+'.avg_epsilon_t0.npy',avg_epsilon_over_t0)
-  np.save(path+'/npy/'+system+'.avg_epsilon2_t02.npy',avg_epsilon2_over_t02)
-  np.save(path+'/npy/'+system+'.avg_epsilon_H_t0.npy',avg_epsilon_H_over_t0)
-  np.save(path+'/npy/'+system+'.avg_epsilon2.npy',avg_epsilon2)
-  np.save(path+'/npy/'+system+'.avg_H2.npy',avg_H_plus2)
-  np.save(path+'/npy/'+system+'.avg_H.npy',avg_H_plus)
-  np.save(path+'/npy/'+system+'.avg_tilde_t.npy',avg_tilde_t)
-  np.save(path+'/npy/'+system+'.avg_total_t.npy',avg_total_t)
+  #make pretty pictures and save data
+  data_list = [avg_epsilon, avg_epsilon2, avg_H_plus, avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H, avg_total_t, avg_z_minus, avg_z_minus2, avg_z_minus_H_minus, avg_epsilon_over_t0, avg_epsilon_H_over_t0, avg_epsilon2_over_t02, avg_tilde_t, avg_z_minus2_over_t02, avg_z_minus_H_minus_over_t0]
+  name_list = ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]
+  for data, name in zip(data_list,name_list):
+    plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
+    np.save(path+'/npy/'+system+'.'+name+'.npy', data)
 
 
 def measure_t0(zone, ztwo, coordsys):
