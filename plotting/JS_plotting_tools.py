@@ -133,37 +133,61 @@ def zoom_in(systems):
 		os.chdir('../..')
 
 
+def calc_epsilon_and_H_terms(system, path, coordsys):
+	"""
+	system (str)   : the same name you gave nougat.tcl and nougat.py
+	path (str)     : should point to the folder housing your nougat outputs 
+								   for a given system 
+	coordsys (str) : "polar" or "cart" 
+	"""
 
-def diff_mid_interface(systems, mol, coordsys):
-	for system in systems:
-		os.chdir(system+'/'+system+'_polar_5_10_0_-1_1')
-		#filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/dm1/'+system+'/'+system+'_polar_5_10_100_-1_1/npy/'+system+'.'
-		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.'
-		filename_end = '.C1A.C1B.'+coordsys+'.height.npy'
-		fig = plt.figure()
-		ax = plt.subplot()
-		zzero = np.load(filename_start+'zzero'+filename_end)
-		zone = np.load(filename_start+'zone'+filename_end)
-		ztwo = np.load(filename_start+'ztwo'+filename_end)
-		H1 = np.load(filename_start+'zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
-		H2 = np.load(filename_start+'ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
-		zplus = np.load(filename_start+'zplus'+filename_end)
-		diff = zplus-zzero
-		avgdiff = np.nanmean(diff,axis=2)
-		H = H1+H2
-		avgH = np.nanmean(H,axis=2)
-		t0 = measure_t0(zone, ztwo, coordsys)
-		avgdiff = avgdiff/t0
-		avgcombo = avgdiff*avgH
+	#load height and curvature data
+	z_0 = np.load(path+'/npy/'+system+'.zzero.C1A.C1B.'+coordsys+'.height.npy')
+	z_plus = np.load(path+'/npy/'+system+'.zplus.C1A.C1B.'+coordsys+'.height.npy')
+	H_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
+	H_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
+	
+	#measure terms of interest
+	epsilon = z_plus-z_0
+	epsilon2 = epsilon**2
+	H_plus = H_1+H_2
+	H_plus2 = H_plus**2
+	epsilon_H = epsilon*H_plus
 
-		dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
-		N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
-		plot_maker(dim1vals, dim2vals, avgdiff, system, 'comb', .1, -.1, False, "avgEpsilon", False, coordsys)
-		plot_maker(dim1vals, dim2vals, avgcombo, system, 'comb', .1, -.1, False, "avgEpsilonH", False, coordsys)
-		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.avg_epsilon_t0.npy',avgdiff)
-		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.epsilon_t0.npy',diff)
-		np.save('/home/js2746/Bending/PC/whole_mols/'+mol+'/lgSims/'+system+'/'+system+'_polar_5_10_0_-1_1/npy/'+system+'.avg_epsilonH_t0.npy',avgcombo)
-		os.chdir('../..')
+	#calculate averages
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore", category=RuntimeWarning)
+		avg_epsilon = np.nanmean(epsilon,axis=2)
+		avg_epsilon2 = np.nanmean(epsilon2,axis=2)
+		avg_H_plus = np.nanmean(H_plus,axis=2)
+		avg_H_plus2 = np.nanmean(H_plus2,axis=2)
+		avg_epsilon_H = np.nanmean(epsilon_H,axis=2)
+
+	#measure t0
+	z_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.height.npy')
+	z_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.height.npy')
+	t0 = measure_t0(z_1, z_2, coordsys)
+	
+	#normalize by t0
+	avg_epsilon_over_t0 = avg_epsilon/t0
+	avg_esilon_H_over_t0 = avg_epsilon_H/t0
+
+	#get proper plot dimensions
+	dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
+	N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+
+	#make pretty pictures
+	plot_maker(dim1vals, dim2vals, avg_epsilon_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_t0", False, coordsys)
+	plot_maker(dim1vals, dim2vals, avg_epsilon_H_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_H_t0", False, coordsys)
+	plot_maker(dim1vals, dim2vals, avgepsilon2, system, 'comb', .1, -.1, False, "avg_epsilon2", False, coordsys)
+	plot_maker(dim1vals, dim2vals, avgH2, system, 'comb', .1, -.1, False, "avgH2", False, coordsys)
+	
+	#save data matrix for other analyses
+	np.save(path+'/npy/'+system+'.avg_epsilon_t0.npy',avg_epsilon_over_t0)
+	np.save(path+'/npy/'+system+'.avg_epsilon_H_t0.npy',avg_epsilon_H_over_t0)
+	np.save(path+'/npy/'+system+'.avg_epsilon2.npy',avg_epsilon2)
+	np.save(path+'/npy/'+system+'.avg_H2.npy',avg_H_plus2)
+
 
 def avg_eps_t0_over_theta(systems):
 	fig, axs = plt.subplots()
@@ -343,21 +367,17 @@ def plot_average_area_per_lipid(systems):
 
 
 
-
-
-
+allsys = ["DT", "DL", "DP", "DB", "DX", "PO", "DY", "DO", "DG"]
+satsys = ["DT", "DL", "DP", "DB", "DX"]
+monounsatsys = ["DY", "DO", "DG"]
+coordsys = "polar"
+#coordsys = "cart"
 
 if __name__ == "__main__": 
-	diff_mid_interface(["DTPC", "DYPC", "DGPC", "DOPC", "DPPC", "DLPC", "DXPC", "DBPC", "POPC"], "7k3g", "polar")
-	#avg_eps_t0_over_theta(["DT", "DL", "DP", "DB", "DX"])
-	avg_eps_t0_over_theta(["DY", "DO", "DG"])
-	#measure_H_epsilon_corr(["lgPO"], "empty")
-	#avg_eps_t0_over_theta(["DY", "DO", "DG"])
-	#measure_t0(["lgPO", "lgDG", "lgDY", "lgDT0", "lgDO", "lgDP", "lgDL", "lgDX", "lgDB"], "5x29")
-	#diff_mid_interface(["lgPO"], "7k3g")
-	#measure_H(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB"], "5x29")
-	#sum_over_K(["PO", "DG", "DY", "DT", "DL", "DO", "DP", "DX", "DB","lgPO", "lgDG", "lgDY", "lgDT"])
-	#sum_over_K(["lgPO"])
-	#sum_terms(["lgDG"], "5x29")
-	#zoom_in(["lgDB","lgDL","lgDP","lgDX"])
-	#zoom_in(["lgDT"])
+
+	#for system in satsys:
+		#path = "home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lg"+system+"/lg"+system+"_"+coordsys+"_5_10_0_-1_1"
+	#	path = "home/js2746/Bending/PC/whole_mols/7k3g/lgSims/"+system+"PC/"+system+"PC_"+coordsys+"_5_10_0_-1_1"
+	#	calc_epsilon_and_H_terms(system, path, coordsys)
+	for quantity in ["avg_epsilon_t0", "avg_epsilon_H_t0", "avg_epsilon2", "avg_H2"]:
+		avg_over_theta(quantity, satsys, "satsys")
