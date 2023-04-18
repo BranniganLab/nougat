@@ -305,33 +305,7 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-allsys = ["DT", "DL", "DP", "DB", "DX", "PO", "DY", "DO", "DG"]
-satsys = ["DT", "DL", "DP", "DB", "DX"]
-monounsatsys = ["DY", "DO", "DG"]
-coordsys = "polar"
-#coordsys = "cart"
-#mol = "5x29"
-mol = "7k3g"
-
-if __name__ == "__main__": 
-	
+def run_avg_over_theta(mol):
 	if mol == "5x29":
 		sys_names = []
 		for system in satsys:
@@ -354,3 +328,59 @@ if __name__ == "__main__":
 			sys_names.append(system+"PC")
 		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 			avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
+
+
+def sum_over_H2(systems, system_names, groupname, nougvals, mol):
+	sum_list = []
+	for system, name in zip(systems, system_names):
+		data = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.avg_H_plus2.npy')
+		areas = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+coordsys+'.areas.npy')
+		normalized = data/areas
+		sumHplus2 = np.nansum(normalized)
+		sum_list.append(sumHplus2)
+	fig = plt.figure()
+	plt.bar(systems, sum_list)
+	plt.show()
+
+
+def run_sum_over_H2(mol):
+	if mol == "5x29":
+		sys_names = []
+		for system in satsys:
+			sys_names.append("lg"+system)
+		sum_over_H2(satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append("lg"+system)
+		sum_over_H2(monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29")
+	elif mol == "7k3g":
+		sys_names = []
+		for system in satsys:
+			sys_names.append(system+"PC")
+		sum_over_H2(satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append(system+"PC")
+		sum_over_H2(monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
+
+
+
+
+
+
+
+
+
+
+allsys = ["DT", "DL", "DP", "DB", "DX", "PO", "DY", "DO", "DG"]
+satsys = ["DT", "DL", "DP", "DB", "DX"]
+monounsatsys = ["DY", "DO", "DG"]
+coordsys = "polar"
+#coordsys = "cart"
+#mol = "5x29"
+mol = "7k3g"
+
+if __name__ == "__main__": 
+	#run_avg_over_theta(mol)
+	run_sum_over_H2(mol)
+	
