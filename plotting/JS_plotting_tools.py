@@ -285,7 +285,9 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 		"avg_epsilon2":0,
 		"avg_H2": 0
 	}
-	axs.set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
+
+	if quantity in min_scale_dict:
+		axs.set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
 	for system, name in zip(systems, system_names):
 		data = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+quantity+'.npy')
 		with warnings.catch_warnings():
@@ -333,5 +335,10 @@ if __name__ == "__main__":
 	for system in satsys:
 		sys_names.append(system+"PC")
 		#sys_names.append("lg"+system)
-	for quantity in ["avg_epsilon_t0", "avg_epsilon2_t02", "avg_epsilon_H_t0", "avg_epsilon2", "avg_H2"]:
+	for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 		avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
+	for system in monounsatsys:
+		sys_names.append(system+"PC")
+		#sys_names.append("lg"+system)
+	for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+		avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
