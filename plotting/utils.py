@@ -249,3 +249,82 @@ def dimensions_analyzer(data, coordsys):
     d2 = d1
 
   return N1_bins, d1, N2_bins, d2, Nframes, match_value
+
+
+def calc_epsilon_and_H_terms(system, path, coordsys):
+  """
+  system (str)   : the same name you gave nougat.tcl and nougat.py
+  path (str)     : should point to the folder housing your nougat outputs 
+                   for a given system 
+  coordsys (str) : "polar" or "cart" 
+  """
+
+  #load height and curvature data
+  z_0 = np.load(path+'/npy/'+system+'.zzero.C1A.C1B.'+coordsys+'.height.npy')
+  z_plus = np.load(path+'/npy/'+system+'.zplus.C1A.C1B.'+coordsys+'.height.npy')
+  H_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
+  H_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
+  
+  #measure terms of interest
+  epsilon = z_plus-z_0
+  epsilon2 = epsilon**2
+  H_plus = H_1+H_2
+  H_plus2 = H_plus**2
+  epsilon_H = epsilon*H_plus
+
+  #calculate averages
+  avg_epsilon = calc_avg_over_time(epsilon)
+  avg_epsilon2 = calc_avg_over_time(epsilon2)
+  avg_H_plus = calc_avg_over_time(H_plus)
+  avg_H_plus2 = calc_avg_over_time(H_plus2)
+  avg_epsilon_H = calc_avg_over_time(epsilon_H)
+
+  #measure t0
+  z_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.height.npy')
+  z_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.height.npy')
+  t0 = measure_t0(z_1, z_2, coordsys)
+  
+  #normalize by t0
+  avg_epsilon_over_t0 = avg_epsilon/t0
+  avg_epsilon_H_over_t0 = avg_epsilon_H/t0
+
+  #get proper plot dimensions
+  dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
+  N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+
+  #make pretty pictures
+  plot_maker(dim1vals, dim2vals, avg_epsilon_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_t0", False, coordsys)
+  plot_maker(dim1vals, dim2vals, avg_epsilon_H_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_H_t0", False, coordsys)
+  plot_maker(dim1vals, dim2vals, avg_epsilon2, system, 'comb', .1, -.1, False, "avg_epsilon2", False, coordsys)
+  plot_maker(dim1vals, dim2vals, avg_H_plus2, system, 'comb', .1, -.1, False, "avgH2", False, coordsys)
+  
+  #save data matrix for other analyses
+  np.save(path+'/npy/'+system+'.avg_epsilon_t0.npy',avg_epsilon_over_t0)
+  np.save(path+'/npy/'+system+'.avg_epsilon_H_t0.npy',avg_epsilon_H_over_t0)
+  np.save(path+'/npy/'+system+'.avg_epsilon2.npy',avg_epsilon2)
+  np.save(path+'/npy/'+system+'.avg_H2.npy',avg_H_plus2)
+
+
+def measure_t0(zone, ztwo, coordsys):
+  """
+  zone (np array) : data for outer leaflet height
+  ztwo (np array) : data for inner leaflet height
+  coordsys (str)  : "polar" or "cart"
+  """
+  
+  thickness = zone-ztwo
+
+  avgthickness = calc_avg_over_time(thickness)
+
+  if coordsys == "cart":
+    leftcol = np.mean(avgthickness[:,0])
+    rightcol =  np.mean(avgthickness[:,-1])
+    toprow =  np.mean(avgthickness[0,:])
+    botrow =   np.mean(avgthickness[-1,:])
+    avgt0 = (leftcol+rightcol+toprow+botrow)/4.0
+  elif coordsys == "polar":
+    avgt0 = np.mean(avgthickness[-1:])
+
+  avgt0 = avgt0/2.0
+
+  return avgt0
