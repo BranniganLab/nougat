@@ -197,14 +197,15 @@ proc count_lipids {sel} {
     return [llength [lsort -unique [$sel get resid]]]
 }
 
-proc track_asymmetry_over_traj {sys_name nframes} {
+proc track_asymmetry_over_traj {sys_name} {
     set outfile [open "${sys_name}.asymm.traj" w]
+    set nframes [molinfo top get numframes]
     set sel1 [atomselect top "user 1"]
     set sel2 [atomselect top "user 2"]
     set sel3 [atomselect top "user 3"]
     set sel4 [atomselect top "user 4"]
     for {set i 0} {$i < $nframes} {incr i} {
-        foreach sel {$sel1 $sel2 $sel3 $sel4} {
+        foreach sel [list $sel1 $sel2 $sel3 $sel4] {
             $sel frame $i 
             $sel update
         }
@@ -213,6 +214,7 @@ proc track_asymmetry_over_traj {sys_name nframes} {
         set num3 [count_lipids $sel3]
         set num4 [count_lipids $sel4]
         puts $outfile "$i    $num1    $num2    $num3    $num4"
+        puts $i
     }
     close $outfile
 }
