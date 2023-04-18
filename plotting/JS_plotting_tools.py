@@ -133,62 +133,6 @@ def zoom_in(systems):
 		os.chdir('../..')
 
 
-def calc_epsilon_and_H_terms(system, path, coordsys):
-	"""
-	system (str)   : the same name you gave nougat.tcl and nougat.py
-	path (str)     : should point to the folder housing your nougat outputs 
-								   for a given system 
-	coordsys (str) : "polar" or "cart" 
-	"""
-
-	#load height and curvature data
-	z_0 = np.load(path+'/npy/'+system+'.zzero.C1A.C1B.'+coordsys+'.height.npy')
-	z_plus = np.load(path+'/npy/'+system+'.zplus.C1A.C1B.'+coordsys+'.height.npy')
-	H_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.meancurvature.npy')
-	H_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.meancurvature.npy')
-	
-	#measure terms of interest
-	epsilon = z_plus-z_0
-	epsilon2 = epsilon**2
-	H_plus = H_1+H_2
-	H_plus2 = H_plus**2
-	epsilon_H = epsilon*H_plus
-
-	#calculate averages
-	with warnings.catch_warnings():
-		warnings.simplefilter("ignore", category=RuntimeWarning)
-		avg_epsilon = np.nanmean(epsilon,axis=2)
-		avg_epsilon2 = np.nanmean(epsilon2,axis=2)
-		avg_H_plus = np.nanmean(H_plus,axis=2)
-		avg_H_plus2 = np.nanmean(H_plus2,axis=2)
-		avg_epsilon_H = np.nanmean(epsilon_H,axis=2)
-
-	#measure t0
-	z_1 = np.load(path+'/npy/'+system+'.zone.C1A.C1B.'+coordsys+'.height.npy')
-	z_2 = np.load(path+'/npy/'+system+'.ztwo.C1A.C1B.'+coordsys+'.height.npy')
-	t0 = measure_t0(z_1, z_2, coordsys)
-	
-	#normalize by t0
-	avg_epsilon_over_t0 = avg_epsilon/t0
-	avg_esilon_H_over_t0 = avg_epsilon_H/t0
-
-	#get proper plot dimensions
-	dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
-	N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
-
-	#make pretty pictures
-	plot_maker(dim1vals, dim2vals, avg_epsilon_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_t0", False, coordsys)
-	plot_maker(dim1vals, dim2vals, avg_epsilon_H_over_t0, system, 'comb', .1, -.1, False, "avg_epsilon_H_t0", False, coordsys)
-	plot_maker(dim1vals, dim2vals, avgepsilon2, system, 'comb', .1, -.1, False, "avg_epsilon2", False, coordsys)
-	plot_maker(dim1vals, dim2vals, avgH2, system, 'comb', .1, -.1, False, "avgH2", False, coordsys)
-	
-	#save data matrix for other analyses
-	np.save(path+'/npy/'+system+'.avg_epsilon_t0.npy',avg_epsilon_over_t0)
-	np.save(path+'/npy/'+system+'.avg_epsilon_H_t0.npy',avg_epsilon_H_over_t0)
-	np.save(path+'/npy/'+system+'.avg_epsilon2.npy',avg_epsilon2)
-	np.save(path+'/npy/'+system+'.avg_H2.npy',avg_H_plus2)
-
-
 def avg_eps_t0_over_theta(systems):
 	fig, axs = plt.subplots()
 	axs.set_xlim(0,6)
