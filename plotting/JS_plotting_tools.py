@@ -133,35 +133,6 @@ def zoom_in(systems):
 		os.chdir('../..')
 
 
-def avg_eps_t0_over_theta(systems):
-	fig, axs = plt.subplots()
-	axs.set_xlim(0,6)
-	colordict = {
-		"DT": "red",
-		"DL": "orange",
-		"DX": "purple",
-		"DB": "blue",
-		"DY": "orange",
-		"DO": "green",
-		"PO": "green",
-		"DP": "green",
-		"DG": "blue"
-	}
-
-	for system in systems:
-		#eps_data = np.load("lg"+system+"/lg"+system+"_polar_5_10_100_-1_1/npy/lg"+system+'.avg_epsilonH_t0.npy')
-		eps_data = np.load(system+"PC/"+system+"PC_polar_5_10_0_-1_1/npy/"+system+'PC.avg_epsilon_t0.npy')
-		with warnings.catch_warnings():
-			warnings.simplefilter("ignore", category=RuntimeWarning)
-			z_vals=np.nanmean(eps_data, axis=1)
-		maxval = len(z_vals)
-		x = np.arange(2.5,(maxval*5+2.5),5) / 10
-		axs.plot(x,z_vals,color=colordict[system])
-	plt.savefig("unsatsys_avg_epsilonovertheta_combo.pdf", dpi = 700)
-	plt.clf()
-	plt.close()
-
-
 def measure_H_epsilon_corr(systems, mol):
 	for system in systems:
 		filename_start = '/home/js2746/Bending/PC/whole_mols/'+mol+'/'+system+'/npy/'+system+'.'
@@ -286,7 +257,46 @@ def plot_average_area_per_lipid(systems):
 	plt.show()
 
 
-
+def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
+	fig, axs = plt.subplots()
+	axs.set_xlim(0,6)
+	colordict = {
+		"DT": "red",
+		"DL": "orange",
+		"DX": "purple",
+		"DB": "blue",
+		"DY": "orange",
+		"DO": "green",
+		"PO": "green",
+		"DP": "green",
+		"DG": "blue"
+	}
+	max_scale_dict = {
+		"avg_epsilon_t0": .1,
+		"avg_epsilon2_t02":.2,
+		"avg_epsilon_H_t0": 0,
+		"avg_epsilon2":20,
+		"avg_H2": .025
+	}
+	min_scale_dict = {
+		"avg_epsilon_t0": -.15,
+		"avg_epsilon2_t02":0,
+		"avg_epsilon_H_t0": -.025,
+		"avg_epsilon2":0,
+		"avg_H2": 0
+	}
+	axs.set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
+	for system, name in zip(systems, system_names):
+		data = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+quantity+'.npy')
+		with warnings.catch_warnings():
+			warnings.simplefilter("ignore", category=RuntimeWarning)
+			avg_vals=np.nanmean(data, axis=1)
+		maxval = len(avg_vals)
+		x = np.arange(2.5,(maxval*5+2.5),5) / 10
+		axs.plot(x,avg_vals,color=colordict[system])
+	plt.savefig(mol+"_"+groupname+"_"+quantity+"_combo.pdf", dpi = 700)
+	plt.clf()
+	plt.close()
 
 
 
@@ -319,9 +329,9 @@ coordsys = "polar"
 
 if __name__ == "__main__": 
 
-	#for system in satsys:
-		#path = "home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lg"+system+"/lg"+system+"_"+coordsys+"_5_10_0_-1_1"
-	#	path = "home/js2746/Bending/PC/whole_mols/7k3g/lgSims/"+system+"PC/"+system+"PC_"+coordsys+"_5_10_0_-1_1"
-	#	calc_epsilon_and_H_terms(system, path, coordsys)
-	for quantity in ["avg_epsilon_t0", "avg_epsilon_H_t0", "avg_epsilon2", "avg_H2"]:
-		avg_over_theta(quantity, satsys, "satsys")
+	sys_names = []
+	for system in satsys:
+		sys_names.append(system+"PC")
+		#sys_names.append("lg"+system)
+	for quantity in ["avg_epsilon_t0", "avg_epsilon2_t02", "avg_epsilon_H_t0", "avg_epsilon2", "avg_H2"]:
+		avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
