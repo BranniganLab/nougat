@@ -54,7 +54,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
   #calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
   #calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
 
-  calc_epsilon_and_H_terms(sys_name, ".", coordsys)
+  calc_elastic_terms(sys_name, ".", coordsys)
 
 
 if __name__ == "__main__": 
