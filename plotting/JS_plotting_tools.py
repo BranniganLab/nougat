@@ -271,18 +271,22 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 		"DG": "blue"
 	}
 	max_scale_dict = {
-		"avg_epsilon_t0": .1,
-		"avg_epsilon2_t02":.2,
-		"avg_epsilon_H_t0": 0,
+		"avg_epsilon_over_t0": .1,
+		"avg_epsilon2_over_t02":.2,
+		"avg_epsilon_H_over_t0": 0,
 		"avg_epsilon2":20,
-		"avg_H2": .025
+		"avg_H2": .025,
+		"avg_tilde_t":1.05,
+		"avg_epsilon":.1
 	}
 	min_scale_dict = {
-		"avg_epsilon_t0": -.15,
-		"avg_epsilon2_t02":0,
-		"avg_epsilon_H_t0": -.025,
+		"avg_epsilon_over_t0": -.15,
+		"avg_epsilon2_over_t02":0,
+		"avg_epsilon_H_over_t0": -.025,
 		"avg_epsilon2":0,
-		"avg_H2": 0
+		"avg_H2": 0,
+		"avg_tilde_t":0,
+		"avg_epsilon":-.15
 	}
 
 	if quantity in min_scale_dict:
@@ -339,6 +343,7 @@ def sum_over_H2(systems, system_names, groupname, nougvals, mol):
 		sumHplus2 = np.nansum(normalized)
 		sum_list.append(sumHplus2)
 	fig = plt.figure()
+	plt.ylim(0,.01)
 	plt.bar(systems, sum_list)
 	plt.show()
 
@@ -377,10 +382,10 @@ satsys = ["DT", "DL", "DP", "DB", "DX"]
 monounsatsys = ["DY", "DO", "DG"]
 coordsys = "polar"
 #coordsys = "cart"
-#mol = "5x29"
-mol = "7k3g"
+mol = "5x29"
+#mol = "7k3g"
 
 if __name__ == "__main__": 
-	#run_avg_over_theta(mol)
-	run_sum_over_H2(mol)
+	run_avg_over_theta(mol)
+	#run_sum_over_H2(mol)
 	
