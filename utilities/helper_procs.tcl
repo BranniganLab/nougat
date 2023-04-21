@@ -5,7 +5,7 @@ proc RtoD {r} {
     return [expr $r*180.0/$M_PI]
 }
 
-# calculateTiltAngles --
+# fitVecsToSel (Previously: tilt_angles)--
 #
 #       Performs a least squares fit for each lipid tail of N bead length
 #       given the x, y and z values in order. This allows you to use 1 instance 
@@ -20,9 +20,9 @@ proc RtoD {r} {
 # Results:
 #       The result is a list of list that contains a normalized fitted vector 
 #       and the number of beads in an acyl chain. ex. 
-#       {{{0.534522 -0.801783 0.267261} 4} {0.527046 0.843274 0.105409} 4}...}   
+#       {{{0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261}}...}   
 
-proc calculateTiltAngles {length xvals yvals zvals} {
+proc fitVecsToSel {length xvals yvals zvals} {
     set tiltList []
     set lsqNormFactor [calculateLsqNormFactor $length]
     set xvec [fitTailVectors $length $xvals $lsqNormFactor]
@@ -44,9 +44,14 @@ proc calculateTiltAngles {length xvals yvals zvals} {
 }
 
 # returns a list of (i-(N-1)/2)
-# calculateLsqNormFactor -- 
+# calculateLsqNormFactor (Previously: calc_lsq_normfactor)-- 
+#       calculates the normalization factor for a least square fitting.
+#
+# Arguments:
+#       length      {int}     number of beads in the least square fitting.
 #       
-#       
+# Results: 
+#       The result is an integer       
 proc calculateLsqNormFactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
@@ -61,7 +66,8 @@ proc calculateLsqNormFactor { length } {
 
     return $lsqNormFactor
 }
-
+# fitTailVectors (Previously: fit_all_tails)-- 
+#
 # Fit the points x to x = ai + b, i=0...N-1, and return the value 
 # a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
 proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
@@ -85,6 +91,7 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
     return $fitValues
 }
 
+# concatenateList (Previously: cat_list)--
 # Concatenates list items into one long string, separated by 
 # spaces on either side of the $delimiter.
 # "NULL" will result in no delimiter with a single space separating elements.
@@ -110,6 +117,7 @@ proc concatenateList {inputList delimiter} {
     return $output
 }
 
+# findHeadsAndTails (Previously: heads_and_tails)--
 # Returns a list of lists containing the starting beads and ending beads for a 
 # given lipid's acyl chains.
 # E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
@@ -145,10 +153,12 @@ proc rotate_system {axis degree start stop} {
     $sel delete
 }
 
-;# checks whether lipid tails are above/below the PO4 bead,
-;# and assigns user to 1 or 2 for outer or inner leaflet.
-;# Needs to be revised to just take the 'top' bead in a lipid
-;# rather than hard-code PO4
+# assignLeaflet (Previously: leaflet_check)--
+#
+# checks whether lipid tails are above/below the PO4 bead,
+# and assigns user to 1 or 2 for outer or inner leaflet.
+# Needs to be revised to just take the 'top' bead in a lipid
+# rather than hard-code PO4
 proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
     set starts [lindex $findHeadsAndTails 0]
     set ends [lindex $findHeadsAndTails 1]
