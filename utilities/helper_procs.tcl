@@ -363,10 +363,16 @@ proc print_frame {N1 outFiles key d1 min N2 polar selex} {
     }
 }
 
-# tail_analyzer returns $taillist, a nested list: 
-# top level is by species
-# mid level is by tail in species
-# bottom level is by beads in tail
+# analyzingTails (Previously: tail_analyzer)--
+#
+#
+# Arguments:
+#       species
+#
+# Results: 
+#       tail_analyzer returns $taillist, a nested list: 
+#       top level is by species, mid level is by tail in species
+#       bottom level is by beads in tail
 # e.g. a membrane with DO and DP lipids would be: 
 
 # |-------------------------------------taillist------------------------------------|
