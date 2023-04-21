@@ -5,11 +5,26 @@ proc RtoD {r} {
     return [expr $r*180.0/$M_PI]
 }
 
-# Returns a least squares fit for each lipid tail with N_beads = $length
-# in the system. This allows you to use 1 instance of $lsqnormfactor only,
-# rather than calculate it on the fly each time. 
-# $lsqnormfactor is a list of values (i-(N-1)/2)
-proc calculateTiltAngles {length xvals yvals zvals} {
+# fitVecsToSel (Previously: tilt_angles)--
+#
+#       Performs a least squares fit for each lipid tail of N bead length
+#       given the x, y and z values in order. This allows you to use 1 instance 
+#       of $lsqnormfactor only,rather than calculate it on the fly each time.
+#
+# Arguments:
+#       length      {int}     Number of beads in a single lipid tail.
+#       xvals       {list}    Ordered list of x coordinates. 
+#       yvals       {list}    Ordered list of y coordinates. 
+#       zvals       {list}    Ordered list of z coordinates.
+#
+# Results:
+#       The result is a list of list that contains a normalized fitted vector 
+#       and the number of beads in an acyl chain. 
+#
+#       ex. 
+#       {{{0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261}}...}   
+
+proc fitVecsToSel {length xvals yvals zvals} {
     set tiltList []
     set lsqNormFactor [calculateLsqNormFactor $length]
     set xvec [fitTailVectors $length $xvals $lsqNormFactor]
@@ -30,7 +45,20 @@ proc calculateTiltAngles {length xvals yvals zvals} {
     return $finalTiltList
 }
 
-# returns a list of (i-(N-1)/2)
+# calculateLsqNormFactor (Previously: calc_lsq_normfactor)-- 
+#       
+#       calculates the normalization factor for a least square fitting.
+#
+# Arguments:
+#       length      {int}     number of beads in the least square fitting.
+#       
+# Results: 
+#       The result is a list of normalization factors of the form (i-(N-1)/2).
+#       
+#       ex. 
+#       >>> calculateLsqNormFactor 4
+#       {-1.5 -0.5 0.5 1.5} 
+
 proc calculateLsqNormFactor { length } {
     set diff [expr $length-1]
     set d [expr 0.5*$diff] ;#normalization factor
@@ -46,8 +74,19 @@ proc calculateLsqNormFactor { length } {
     return $lsqNormFactor
 }
 
-# Fit the points x to x = ai + b, i=0...N-1, and return the value 
-# a = sum[ (i-(N-1)/2) * x_i] ; reference: Bevington
+# fitTailVectors (Previously: fit_all_tails)-- 
+#
+#       Fits all points x to x = ai + b, i=0...N-1
+#
+# Arguments: 
+#       tailLength        {int}    number of beads in a tail
+#       listOfTailCoords  {list}   list of x, y or z coordinates for all beads in a tail
+#                                  for all lipids to be evaluated
+#       lsqNormFactor     {list}   list of normalization factors (see: calculateLsqNormFactor)  
+# 
+# Results:
+#       returns the value a = sum[ (i-(N-1)/2) * x_i] for each tail ; reference: Bevington
+
 proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
     set fitValues []
     set NumLipids [expr [llength $listOfTailCoords]/$tailLength]
@@ -69,11 +108,24 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
     return $fitValues
 }
 
-# Concatenates list items into one long string, separated by 
-# spaces on either side of the $delimiter.
-# "NULL" will result in no delimiter with a single space separating elements.
-# "or" will also enclose list items in parentheses for use as 
-# atomselection text. 
+# concatenateList (Previously: cat_list)--
+#
+#       Concatenates list elements into one long string, separated by 
+#       spaces on either side of the $delimiter.
+# 
+# Arguments:
+#       inputList       {List}      list of elements to concatenate
+#       delimiter       {str}       string to be input between items in inputList
+#
+# Results:
+#       Returns a list of elements with the specified delimiter between "NULL" will 
+#       result in no delimiter with a single space separating elements."or" will 
+#       also enclose list items in parentheses for use as atomselection text.
+#
+#       ex. 
+#       >>>  concatenateList {1 2 3 4 5} $
+#       {1 $ 2 $ 3 $ 4 $ 5}
+
 proc concatenateList {inputList delimiter} {
     if {$delimiter eq "or"} {
         set output "([lindex $inputList 0])"
@@ -94,10 +146,20 @@ proc concatenateList {inputList delimiter} {
     return $output
 }
 
-# Returns a list of lists containing the starting beads and ending beads for a 
-# given lipid's acyl chains.
+# findHeadsAndTails (Previously: heads_and_tails)--
+#
+#       Finds the first and last bead for each lipid tail for all lipids
+#       to be evaluated.
+#
+# Arguments: 
+#       tailList        {List}      List of list of atomselections of lipid tails 
+#   
+# Results:
+#       Returns a list of lists containing the starting beads and 
+#       ending beads for a given lipid's acyl chains.
 # E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
-proc findHeadsAndTails {species tailList} {
+
+proc findHeadsAndTails { tailList } {
     for {set i 0} {$i < [llength $tailList]} {incr i} {
         set startBead []
         set endBead []
@@ -112,7 +174,21 @@ proc findHeadsAndTails {species tailList} {
     return [list $startSelList $endSelList]
 }
 
-proc rotate_system {axis degree start stop} {
+# rotateSystem (Previously: rotate_system)--
+#
+#       Rotates the entire system by a certian degree over frames to be 
+#       evaluated
+#
+# Arguments: 
+#       axis        {str}       axis of rotation(x, y, z)
+#       degree      {int}       degree of rotation from 0 to 360
+#       start       {int}       start frame
+#       stop        {int}       stop frame
+#
+# Results:
+#       results in the system being rotated by user-defined specifications
+
+proc rotateSystem {axis degree start stop} {
     if {$stop == -1} {
         set stop [molinfo top get numframes]    
     } 
@@ -129,11 +205,27 @@ proc rotate_system {axis degree start stop} {
     $sel delete
 }
 
-;# checks whether lipid tails are above/below the PO4 bead,
-;# and assigns user to 1 or 2 for outer or inner leaflet.
-;# Needs to be revised to just take the 'top' bead in a lipid
-;# rather than hard-code PO4
-proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
+# assignLeaflet (Previously: leaflet_check)--
+#       
+#       Checks whether lipid tails are above/below the PO4 bead,and assigns user to 
+#       1 or 2 for outer or inner leaflet.
+# 
+# Arguments:
+#       frm                 {int}       frame to be evaluated 
+#       species             {list}      list of lipid species in system
+#       findHeadsAndTails   {list}
+#       window              {int}
+#       poreSort            {str}       
+#
+# Results:
+#       
+# 
+#
+# Necessary Revisions:
+#       Needs to be revised to just take the 'top' bead in a lipid
+#       rather than hard-code PO4
+
+proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
     set starts [lindex $findHeadsAndTails 0]
     set ends [lindex $findHeadsAndTails 1]
 
@@ -185,22 +277,46 @@ proc assignLeaflet {frm species findHeadsAndTails window pore_sort} {
         $totalSel delete
     }
 
-    if {$pore_sort ne "NULL"} {
+    if {$poreSort ne "NULL"} {
         ;# custom pore sorting proc for 5x29 and 7k3g
-        pore_sorter_custom $frm $species $pore_sort
+        pore_sorter_custom $frm $species $poreSort
     }
 }
 
-;# starts a new line in the print file that has the min/max r or x value for the bin, depending on if polar or cartesian
-proc print_line_init {file number d1 min} {
+# printBinInfo (Previously: print_line_init)--
+#
+#       starts a new line in the print file that has the min/max 
+#       r or x value for the bin, depending on if polar or cartesian
+#
+# Arguments:
+#       file        {str}       File name
+#       number      {int}
+#       d1          {int}
+#       min         {int}
+#
+# Results:
+#       prints line containing the min and max bin values to a file 
+
+proc printBinInfo {file number d1 min} {
     puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
 }
 
-;# adds a value to the print file
-proc print_value {file value end_line} {
-    if {$end_line == 0} {
+# printValue (Previously: print_value)--
+#
+#       adds a value to be printed to a file
+#
+# Arguments:
+#       file        {str}       File name
+#       value       {}          Value to be printed
+#       endLine     {int}       Determines if value should be added to same line or next line
+#                               by 0 or 1
+# Results:
+#       prints line in file with value specified
+
+proc printValue {file value endLine} {
+    if {$endLine == 0} {
         puts -nonewline $file " $value" 
-    } elseif {$end_line == 1} {
+    } elseif {$endLine == 1} {
         puts $file " $value"
     } else {
         puts "Something went wrong - end_line should have value of 0 or 1 only"
@@ -208,10 +324,26 @@ proc print_value {file value end_line} {
     }
 }
 
-;#print an entire 2D array (usually 1 frame) to file
-proc print_frame {N1 outfiles key d1 min N2 polar selex} {
+# printFrame (Previously: print_frame)--
+#
+#       print an entire 2D array (usually 1 frame) to file
+# 
+# Arguments:
+#       N1
+#       outFiles
+#       key
+#       d1
+#       min
+#       N2
+#       polar
+#       selex
+#
+# Results:
+#
 
-    set file [dict get $outfiles $selex $key fname]
+proc print_frame {N1 outFiles key d1 min N2 polar selex} {
+
+    set file [dict get $outFiles $selex $key fname]
 
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
@@ -220,7 +352,7 @@ proc print_frame {N1 outfiles key d1 min N2 polar selex} {
         puts -nonewline $file "$binstart  $binend  "
         ;# prints bin values through ultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n+1.0]} {
-            if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
+            if {[dict exists $outFiles $selex $key bin "$m,$n"]} {
                 puts -nonewline $file " [dict get $outfiles $selex $key bin "$m,$n"]"
             } else {
                 puts -nonewline $file " nan"
