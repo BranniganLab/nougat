@@ -46,9 +46,7 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
 
   zplus=(zone+ztwo)/2
 
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-    avgzplus=np.nanmean(zplus, axis=2)
+  avgzplus = calc_avg_over_time(zplus)
 
   #make plots!
   plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
