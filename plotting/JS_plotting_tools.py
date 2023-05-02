@@ -277,7 +277,7 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 		"avg_epsilon2_over_t02":.15,
 		"avg_epsilon_H_over_t0": 0,
 		"avg_epsilon2":5,
-		"avg_H_plus2": 5,
+		#"avg_H_plus2": 5,
 		"avg_tilde_t":1.05,
 		"avg_epsilon":2,
 		"avg_rms_epsilon_over_t0": 6
@@ -289,7 +289,7 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 		"avg_epsilon2_over_t02":0,
 		"avg_epsilon_H_over_t0": -.025,
 		"avg_epsilon2":0,
-		"avg_H_plus2": 1,
+		#"avg_H_plus2": 1,
 		"avg_tilde_t":0,
 		"avg_epsilon":-3,
 		"avg_rms_epsilon_over_t0": .95
@@ -304,7 +304,9 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 			warnings.simplefilter("ignore", category=RuntimeWarning)
 			avg_vals=np.nanmean(data, axis=1)
 		if quantity == "avg_H_plus2":
+			print(avg_vals)
 			avg_vals = avg_vals/avg_vals[-1]
+			print(avg_vals)
 		maxval = len(avg_vals)
 		x = np.arange(2.5,(maxval*5+2.5),5) / 10
 		axs.plot(x,avg_vals,color=colordict[system])
