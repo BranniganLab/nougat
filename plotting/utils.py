@@ -274,6 +274,7 @@ def calc_elastic_terms(system, path, coordsys):
   
   #measure terms of interest
   epsilon = z_plus-z_0
+  abs_epsilon = np.absolute(epsilon)
   epsilon2 = epsilon**2
   H_plus = (H_1+H_2)/2
   H_plus2 = H_plus**2
@@ -284,9 +285,14 @@ def calc_elastic_terms(system, path, coordsys):
   z_minus = (z_1-z_2-2*t0)/2
   z_minus2 = z_minus**2
   z_minus_H_minus = z_minus*H_minus
+
+  #save epsilon and h plus trajectory
+  np.save(path+'/npy/'+system+'.epsilon.npy', epsilon)
+  np.save(path+'/npy/'+system+'.H_plus.npy', H_plus)
   
   #calculate averages
   avg_epsilon = calc_avg_over_time(epsilon)
+  avg_abs_epsilon = calc_avg_over_time(abs_epsilon)
   avg_epsilon2 = calc_avg_over_time(epsilon2)
   avg_H_plus = calc_avg_over_time(H_plus)
   avg_H_plus2 = calc_avg_over_time(H_plus2)
@@ -300,6 +306,8 @@ def calc_elastic_terms(system, path, coordsys):
 
   #normalize by t0 where appropriate
   avg_epsilon_over_t0 = avg_epsilon/t0
+  avg_abs_epsilon_over_t0 = avg_abs_epsilon/t0
+  avg_rms_epsilon_over_t0 = np.sqrt(avg_epsilon2)/t0
   avg_epsilon_H_over_t0 = avg_epsilon_H/t0
   avg_epsilon2_over_t02 = avg_epsilon2/t0**2
   avg_tilde_t = avg_total_t/(2*t0)
@@ -311,8 +319,8 @@ def calc_elastic_terms(system, path, coordsys):
   N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
   #make pretty pictures and save data
-  data_list = [avg_epsilon, avg_epsilon2, avg_H_plus, avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H, avg_total_t, avg_z_minus, avg_z_minus2, avg_z_minus_H_minus, avg_epsilon_over_t0, avg_epsilon_H_over_t0, avg_epsilon2_over_t02, avg_tilde_t, avg_z_minus2_over_t02, avg_z_minus_H_minus_over_t0]
-  name_list = ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]
+  data_list = [avg_epsilon, avg_rms_epsilon_over_t0, avg_abs_epsilon, avg_abs_epsilon_over_t0, avg_epsilon2, avg_H_plus, avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H, avg_total_t, avg_z_minus, avg_z_minus2, avg_z_minus_H_minus, avg_epsilon_over_t0, avg_epsilon_H_over_t0, avg_epsilon2_over_t02, avg_tilde_t, avg_z_minus2_over_t02, avg_z_minus_H_minus_over_t0]
+  name_list = ["avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]
   for data, name in zip(data_list,name_list):
     plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
     np.save(path+'/npy/'+system+'.'+name+'.npy', data)

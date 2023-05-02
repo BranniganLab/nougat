@@ -272,30 +272,40 @@ def avg_over_theta(quantity, systems, system_names, groupname, nougvals, mol):
 	}
 	max_scale_dict = {
 		"avg_epsilon_over_t0": .1,
-		"avg_epsilon2_over_t02":.2,
+		"avg_abs_epsilon": 4,
+		"avg_abs_epsilon_over_t0": 0.4,
+		"avg_epsilon2_over_t02":.15,
 		"avg_epsilon_H_over_t0": 0,
-		"avg_epsilon2":20,
+		"avg_epsilon2":5,
 		"avg_H2": .025,
 		"avg_tilde_t":1.05,
-		"avg_epsilon":.1
+		"avg_epsilon":2,
+		"avg_rms_epsilon_over_t0": 6
 	}
 	min_scale_dict = {
 		"avg_epsilon_over_t0": -.15,
+		"avg_abs_epsilon": 0,
+		"avg_abs_epsilon_over_t0": 0,
 		"avg_epsilon2_over_t02":0,
 		"avg_epsilon_H_over_t0": -.025,
 		"avg_epsilon2":0,
 		"avg_H2": 0,
 		"avg_tilde_t":0,
-		"avg_epsilon":-.15
+		"avg_epsilon":-3,
+		"avg_rms_epsilon_over_t0": .95
 	}
 
 	if quantity in min_scale_dict:
 		axs.set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
 	for system, name in zip(systems, system_names):
 		data = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+quantity+'.npy')
+		
 		with warnings.catch_warnings():
 			warnings.simplefilter("ignore", category=RuntimeWarning)
 			avg_vals=np.nanmean(data, axis=1)
+		if quantity == "avg_epsilon2":
+			avg_vals = np.sqrt(avg_vals)
+			print(name, avg_vals[-1])
 		maxval = len(avg_vals)
 		x = np.arange(2.5,(maxval*5+2.5),5) / 10
 		axs.plot(x,avg_vals,color=colordict[system])
@@ -314,23 +324,23 @@ def run_avg_over_theta(mol):
 		sys_names = []
 		for system in satsys:
 			sys_names.append("lg"+system)
-		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+		for quantity in ["avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 			avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29")
 		sys_names = []
 		for system in monounsatsys:
 			sys_names.append("lg"+system)
-		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+		for quantity in ["avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 			avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29")
 	elif mol == "7k3g":
 		sys_names = []
 		for system in satsys:
 			sys_names.append(system+"PC")
-		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+		for quantity in ["avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 			avg_over_theta(quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
 		sys_names = []
 		for system in monounsatsys:
 			sys_names.append(system+"PC")
-		for quantity in ["avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+		for quantity in ["avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 			avg_over_theta(quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
 
 
@@ -369,11 +379,50 @@ def run_sum_over_H2(mol):
 		sum_over_H2(monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
 
 
+def run_eps_corr_scatter(mol):
+	if mol == "5x29":
+		sys_names = []
+		for system in satsys:
+			sys_names.append("lg"+system)
+		plot_eps_corr_scatter(satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append("lg"+system)
+		plot_eps_corr_scatter(monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29")
+	elif mol == "7k3g":
+		sys_names = []
+		for system in satsys:
+			sys_names.append(system+"PC")
+		plot_eps_corr_scatter(satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
+		sys_names = []
+		for system in monounsatsys:
+			sys_names.append(system+"PC")
+		plot_eps_corr_scatter(monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
 
 
-
-
-
+def plot_eps_corr_scatter(systems, system_names, groupname, nougvals, mol):
+	for system, name in zip(systems, system_names):
+		curvlist = []
+		epslist = []
+		curv = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.H_plus.npy')
+		eps = np.load(name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.epsilon.npy')
+		for i in range(len(curv[:,0,0])):
+			for j in range(len(curv[0,:,0])):
+				for k in range(len(curv[0,0,:])):
+					if (np.isnan(curv[i,j,k])) or (np.isnan(eps[i,j,k])):
+						continue
+					else:
+						curvlist.append(curv[i,j,k])
+						epslist.append(eps[i,j,k])
+		print(system, np.corrcoef(curvlist,epslist))
+		#fig = plt.figure()
+		#plt.scatter(curvlist,epslist)
+		#m, b = np.polyfit(curvlist, epslist, 1)
+		#axes = plt.gca()
+		#x_vals = np.array(axes.get_xlim())
+		#y_vals = b + m * x_vals
+		#plt.plot(x_vals, y_vals, '-',color="green")
+		#plt.show()
 
 
 
@@ -388,4 +437,4 @@ mol = "5x29"
 if __name__ == "__main__": 
 	run_avg_over_theta(mol)
 	#run_sum_over_H2(mol)
-	
+	#run_eps_corr_scatter(mol)
