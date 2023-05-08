@@ -213,9 +213,9 @@ proc rotateSystem {axis degree start stop} {
 # Arguments:
 #       frm                 {int}       frame to be evaluated 
 #       species             {list}      list of lipid species in system
-#       findHeadsAndTails   {list}
-#       window              {int}
-#       poreSort            {str}       
+#       findHeadsAndTails   {list}      
+#       window              {int}       Window size of tilted lipids 
+#       poreSort            {str}       Lipids Excluded From analysis
 #
 # Results:
 #       
