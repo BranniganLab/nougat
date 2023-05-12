@@ -213,7 +213,7 @@ proc rotateSystem {axis degree start stop} {
 # Arguments:
 #       frm                 {int}       frame to be evaluated 
 #       species             {list}      list of lipid species in system
-#       findHeadsAndTails   {list}      
+#       findHeadsAndTails   {list}      list of first and last beads in lipid tail
 #       window              {int}       Window size of tilted lipids 
 #       poreSort            {str}       Lipids Excluded From analysis
 #
@@ -290,12 +290,15 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
 #
 # Arguments:
 #       file        {str}       File name
-#       number      {int}
-#       d1          {int}
-#       min         {int}
+#       number      {int}       Bin values ranging from 0 to n bins
+#       d1          {int}       Width of bins 
+#       min         {int}       Minimum values for analysis
 #
 # Results:
 #       prints line containing the min and max bin values to a file 
+#
+#Necessary Revisions:
+#       min is needs to be removed
 
 proc printBinInfo {file number d1 min} {
     puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
