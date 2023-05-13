@@ -14,8 +14,8 @@ custom = ['DX']
 comparison = ['PO']
 
 
-sys_list = [monounsatsys]
-sys_name_list = ['monounsatsys']
+sys_list = [satsys]
+sys_name_list = ['satsys']
 
 #sys_list = [satsys, monounsatsys, fivebeads, fourbeads, threebeads]
 #sys_name_list = ["satsys", "monounsatsys", "fivebeads", "fourbeads", "threebeads"]
@@ -157,7 +157,7 @@ min_scale_dict = {
 	"density":0
 }
 
-def plot_total_thickness():
+def plot_total_thickness(mol):
 	nmcount=0
 	for system in sys_list:
 		fig, axs = plt.subplots()
@@ -165,8 +165,14 @@ def plot_total_thickness():
 		axs.set_ylim(0,20)
 		#axs.set_ylim(min_scale_dict["thickness"],max_scale_dict["thickness"])
 		for name in system:
-			upper = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "zone", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-			lower = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", "ztwo", "C1A.C1B", "polar", "thickness", "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
+			if mol == "5x29":
+				filename = "lg"+name
+				upper = np.genfromtxt(filename+"/"+filename+"_polar_5_10_100_-1_1/dat/"+filename_generator(filename, name+"PC", "zone", "C1A.C1B", "polar", "thickness", "dat"), delimiter=",", missing_values='nan',filling_values=np.nan)
+				lower = np.genfromtxt(filename+"/"+filename+"_polar_5_10_100_-1_1/dat/"+filename_generator(filename, name+"PC", "ztwo", "C1A.C1B", "polar", "thickness", "dat"), delimiter=",", missing_values='nan',filling_values=np.nan)
+			elif mol == "7k3g":
+				filename = name+"PC"
+				upper = np.genfromtxt(filename+"/"+filename+"_polar_5_10_0_-1_1/dat/"+filename_generator(filename, name+"PC", "zone", "C1A.C1B", "polar", "thickness", "dat"), delimiter=",", missing_values='nan',filling_values=np.nan)
+				lower = np.genfromtxt(filename+"/"+filename+"_polar_5_10_0_-1_1/dat/"+filename_generator(filename, name+"PC", "ztwo", "C1A.C1B", "polar", "thickness", "dat"), delimiter=",", missing_values='nan',filling_values=np.nan)
 			total = (upper + lower)/2.
 			with warnings.catch_warnings():
 				warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -179,7 +185,7 @@ def plot_total_thickness():
 		plt.close()
 		nmcount+=1		
 
-def make_avg_over_theta_plots():
+def make_avg_over_theta_plots(mol):
 	for measure in ["height", "curvature", "Kcurvature", "thickness", "tail1", "tail0"]:
 		nmcount = 0 
 		for system in sys_list:
@@ -189,12 +195,10 @@ def make_avg_over_theta_plots():
 				axs[counter].set_xlim(0,6)
 				axs[counter].set_ylim(min_scale_dict[measure],max_scale_dict[measure])
 				for name in system:
-					#data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					data = np.genfromtxt(name+"PC/"+name+"PC_polar_5_10_0_-1_1/dat/"+filename_generator(name+"PC", name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
-					#	nonzerocount = np.count_nonzero(data[row,:])
-					#	nancount = np.count_nonzero(np.isnan(data[row,:]))
-					#	if (nancount/nonzerocount) >= 0.2:
-					#		data[row,:] = np.nan
+					if mol == "5x29":
+						data = np.genfromtxt("lg"+name+"/lg"+name+"_polar_5_10_100_-1_1/dat/"+filename_generator("lg"+name, name+"PC", field, "C1A.C1B", "polar", measure, "dat"), delimiter=",", missing_values='nan', filling_values=np.nan)
+					elif mol == "7k3g":
+						data = np.genfromtxt(name+"PC/"+name+"PC_polar_5_10_0_-1_1/dat/"+filename_generator(name+"PC", name+"PC", field, "C1A.C1B", "polar", measure, "dat"),delimiter=",",missing_values='nan',filling_values=np.nan)
 					with warnings.catch_warnings():
 						warnings.simplefilter("ignore", category=RuntimeWarning)
 						z_vals=np.nanmean(data, axis=1)
@@ -260,5 +264,7 @@ for name in allsys:
 	'''
 
 if __name__ == "__main__":
-	make_avg_over_theta_plots()
-	plot_total_thickness()
+	#mol = "5x29"
+	mol = "7k3g"
+	make_avg_over_theta_plots(mol)
+	plot_total_thickness(mol)

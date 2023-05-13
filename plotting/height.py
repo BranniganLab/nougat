@@ -82,16 +82,16 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field
           height[:,:,frm] = height_data[frm*N1_bins:(frm+1)*N1_bins,2:]
 
         #if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
-        height = mostly_empty(height, N1_bins, N2_bins, Nframes)
+        pruned_height = mostly_empty(height, N1_bins, N2_bins, Nframes)
 
         #take the average height over all frames
-        avgHeight = calc_avg_over_time(height)
+        avgHeight = calc_avg_over_time(pruned_height)
 
         #make plots!
         plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
 
         #save as file for debugging / analysis AND make PDB!
-        np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
+        np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', pruned_height)
         np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
         serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
         print(sys_name+' '+bead+' '+field+" height done!")

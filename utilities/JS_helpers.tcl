@@ -103,8 +103,8 @@ proc transform_to_ref_height {ref} {
         $totsel update
 
         set zvals [$refsel get z]
-        set avgz [vecexpr $zvals mean]
-        $totsel moveby "0 0 -$avgz"
+        set avgz [expr -1.0* [vecexpr $zvals mean]]
+        $totsel moveby "0 0 $avgz"
     }
     $refsel delete
     $totsel delete
