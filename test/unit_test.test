@@ -166,3 +166,20 @@ test catlistorfunc {
 } -body {
     return [concatenateList $data "or"]
 } -result "(1) or (2) or (3) or (4) or (5)" -cleanup {}
+
+test basicpopctail {
+    Test: findHeadsAndTails
+} -setup {
+   set data {{{C1A D2A C3A C4A} {C1B C2B C3B C4B}}}
+} -body {
+    return [findHeadsAndTails $data]
+} -result {{{C1A C1B}} {{C4A C4B}}} -cleanup {}
+
+test popctailmiddleremoved {
+    Test: findHeadsAndTails
+} -setup {
+   set data {{{C1A C4A} {C1B C4B}}}
+} -body {
+    return [findHeadsAndTails $data]
+} -result {{{C1A C1B}} {{C4A C4B}}} -cleanup {}
+
