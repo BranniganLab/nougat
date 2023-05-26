@@ -8,61 +8,61 @@ source ../utilities/helper_procs.tcl
 load ../utilities/vecexpr.so
 
  test tailtiltA {
-    Test: calculateTiltAngles
+    Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/singlelipid.gro
    set seltext [format {name "C.*" "D.*" and name ".*A"}]
    set sel1 [atomselect top "$seltext"]
 } -body {
-    return [calculateTiltAngles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
 } -result {{-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643}} -cleanup {
    mol delete top
 }
 
 test tailtiltB {
-    Test: calculateTiltAngles
+    Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/singlelipid.gro
    set seltext [format {name "C.*" and name ".*B"}]
    set sel1 [atomselect top "$seltext"]
 } -body {
-    return [calculateTiltAngles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
 } -result {{0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253}} -cleanup {
    mol delete top
 }
 
 test tailtilt90 {
-    Test: calculateTiltAngles
+    Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/90degreelipid.gro
    set seltext [format {name "C.*" and name ".*B"}]
    set sel1 [atomselect top "$seltext"]
 } -body {
-    return [calculateTiltAngles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
 } -result {{0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434}} -cleanup {
    mol delete top
 }
 
 test tailtilt30 {
-    Test: calculateTiltAngles
+    Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/30degreelipid.gro
    set seltext [format {name "C.*" and name ".*B"}]
    set sel1 [atomselect top "$seltext"]
 } -body {
-    return [calculateTiltAngles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
 } -result {{0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251}} -cleanup {
    mol delete top
 }
 
 test tailtilt180 {
-    Test: calculateTiltAngles
+    Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/180degreelipid.gro
    set seltext [format {name "C.*" and name ".*B"}]
    set sel1 [atomselect top "$seltext"]
 } -body {
-    return [calculateTiltAngles 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
 } -result {{0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383}} -cleanup {
    mol delete top
 }
@@ -183,3 +183,54 @@ test popctailmiddleremoved {
     return [findHeadsAndTails $data]
 } -result {{{C1A C1B}} {{C4A C4B}}} -cleanup {}
 
+test basicleaflettop {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
+   set sel [atomselect top "resname POPC and z > 100"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 1.0 -cleanup {
+   mol delete top
+}
+
+test basicleafletbottom {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
+   set sel [atomselect top "resname POPC and z < 100"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 2.0 -cleanup {
+   mol delete top
+}
+
+test Singlelipidturned {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/fullmemsingletilt.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 8 NULL 
+   set sel [atomselect top "resname POPC and resid 1000"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 3.0 -cleanup {
+   mol delete top
+}
+
+test Singlelipidturnedminwindow {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/fullmemsingletilt.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 2 NULL 
+   set sel [atomselect top "resname POPC and resid 1000"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 2.0 -cleanup {
+   mol delete top
+}
