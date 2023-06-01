@@ -143,7 +143,7 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     ;# lipid tail vectors and order parameters
 
     run_nougat $system $config_dict $bindims $polar "height_density" $foldername
-    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
+    #run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
 }
 
