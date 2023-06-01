@@ -25,6 +25,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
     avgouter = calc_avg_over_time(density_up)
     avginner = calc_avg_over_time(density_down)
 
+    """ this part deprecated now that log file implemented
     found = False
     with open('tcl_output/'+sys_name+'.'+coordsys+'.density.normfactor.dat', 'r') as normfile:
       norms = normfile.readlines()
@@ -34,6 +35,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
           if vals[0] == species:
             normfactor = float(vals[1])
             found = True
+    """
+    normfactor = names_dict["density_norm"]
 
     #normalize
     avgouter = avgouter * normfactor / areas
