@@ -232,9 +232,13 @@ def sum_over_K(systems):
 
 def rollingavg(list_in, window_size):
 	rollingavg = []
+	for i in range(window_size):
+		rollingavg.append(np.nan)
 	for i in range(window_size,len(list_in)-window_size):
 		windowavg = np.sum(list_in[i-window_size:i+window_size])/(2*window_size)
 		rollingavg.append(windowavg)
+	for i in range(window_size):
+		rollingavg.append(np.nan)
 	rollingavg = np.array(rollingavg)
 	return rollingavg
 
@@ -258,11 +262,12 @@ def plot_average_area_per_lipid(systems):
 	plt.show()
 
 
-def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, mol):
+def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, mol, xlim):
 	fig, axs = plt.subplots()
-	#axs.set_xlim(0,6)
+	axs.set_xlim(0,xlim)
+	limname = "zoomed_"+str(xlim)
 
-	if quantity in min_scale_dict:
+	if quantity in min_scale_dict and xlim==6:
 		axs.set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
 	for system, name in zip(systems, system_names):
 		data = np.load(path+"/"+name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+quantity+'.npy')
@@ -278,7 +283,7 @@ def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, m
 		x = np.arange(2.5,(maxval*5+2.5),5) / 10
 		axs.plot(x,avg_vals,color=colordict[system])
 		np.savez(path+"/"+name+"/"+name+"_polar_"+nougvals+"/npy/"+name+'.'+quantity+'avg_over_theta.npz', x=x, y=avg_vals)
-	plt.savefig(path+"/avg_over_theta/"+mol+"_"+groupname+"_"+quantity+"_combo.pdf", dpi = 700)
+	plt.savefig(path+"/avg_over_theta/"+mol+"_"+groupname+"_"+quantity+"_"+limname+".pdf", dpi = 700)
 	plt.clf()
 	plt.close()
 
@@ -332,23 +337,27 @@ def run_avg_over_theta(mol, path):
 		for system in satsys:
 			sys_names.append("lg"+system)
 		for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-			avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29")
+			for xlim in [6,20]:
+				avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29", xlim)
 		sys_names = []
 		for system in monounsatsys:
 			sys_names.append("lg"+system)
 		for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-			avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29")
+			for xlim in [6,20]:
+				avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29", xlim)
 	elif mol == "7k3g":
 		sys_names = []
 		for system in satsys:
 			sys_names.append(system+"PC")
 		for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-			avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g")
+			for xlim in [6,20]:
+				avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g", xlim)
 		sys_names = []
 		for system in monounsatsys:
 			sys_names.append(system+"PC")
 		for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
-			avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g")
+			for xlim in [6,20]:
+				avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g", xlim)
 
 
 def sum_over_H2(systems, system_names, groupname, nougvals, mol):
@@ -431,8 +440,7 @@ def plot_eps_corr_scatter(systems, system_names, groupname, nougvals, mol):
 		#plt.plot(x_vals, y_vals, '-',color="green")
 		#plt.show()
 
-def plot_together(mols, paths, nougvals):
-	sys.path.append("/home/js2746/bin/TeXLive/texmf-dist/tex/latex/textgreek/")
+def plot_together(mols, paths, nougvals, xlim):
 	mainpath = "/home/js2746/Bending/PC/whole_mols"
 	dirname = os.path.join(mainpath, "avg_over_theta")
 	try:
@@ -443,10 +451,10 @@ def plot_together(mols, paths, nougvals):
 	for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
 		for series, seriesname in zip([satsys, monounsatsys],["satsys","monounsatsys"]):
 			fig, axs = plt.subplots(2, sharex=True, sharey=True, layout="constrained")
-			#axs.set_xlim(0,6)
-			axs[0].set_xlim(0,20)
-			#if quantity in min_scale_dict:
-			#	axs[0].set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
+			axs[0].set_xlim(0,xlim)
+			limname = "zoomed_"+str(xlim)
+			if quantity in min_scale_dict and xlim==6:
+				axs[0].set_ylim(min_scale_dict[quantity],max_scale_dict[quantity])
 			for name in series:
 				for mol, path, nougval in zip(mols,paths,nougvals):
 					if mol == "5x29":
@@ -456,18 +464,113 @@ def plot_together(mols, paths, nougvals):
 						sysname = name+"PC"
 						figax = 0
 					npzfile = np.load(path+"/"+sysname+"/"+sysname+nougval+"/npy/"+sysname+"."+quantity+"avg_over_theta.npz")
-					axs[figax].plot(npzfile['x'],npzfile['y'],color=colordict[name])
-			axs[0].axvline(x=1.25, color = 'black', linestyle='--')
-			axs[1].axvline(x=1.25, color = 'black', linestyle='--')
-			axs[1].axvline(x=2.75, color = 'black', linestyle=':')
+					if mol == "5x29":
+						start = np.where(npzfile['x']==2.75)[0][0]
+					elif mol == "7k3g":
+						start = np.where(npzfile['x']==1.25)[0][0]
+					axs[figax].plot(npzfile['x'][start:],npzfile['y'][start:],color=colordict[name])
+			#axs[0].axvline(x=1.25, color = 'black', linestyle='--')
+			#axs[1].axvline(x=1.25, color = 'black', linestyle='--')
+			axs[0].axvline(x=2.75, color = 'black', linestyle=':')
 			axs[0].set_title("7k3g")
 			axs[1].set_title("5x29")
 			fig.supxlabel(r'$r \;(\mathrm{nm})$')
 			fig.supylabel(legend_dict[quantity])
-			plt.savefig(mainpath+"/avg_over_theta/"+seriesname+"_"+quantity+"_combo.pdf", dpi = 700)
+			plt.savefig(mainpath+"/avg_over_theta/"+seriesname+"_"+quantity+"_"+limname+".pdf", dpi = 700)
 			plt.clf()
 			plt.close()
 
+
+def plot_avg_H2_over_time(system, path):
+	H1 = np.load(path+system+".zone.C1A.C1B.polar.meancurvature.npy")
+	H2 = np.load(path+system+".ztwo.C1A.C1B.polar.meancurvature.npy")
+	Hplus = (H1+H2)/2
+	Hplus2 = Hplus*Hplus
+	fig, axs = plt.subplots(2, sharex=True, sharey=False, layout="constrained")
+	for item in [Hplus, Hplus2]:
+		x = np.linspace(0,308,309)
+		x = x/10.
+		y = np.nanmean(item, axis=0)
+		y = np.nanmean(y, axis=0)
+		rollavg = rollingavg(y,10)
+		if item is Hplus:
+			figax = 0
+		else:
+			figax = 1
+		axs[figax].plot(x,y)
+		axs[figax].plot(x,rollavg,color="red")
+	axs[0].set_ylabel(r'$\langle H^+ \rangle \;(\mathrm{\dot A^{-1}})$')
+	axs[1].set_ylabel(r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$')
+	fig.supxlabel(r'$t \;(\mu s)$')
+	plt.savefig("H2_over_time.pdf", dpi=700)
+	plt.clf()
+	plt.close()
+
+
+def normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim):
+	mainpath = "/home/js2746/Bending/PC/whole_mols"
+	dirname = os.path.join(mainpath, "avg_over_theta")
+	try:
+		os.mkdir(dirname) 
+	except: 
+		pass
+
+	for quantity in ["avg_epsilon2", "avg_H_plus2"]:
+		for series, seriesname in zip([satsys, monounsatsys],["satsys","monounsatsys"]):
+			fig, axs = plt.subplots(2, sharex=True, sharey=True, layout="constrained")
+			axs[0].set_xlim(0,xlim)
+			limname = "zoomed_"+str(xlim)
+			if xlim == 6:
+				axs[0].set_ylim(min_scale_dict[quantity+"_normed6"],max_scale_dict[quantity+"_normed6"])
+			else:
+				axs[0].set_ylim(min_scale_dict[quantity+"_normed20"],max_scale_dict[quantity+"_normed20"])
+			for name in series:
+				for mol, path, nougval in zip(mols,paths,nougvals):
+					if mol == "5x29":
+						sysname = "lg"+name
+						figax = 1
+					elif mol == "7k3g":
+						sysname = name+"PC"
+						figax = 0
+					exp = np.load(path+"/"+sysname+"/"+sysname+nougval+"/npy/"+sysname+"."+quantity+".npy")
+					bulk = np.load(bulkpath+"/lg"+name+"/lg"+name+bulknougvals+"/npy/lg"+name+"."+quantity+".npy")
+					bulkval = np.mean(bulk[20:-2,:])
+					#bulkval = np.mean(bulk)
+					print(bulkval, name, quantity, mol)
+					normed = exp/bulkval
+					'''
+					except ValueError as error:
+						explen = np.shape(exp)[0]
+						bulklen = np.shape(bulk)[0]
+						print(name+": experimental is "+str(explen)+" long but bulk is "+str(bulklen)+" long.")
+						minval = min(explen, bulklen)
+						exp = exp[0:minval,:]
+						bulk = bulk[0:minval,:]
+						normed = exp/bulk
+					'''
+					with warnings.catch_warnings():
+						warnings.simplefilter("ignore", category=RuntimeWarning)
+						avg_vals=np.nanmean(normed, axis=1)
+					maxval = len(avg_vals)
+					x = np.arange(2.5,(maxval*5+2.5),5) / 10
+					if mol == "5x29":
+						start = np.where(x == 2.75)[0][0]
+					elif mol == "7k3g":
+						start = np.where(x == 1.25)[0][0]
+					axs[figax].plot(x[start:],avg_vals[start:],color=colordict[name])
+			axs[0].axvline(x=2.75, color = 'black', linestyle='--')
+			#axs[1].axvline(x=1.25, color = 'black', linestyle='--')
+			#axs[1].axvline(x=2.75, color = 'black', linestyle=':')
+			axs[0].set_title("7k3g")
+			axs[1].set_title("5x29")
+			fig.supxlabel(r'$r \;(\mathrm{nm})$')
+			if quantity == "avg_epsilon2":
+				fig.supylabel(r'$\langle \tilde \epsilon^2 \rangle$')
+			elif quantity == "avg_H_plus2":
+				fig.supylabel(r'$\langle (\tilde H^+)^2 \rangle$')
+			plt.savefig(mainpath+"/avg_over_theta/"+seriesname+"_"+quantity+"_normed_"+limname+".pdf", dpi = 700)
+			plt.clf()
+			plt.close()
 
 colordict = {
 	"DT": "red",
@@ -487,6 +590,10 @@ max_scale_dict = {
 	"avg_epsilon2_over_t02":.15,
 	"avg_epsilon_H_over_t0": 0,
 	"avg_epsilon2":5,
+	"avg_epsilon2_normed6":35,
+	"avg_H_plus2_normed6":15,
+	"avg_epsilon2_normed20":35,
+	"avg_H_plus2_normed20":30,
 	"avg_H_plus2": .006,
 	"avg_tilde_t":1.05,
 	"avg_epsilon":2,
@@ -502,6 +609,10 @@ min_scale_dict = {
 	"avg_epsilon2_over_t02":0,
 	"avg_epsilon_H_over_t0": -.015,
 	"avg_epsilon2":0,
+	"avg_epsilon2_normed6":0,
+	"avg_H_plus2_normed6":0,
+	"avg_epsilon2_normed20":0,
+	"avg_H_plus2_normed20":0,
 	"avg_H_plus2": 0,
 	"avg_tilde_t":0,
 	"avg_epsilon":-3,
@@ -510,7 +621,7 @@ min_scale_dict = {
 	"corr_epst0_Hplus": -0.02,
 	"avg_rms_epsilon_over_t0": .95
 }
-
+'''
 legend_dict = {
 	"avg_epsilon_over_t0": r'$\langle $'+u'\u03F5'+r'$ / t_0 \rangle$',
 	"avg_abs_epsilon": r'$\langle | $'+u'\u03F5'+r'$ | \rangle\; (\mathrm{\dot A})$',
@@ -538,6 +649,34 @@ legend_dict = {
 	"avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
 	"corr_epst0_Kplus": r'$\langle $'+u'\u03F5'+r'$ K^+ / t_0 \rangle - \langle $'+u'\u03F5'+r'$ / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$'
 }
+'''
+legend_dict = {
+	"avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
+	"avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
+	"avg_abs_epsilon_over_t0": r'$\langle | \epsilon / t_0 | \rangle$',
+	"avg_epsilon2_over_t02":r'$\langle ( \epsilon / t_0 )^2 \rangle$',
+	"avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
+	"avg_epsilon2":r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
+	"avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
+	"avg_tilde_t": r'$\langle \tilde t \rangle$',
+	"avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
+	"avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
+	"corr_mag_epst0_Hplus": r'$\langle | \epsilon| | H^+ | / t_0 \rangle - \langle |\epsilon| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
+	"corr_epst0_Hplus": r'$ \langle \epsilon H^+ / t_0 \rangle - \langle \epsilon/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
+	"avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;\epsilon / t_0 \rangle$',
+	"avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
+	"avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
+	"avg_H_plus": r'$\langle H^+ \rangle\; (\mathrm{\dot A^{-1}})$', 
+	"avg_H_minus": r'$\langle H^- \rangle\; (\mathrm{\dot A^{-1}})$', 
+	"avg_H_minus2": r'$\langle \left ( H^- \right )^2 \rangle\; (\mathrm{\dot A^{-2}})$', 
+	"avg_epsilon_H": r'$\langle  \epsilon H^+  \rangle$',
+	"avg_z_minus": r'$\langle z^- \rangle\; (\mathrm{\dot A})$', 
+	"avg_z_minus2": r'$\langle \left ( z^- \right )^2 \rangle\; (\mathrm{\dot A^2})$', 
+	"avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$', 
+	"avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$', 
+	"avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
+	"corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$'
+}
 
 allsys = ["DT", "DL", "DP", "DB", "DX", "DY", "DO", "DG"]
 satsys = ["DT", "DL", "DP", "DB", "DX"]
@@ -547,10 +686,15 @@ coordsys = "polar"
 mols = ["5x29", "7k3g"]
 paths = ["/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1", "/home/js2746/Bending/PC/whole_mols/7k3g/lgSims"]
 nougvals = ["_polar_5_10_100_-1_1", "_polar_5_10_0_-1_1"]
+bulkpath = "/home/js2746/Bending/PC/whole_mols/empty"
+bulknougvals = "_polar_5_10_0_-1_1"
 
 if __name__ == "__main__": 
 	#for mol, path in zip(mols, paths):
 	#	run_avg_over_theta(mol,path)
-	plot_together(mols, paths, nougvals)
+	#for xlim in [6,20]:
+		#plot_together(mols, paths, nougvals, xlim)
+		#normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim)
 	#run_sum_over_H2(mol)
 	#run_eps_corr_scatter(mol)
+	plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
