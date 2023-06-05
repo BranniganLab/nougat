@@ -891,14 +891,13 @@ proc sortTailLength {species acyl_names} {
 # getCosineTheta (Previously: get_costheta)--
 #
 # Arguments:
-#       start
-#       end
+#       start       {Vector}    Position of the start of the vector
+#       end         {Vector}    Position of the end of the vector
 #
 # Results:
-#   
-;# cosine theta is the dot product of n_{1,2} and the vector [0 0 1]
-;# this corresponds to the 3rd value of n_{1,2} 
-proc get_costheta {start end} {   
+#       returns the cosine theta of the vector, 
+#       this is the dot product of n_{1,2} and the vector [0 0 1]
+#       this corresponds to the 3rd value of n_{1,2} 
     set r12 [vecsub $start $end]
     set n12 [vecnorm $r12]
     return [lindex $n12 2]
@@ -917,10 +916,10 @@ proc get_costheta {start end} {
 #
 # Results:
 #       
-proc calculateOrderParameters {length xvals yvals zvals} {
+proc calculateOrderParameters {length xValues yValues zValues} {
     set order_list []
     set temp_list []
-    for {set i 1} {$i <= [llength $xvals]} {incr i} {
+    for {set i 1} {$i <= [llength $xValues]} {incr i} {
         if {[expr $i%$length] == 0} {
             ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
             ;# already and now you need to average them
@@ -930,8 +929,8 @@ proc calculateOrderParameters {length xvals yvals zvals} {
             set temp_list []
         } else {
             ;# calculate cos2theta for each bond in the tail and append to a temp list
-            set start [list [lindex $xvals $i] [lindex $yvals $i] [lindex $zvals $i]]
-            set end [list [lindex $xvals [expr $i-1]] [lindex $yvals [expr $i-1]] [lindex $zvals [expr $i-1]]]
+            set start [list [lindex $xValues $i] [lindex $yValues $i] [lindex $zValues $i]]
+            set end [list [lindex $xValues [expr $i-1]] [lindex $yValues [expr $i-1]] [lindex $zValues [expr $i-1]]]
             set costheta [get_costheta $start $end]
             lappend temp_list [expr {$costheta * $costheta}]
         }
@@ -950,7 +949,6 @@ proc calculateOrderParameters {length xvals yvals zvals} {
 # Arguments:
 #       residueDictionary
 #       outfiles
-#       leafletList
 #       lipidList
 #       tilts
 #       orders
@@ -959,14 +957,14 @@ proc calculateOrderParameters {length xvals yvals zvals} {
 #
 # Results:
 #       
-proc averageTiltAndOrderParameter {res_dict outfiles leaflet_list lipid_list tilts orders tail_list selex} {
+proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts orders tailList selex} {
     dict set counts placeholder "dummy"
-    dict for {bin indices} $res_dict {
+    dict for {bin indices} $residueDictionary {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
         foreach indx $indices {
-            set tailnum [expr int([lindex $tail_list $indx])]
-            set species [lindex $lipid_list $indx]
+            set tailnum [expr int([lindex $tailList $indx])]
+            set species [lindex $lipidList $indx]
             if {$leaf == 1} {
                 set tilt_key "tilts_up_${species}_tail${tailnum}"
                 set order_key "order_up_${species}_tail${tailnum}"
@@ -1008,19 +1006,17 @@ proc averageTiltAndOrderParameter {res_dict outfiles leaflet_list lipid_list til
 # Arguments:
 #       residueDictionary
 #       outfiles
-#       leafletList
 #       lipidList
 #       zValsList
-#       NameList
 #
 # Results:
 #   
-proc averageHeightAndDensity {res_dict outfiles leaflet_list lipid_list zvals_list name_list} {
-    dict for {bin indices} $res_dict {
+proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
+    dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
         foreach indx $indices {
-            set species [lindex $lipid_list $indx]
+            set species [lindex $lipidList $indx]
             if {$leaf == 1} {
                 set field_key "z1z2"
                 set dens_key "density_up_${species}"
@@ -1044,7 +1040,7 @@ proc averageHeightAndDensity {res_dict outfiles leaflet_list lipid_list zvals_li
                 set oldcount [dict get $outfiles $field_key $counts_key bin $correct_bin]
                 set newcount [expr $oldcount+1.0]
                 set oldavg [dict get $outfiles $field_key $height_key bin $correct_bin]
-                set newsum [expr {$oldavg * $oldcount + [lindex $zvals_list $indx]}]
+                set newsum [expr {$oldavg * $oldcount + [lindex $zValsList $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
                 dict set outfiles $field_key $counts_key bin $correct_bin $newcount
@@ -1055,7 +1051,7 @@ proc averageHeightAndDensity {res_dict outfiles leaflet_list lipid_list zvals_li
                     dict set outfiles $field_key $dens_key bin $correct_bin 1.0
                 }       
             } else {
-                dict set outfiles $field_key $height_key bin $correct_bin [lindex $zvals_list $indx]
+                dict set outfiles $field_key $height_key bin $correct_bin [lindex $zValsList $indx]
                 dict set outfiles $field_key $counts_key bin $correct_bin 1.0
                 dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
@@ -1072,15 +1068,15 @@ proc averageHeightAndDensity {res_dict outfiles leaflet_list lipid_list zvals_li
 #
 # Results:
 #       
-proc setBetaValues {inclusion_sel species} {
+proc setBetaValues {selectInclusion species} {
     puts "starting to fill beta values"
     
-    if {$inclusion_sel ne "NULL"} {
-        set inclusion [atomselect top $inclusion_sel]
+    if {$selectInclusion ne "NULL"} {
+        set inclusion [atomselect top $selectInclusion]
         $inclusion set beta 0
         $inclusion delete 
 
-        set excl_sel [atomselect top "not $inclusion_sel and not resname W"]
+        set excl_sel [atomselect top "not $selectInclusion and not resname W"]
     } else {
         set excl_sel [atomselect top "not resname W"]
     }
@@ -1149,19 +1145,19 @@ proc readPolar {polar} {
 # createAtomSelections (Previously: create_atomselections)--
 #       
 # Arguments:
-#       quanity
+#       quantity
 #       configDictionary
 #
 # Results:
 #       
-proc createAtomSelections {quantity_of_interest config_dict} {
+proc createAtomSelections {quantity configDictonary} {
     ;#atomselections setup as dict
-    if {$quantity_of_interest eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $config_dict species] and name [dict get $config_dict full_tails]"]
-        dict set selections z0 [atomselect top "resname [dict get $config_dict species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+    if {$quantity eq "height_density"} {
+        dict set selections z1z2 [atomselect top "resname [dict get $configDictonary species] and name [dict get $configDictonary full_tails]"]
+        dict set selections z0 [atomselect top "resname [dict get $configDictonary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
 
-    } elseif {$quantity_of_interest eq "tilt_order"} {
-        set lists [sortTailLength [dict get $config_dict species] [dict get $config_dict acyl_names]]
+    } elseif {$quantity eq "tilt_order"} {
+        set lists [sortTailLength [dict get $configDictonary species] [dict get $configDictonary acyl_names]]
         set sellist [lindex $lists 0]
         set lenlist [lindex $lists 1]
         foreach sel $sellist len $lenlist {
