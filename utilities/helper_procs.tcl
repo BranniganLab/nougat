@@ -851,8 +851,8 @@ proc outputDensityNormalizationInformation {start nframes step species system he
 # sortTailLength (Previously: tail_length_sorter) --
 #
 # Arguments:
-#       species
-#       acylNames
+#       species         {list}      List of lipid types in system
+#       acylNames       {list}      
 #
 # Results:
 #   
@@ -861,10 +861,10 @@ proc outputDensityNormalizationInformation {start nframes step species system he
 ;# and so their calculations can be combined in the same loop iteration.
 ;# This proc determines the unique tail lengths in the system and creates a
 ;# list of atomselection texts that correspond.
-proc sortTailLength {species acyl_names} {
+proc sortTailLength {species acylNames} {
     set lenlist []
-    for {set i 0} {$i < [llength $acyl_names]} {incr i} {
-        foreach tail [lindex $acyl_names $i] {
+    for {set i 0} {$i < [llength $acylNames]} {incr i} {
+        foreach tail [lindex $acylNames $i] {
             lappend lenlist [llength $tail]
         }
     }
@@ -873,8 +873,8 @@ proc sortTailLength {species acyl_names} {
     foreach length $lengthlist {
         set resnamelist []
         set namelist []
-        for {set i 0} {$i < [llength $acyl_names]} {incr i} {
-            foreach tail [lindex $acyl_names $i] {
+        for {set i 0} {$i < [llength $acylNames]} {incr i} {
+            foreach tail [lindex $acylNames $i] {
                 if {[llength $tail] == $length} {
                     lappend resnamelist [lindex $species $i]
                     foreach nm $tail {
@@ -891,8 +891,8 @@ proc sortTailLength {species acyl_names} {
 # getCosineTheta (Previously: get_costheta)--
 #
 # Arguments:
-#       start       {Vector}    Position of the start of the vector
-#       end         {Vector}    Position of the end of the vector
+#       start       {vector}    Position of the start of the vector
+#       end         {vector}    Position of the end of the vector
 #
 # Results:
 #       returns the cosine theta of the vector, 
@@ -909,13 +909,16 @@ proc sortTailLength {species acyl_names} {
 #       tail of a given length
 # 
 # Arguments:
-#       length
-#       xValues
-#       yValues
-#       zValues
+#       length      {int}       length of lipids being evaluated
+#       xValues     {list}      x coordinate of tail beads of all lipids being evaluated 
+#       yValues     {list}      y coordinate of tail beads of all lipids being evaluated
+#       zValues     {list}      z coordinate of tail beads of all lipids being evaluated
 #
 # Results:
-#       
+#       Returns a nested list of the average order parameter of a lipid tail
+#       ex.
+#       {{0.4 0.4 0.4 0.4} {0.9 0.9 0.9 0.9} ...}  
+
 proc calculateOrderParameters {length xValues yValues zValues} {
     set order_list []
     set temp_list []
@@ -944,19 +947,20 @@ proc calculateOrderParameters {length xValues yValues zValues} {
 
 # averageTiltAndOrderParameter (Previously: tilt_order_averaging)
 #
-#       Uses res_dict entries to compute bin averages, then assigns them to the correct outfile
+#       Uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
 # Arguments:
-#       residueDictionary
-#       outfiles
-#       lipidList
-#       tilts
-#       orders
-#       tailList
-#       selex
+#       residueDictionary       {dict}
+#       outfiles                {dict}
+#       lipidList               {list}
+#       tilts                   {}
+#       orders                  {}
+#       tailList                {}
+#       selex                   {}
 #
 # Results:
-#       
+#       Returns dictionary with average tilt and order parameter 
+#       of lipids for a specific bin 
 proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts orders tailList selex} {
     dict set counts placeholder "dummy"
     dict for {bin indices} $residueDictionary {
@@ -1001,16 +1005,17 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 
 # averageHeightAndDensity (Previously: height_density_averaging)
 #
-#       uses res_dict entries to compute bin averages, then assigns them to the correct outfile
+#       uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
 # Arguments:
-#       residueDictionary
-#       outfiles
-#       lipidList
-#       zValsList
+#       residueDictionary       {dict}
+#       outfiles                {dict}
+#       lipidList               {list}
+#       zValsList               {list}
 #
 # Results:
-#   
+#       Returns dictionary with average height, density and counts 
+#       of lipids for a specific bin 
 proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
     dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
