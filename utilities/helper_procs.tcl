@@ -1074,7 +1074,7 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
 # setBetaValues (Previously: set_beta_vals)--
 #       
 # Arguments:
-#       inclusionSelection
+#       selectInclusion
 #       species
 #
 # Results:
