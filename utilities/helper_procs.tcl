@@ -374,14 +374,14 @@ proc printFrame {N1 outFiles key d1 min N2 polar selex} {
 
 # analyzeTails (Previously: tail_analyzer)--
 #
+#       Sorts tails of lipids by head group and tail type
 #
 # Arguments:
-#       species     {list} 
+#       species     {list}      list of lipid species in system
 #
 # Results: 
-#       returns a nested list: 
-#       top level is by species, mid level is by tail in species
-#       bottom level is by beads in tail
+#       returns a nested list: top level is by species, mid level 
+#       is by tail in species bottom level is by beads in tail
 #
 # e.g. a membrane with DO and DP lipids would be: 
 # |-------------------------------------taillist------------------------------------|
@@ -435,9 +435,11 @@ proc analyzeTails { species } {
 
 # numberTails (Previously: Tail_numberer)--
 #
+#       Sorts lipid tails in user3 by an arbitrary tail number
+#
 # Arguments:
-#       species
-#       tailList
+#       species     {list}      list of lipid species in system
+#       tailList    {list}
 #
 # Results:
 #       
@@ -850,17 +852,21 @@ proc outputDensityNormalizationInformation {start nframes step species system he
 
 # sortTailLength (Previously: tail_length_sorter) --
 #
+#       Determines tails with unique tail lengths and 
+#       makes an atomselection for them
+#
 # Arguments:
 #       species         {list}      List of lipid types in system
-#       acylNames       {list}      
+#       acylNames       {list}      List of lost of all bead names of all tails in the system 
 #
 # Results:
 #   
+#       Returns a list with an atomselection and the number of unique 
+#       tails (tails with different lengths)
+
 ;# nougat tilt and order calculations segregate by lipid species and tail.
 ;# Several different tails in a system may be the same length as each other,
 ;# and so their calculations can be combined in the same loop iteration.
-;# This proc determines the unique tail lengths in the system and creates a
-;# list of atomselection texts that correspond.
 proc sortTailLength {species acylNames} {
     set lenlist []
     for {set i 0} {$i < [llength $acylNames]} {incr i} {
