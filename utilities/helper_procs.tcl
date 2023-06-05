@@ -376,7 +376,7 @@ proc printFrame {N1 outFiles key d1 min N2 polar selex} {
 #
 #
 # Arguments:
-#       species
+#       species     {list} 
 #
 # Results: 
 #       returns a nested list: 
@@ -458,32 +458,32 @@ proc numberTails { species tailList } {
 }
 
 # assignBins (Previously: bin_assigner)--
-#
+#       makes a list of bins based on x, y values and the coordinate system
 # Arguments:
-#       xVals
-#       yVals
-#       binWidth1
-#       binWidth2
-#       thetaDeg
-#       polar
-#       frame
+#       xVals       {list}
+#       yVals       {list}
+#       binWidth1   {float}
+#       binWidth2   {float}
+#       thetaDeg    {float}
+#       polar       {int}
+#       frm         {int}  
 #
 # Results:
-#       
-;# creates two lists of bins along two dimensions based on the x,y values and the coordinate system
-proc assignBins {x_vals y_vals d1 d2 dthetadeg polar frm} {
+#       returns two lists of bins in the x or y direction
+
+proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
     
     if {$polar == 1} {
         ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecexpr [vecexpr $x_vals sq] [vecexpr $y_vals sq] add] sqrt]
+        set r_vals [vecexpr [vecexpr [vecexpr $xVals sq] [vecexpr $yVals sq] add] sqrt]
         
         ;#turn into bin numbers rather than r values
         set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
         
         ;#calculate theta: use atan2 to get values for al x,y pairs
-        set theta_vals [vecexpr $y_vals $x_vals atan2 pi div 180 mult]
+        set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
 
         ;#atan2 gives values from -180 to 180; shifting to 0 to 360
         for {set i 0} {$i<[llength $theta_vals]} {incr i} {
@@ -493,7 +493,7 @@ proc assignBins {x_vals y_vals d1 d2 dthetadeg polar frm} {
         }
 
         ;#turn into bin numbers rather than theta values
-        set dim2_bins [vecexpr [vecexpr $theta_vals $dthetadeg div] floor]
+        set dim2_bins [vecexpr [vecexpr $theta_vals $thetaDeg div] floor]
         
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
@@ -503,27 +503,27 @@ proc assignBins {x_vals y_vals d1 d2 dthetadeg polar frm} {
         set ylen [molinfo top get b frame $frm]
         set xmin [expr -$xlen/2.0]
         set ymin [expr -$ylen/2.0]
-        set x_vals [vecexpr $x_vals $xmin sub]
-        set y_vals [vecexpr $y_vals $ymin sub]
+        set xVals [vecexpr $xVals $xmin sub]
+        set yVals [vecexpr $yVals $ymin sub]
 
         ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
         ;# and should be put back for binning purposes (but not for order params purposes!)
-        for {set i 0} {$i < [llength $x_vals]} {incr i} {
-            if {[lindex $x_vals $i] < 0} {
-                lset x_vals $i [expr $xlen-1.0]
-            } elseif {[lindex $x_vals $i] > $xlen} {
-                lset x_vals $i 0
+        for {set i 0} {$i < [llength $xVals]} {incr i} {
+            if {[lindex $xVals $i] < 0} {
+                lset xVals $i [expr $xlen-1.0]
+            } elseif {[lindex $xVals $i] > $xlen} {
+                lset xVals $i 0
             }
-            if {[lindex $y_vals $i] < 0} {
-                lset y_vals $i [expr $ylen-1.0]
-            } elseif {[lindex $y_vals $i] > $ylen} {
-                lset y_vals $i 0
+            if {[lindex $yVals $i] < 0} {
+                lset yVals $i [expr $ylen-1.0]
+            } elseif {[lindex $yVals $i] > $ylen} {
+                lset yVals $i 0
             }
         }
 
         ;# turn into bin numbers rather than x,y values
-        set dim1_bins [vecexpr [vecexpr $x_vals $d1 div] floor]
-        set dim2_bins [vecexpr [vecexpr $y_vals $d2 div] floor]
+        set dim1_bins [vecexpr [vecexpr $xVals $binWidth1 div] floor]
+        set dim2_bins [vecexpr [vecexpr $yVals $binWidth2 div] floor]
     }
 
     return [list $dim1_bins $dim2_bins]
