@@ -221,14 +221,14 @@ proc rotateSystem {axis degree start stop} {
 #       species             {list}      list of lipid species in system
 #       findHeadsAndTails   {list}      list of first and last beads in lipid tail
 #       window              {int}       Window size of tilted lipids 
-#       poreSort            {str}       Lipids Excluded From analysis
+#       poreSort            {str}       lipids Excluded From analysis
 #
 # Results:
 #       
 # 
 #
 # Necessary Revisions:
-#       Needs to be revised to just take the 'top' bead in a lipid
+#       - Needs to be revised to just take the 'top' bead in a lipid
 #       rather than hard-code PO4
 
 proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
@@ -295,16 +295,16 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
 #       r or x value for the bin, depending on if polar or cartesian
 #
 # Arguments:
-#       file        {str}       File name
-#       number      {int}       Bin values ranging from 0 to n bins
-#       d1          {int}       Width of bins 
-#       min         {int}       Minimum values for analysis
+#       file        {str}       file name
+#       number      {int}       bin values ranging from 0 to n bins
+#       d1          {int}       width of bins 
+#       min         {int}       minimum values for analysis
 #
 # Results:
 #       prints line containing the min and max bin values to a file 
 #
 # Necessary Revisions/Problems:
-#       min is needs to be removed
+#       - min is only partially implemented
 
 proc printBinInfo {file number d1 min} {
     puts -nonewline $file "[format {%0.2f} [expr $number*$d1+$min]]  [format {%0.2f} [expr ($number+1)*$d1+$min]]  "
@@ -338,17 +338,22 @@ proc printValue {file value endLine} {
 #       print an entire 2D array (usually 1 frame) to file
 # 
 # Arguments:
-#       N1
-#       outFiles
-#       key
-#       d1
-#       min
-#       N2
-#       polar
-#       selex
+#       N1          {float}     bin dimension in x direction/radial bin dimensions
+#       outFiles    {dict}      dictionary of outputfiles and various membrane related quanities 
+#       key         {str}       key for value associated with outFiles dictionary
+#       d1          {float}     radial bin width
+#       min         {int}       controls how much of the region around the protein is analyzed (not fully implemented)  
+#       N2          {float}     bin dimension in y direction
+#       polar       {int}       1 or 0 denoting if system is analyzed in polar 
+#                               or cartesian coordinartes
+#       selex       {str}       a dict key that holds an atomselection as its value
 #
 # Results:
 #
+#       Prints 2D arrays of information of specific frame to output files
+#
+#Necessary Revisions/Problems:
+#       - min needs to be implemented 
 
 proc printFrame {N1 outFiles key d1 min N2 polar selex} {
 
@@ -439,12 +444,11 @@ proc analyzeTails { species } {
 #
 # Arguments:
 #       species     {list}      list of lipid species in system
-#       tailList    {list}
+#       tailList    {list}      nested list of tails organized by lipid type (see analyzeTails)
 #
 # Results:
-#       
-;# tail_numberer changes user3 to hold a tail number.
-;# This makes different tails easily separable for tilt/order analysis
+#       tail list in user3 is assigned values based on tail length
+
 proc numberTails { species tailList } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
         for {set tail 0} {$tail < [llength [lindex $tailList $lipidtype]]} {incr tail} {
@@ -462,13 +466,13 @@ proc numberTails { species tailList } {
 # assignBins (Previously: bin_assigner)--
 #       makes a list of bins based on x, y values and the coordinate system
 # Arguments:
-#       xVals       {list}
-#       yVals       {list}
-#       binWidth1   {float}
-#       binWidth2   {float}
-#       thetaDeg    {float}
-#       polar       {int}
-#       frm         {int}  
+#       xVals       {list}      list of all x values of lipids in a particular species
+#       yVals       {list}      list of all y values of lipids in a particular species
+#       binWidth1   {float}     Length of x dimension for a particular frame
+#       binWidth2   {float}     Length of y dimension for a particular frame
+#       thetaDeg    {float}     Degree system split to get appropriate Ntheta or number of bins
+#       polar       {int}       1 or 0 denoting if system is analyzed in polar or cartesian coordinartes
+#       frm         {int}       current frame of system
 #
 # Results:
 #       returns two lists of bins in the x or y direction
@@ -535,31 +539,32 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 # createOutfiles (Previously: create_outfiles) --
 #
 # Arguments:
-#       system
-#       quanity
-#       headNames
-#       TailList
-#       coordSystem
-#       folderName
+#       system          {str}       user defined name of the system
+#       quanity         {str}       quanities being evaluated, either height_density or tilt_order
+#       headNames       {str}       names of beads that define neutral surface  
+#       species         {list}      species of lipids in system
+#       TailList        {list}      nested list of tail names organized by lipid species
+#       coordSystem     {str}       string either for either polar of cartesian coordiates
+#       folderName      {str}       name of folder
 #
 # Results:
-#
-;# create a dict containing all the outfile names/addresses
-;# density segregates by species
-;# tilt and order segregate by species and tail number
-proc createOutfiles {system quantity_of_interest headnames species taillist coordsys foldername} {
+#       create a dict containing all the outfile names/addresses
+#       seperates density by species and tilt and order segregate 
+#       by species and tail number
+
+proc createOutfiles {system quantity headNames species tailList coordSystem folderName} {
     file mkdir "${foldername}/tcl_output"
-    if {$quantity_of_interest eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${foldername}/tcl_output/${system}.zone.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headnames}.${coordsys}.height.dat" w]
-        dict set outfiles z1z2 counts_up fname [open "${foldername}/tcl_output/${system}.zone.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z1z2 counts_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headnames}.${coordsys}.totdensity.dat" w]
-        dict set outfiles z0 counts_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headnames}.${coordsys}.totdensity.dat" w]
+    if {$quantity eq "height_density"} {
+        dict set outfiles z1z2 heights_up fname [open "${foldername}/tcl_output/${system}.zone.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "${foldername}/tcl_output/${system}.zone.${headNames}.${coordSystem}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.totdensity.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zone.${coordsys}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.ztwo.${coordsys}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zzero.${coordsys}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zone.${coordSystem}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.ztwo.${coordSystem}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zzero.${coordSystem}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
         for {set i 0} {$i < [llength $taillist]} {incr i} {
@@ -611,7 +616,13 @@ proc measureBoxSize {frame dim} {
 #       N2
 #
 # Results:
-#       
+#
+#
+#
+# Necessary Revisions/Problems:
+#       - Assumes a square system for cartesian plotting
+#       - min is only partially implemented
+
 proc prepareBins {nframes polar min dr_N1 N2} {
     
     if {$polar == 1} {
@@ -1161,6 +1172,9 @@ proc readPolar {polar} {
 #
 # Results:
 #       
+#       
+#Necessary Revisions/Problems:
+#       Min is not fully implemented 
 proc createAtomSelections {quantity configDictonary} {
     ;#atomselections setup as dict
     if {$quantity eq "height_density"} {
