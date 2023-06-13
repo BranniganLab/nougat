@@ -158,7 +158,7 @@ proc concatenateList {inputList delimiter} {
 #       to be evaluated.
 #
 # Arguments: 
-#       tailList        {List}      List of list of atomselections of lipid tails 
+#       tailList        {List}      nested list of tails organized by lipid type (see analyzeTails) 
 #   
 # Results:
 #       Returns a list of lists containing the starting beads and 
@@ -225,7 +225,6 @@ proc rotateSystem {axis degree start stop} {
 #
 # Results:
 #       
-# 
 #
 # Necessary Revisions:
 #       - Needs to be revised to just take the 'top' bead in a lipid
@@ -535,47 +534,46 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
     return [list $dim1_bins $dim2_bins]
 }
 
-
 # createOutfiles (Previously: create_outfiles) --
 #
 # Arguments:
 #       system          {str}       user defined name of the system
-#       quanity         {str}       quanities being evaluated, either height_density or tilt_order
+#       quantity        {str}       quanities being evaluated, either height_density or tilt_order
 #       headNames       {str}       names of beads that define neutral surface  
 #       species         {list}      species of lipids in system
-#       TailList        {list}      nested list of tail names organized by lipid species
+#       tailList        {list}      nested list of tail names organized by lipid species
 #       coordSystem     {str}       string either for either polar of cartesian coordiates
 #       folderName      {str}       name of folder
 #
 # Results:
-#       create a dict containing all the outfile names/addresses
+#       returns a dict containing all the outfile names/addresses
 #       seperates density by species and tilt and order segregate 
 #       by species and tail number
 
 proc createOutfiles {system quantity headNames species tailList coordSystem folderName} {
     file mkdir "${foldername}/tcl_output"
     if {$quantity eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${foldername}/tcl_output/${system}.zone.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z1z2 counts_up fname [open "${foldername}/tcl_output/${system}.zone.${headNames}.${coordSystem}.totdensity.dat" w]
-        dict set outfiles z1z2 counts_down fname [open "${foldername}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.totdensity.dat" w]
-        dict set outfiles z0 counts_zzero fname [open "${foldername}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.totdensity.dat" w]
+        dict set outfiles z1z2 heights_up fname [open "${folderName}/tcl_output/${system}.zone.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${folderName}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${folderName}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.height.dat" w]
+        dict set outfiles z1z2 counts_up fname [open "${folderName}/tcl_output/${system}.zone.${headNames}.${coordSystem}.totdensity.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "${folderName}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.totdensity.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "${folderName}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.totdensity.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zone.${coordSystem}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.ztwo.${coordSystem}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.zzero.${coordSystem}.density.dat" w]
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.zone.${coordSystem}.density.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.ztwo.${coordSystem}.density.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.zzero.${coordSystem}.density.dat" w]
         }
     } elseif {$quantity_of_interest eq "tilt_order"} {
-        for {set i 0} {$i < [llength $taillist]} {incr i} {
+        for {set i 0} {$i < [llength $tailList]} {incr i} {
             set lipidtype [lindex $species $i]
-            for {set j 0} {$j < [llength [lindex $taillist $i]]} {incr j} {
+            for {set j 0} {$j < [llength [lindex $tailList $i]]} {incr j} {
                 set tailnum "tail$j"
-                set taillength [llength [lindex [lindex $taillist $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordsys}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${foldername}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordsys}.order.dat" w]
+                set taillength [llength [lindex [lindex $tailList $i] $j]]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordSystem}.tilt.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordSystem}.tilt.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordSystem}.order.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordSystem}.order.dat" w]
             }
         }
     }
@@ -584,21 +582,26 @@ proc createOutfiles {system quantity headNames species tailList coordSystem fold
 }
 
 # measureBoxSize (Prevoiusly: measure_box_size)--
-#       a proc for measuring box size
+#
+#       measures length of a single boxedge
+#
 # Arguments:
-#       frame
-#       dimension
+#       frame        {int}       current frame being analyzed 
+#       coordinate   {str}       coordinate, either "x","y" or "z" 
 # Results:
 #   
+#       returns the length of the box in a single direction 
+#
 # Necessary Revisions/Problems: 
-#       [molinfo top get a] is unreliable for certain coarse-grain simulations 
-proc measureBoxSize {frame dim} {
-    if {($dim ne "x") && ($dim ne "y") && ($dim ne "z")} {
+#       [molinfo top get a] is unreliable for certain coarse-grain simulations
+# 
+proc measureBoxSize {frame coordinate} {
+    if {($coordinate ne "x") && ($coordinate ne "y") && ($coordinate ne "z")} {
         puts "dim must be x, y, or z"
         return
     }
     set sel [atomselect top all frame $frame]
-    set dimvals [$sel get $dim]
+    set dimvals [$sel get $coordinate]
     set max [lindex [lsort -real $dimvals] end]
     set min [lindex [lsort -real $dimvals] 0]
     set len [expr $max-$min]
@@ -607,30 +610,32 @@ proc measureBoxSize {frame dim} {
 }
 
 # prepareBins (Previously: bin_prep)--
-#       Determines the number of bins and the step length in each dimension
+#
+#       determines the number of bins and the step length in each dimension
+#
 # Arguments:
-#       frameNumber
-#       polar
-#       min
-#       drN1
-#       N2
+#       frameNumber     {int}       current frame being analyzed 
+#       polar           {int}       1 or 0 denoting if system is analyzed in polar or cartesian coordinartes
+#       min             {int}       controls how much of the region around the protein is analyzed (not fully implemented)
+#       drN1            {int}       bin dimension in x direction/radial bin dimensions
+#       N2              {int}       bin dimension in y direction
 #
 # Results:
 #
-#
+#       returns a dictionary containing bin and step length information
 #
 # Necessary Revisions/Problems:
 #       - Assumes a square system for cartesian plotting
 #       - min is only partially implemented
 
-proc prepareBins {nframes polar min dr_N1 N2} {
+proc prepareBins {frameNumber polar min dr_N1 N2} {
     
     if {$polar == 1} {
     
         dict set bindims d1 $dr_N1
 
         #measure box size at final frame to get bin values
-        set box_x [molinfo top get a frame [expr $nframes-1]]
+        set box_x [molinfo top get a frame [expr $frameNumber-1]]
 
         set box_r [expr int($box_x)/2]
         set rrange [expr $box_r-$min]
@@ -664,12 +669,16 @@ proc prepareBins {nframes polar min dr_N1 N2} {
 
 # calculateReferenceHeight (Previously: calc_ref_height)--
 #
+#       Calculates reference height of inclusion 
+#
 # Arguments:
-#       configDict
-#       frame
+#       configDict      {dict}      dictionary of values created from the config file 
+#       frame           {int}       current frame
 #
 # Result:
-#   
+#
+#       returns the reference height of the inclusion for a specific frame
+  
 proc calculateReferenceHeight {config_dict frm} {
     if {[dict get $config_dict reference_point] ne "NULL"} {
         set ref_bead [atomselect top [dict get $config_dict reference_point] frame $frm]
@@ -684,12 +693,17 @@ proc calculateReferenceHeight {config_dict frm} {
 
 # getSelectionInformation (Previously: grab_sel_info)--
 #
+#       gets various pieces of information of lipid atomselection
+#
 # Arguments:
-#       sel
-#       referenceHeight
+#       sel             {atomsel}       atomselection for lipids 
+#       refHeight       {float}         reference height to subtract from lipids
 #
 # Results:
-#       
+#
+#       returns dictionary containing various pieces of information 
+#       for an atomselection
+
 proc grab_sel_info {sel ref_height} {
     dict set sel_info xvals_list [$sel get x]
     dict set sel_info yvals_list [$sel get y]
@@ -741,21 +755,24 @@ proc updateDimensions {bindims frm} {
 
 # concatenateNames (Previously: concat_names) --
 #
+#       concatenate all beadnames together for file naming purposes
+#
 # Arguments: 
-#       headnames
+#       headNames       {str}       names of beads that define neutral surface
 #
 # Results:
 #   
-;# concatenate all beadnames together for file naming purposes
-proc concat_names { headnames } {
+#       returns string of bead names
+
+proc concat_names { headNames } {
     if {[llength $headnames] > 1} {
-        set condensed_name [lindex $headnames 0]
-        for {set i 1} {$i < [llength $headnames]} {incr i} {
-            set addname [lindex $headnames $i]
+        set condensed_name [lindex $headNames 0]
+        for {set i 1} {$i < [llength $headNames]} {incr i} {
+            set addname [lindex $headNames $i]
             set condensed_name "$condensed_name.$addname"
         }
     } elseif {[llength $headnames] == 1} {
-        set condensed_name [lindex $headnames 0]
+        set condensed_name [lindex $headNames 0]
     } else {
         puts "headnames must contain a bead name"
         break
@@ -765,22 +782,25 @@ proc concat_names { headnames } {
 
 # createResidueDictionaries (Previously: create_res_dict)--
 #
+#       creates dictionary containing various values needed downstream
+#
 # Arguments:
-#       species
-#       headNames
-#       lipidList
-#       nameList
-#       residList
-#       dimensionOneBinList
-#       dimensionTwoBinList
-#       leafletList
-#       selex
+#       species         {list}      species of lipids in system
+#       headNames       {str}       names of beads that define neutral surface
+#       lipidList       {list}      all lipid resnames in system
+#       nameList        {list}      all lipid bead names in system
+#       residList       {list}      all lipid resid's in system
+#       dimOneBinList   {list}      list of bins in the x direction/radial bin's
+#       dimTwoBinList   {list}      list ob bins in y direction
+#       leafletList     {list}      list of user values for lipids denoting upper, lower, 
+#                                   or middle leaflet
+#       selex           {atomsel}   from the dictionary created by the createAtomSelections proc
 #
 # Results:
 #  
-;# binning is controlled by the location of beads named as $headnames in cell_prep
-;# creates a nested dict with keys set to the name "bin1#,bin2#,leaflet#" and
-;# values corresponding to the indices of lipids in that bin
+#       returns dictionary with various values corresponding to lipids in 
+#       a particular bin
+
 proc createResidueDictionaries { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
     ;# initialize a nested dict with a dummy key and value
     dict set res_dict dummy "dummy"
@@ -818,27 +838,28 @@ proc createResidueDictionaries { species headnames lipid_list name_list resid_li
     return $res_dict
 }
 
-# outputDensityNormalizationInformation (Previously: output_density_norm_info)
+# outputDensityNormInfo (Previously: output_density_norm_info)
 #
 #       Calculates the normalization factor for 
 #       density enrichment calculations
 #
 # Arguments:
-#       start
-#       frameNumber
-#       step
-#       species
-#       system
-#       headNames
-#       coordSystem
-#       folderName
+#       start           {int}       starting frame
+#       frameNumber     {int}       end frame
+#       step            {int}       step size between frames
+#       species         {list}      species of lipids in system
+#       system          {str}       user defined name of the system
+#       headNames       {str}       names of beads that define neutral surface
+#       coordSystem     {str}       string either for either polar of cartesian coordiates
+#       folderName      {str}       name of folder
 #
 # Results:
 #       
-;# calculates the normalization factor for density enrichment calculations
-proc outputDensityNormalizationInformation {start nframes step species system headnames coordsys foldername} {
+#       calculates the normalization factor for density enrichment calculations
+
+proc outputDensityNormInfo {start frameNumber step species system headnames coordsys foldername} {
     set arealist []
-    for {set frm $start} {$frm <= $nframes} {set frm [expr $frm+$step]} {
+    for {set frm $start} {$frm <= $frameNumber} {set frm [expr $frm+$step]} {
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
@@ -875,9 +896,6 @@ proc outputDensityNormalizationInformation {start nframes step species system he
 #       Returns a list with an atomselection and the number of unique 
 #       tails (tails with different lengths)
 
-;# nougat tilt and order calculations segregate by lipid species and tail.
-;# Several different tails in a system may be the same length as each other,
-;# and so their calculations can be combined in the same loop iteration.
 proc sortTailLength {species acylNames} {
     set lenlist []
     for {set i 0} {$i < [llength $acylNames]} {incr i} {
@@ -915,6 +933,7 @@ proc sortTailLength {species acylNames} {
 #       returns the cosine theta of the vector, 
 #       this is the dot product of n_{1,2} and the vector [0 0 1]
 #       this corresponds to the 3rd value of n_{1,2} 
+proc getCosineTheta {start end} {
     set r12 [vecsub $start $end]
     set n12 [vecnorm $r12]
     return [lindex $n12 2]
@@ -932,6 +951,7 @@ proc sortTailLength {species acylNames} {
 #       zValues     {list}      z coordinate of tail beads of all lipids being evaluated
 #
 # Results:
+#
 #       Returns a nested list of the average order parameter of a lipid tail
 #       ex.
 #       {{0.4 0.4 0.4 0.4} {0.9 0.9 0.9 0.9} ...}  
@@ -967,17 +987,19 @@ proc calculateOrderParameters {length xValues yValues zValues} {
 #       Uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
 # Arguments:
-#       residueDictionary       {dict}
-#       outfiles                {dict}
-#       lipidList               {list}
-#       tilts                   {}
-#       orders                  {}
-#       tailList                {}
-#       selex                   {}
+#       residueDictionary       {dict}      contains various attributes of the system (check:createResidueDictionaries)
+#       outfiles                {dict}      contains all output files
+#       lipidList               {list}      all lipid resnames in system 
+#       tilts                   {list}      tilts of lipids 
+#       orders                  {list}      order parameter of lipid tails
+#       tailList                {list}      nested list of tails organized by lipid type (see analyzeTails)
+#       selex                   {atomsel}   from the dictionary created by the createAtomSelections proc 
 #
 # Results:
+#
 #       Returns dictionary with average tilt and order parameter 
 #       of lipids for a specific bin 
+
 proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts orders tailList selex} {
     dict set counts placeholder "dummy"
     dict for {bin indices} $residueDictionary {
@@ -1025,14 +1047,16 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 #       uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
 # Arguments:
-#       residueDictionary       {dict}
-#       outfiles                {dict}
-#       lipidList               {list}
-#       zValsList               {list}
+#       residueDictionary       {dict}      contains various attributes of the system (check:createResidueDictionaries) 
+#       outfiles                {dict}      contains all output files 
+#       lipidList               {list}      all lipid resnames in system 
+#       zValsList               {list}      height of lipids from inclusion if present
 #
 # Results:
+#
 #       Returns dictionary with average height, density and counts 
 #       of lipids for a specific bin 
+
 proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
     dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
@@ -1083,14 +1107,17 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
 }
 
 # setBetaValues (Previously: set_beta_vals)--
+#
+#       assigns beta values to various components of system
 #       
 # Arguments:
-#       selectInclusion
-#       species
+#       selectInclusion     {str}       selection for the inclusion
 #
 # Results:
-#       
-proc setBetaValues {selectInclusion species} {
+#
+#       sets all beta values in vmd based on group
+
+proc setBetaValues {selectInclusion} {
     puts "starting to fill beta values"
     
     if {$selectInclusion ne "NULL"} {
@@ -1146,11 +1173,15 @@ proc setBetaValues {selectInclusion species} {
 
 # readPolar (Previously: read_polar) --
 #
+#       Converts bianary value (1 or 0) to "polar" or "cart"
+#
 # Arguments:
-#       polar
+#       polar    {int}      1 or 0 denoting if system is analyzed in polar or cartesian coordinartes
 #
 # Results:
 #       
+#       returns string denoting if system is analyzed in polar or cartesian    
+
 proc readPolar {polar} {
     ;# generate string for polar or cartesian coordinates
     if {$polar == 1} {
@@ -1165,16 +1196,21 @@ proc readPolar {polar} {
 }
 
 # createAtomSelections (Previously: create_atomselections)--
+#
+#       creates dictionaies of atomselections  
 #       
 # Arguments:
-#       quantity
-#       configDictionary
+#       quantity            {str}       quanities being evaluated, either height_density or tilt_order       
+#       configDictionary    {dict}      dictionary of values created from the config file 
 #
 # Results:
 #       
+#       returns a dictionary with updated atomselections for height&density 
+#       or tilt&order processing 
 #       
-#Necessary Revisions/Problems:
-#       Min is not fully implemented 
+# Necessary Revisions/Problems:
+#       Min is not fully implemented
+
 proc createAtomSelections {quantity configDictonary} {
     ;#atomselections setup as dict
     if {$quantity eq "height_density"} {
