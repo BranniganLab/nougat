@@ -1,14 +1,16 @@
 # ConvertRadianToDegree (Previously: RtoD)--
+#
 #       Converts radians to degrees
 #
 # Arguments:
-#       r         {float}    Angle in radians
+#       rad         {float}    Angle in radians
 #
 # Results:
 #       Returns angle in degrees
-proc RtoD {r} {
+
+proc RtoD {rad} {
     global M_PI
-    return [expr $r*180.0/$M_PI]
+    return [expr $rad*180.0/$M_PI]
 }
 
 # fitVecsToSel (Previously: tilt_angles)--
@@ -19,9 +21,9 @@ proc RtoD {r} {
 #
 # Arguments:
 #       length      {int}     Number of beads in a single lipid tail.
-#       xvals       {list}    Ordered list of x coordinates. 
-#       yvals       {list}    Ordered list of y coordinates. 
-#       zvals       {list}    Ordered list of z coordinates.
+#       xVals       {list}    Ordered list of x coordinates. 
+#       yVals       {list}    Ordered list of y coordinates. 
+#       zVals       {list}    Ordered list of z coordinates.
 #
 # Results:
 #       The result is a list of list that contains a normalized fitted vector 
@@ -30,12 +32,12 @@ proc RtoD {r} {
 #       ex. 
 #       {{{0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261}}...}   
 
-proc fitVecsToSel {length xvals yvals zvals} {
+proc fitVecsToSel {length xVals yVals zVals} {
     set tiltList []
     set lsqNormFactor [calculateLsqNormFactor $length]
-    set xvec [fitTailVectors $length $xvals $lsqNormFactor]
-    set yvec [fitTailVectors $length $yvals $lsqNormFactor]
-    set zvec [fitTailVectors $length $zvals $lsqNormFactor]
+    set xvec [fitTailVectors $length $xVals $lsqNormFactor]
+    set yvec [fitTailVectors $length $yVals $lsqNormFactor]
+    set zvec [fitTailVectors $length $zVals $lsqNormFactor]
     for {set i 0} {$i < [llength $xvec]} {incr i} {
         set vector "[lindex $xvec $i] [lindex $yvec $i] [lindex $zvec $i]"
         set norm [vecnorm $vector]
@@ -120,8 +122,8 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       spaces on either side of the $delimiter.
 # 
 # Arguments:
-#       inputList       {List}      list of elements to concatenate
-#       delimiter       {str}       string to be input between items in inputList
+#       inputList  {List}  list of elements to concatenate
+#       delimiter  {str}   string to be input between items in inputList
 #
 # Results:
 #       Returns a list of elements with the specified delimiter between "NULL" will 
@@ -158,7 +160,7 @@ proc concatenateList {inputList delimiter} {
 #       to be evaluated.
 #
 # Arguments: 
-#       tailList        {List}      nested list of tails organized by lipid type (see analyzeTails) 
+#       tailList  {List}  nested list of tails organized by lipid type (see analyzeTails) 
 #   
 # Results:
 #       Returns a list of lists containing the starting beads and 
@@ -186,10 +188,10 @@ proc findHeadsAndTails { tailList } {
 #       evaluated
 #
 # Arguments: 
-#       axis        {str}       axis of rotation(x, y, z)
-#       degree      {int}       degree of rotation from 0 to 360
-#       start       {int}       start frame
-#       stop        {int}       stop frame
+#       axis     {str}   axis of rotation(x, y, z)
+#       degree   {int}   degree of rotation from 0 to 360
+#       start    {int}   start frame
+#       stop     {int}   stop frame
 #
 # Results:
 #       results in the system being rotated by user-defined specifications
@@ -225,6 +227,7 @@ proc rotateSystem {axis degree start stop} {
 #
 # Results:
 #       
+#       all lipids will contain a user value corresponding to upper or lower leaflet
 #
 # Necessary Revisions:
 #       - Needs to be revised to just take the 'top' bead in a lipid
@@ -315,7 +318,7 @@ proc printBinInfo {file number d1 min} {
 #
 # Arguments:
 #       file        {str}       File name
-#       value       {}          Value to be printed
+#       value       {float}     Value to be printed
 #       endLine     {int}       Determines if value should be added to same line or next line
 #                               by 0 or 1
 # Results:
@@ -422,7 +425,7 @@ proc analyzeTails { species } {
     }
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set heads_and_tails [findHeadsAndTails $species $taillist]
+    set findHeadsAndTails [findHeadsAndTails $species $taillist]
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -434,7 +437,7 @@ proc analyzeTails { species } {
         }
     }
 
-    return [list $taillist $heads_and_tails $full_tails]
+    return [list $taillist $findHeadsAndTails $full_tails]
 }
 
 # numberTails (Previously: Tail_numberer)--
@@ -628,7 +631,7 @@ proc measureBoxSize {frame coordinate} {
 #       - Assumes a square system for cartesian plotting
 #       - min is only partially implemented
 
-proc prepareBins {frameNumber polar min dr_N1 N2} {
+proc prepareBins {frameNumber polar min drN1 N2} {
     
     if {$polar == 1} {
     
@@ -641,10 +644,10 @@ proc prepareBins {frameNumber polar min dr_N1 N2} {
         set rrange [expr $box_r-$min]
         
         #calculate number of dim1 bins from d1 and range1
-        if {[expr $rrange%$dr_N1] == 0} { 
-            dict set bindims N1 [expr [expr $rrange/$dr_N1]-1] 
+        if {[expr $rrange%$drN1] == 0} { 
+            dict set bindims N1 [expr [expr $rrange/$drN1]-1] 
         } else {
-            dict set bindims N1 [expr $rrange/$dr_N1]
+            dict set bindims N1 [expr $rrange/$drN1]
         }
 
         #calculate dtheta in degrees and radians
@@ -655,9 +658,9 @@ proc prepareBins {frameNumber polar min dr_N1 N2} {
     
     } elseif {$polar == 0} {
 
-        dict set bindims N1 $dr_N1
+        dict set bindims N1 $drN1
         ;# fix this if you ever want to implement rectangular systems
-        dict set bindims N2 $dr_N1
+        dict set bindims N2 $drN1
         
         set bindims [updateDimensions $bindims 0]
 
@@ -679,9 +682,9 @@ proc prepareBins {frameNumber polar min dr_N1 N2} {
 #
 #       returns the reference height of the inclusion for a specific frame
   
-proc calculateReferenceHeight {config_dict frm} {
-    if {[dict get $config_dict reference_point] ne "NULL"} {
-        set ref_bead [atomselect top [dict get $config_dict reference_point] frame $frm]
+proc calculateReferenceHeight {configDict frm} {
+    if {[dict get $configDict reference_point] ne "NULL"} {
+        set ref_bead [atomselect top [dict get $configDict reference_point] frame $frm]
         set ref_height [$ref_bead get z]
         $ref_bead delete
         set ref_height [vecexpr $ref_height mean]
@@ -691,7 +694,7 @@ proc calculateReferenceHeight {config_dict frm} {
     return $ref_height
 }
 
-# getSelectionInformation (Previously: grab_sel_info)--
+# getSelInfo (Previously: grab_sel_info)--
 #
 #       gets various pieces of information of lipid atomselection
 #
@@ -704,7 +707,7 @@ proc calculateReferenceHeight {config_dict frm} {
 #       returns dictionary containing various pieces of information 
 #       for an atomselection
 
-proc grab_sel_info {sel ref_height} {
+proc getSelInfo {sel refHeight} {
     dict set sel_info xvals_list [$sel get x]
     dict set sel_info yvals_list [$sel get y]
     dict set sel_info resid_list [$sel get resid]
@@ -718,7 +721,7 @@ proc grab_sel_info {sel ref_height} {
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
     if {$ref_height ne "NULL"} {
-        dict set sel_info zvals_list [vecexpr [$sel get z] $ref_height sub]
+        dict set sel_info zvals_list [vecexpr [$sel get z] $refHeight sub]
     } else {
         dict set sel_info zvals_list [$sel get z]
     }   
@@ -737,18 +740,22 @@ proc grab_sel_info {sel ref_height} {
 
 # updateDimensions (Previously: update_dims)--
 #
+#       Updates the bin dimensions based on frame
+#
 # Arguments: 
-#       binDimension
-#       frame
+#       binDimension    {dict}  previous bin dimensions
+#       frame           {int}   current frame
 #
 # Results:
 #   
-proc updateDimensions {bindims frm} {
-    set x [molinfo top get a frame $frm]
-    set y [molinfo top get b frame $frm]
+#       returns updated bin dimensions for the current frame
 
-    dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
-    dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+proc updateDimensions {binDimension frame} {
+    set x [molinfo top get a frame $frame]
+    set y [molinfo top get b frame $frame]
+
+    dict set bindims d1 [expr $x/[expr [dict get $binDimension N1]*1.0]]
+    dict set bindims d2 [expr $y/[expr [dict get $binDimension N2]*1.0]]
 
     return $bindims
 }
@@ -764,7 +771,7 @@ proc updateDimensions {bindims frm} {
 #   
 #       returns string of bead names
 
-proc concat_names { headNames } {
+proc concatenateNames { headNames } {
     if {[llength $headnames] > 1} {
         set condensed_name [lindex $headNames 0]
         for {set i 1} {$i < [llength $headNames]} {incr i} {
@@ -789,7 +796,6 @@ proc concat_names { headNames } {
 #       headNames       {str}       names of beads that define neutral surface
 #       lipidList       {list}      all lipid resnames in system
 #       nameList        {list}      all lipid bead names in system
-#       residList       {list}      all lipid resid's in system
 #       dimOneBinList   {list}      list of bins in the x direction/radial bin's
 #       dimTwoBinList   {list}      list ob bins in y direction
 #       leafletList     {list}      list of user values for lipids denoting upper, lower, 
@@ -801,16 +807,16 @@ proc concat_names { headNames } {
 #       returns dictionary with various values corresponding to lipids in 
 #       a particular bin
 
-proc createResidueDictionaries { species headnames lipid_list name_list resid_list dim1_bins_list dim2_bins_list leaflet_list selex} {
+proc createResidueDictionaries { species headnames lipidList nameList dimOneBinList dimTwoBinList leafletList selex} {
     ;# initialize a nested dict with a dummy key and value
     dict set res_dict dummy "dummy"
     
     if {$selex ne "z0"} {
-        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-            if {([lindex $leaflet_list $i] == 3) || ([lindex $leaflet_list $i] == 4)} {
+        for {set i 0} {$i < [llength $lipidList]} {incr i} {
+            if {([lindex $leafletList $i] == 3) || ([lindex $leafletList $i] == 4)} {
                 continue
-            } elseif {([lsearch $species [lindex $lipid_list $i]] != -1) && ([lsearch $headnames [lindex $name_list $i]] != -1)} {
-                set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+            } elseif {([lsearch $species [lindex $lipidList $i]] != -1) && ([lsearch $headNames [lindex $nameList $i]] != -1)} {
+                set bin "[lindex $dimOneBinList $i],[lindex $dimTwoBinList $i]"
                 set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
                 if {[dict exists $res_dict $bin_leaf]} {
                     dict append res_dict $bin_leaf " $i"
@@ -821,8 +827,8 @@ proc createResidueDictionaries { species headnames lipid_list name_list resid_li
         }
     } else {
         ;# zzero needs to be handled separately; keys are set to "bin1#,bin2#,3"
-        for {set i 0} {$i < [llength $lipid_list]} {incr i} {
-            set bin "[lindex $dim1_bins_list $i],[lindex $dim2_bins_list $i]"
+        for {set i 0} {$i < [llength $lipidList]} {incr i} {
+            set bin "[lindex $dimOneBinList $i],[lindex $dimTwoBinList $i]"
             set bin_leaf "$bin,3"
             if {[dict exists $res_dict $bin_leaf]} {
                 dict append res_dict $bin_leaf " $i"
@@ -857,19 +863,19 @@ proc createResidueDictionaries { species headnames lipid_list name_list resid_li
 #       
 #       calculates the normalization factor for density enrichment calculations
 
-proc outputDensityNormInfo {start frameNumber step species system headnames coordsys foldername} {
+proc outputDensityNormInfo {start frameNumber step species system headNames coordSystem folderName} {
     set arealist []
     for {set frm $start} {$frm <= $frameNumber} {set frm [expr $frm+$step]} {
         lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
     }
     set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${foldername}/tcl_output/${system}.${coordsys}.density.normfactor.dat" w]
+    set normfactor_outfile [open "${folderName}/tcl_output/${system}.${coordSystem}.density.normfactor.dat" w]
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
         set Sb 0
         foreach name $names {
-            if {[lsearch $headnames $name] != -1} {
+            if {[lsearch $headNames $name] != -1} {
                 incr Sb
             }
         }
@@ -971,7 +977,7 @@ proc calculateOrderParameters {length xValues yValues zValues} {
             ;# calculate cos2theta for each bond in the tail and append to a temp list
             set start [list [lindex $xValues $i] [lindex $yValues $i] [lindex $zValues $i]]
             set end [list [lindex $xValues [expr $i-1]] [lindex $yValues [expr $i-1]] [lindex $zValues [expr $i-1]]]
-            set costheta [get_costheta $start $end]
+            set costheta [getCosineTheta $start $end]
             lappend temp_list [expr {$costheta * $costheta}]
         }
     }
@@ -1328,7 +1334,7 @@ proc get_theta {x y} {
     }
 
     ;# change to degrees
-    return [RtoD $theta]
+    return [ConvertRadianToDegree $theta]
 }
 
 ;# Ouputs position of the centered protein in a membrane
