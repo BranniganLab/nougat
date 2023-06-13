@@ -357,9 +357,9 @@ proc printValue {file value endLine} {
 #Necessary Revisions/Problems:
 #       - min needs to be implemented 
 
-proc printFrame {N1 outFiles key d1 min N2 polar selex} {
+proc printFrame {N1 outfiles key d1 min N2 polar selex} {
 
-    set file [dict get $outFiles $selex $key fname]
+    set file [dict get $outfiles $selex $key fname]
 
     ;# starts new line in outfile with bin values
     for {set m 0.0} {$m < $N1} {set m [expr $m+1.0]} {
@@ -368,7 +368,7 @@ proc printFrame {N1 outFiles key d1 min N2 polar selex} {
         puts -nonewline $file "$binstart  $binend  "
         ;# prints bin values through ultimate value in one line
         for {set n 0.0} {$n < $N2} {set n [expr $n+1.0]} {
-            if {[dict exists $outFiles $selex $key bin "$m,$n"]} {
+            if {[dict exists $outfiles $selex $key bin "$m,$n"]} {
                 puts -nonewline $file " [dict get $outfiles $selex $key bin "$m,$n"]"
             } else {
                 puts -nonewline $file " nan"
@@ -554,7 +554,7 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 #       by species and tail number
 
 proc createOutfiles {system quantity headNames species tailList coordSystem folderName} {
-    file mkdir "${foldername}/tcl_output"
+    file mkdir "${folderName}/tcl_output"
     if {$quantity eq "height_density"} {
         dict set outfiles z1z2 heights_up fname [open "${folderName}/tcl_output/${system}.zone.${headNames}.${coordSystem}.height.dat" w]
         dict set outfiles z1z2 heights_down fname [open "${folderName}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.height.dat" w]
@@ -567,7 +567,7 @@ proc createOutfiles {system quantity headNames species tailList coordSystem fold
             dict set outfiles z1z2 density_down_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.ztwo.${coordSystem}.density.dat" w]
             dict set outfiles z0 density_zzero_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.zzero.${coordSystem}.density.dat" w]
         }
-    } elseif {$quantity_of_interest eq "tilt_order"} {
+    } elseif {$quantity eq "tilt_order"} {
         for {set i 0} {$i < [llength $tailList]} {incr i} {
             set lipidtype [lindex $species $i]
             for {set j 0} {$j < [llength [lindex $tailList $i]]} {incr j} {
@@ -720,7 +720,7 @@ proc getSelInfo {sel refHeight} {
     }
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
-    if {$ref_height ne "NULL"} {
+    if {$refHeight ne "NULL"} {
         dict set sel_info zvals_list [vecexpr [$sel get z] $refHeight sub]
     } else {
         dict set sel_info zvals_list [$sel get z]
@@ -743,19 +743,19 @@ proc getSelInfo {sel refHeight} {
 #       Updates the bin dimensions based on frame
 #
 # Arguments: 
-#       binDimension    {dict}  previous bin dimensions
+#       bindims         {dict}  previous bin dimensions
 #       frame           {int}   current frame
 #
 # Results:
 #   
 #       returns updated bin dimensions for the current frame
 
-proc updateDimensions {binDimension frame} {
+proc updateDimensions {bindims frame} {
     set x [molinfo top get a frame $frame]
     set y [molinfo top get b frame $frame]
 
-    dict set bindims d1 [expr $x/[expr [dict get $binDimension N1]*1.0]]
-    dict set bindims d2 [expr $y/[expr [dict get $binDimension N2]*1.0]]
+    dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
+    dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
 
     return $bindims
 }
@@ -817,7 +817,7 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
                 continue
             } elseif {([lsearch $species [lindex $lipidList $i]] != -1) && ([lsearch $headNames [lindex $nameList $i]] != -1)} {
                 set bin "[lindex $dimOneBinList $i],[lindex $dimTwoBinList $i]"
-                set bin_leaf "$bin,[expr int([lindex $leaflet_list $i])]"
+                set bin_leaf "$bin,[expr int([lindex $leafletList $i])]"
                 if {[dict exists $res_dict $bin_leaf]} {
                     dict append res_dict $bin_leaf " $i"
                 } else {

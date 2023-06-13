@@ -109,7 +109,6 @@ proc cell_prep {config_path leaf_check} {
 ;# nougat main functions
 
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
-    puts "yes"
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
     set config_dict [cell_prep $config_path 0]
@@ -139,14 +138,13 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     set coordsys [readPolar $polar]
     set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
-    puts $foldername
     file mkdir $foldername
     file copy -force $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
     
-    puts "yes"
+    
     run_nougat $system $config_dict $bindims $polar "height_density" $foldername
     run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
@@ -155,7 +153,6 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
     
     set coordsys [readPolar $polar]
-    puts "yes"
     set outfiles [createOutfiles $system $quantity_of_interest [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys $foldername]
     set selections [createAtomSelections $quantity_of_interest $config_dict]
 
@@ -182,7 +179,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
-        puts "yes"
+
         foreach selex [dict keys $selections] {
 
             ;# $selex is a dict key that holds an atomselection as its value
@@ -207,11 +204,11 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
+                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [fitVecsToSel [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set orders [calculateOrderParameters [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
-                set outfiles [averageTiltAndOrderParameter $res_dict $outfiles [dict get $sel_info leaflet_list] [dict get $sel_info lipid_list] $tilts $orders [dict get $sel_info tail_list] $selex]
+                set outfiles [averageTiltAndOrderParameter $res_dict $outfiles [dict get $sel_info lipid_list] $tilts $orders [dict get $sel_info tail_list] $selex]
             }
 
             ;# Now that all information has been binned, print it to files
