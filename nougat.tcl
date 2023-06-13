@@ -36,15 +36,18 @@ proc cell_prep {config_path leaf_check} {
     load [dict get $config_dict vecexpr_path]/vecexpr.so
 
     ;# figure out which lipids are in the system
+
     if {[dict get $config_dict inclusion_sel] ne "NULL"} {
         set lipidsel [atomselect top "not [dict get $config_dict inclusion_sel] and not [dict get $config_dict excluded_sel]"]
     } else {
         set lipidsel [atomselect top "not [dict get $config_dict excluded_sel]"]
     }
+
     set species [lsort -unique [$lipidsel get resname]]
     $lipidsel delete
 
     set tail_info [analyzeTails $species]
+
     set acyl_names [lindex $tail_info 0]
     set heads_and_tails [lindex $tail_info 1]
     set full_tails [lindex $tail_info 2]
@@ -106,7 +109,7 @@ proc cell_prep {config_path leaf_check} {
 ;# nougat main functions
 
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
-
+    puts "yes"
     ;# running cell_prep will do some important initial configuration based on user input. 
     ;# check the extensive documentation at the top of this file for instructions.
     set config_dict [cell_prep $config_path 0]
@@ -136,12 +139,14 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     set coordsys [readPolar $polar]
     set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
+    puts $foldername
     file mkdir $foldername
     file copy -force $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-
+    
+    puts "yes"
     run_nougat $system $config_dict $bindims $polar "height_density" $foldername
     run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
@@ -149,7 +154,8 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
 proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
     
-    set coordsys [read_polar $polar]
+    set coordsys [readPolar $polar]
+    puts "yes"
     set outfiles [createOutfiles $system $quantity_of_interest [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] $coordsys $foldername]
     set selections [createAtomSelections $quantity_of_interest $config_dict]
 
@@ -176,7 +182,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
-
+        puts "yes"
         foreach selex [dict keys $selections] {
 
             ;# $selex is a dict key that holds an atomselection as its value

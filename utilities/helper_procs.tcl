@@ -425,7 +425,7 @@ proc analyzeTails { species } {
     }
 
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-    set findHeadsAndTails [findHeadsAndTails $species $taillist]
+    set findHeadsAndTails [findHeadsAndTails $taillist]
 
     ;# one list with all the bead names for convenience
     set full_tails []
@@ -772,13 +772,13 @@ proc updateDimensions {binDimension frame} {
 #       returns string of bead names
 
 proc concatenateNames { headNames } {
-    if {[llength $headnames] > 1} {
+    if {[llength $headNames] > 1} {
         set condensed_name [lindex $headNames 0]
         for {set i 1} {$i < [llength $headNames]} {incr i} {
             set addname [lindex $headNames $i]
             set condensed_name "$condensed_name.$addname"
         }
-    } elseif {[llength $headnames] == 1} {
+    } elseif {[llength $headNames] == 1} {
         set condensed_name [lindex $headNames 0]
     } else {
         puts "headnames must contain a bead name"
@@ -807,7 +807,7 @@ proc concatenateNames { headNames } {
 #       returns dictionary with various values corresponding to lipids in 
 #       a particular bin
 
-proc createResidueDictionaries { species headnames lipidList nameList dimOneBinList dimTwoBinList leafletList selex} {
+proc createResidueDictionaries { species headNames lipidList nameList dimOneBinList dimTwoBinList leafletList selex} {
     ;# initialize a nested dict with a dummy key and value
     dict set res_dict dummy "dummy"
     
@@ -1385,7 +1385,7 @@ proc Center_System {wrap_sel species inclusion_sel} {
     puts "${wrap_sel}"
     puts "Center_System now running"
 
-    setBetaValues $inclusion_sel $species
+    setBetaValues $inclusion_sel
     qunwrap compound beta
     if {$inclusion_sel ne "NULL"} {
         qwrap compound beta center $inclusion_sel 
