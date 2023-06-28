@@ -1,0 +1,69 @@
+from itertools import product
+
+def prep_config(category_names, lol_of_categories):
+	""" Create a text file that the user can manually add paths to.
+
+	Keyword arguments:
+	category_names -- a list of strings containing category names
+	lol_of_categories -- list of lists (lol) containing the entries for each category
+	"""
+
+	#error check
+	if len(category_names) != len(lol_of_categories):
+		print("different number of categories than lists!")
+		return
+
+	with open('comp_config.txt', 'w') as f:
+		
+		# write comments at top
+		f.write("### Please enter paths after each entry below\n")
+		f.write("### If no path exists, write NULL\n")
+		f.write("### Entry format is "+';'.join(category_names)+":[path]\n")
+		f.write("\n")
+
+		#create entries for user to fill in
+		for item in product(*lol_of_categories):
+			f.write(";".join(item)+':\n')
+
+
+def strip_blank_lines(f):
+	for l in f:
+		line = l.strip()
+		if line:
+			yield line
+
+
+def read_config(config_file, category_names):
+	"""Reads in the config file provided by user and returns a dict
+
+	Keyworkd arguments:
+	config_file -- config filename
+	category_names -- a list of strings containing category names
+	"""
+	config_dict = {}
+	counter = 0
+
+	with open(config_file, "r+") as f:
+		for line in strip_blank_lines(f):
+			if line.startswith("#") is True:
+				continue
+			else:
+				# ignore potential in-line comment
+				line = line.partition('#')[0]
+
+				if line.rstrip():
+					config_dict[str(counter)] = {}
+					values = line.split(":")
+					path = values[1]
+					cat_vals = values[0].split(";")
+					for key,val in zip(category_names,cat_vals):
+						config_dict[str(counter)][str(key)]= val
+					config_dict[str(counter)]["path"]= path
+					counter=counter+1
+
+	return config_dict
+
+
+if __name__ == "__main__": 
+	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
+	read_config('comp_config.txt',["length","saturation","structure"])
