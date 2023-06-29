@@ -27,6 +27,11 @@ def prep_config(category_names, lol_of_categories):
 
 
 def strip_blank_lines(f):
+	"""Generator function to return only non-blank lines
+
+	Keyword arguments:
+	f -- the list of lines
+	"""
 	for l in f:
 		line = l.strip()
 		if line:
@@ -36,29 +41,42 @@ def strip_blank_lines(f):
 def read_config(config_file, category_names):
 	"""Reads in the config file provided by user and returns a dict
 
-	Keyworkd arguments:
+	Keyword arguments:
 	config_file -- config filename
 	category_names -- a list of strings containing category names
 	"""
+
 	config_dict = {}
 	counter = 0
 
 	with open(config_file, "r+") as f:
+		#skip blank lines
 		for line in strip_blank_lines(f):
+
+			#ignore lines starting with comment
 			if line.startswith("#") is True:
 				continue
+			
 			else:
-				# ignore potential in-line comment
+				# ignore in-line comment if present
 				line = line.partition('#')[0]
 
+				#double-check that is probably unnecessary
 				if line.rstrip():
+
+					#initialize dict key to contain nested dict
 					config_dict[str(counter)] = {}
+					
+					#split the line into 2 parts
 					values = line.split(":")
 					path = values[1]
 					cat_vals = values[0].split(";")
+
+					#save to nested dict
 					for key,val in zip(category_names,cat_vals):
 						config_dict[str(counter)][str(key)]= val
 					config_dict[str(counter)]["path"]= path
+					
 					counter=counter+1
 
 	return config_dict
@@ -66,4 +84,4 @@ def read_config(config_file, category_names):
 
 if __name__ == "__main__": 
 	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
-	read_config('comp_config.txt',["length","saturation","structure"])
+	config_dict = read_config('comp_config.txt',["length","saturation","structure"])
