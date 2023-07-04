@@ -1,0 +1,34 @@
+### Please enter paths after each entry below
+### If no path exists, write NULL
+### Entry format is Lipid Tail Length;Saturation;Structure:[path]
+
+2;Saturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDT/lgDT_polar_5_10_100_-1_1
+2;Saturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DTPC/DTPC_polar_5_10_0_-1_1
+2;Saturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDT/lgDT_polar_5_10_0_-1_1
+2;Mono-unsaturated;capped:NULL
+2;Mono-unsaturated;uncapped:NULL
+2;Mono-unsaturated;protein-less:NULL
+3;Saturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDL/lgDL_polar_5_10_100_-1_1
+3;Saturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DLPC/DLPC_polar_5_10_0_-1_1
+3;Saturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDL/lgDL_polar_5_10_0_-1_1
+3;Mono-unsaturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDY/lgDY_polar_5_10_100_-1_1
+3;Mono-unsaturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DYPC/DYPC_polar_5_10_0_-1_1
+3;Mono-unsaturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDY/lgDY_polar_5_10_0_-1_1
+4;Saturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDP/lgDP_polar_5_10_100_-1_1
+4;Saturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DPPC/DPPC_polar_5_10_0_-1_1
+4;Saturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDP/lgDP_polar_5_10_0_-1_1
+4;Mono-unsaturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDO/lgDO_polar_5_10_100_-1_1
+4;Mono-unsaturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DOPC/DOPC_polar_5_10_0_-1_1
+4;Mono-unsaturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDO/lgDO_polar_5_10_0_-1_1
+5;Saturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDB/lgDB_polar_5_10_100_-1_1
+5;Saturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DBPC/DBPC_polar_5_10_0_-1_1
+5;Saturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDB/lgDB_polar_5_10_0_-1_1
+5;Mono-unsaturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDG/lgDG_polar_5_10_100_-1_1
+5;Mono-unsaturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DGPC/DGPC_polar_5_10_0_-1_1
+5;Mono-unsaturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDG/lgDG_polar_5_10_0_-1_1
+6;Saturated;capped:/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgDX/lgDX_polar_5_10_100_-1_1
+6;Saturated;uncapped:/home/js2746/Bending/PC/whole_mols/7k3g/lgSims/DXPC/DXPC_polar_5_10_0_-1_1
+6;Saturated;protein-less:/home/js2746/Bending/PC/whole_mols/empty/lgDX/lgDX_polar_5_10_0_-1_1
+6;Mono-unsaturated;capped:NULL
+6;Mono-unsaturated;uncapped:NULL
+6;Mono-unsaturated;protein-less:NULL

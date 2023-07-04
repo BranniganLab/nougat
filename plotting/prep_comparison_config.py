@@ -16,7 +16,7 @@ def prep_config(category_names, lol_of_categories):
 	with open('comp_config.txt', 'w') as f:
 		
 		# write comments at top
-		f.write("### Please enter paths after each entry below\n")
+		f.write("### Please enter paths to nougat-generated output folder after each entry below\n")
 		f.write("### If no path exists, write NULL\n")
 		f.write("### Entry format is "+';'.join(category_names)+":[path]\n")
 		f.write("\n")
@@ -42,11 +42,12 @@ def read_config(config_file, category_names):
 	"""Reads in the config file provided by user and returns a dict
 
 	Keyword arguments:
-	config_file -- config filename
+	config_file -- config filename (must be in working directory)
 	category_names -- a list of strings containing category names
 	"""
 
 	config_dict = {}
+	config_dict['TOC'] = {}
 	counter = 0
 
 	with open(config_file, "r+") as f:
@@ -75,6 +76,12 @@ def read_config(config_file, category_names):
 					#save to nested dict
 					for key,val in zip(category_names,cat_vals):
 						config_dict[str(counter)][str(key)]= val
+						if key in config_dict['TOC']:
+							if val not in config_dict['TOC'][str(key)]:
+								config_dict['TOC'][str(key)].append(str(val))
+						else: 
+							config_dict['TOC'][str(key)] = [str(val)]
+
 					config_dict[str(counter)]["path"]= path
 					
 					counter=counter+1
@@ -82,6 +89,28 @@ def read_config(config_file, category_names):
 	return config_dict
 
 
+def generate_combinations(config_dict):
+	"""Generator that reads in a config dict and yields a list of the different paths needed to make each figure
+
+	Keyword arguments:
+	config_dict -- the dictionary made by read_config
+	"""
+
+	key_list = config_dict.keys()
+	category_list = config_dict['TOC'].keys()
+	for category in category_list:
+		for value in config_dict['TOC'][category]:
+			combo_list = []
+			for key in key_list:
+				if key == 'TOC':
+					continue
+				else:
+					if config_dict[key][category] == value:
+						combo_list.append(config_dict[key]['path'])
+			print(value)
+			print(combo_list)
+
 if __name__ == "__main__": 
 	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
 	config_dict = read_config('comp_config.txt',["length","saturation","structure"])
+	generate_combinations(config_dict)
