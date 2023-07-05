@@ -1,4 +1,5 @@
 from itertools import product
+from itertools import combinations
 
 def prep_config(category_names, lol_of_categories):
 	""" Create a text file that the user can manually add paths to.
@@ -97,25 +98,47 @@ def generate_combinations(config_dict):
 	"""
 
 	key_list = config_dict.keys()
-	category_list = config_dict['TOC'].keys()
-	for category in category_list:
-		for comparison_category in category_list:
-			if comparison_category == category:
+	category_list = list(config_dict['TOC'].keys())
+	if len(category_list) == 3:
+		for category_combo in combinations(category_list,2):
+			for category1 in config_dict['TOC'][category_combo[0]]:
+				for category2 in config_dict['TOC'][category_combo[1]]:
+					templist = []
+					for key in key_list:
+						if key == 'TOC':
+							continue
+						else:
+							if (config_dict[key][category_combo[0]]==category1) and (config_dict[key][category_combo[1]] == category2):
+								if config_dict[key]['path'] != "NULL":
+									templist.append(config_dict[key]['path'])
+					yield templist
+	elif len(category_list) == 2:
+		for category in category_list:
+			for item in config_dict['TOC'][category].keys():
+				templist = []
+				for key in key_list:
+					if key = 'TOC':
+						continue
+					else:
+						if config_dict[key][category] == item:
+							if config_dict[key]['path'] != "NULL":
+								templist.append(config_dict[key]['path'])
+					yield templist
+	elif len(category_list) == 1:
+		for key in key_list:
+			templist = []
+			if key == 'TOC':
 				continue
 			else:
-				
-		for value in config_dict['TOC'][category]:
-			combo_list = []
-			for key in key_list:
-				if key == 'TOC':
-					continue
-				else:
-					if config_dict[key][category] == value:
-						combo_list.append(config_dict[key]['path'])
-			print(value)
-			print(combo_list)
+				if config_dict[key]['path'] != "NULL":
+					templist.append(config_dict[key]['path'])
+		yield templist
+	else:
+		print("I only made this to work with 3 dimensions - sorry!")
+
 
 if __name__ == "__main__": 
 	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
 	config_dict = read_config('comp_config.txt',["length","saturation","structure"])
-	generate_combinations(config_dict)
+	for combination in generate_combinations(config_dict):
+		print(combination)
