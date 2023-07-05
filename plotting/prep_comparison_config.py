@@ -99,6 +99,11 @@ def generate_combinations(config_dict):
 	key_list = config_dict.keys()
 	category_list = config_dict['TOC'].keys()
 	for category in category_list:
+		for comparison_category in category_list:
+			if comparison_category == category:
+				continue
+			else:
+				
 		for value in config_dict['TOC'][category]:
 			combo_list = []
 			for key in key_list:
