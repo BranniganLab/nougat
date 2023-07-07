@@ -27,10 +27,7 @@ proc RtoD {rad} {
 #
 # Results:
 #       The result is a list of list that contains a normalized fitted vector 
-#       and the number of beads in an acyl chain. 
-#
-#       ex. 
-#       {{{0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261}}...}   
+#       and the number of beads in an acyl chain.   
 
 proc fitVecsToSel {length xVals yVals zVals} {
     set tiltList []
