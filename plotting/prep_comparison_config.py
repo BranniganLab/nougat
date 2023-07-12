@@ -142,6 +142,17 @@ def generate_combinations(config_dict):
 		print("I only made this to work with 3 dimensions - sorry!")
 
 
+def plot_combination(paths, name, quantity):
+	""" Plots the quantity specified from each of the paths on the same figure
+
+	Keyword arguments:
+	paths: a list of paths where the correct nougat results can be found
+	name: the name of the figure (output from generate_combinations)
+	quantity: the name of the values being plotted (e.g. height, thickness, etc.)
+	"""
+	return
+	
+
 if __name__ == "__main__": 
 	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
 	config_dict = read_config('comp_config_main.txt',["length","saturation","structure"])
