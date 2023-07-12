@@ -144,6 +144,6 @@ def generate_combinations(config_dict):
 
 if __name__ == "__main__": 
 	#prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
-	config_dict = read_config('comp_config.txt',["length","saturation","structure"])
+	config_dict = read_config('comp_config_main.txt',["length","saturation","structure"])
 	for combination in generate_combinations(config_dict):
 		print(combination[0], combination[1])

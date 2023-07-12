@@ -621,35 +621,7 @@ min_scale_dict = {
 	"corr_epst0_Hplus": -0.02,
 	"avg_rms_epsilon_over_t0": .95
 }
-'''
-legend_dict = {
-	"avg_epsilon_over_t0": r'$\langle $'+u'\u03F5'+r'$ / t_0 \rangle$',
-	"avg_abs_epsilon": r'$\langle | $'+u'\u03F5'+r'$ | \rangle\; (\mathrm{\dot A})$',
-	"avg_abs_epsilon_over_t0": r'$\langle | $'+u'\u03F5'+r'$ / t_0 | \rangle$',
-	"avg_epsilon2_over_t02":r'$\langle ( $'+u'\u03F5'+r'$ / t_0 )^2 \rangle$',
-	"avg_epsilon_H_over_t0": r'$\langle $'+u'\u03F5'+r'$ H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
-	"avg_epsilon2":r'$\langle $'+u'\u03F5'+r'$^2 \rangle\; (\mathrm{\dot A^2})$',
-	"avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-	"avg_tilde_t": r'$\langle \tilde t \rangle$',
-	"avg_epsilon": r'$\langle $'+u'\u03F5'+r'$ \rangle\; (\mathrm{\dot A})$',
-	"avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
-	"corr_mag_epst0_Hplus": r'$\langle | $'+u'\u03F5'+r'$| | H^+ | / t_0 \rangle - \langle |$'+u'\u03F5'+r'$| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
-	"corr_epst0_Hplus": r'$ \langle$'+u'\u03F5'+r'$H^+ / t_0 \rangle - \langle $'+u'\u03F5'+r'$/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
-	"avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;$'+u'\u03F5'+r'$ / t_0 \rangle$',
-	"avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
-	"avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
-	"avg_H_plus": r'$\langle H^+ \rangle\; (\mathrm{\dot A^{-1}})$', 
-	"avg_H_minus": r'$\langle H^- \rangle\; (\mathrm{\dot A^{-1}})$', 
-	"avg_H_minus2": r'$\langle \left ( H^- \right )^2 \rangle\; (\mathrm{\dot A^{-2}})$', 
-	"avg_epsilon_H": r'$\langle  $'+u'\u03F5'+r'$ H^+  \rangle$',
-	"avg_z_minus": r'$\langle z^- \rangle\; (\mathrm{\dot A})$', 
-	"avg_z_minus2": r'$\langle \left ( z^- \right )^2 \rangle\; (\mathrm{\dot A^2})$', 
-	"avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$', 
-	"avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$', 
-	"avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
-	"corr_epst0_Kplus": r'$\langle $'+u'\u03F5'+r'$ K^+ / t_0 \rangle - \langle $'+u'\u03F5'+r'$ / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$'
-}
-'''
+
 legend_dict = {
 	"avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
 	"avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
