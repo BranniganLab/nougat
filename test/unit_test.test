@@ -310,3 +310,80 @@ test cartesien {
     return $coord
 } -result "cart" -cleanup {}
 
+test sinlgeliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.924 -cleanup {
+   mol delete top
+}
+
+test sinlgeliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.942 -cleanup {
+   mol delete top
+}
+
+test rotatedsinlgeliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.924 -cleanup {
+   mol delete top
+}
+
+test rotatedsinlgeliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.942 -cleanup {
+   mol delete top
+}
+
+test fullmembraneliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.949 -cleanup {
+   mol delete top
+}
+
+test fullmembraneliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.960 -cleanup {
+   mol delete top
+}
