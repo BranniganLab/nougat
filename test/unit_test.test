@@ -293,3 +293,20 @@ test longlength {
 } -body {
     return $Normlist
 } -result {-9.5 -8.5 -7.5 -6.5 -5.5 -4.5 -3.5 -2.5 -1.5 -0.5 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5} -cleanup {}
+
+test polar {
+    Test: readPolar
+} -setup {
+   set coord [readPolar 1]
+} -body {
+    return $coord
+} -result "polar" -cleanup {}
+
+test cartesien {
+    Test: readPolar
+} -setup {
+   set coord [readPolar 0]
+} -body {
+    return $coord
+} -result "cart" -cleanup {}
+
