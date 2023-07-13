@@ -234,3 +234,30 @@ test Singlelipidturnedminwindow {
 } -result 2.0 -cleanup {
    mol delete top
 }
+
+test 90Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 1.5708]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 90 -cleanup {}
+
+test 180Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 3.14159]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 180 -cleanup {}
+
+test 640Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 11.1701]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 640 -cleanup {}

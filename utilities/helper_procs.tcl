@@ -8,7 +8,7 @@
 # Results:
 #       Returns angle in degrees
 
-proc convertRadianToDegree{rad} {
+proc convertRadianToDegree {rad} {
     global M_PI
     return [expr $rad*180.0/$M_PI]
 }
@@ -157,11 +157,7 @@ proc concatenateList {inputList delimiter} {
 #       to be evaluated.
 #
 # Arguments: 
-<<<<<<< HEAD
-#       tailList        {List}      Nested list of bead names in the lipid tails 
-=======
 #       tailList  {List}  nested list of tails organized by lipid type (see analyzeTails) 
->>>>>>> Fixing_Names
 #   
 # Results:
 #       Returns a nested lists containing the starting beads and 
@@ -430,12 +426,7 @@ proc analyzeTails { species } {
     }
     puts $taillist
     ;# returns top/bottom beads in lipid tails for leaflet sorting
-<<<<<<< HEAD
-    
-    set heads_and_tails [findHeadsAndTails $taillist]
-=======
     set findHeadsAndTails [findHeadsAndTails $taillist]
->>>>>>> Fixing_Names
 
     ;# one list with all the bead names for convenience
     set full_tails []
