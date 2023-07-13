@@ -1,4 +1,4 @@
-# ConvertRadianToDegree (Previously: RtoD)--
+# convertRadianToDegree (Previously: RtoD)--
 #
 #       Converts radians to degrees
 #
@@ -8,7 +8,7 @@
 # Results:
 #       Returns angle in degrees
 
-proc RtoD {rad} {
+proc convertRadianToDegree{rad} {
     global M_PI
     return [expr $rad*180.0/$M_PI]
 }
@@ -27,10 +27,7 @@ proc RtoD {rad} {
 #
 # Results:
 #       The result is a list of list that contains a normalized fitted vector 
-#       and the number of beads in an acyl chain. 
-#
-#       ex. 
-#       {{{0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261} {0.534522 -0.801783 0.267261}}...}   
+#       and the number of beads in an acyl chain.   
 
 proc fitVecsToSel {length xVals yVals zVals} {
     set tiltList []
