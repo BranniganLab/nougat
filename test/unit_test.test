@@ -387,3 +387,27 @@ test fullmembraneliptailBOrd {
 } -result 0.960 -cleanup {
    mol delete top
 }
+
+test cosinevec1 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {1 2 2} {0 0 0}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.667 -cleanup {}
+
+test cosinevec2 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {7 8 9} {0 0 0}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.646 -cleanup {}
+
+test cosinevec3 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {20 5 3} {2 2 2}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.055 -cleanup {}
