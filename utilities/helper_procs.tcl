@@ -1,4 +1,4 @@
-# ConvertRadianToDegree (Previously: RtoD)--
+# convertRadianToDegree (Previously: RtoD)--
 #
 #       Converts radians to degrees
 #
@@ -8,7 +8,7 @@
 # Results:
 #       Returns angle in degrees
 
-proc RtoD {rad} {
+proc convertRadianToDegree{rad} {
     global M_PI
     return [expr $rad*180.0/$M_PI]
 }
