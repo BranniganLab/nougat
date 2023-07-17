@@ -161,8 +161,8 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
   """Makes 2d heatmap plots
 
   Keyword arguments:
-  dim1vals -- list of x/r coordinates for the horizontal/radial axis
-  dim2vals -- list of y/theta coordinates for the vertical/azimuthal
+  dim1vals -- meshgrid output 1
+  dim2vals -- meshgrid output 2
   data -- the 2d array/matrix of values to be heatmapped
   name -- the system name you gave nougat.py
   field -- "zone" "ztwo" "zzero" or "zplus"
