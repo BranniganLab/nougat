@@ -138,7 +138,7 @@ def generate_combinations(config_dict):
 
     Yields
     ------
-    templist : LIST
+    templist : TUPLE
         list of paths corresponding to the correct combination of variables.
     name : STRING
         the name corresponding to that combination of variables.
