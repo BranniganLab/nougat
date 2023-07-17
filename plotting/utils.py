@@ -158,6 +158,23 @@ def read_log(sys_name, coordsys):
 
 
 def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
+  """Makes 2d heatmap plots
+
+  Keyword arguments:
+  dim1vals -- list of x/r coordinates for the horizontal/radial axis
+  dim2vals -- list of y/theta coordinates for the vertical/azimuthal
+  data -- the 2d array/matrix of values to be heatmapped
+  name -- the system name you gave nougat.py
+  field -- "zone" "ztwo" "zzero" or "zplus"
+  Vmax -- the max value for the scale bar (what should be red?)
+  Vmin -- the min value for the scale bar (what should be blue?)
+  protein -- list of coordinates corresponding to alpha helix positions of protein; False if no protein present
+  dataname -- the type of measurement this is (thickness, height, curvature, etc.)
+  bead -- the name of the bead used as the neutral surface; usually False
+  coordsys -- "polar" or "cart"
+  """
+
+
   fig = plt.figure()
 
   if coordsys == "polar":
