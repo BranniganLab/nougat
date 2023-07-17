@@ -17,6 +17,7 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
   inner_leaflet = zzero-ztwo
   whole_membrane = zone-ztwo
 
+  #need to fix this to get t0 from an empty membrane
   avgt0 = measure_t0(zone, ztwo, coordsys)
 
   avgouter = calc_avg_over_time(outer_leaflet)
