@@ -164,22 +164,39 @@ def read_log(sys_name, coordsys):
 
 
 def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
-    """Makes 2d heatmap plots
-
-    Keyword arguments:
-    dim1vals -- meshgrid output 1
-    dim2vals -- meshgrid output 2
-    data -- the 2d array/matrix of values to be heatmapped
-    name -- the system name you gave nougat.py
-    field -- "zone" "ztwo" "zzero" or "zplus"
-    Vmax -- the max value for the scale bar (what should be red?)
-    Vmin -- the min value for the scale bar (what should be blue?)
-    protein -- list of coordinates corresponding to alpha helix positions of protein; False if no protein present
-    dataname -- the type of measurement this is (thickness, height, curvature, etc.)
-    bead -- the name of the bead used as the neutral surface; usually False
-    coordsys -- "polar" or "cart"
     """
+    Make 2D heatmaps.
 
+    Parameters
+    ----------
+    dim1vals : list
+        meshgrid output 2
+    dim2vals : list
+        meshgrid output 2
+    data : array
+        the 2d array/matrix of values to be heatmapped
+    name : string
+        the system name you gave nougat.py
+    field : string
+        usually describes which membrane field (z1, z2, etc) to be heatmapped
+    Vmax : float
+        max value for colorbar
+    Vmin : float
+        min value for colorbar
+    protein : list or False
+        if protein present, list of helix coordinates; if no protein, False
+    dataname : string
+        the type of measurement (thickness, height, curvature, etc)
+    bead : string or False
+        if bead specified, name of bead; else False
+    coordsys : string
+        "polar" or "cart"
+
+    Returns
+    -------
+    None.
+
+    """
     fig = plt.figure()
 
     if coordsys == "polar":
