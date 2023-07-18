@@ -303,12 +303,24 @@ def dimensions_analyzer(data, coordsys):
 
 def calc_elastic_terms(system, path, coordsys):
     """
-    system (str)   : the same name you gave nougat.tcl and nougat.py
-    path (str)     : should point to the folder housing your nougat outputs 
-                     for a given system 
-    coordsys (str) : "polar" or "cart" 
-    """
+    Calculate all the additional terms that appear in a hamiltonian or are \
+        generally of interest.
 
+    Parameters
+    ----------
+    system : string
+        the same name you gave nougat.tcl and nougat.py
+    path : string
+        should point to the folder housing your nougat outputs for the given \
+            system
+    coordsys : string
+        "polar" or "cart"
+
+    Returns
+    -------
+    None.
+
+    """
     # load height and curvature data
     z_0 = np.load(path + '/npy/' + system + '.zzero.C1A.C1B.' + coordsys + '.height.npy')
     z_plus = np.load(path + '/npy/' + system + '.zplus.C1A.C1B.' + coordsys + '.height.npy')
@@ -387,11 +399,25 @@ def calc_elastic_terms(system, path, coordsys):
 
 def measure_t0(zone, ztwo, coordsys):
     """
-    zone (np array) : data for outer leaflet height
-    ztwo (np array) : data for inner leaflet height
-    coordsys (str)  : "polar" or "cart"
-    """
+    Compute average bulk membrane thickness by measuring thickness at the box \
+    border. This is not a good way of doing things and will be deprecated in \
+    favor of measuring average thickness of an empty membrane.
 
+    Parameters
+    ----------
+    zone : numpy array
+        data for outer leaflet height
+    ztwo : numpy array
+        data for inner leaflet height
+    coordsys : string
+        "polar" or "cart"
+
+    Returns
+    -------
+    avgt0 : float
+        the average thickness of the membrane at the borders of the box
+
+    """
     thickness = zone - ztwo
 
     avgthickness = calc_avg_over_time(thickness)
