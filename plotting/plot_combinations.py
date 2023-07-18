@@ -211,16 +211,10 @@ def plot_combination(paths, name, quantity):
 
 
 if __name__ == "__main__":
-    quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
-                  "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
-                  "avg_rms_epsilon_over_t0", "avg_abs_epsilon",
-                  "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
-                  "avg_H_plus2", "avg_H_minus", "avg_H_minus2",
-                  "avg_epsilon_H", "avg_total_t", "avg_z_minus",
-                  "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0",
-                  "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02",
-                  "avg_tilde_t", "avg_z_minus2_over_t02",
-                  "avg_z_minus_H_minus_over_t0"]
+    quant_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
+                  "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
+                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
+                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     # prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
     config_dict = read_config('comp_config_main.txt', [
                               "length", "saturation", "structure"])
