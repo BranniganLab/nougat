@@ -419,9 +419,9 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_t0(path, system, coordsys):
+def measure_t0_of_inclusionless_membrane(path, system, coordsys):
     """
-    Measure the average thickness of a membrane.
+    Measure the average thickness of a membrane with no inclusions.
 
     Parameters
     ----------
