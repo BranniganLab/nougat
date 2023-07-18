@@ -380,7 +380,7 @@ def calc_elastic_terms(system, path, coordsys):
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
 
 
-def measure_t0(zone, ztwo, coordsys):
+def bad_measure_t0(zone, ztwo, coordsys):
     """
     Compute average bulk membrane thickness by measuring thickness at the box \
     border. This is not a good way of doing things and will be deprecated in \
@@ -416,4 +416,33 @@ def measure_t0(zone, ztwo, coordsys):
 
     avgt0 = avgt0 / 2.0
 
+    return avgt0
+
+
+def measure_t0(path, system, coordsys):
+    """
+    Measure the average thickness of a membrane.
+
+    Parameters
+    ----------
+    path : string
+        path to the directory where your nougat outputs are for a membrane \
+            that doesn't have any inclusions in it
+    system : string
+        name of the inclusion-less system you gave nougat
+    coordsys : string
+        "polar" or "cart"; if polar, will ignore small r bins (area too small)
+
+    Returns
+    -------
+    avgt0 : float
+        the average thickness of the membrane
+
+    """
+    total_t = np.load(path + '/npy/' + system + '.total_t.npy')
+    if coordsys == "polar":
+        total_t = total_t[4:, :, :]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        avgt0 = np.nanmean(total_t) / 2.0
     return avgt0
