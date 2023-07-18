@@ -5,11 +5,6 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import argparse
-import matplotlib.pyplot as plt
-import matplotlib
-import numpy as np
-import warnings
-import glob
 import os
 from height import *
 from thickness import *
@@ -18,17 +13,36 @@ from density import *
 from tilt import *
 from order import *
 from utils import *
-# from code_review2 import *
 
 
 def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
+    """
+    Run nougat's averaging and image processing routines.
+
+    Parameters
+    ----------
+    sys_name : string
+        The name assigned to the nougat.tcl run
+    polar : boolean
+        True for polar coordinate system; False for cartesian
+    inclusion_drawn : boolean
+        This feature currently isn't implemented, but would be how you acccount
+        include an inclusion in your graphics
+    config_dict : dict
+        Dictionary containing useful information about the system
+
+    Returns
+    -------
+    None.
+
+    """
     cwd = os.getcwd()
 
     for filetype in ["npy", "dat", "pdf"]:
         dirname = os.path.join(cwd, filetype)
         try:
             os.mkdir(dirname)
-        except OSError as error:
+        except OSError:
             continue
 
     if inclusion_drawn is True:
