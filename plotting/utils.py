@@ -378,6 +378,33 @@ def calc_elastic_terms(system, path, coordsys):
     for data, name in zip(data_list, name_list):
         plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
+        if coordsys == "polar":
+            avg_over_theta(path + '/npy/', name, system)
+
+
+def avg_over_theta(path, quantity, sysname):
+    """
+    Compute average of the quantity in question over the theta dimension.
+
+    Parameters
+    ----------
+    path : string
+        The directory in which nougat npy outputs are located
+    quantity : string
+        The variable you're averaging
+    sysname : string
+        The name of the system that you gave nougat orginally
+
+    Returns
+    -------
+    None.
+
+    """
+    data = np.load(path + sysname + "." + quantity + ".npy")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        avg_vals = np.nanmean(data, axis=1)
+    np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
 
 
 def bad_measure_t0(zone, ztwo, coordsys):
