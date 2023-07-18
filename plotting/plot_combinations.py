@@ -207,7 +207,9 @@ def plot_combination(paths, name, quantity):
     None.
 
     """
-    return
+    fig, axs = plt.subplots()
+    for path in paths:
+        data = np.load(path)
 
 
 if __name__ == "__main__":
