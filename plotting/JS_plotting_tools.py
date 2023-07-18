@@ -346,9 +346,10 @@ def plot_avg_H2_over_time(system, path):
     H2 = np.load(path + system + ".ztwo.C1A.C1B.polar.meancurvature.npy")
     Hplus = (H1 + H2) / 2
     Hplus2 = Hplus * Hplus
+    nframes = np.shape(Hplus)[2]
     fig, axs = plt.subplots(2, sharex=True, sharey=False, layout="constrained")
     for item in [Hplus, Hplus2]:
-        x = np.linspace(0, 308, 309)
+        x = np.linspace(0, nframes - 1, nframes)
         x = x / 10.
         y = np.nanmean(item, axis=0)
         y = np.nanmean(y, axis=0)
