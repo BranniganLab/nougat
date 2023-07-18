@@ -372,9 +372,19 @@ def calc_elastic_terms(system, path, coordsys):
     dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
     N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
+    # measure average thickness
+    avgt0 = measure_t0(path, system, coordsys)
+    np.save(path + '/npy/' + system + '.avg_t0.npy', avgt0)
+
     # make pretty pictures and save data
-    data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus, corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus, avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H, avg_total_t]
-    name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus", "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
+    data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
+                 corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
+                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H,
+                 avg_total_t]
+    name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
+                 "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
+                 "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
+                 "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
         plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
@@ -446,17 +456,16 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_t0_of_inclusionless_membrane(path, system, coordsys):
+def measure_t0(path, system, coordsys):
     """
-    Measure the average thickness of a membrane with no inclusions.
+    Measure the average thickness of a membrane.
 
     Parameters
     ----------
     path : string
-        path to the directory where your nougat outputs are for a membrane \
-            that doesn't have any inclusions in it
+        path to the directory where your nougat outputs are
     system : string
-        name of the inclusion-less system you gave nougat
+        name of the system you gave nougat
     coordsys : string
         "polar" or "cart"; if polar, will ignore small r bins (area too small)
 
