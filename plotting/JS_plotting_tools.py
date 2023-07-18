@@ -343,7 +343,7 @@ def sum_over_H2(systems, system_names, groupname, nougvals, mol):
     plt.show()
 
 
-def make_2d_series_over_time(path, quantity, coordsys, sys_name, delete_files_after):
+def make_2d_series_over_time(path, quantity, coordsys, sys_name):
     """
     Make movie file of heatmap over trajectory.
 
@@ -357,8 +357,6 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name, delete_files_af
         "polar" or "cart".
     sys_name : string
         the name you gave nougat.py when it made your files.
-    delete_files_after : boolean
-        True to delete images after movie is made; False to keep them.
 
     Returns
     -------
@@ -378,8 +376,15 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name, delete_files_af
 
     # for each frame, make plot
     image_dir = os.path.join(path, quantity + "_over_time")
-    os.mkdir(image_dir)
+    try:
+        os.mkdir(image_dir)
+    except IOError:
+        pass
     os.chdir(image_dir)
+    try:
+        os.mkdir("pdf")
+    except IOError:
+        pass
     for frame in range(nframes):
         frame_data = traj_data[:, :, frame]
         plot_maker(dim1vals, dim2vals, frame_data, sys_name, str(frame), "auto", "auto", False, quantity, False, coordsys)
@@ -684,4 +689,5 @@ if __name__ == "__main__":
     # normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim)
     # run_sum_over_H2(mol)
     # run_eps_corr_scatter(mol)
-    plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
+    # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
+    make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
