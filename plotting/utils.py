@@ -441,7 +441,7 @@ def measure_t0_of_inclusionless_membrane(path, system, coordsys):
     """
     total_t = np.load(path + '/npy/' + system + '.total_t.npy')
     if coordsys == "polar":
-        total_t = total_t[4:, :, :]
+        total_t = total_t[4:, :, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avgt0 = np.nanmean(total_t) / 2.0
