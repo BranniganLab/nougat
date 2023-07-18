@@ -318,7 +318,7 @@ def old_avg_over_theta(path, quantity, systems, system_names, groupname, nougval
 
 def avg_over_theta(path, quantity, sysname):
     """
-    Compute average of the quantity in question over the theta dimension
+    Compute average of the quantity in question over the theta dimension.
 
     Parameters
     ----------
