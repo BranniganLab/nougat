@@ -280,10 +280,6 @@ def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, m
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             avg_vals = np.nanmean(data, axis=1)
-        # if quantity == "avg_H_plus2":
-            # print(avg_vals)
-            # avg_vals = avg_vals/avg_vals[-2]
-      # print(avg_vals)
         maxval = len(avg_vals)
         x = np.arange(2.5, (maxval * 5 + 2.5), 5) / 10
         axs.plot(x, avg_vals, color=colordict[system])
@@ -294,37 +290,46 @@ def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, m
 
 
 def run_avg_over_theta(mol, path):
+
+    quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
+                  "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
+                  "avg_rms_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
+                  "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H",
+                  "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus",
+                  "avg_epsilon_over_t0", "avg_epsilon_H_over_t0",
+                  "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02",
+                  "avg_z_minus_H_minus_over_t0"]
     # make directory to hold new images
     dirname = os.path.join(path, "avg_over_theta")
     try:
         os.mkdir(dirname)
-    except OSError as error:
+    except OSError:
         pass
 
     if mol == "5x29":
         sys_names = []
         for system in satsys:
             sys_names.append("lg" + system)
-        for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+        for quantity in quant_list:
             for xlim in [6, 20]:
                 avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29", xlim)
         sys_names = []
         for system in monounsatsys:
             sys_names.append("lg" + system)
-        for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+        for quantity in quant_list:
             for xlim in [6, 20]:
                 avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29", xlim)
     elif mol == "7k3g":
         sys_names = []
         for system in satsys:
             sys_names.append(system + "PC")
-        for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+        for quantity in quant_list:
             for xlim in [6, 20]:
                 avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g", xlim)
         sys_names = []
         for system in monounsatsys:
             sys_names.append(system + "PC")
-        for quantity in ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus", "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon", "avg_rms_epsilon_over_t0", "avg_abs_epsilon", "avg_abs_epsilon_over_t0", "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus", "avg_epsilon_over_t0", "avg_epsilon_H_over_t0", "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02", "avg_z_minus_H_minus_over_t0"]:
+        for quantity in quant_list:
             for xlim in [6, 20]:
                 avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g", xlim)
 
