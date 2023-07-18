@@ -344,11 +344,12 @@ def calc_elastic_terms(system, path, coordsys):
     epsilon_H = epsilon * H_plus
     total_t = z_1 - z_2
 
-    # save epsilon and h plus trajectory
+    # save useful trajectories
     np.save(path + '/npy/' + system + '.epsilon.npy', epsilon)
     np.save(path + '/npy/' + system + '.H_plus.npy', H_plus)
     np.save(path + '/npy/' + system + '.epsilon2.npy', epsilon2)
     np.save(path + '/npy/' + system + '.H_plus2.npy', H_plus2)
+    np.save(path + '/npy/' + system + '.total_t.npy', total_t)
 
     # calculate averages
     avg_epsilon = calc_avg_over_time(epsilon)
