@@ -1,12 +1,13 @@
+"""
+Created on Mon Jul 17 10:54:23 2023.
+
+@author: js2746
+"""
+
 import matplotlib.pyplot as plt
-import matplotlib
 import numpy as np
 import warnings
-import glob
 import os
-import sys
-import subprocess
-import pickle
 from utils import *
 
 sys_dict = {
@@ -58,44 +59,6 @@ small_sys_list = ["DT", "DY", "DL", "DO", "DP", "PO", "DG", "DB", "DX"]
 large_sys_list = ["lgDT", "lgDY", "lgDL", "lgDO", "lgDP", "lgPO", "lgDG", "lgDB", "lgDX"]
 
 
-def plot_area_per_lipid(systems):
-
-    lenlist = []
-    fig = plt.figure(figsize=(5, 5))
-    for system in systems:
-        data = np.loadtxt(system + '/' + system + '_boxarea.dat')
-        numframes = len(data) - 1
-        lenlist.append(numframes)
-
-    max_value = max(lenlist)
-    X = np.linspace(0, max_value / 100.0, max_value)
-
-    for system in systems:
-
-        data = np.loadtxt(system + '/' + system + '_boxarea.dat')
-        areadata = data[1:]
-        numlipidsperleaflet = data[0:1]
-        apldata = areadata / (numlipidsperleaflet * 1.0)
-        numframes = len(areadata)
-        window_size = 20
-        rollingavg = []
-        for i in range(numframes - window_size):
-            windowavg = np.sum(apldata[i:i + window_size]) / window_size
-            rollingavg.append(windowavg)
-        rollingavg = np.array(rollingavg)
-        fill_values = max_value - len(rollingavg)
-        if fill_values > 0:
-            fill_array = np.empty(fill_values)
-            fill_array[:] = np.nan
-            avgapldata = np.append(rollingavg, fill_array)
-        elif fill_values < 0:
-            print(system)
-
-        plt.plot(X, avgapldata, color=colordict[system], linestyle=linetypedict[system])
-
-    plt.show()
-
-
 def zoom_in(systems):
     max_scale_dict = {
         "height": 60,
@@ -134,47 +97,6 @@ def zoom_in(systems):
                 print(data[:15, :].shape)
                 plot_maker(dim1vals, dim2vals, data[:15, :], system, field, max_scale_dict[value], min_scale_dict[value], False, value, False, "polar")
         os.chdir('../..')
-
-
-def measure_H_epsilon_corr(systems, mol):
-    for system in systems:
-        filename_start = '/home/js2746/Bending/PC/whole_mols/' + mol + '/' + system + '/npy/' + system + '.'
-        filename_end = '.C1A.C1B.cart.height.npy'
-        fig = plt.figure()
-        ax = plt.subplot()
-        try:
-            zzero = np.load(filename_start + 'zzero' + filename_end)
-            H1 = np.load(filename_start + 'zone' + '.C1A.C1B.cart.meancurvature.npy')
-            H2 = np.load(filename_start + 'ztwo' + '.C1A.C1B.cart.meancurvature.npy')
-        except:
-            filename_end = '.C1A.C1B.D1A.D1B.cart.height.npy'
-            zzero = np.load(filename_start + 'zzero' + filename_end)
-            H1 = np.load(filename_start + 'zone' + '.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
-            H2 = np.load(filename_start + 'ztwo' + '.C1A.C1B.D1A.D1B.cart.meancurvature.npy')
-        dims = np.shape(zzero)
-        dim1 = np.linspace(0, dims[0], dims[0] + 1)
-        dim2 = np.linspace(0, dims[1], dims[1] + 1)
-        dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
-        zplus = np.load(filename_start + 'zplus' + filename_end)
-        epsilon = zplus - zzero
-        avgepsilon = np.nanmean(epsilon, axis=2)
-        H = H1 + H2
-        avgH = np.nanmean(H, axis=2)
-        t0 = measure_t0(system, mol)
-        avgepsilon = avgepsilon / t0
-        avgcombo = avgepsilon * avgH
-        together = epsilon * H
-        avgtogether = np.nanmean(together, axis=2)
-        correlation = avgtogether - avgcombo
-        c = plt.pcolormesh(dim1vals, dim2vals, correlation, cmap="RdBu_r", zorder=0, vmax=.15, vmin=-.15)
-        cbar = plt.colorbar(c)
-        plt.axis('off')
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        # fig.set_size_inches(6,6)
-        plt.savefig(system + "_epsilonH_correlation_cart.pdf", dpi=700)
-        plt.clf()
-        plt.close()
 
 
 def sum_terms(systems, mol):
@@ -246,194 +168,6 @@ def rollingavg(list_in, window_size):
         rollingavg.append(np.nan)
     rollingavg = np.array(rollingavg)
     return rollingavg
-
-
-def plot_average_area_per_lipid(systems):
-
-    avglist = []
-    fig, ax = plt.subplots()
-
-    for system in systems:
-
-        data = np.loadtxt(system + '/' + system + '_boxarea.dat')
-        areadata = data[1:]
-        numlipidsperleaflet = data[0:1]
-        apldata = areadata / (numlipidsperleaflet * 1.0)
-
-        average = np.mean(apldata)
-        avglist.append(average)
-
-    ax.bar(systems, avglist, label=systems)
-    plt.show()
-
-
-def old_avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, mol, xlim):
-    """
-    Calculate the average of whatever quantity over the theta dimension.
-
-    Parameters
-    ----------
-    path : string
-        DESCRIPTION.
-    quantity : string
-        the measurement you're interested in averaging
-    systems : list
-        unique to Jesse: list of lipid types
-    system_names : list
-        unique to Jesse: list of lipid names given when I made the systems
-    groupname : string
-        a descriptor of what averages you're comparing
-    nougvals : string
-        the numbers that follow the coordsys in the nougat output naming convention
-    mol : string
-        the name of the protein
-    xlim : float
-        the limit of your x dimension for plotting
-
-    Returns
-    -------
-    None.
-
-    """
-    fig, axs = plt.subplots()
-    axs.set_xlim(0, xlim)
-    limname = "zoomed_" + str(xlim)
-
-    if quantity in min_scale_dict and xlim == 6:
-        axs.set_ylim(min_scale_dict[quantity], max_scale_dict[quantity])
-    for system, name in zip(systems, system_names):
-        data = np.load(path + "/" + name + "/" + name + "_polar_" + nougvals + "/npy/" + name + '.' + quantity + '.npy')
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            avg_vals = np.nanmean(data, axis=1)
-        maxval = len(avg_vals)
-        x = np.arange(2.5, (maxval * 5 + 2.5), 5) / 10
-        axs.plot(x, avg_vals, color=colordict[system])
-        np.savez(path + "/" + name + "/" + name + "_polar_" + nougvals + "/npy/" + name + '.' + quantity + 'avg_over_theta.npz', x=x, y=avg_vals)
-    plt.savefig(path + "/avg_over_theta/" + mol + "_" + groupname + "_" + quantity + "_" + limname + ".pdf", dpi=700)
-    plt.clf()
-    plt.close()
-
-
-def avg_over_theta(path, quantity, sysname):
-    """
-    Compute average of the quantity in question over the theta dimension.
-
-    Parameters
-    ----------
-    path : string
-        The directory in which nougat npy outputs are located
-    quantity : string
-        The variable you're averaging
-    sysname : string
-        The name of the system that you gave nougat orginally
-
-    Returns
-    -------
-    None.
-
-    """
-    data = np.load(path + sysname + "." + quantity + ".npy")
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=RuntimeWarning)
-        avg_vals = np.nanmean(data, axis=1)
-    np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
-
-
-def run_avg_over_theta():
-    """
-    Set up all the different permutations of avg_over_theta that need to be \
-        computed.
-
-    Parameters
-    ----------
-    None.
-
-    Returns
-    -------
-    None.
-
-    """
-    quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
-                  "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
-                  "avg_rms_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
-                  "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H",
-                  "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus",
-                  "avg_epsilon_over_t0", "avg_epsilon_H_over_t0",
-                  "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02",
-                  "avg_z_minus_H_minus_over_t0"]
-    for mol, path in zip(mols, paths):
-        for lipid in allsys:
-            if mol == "5x29":
-                system_name = "lg" + lipid
-                nougvals = "5_10_100_-1_1"
-            elif mol == "7k3g":
-                system_name = lipid + "PC"
-                nougvals = "5_10_0_-1_1"
-            for quantity in quant_list:
-                complete_path = os.path.join(path, system_name, system_name + "_polar_" + nougvals, "npy")
-                avg_over_theta(complete_path, quantity, system_name)
-
-
-def old_run_avg_over_theta(mol, path):
-    """
-    Set up all the different permutations of avg_over_theta that need to be \
-        computed.
-
-    Parameters
-    ----------
-    mol : string
-        "5x29" or "7k3g"
-    path : string
-        path to meta-directory for the given system
-
-    Returns
-    -------
-    None.
-
-    """
-    quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
-                  "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
-                  "avg_rms_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
-                  "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H",
-                  "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus",
-                  "avg_epsilon_over_t0", "avg_epsilon_H_over_t0",
-                  "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02",
-                  "avg_z_minus_H_minus_over_t0"]
-    # make directory to hold new images
-    dirname = os.path.join(path, "avg_over_theta")
-    try:
-        os.mkdir(dirname)
-    except OSError:
-        pass
-
-    if mol == "5x29":
-        sys_names = []
-        for system in satsys:
-            sys_names.append("lg" + system)
-        for quantity in quant_list:
-            for xlim in [6, 20]:
-                old_avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29", xlim)
-        sys_names = []
-        for system in monounsatsys:
-            sys_names.append("lg" + system)
-        for quantity in quant_list:
-            for xlim in [6, 20]:
-                old_avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29", xlim)
-    elif mol == "7k3g":
-        sys_names = []
-        for system in satsys:
-            sys_names.append(system + "PC")
-        for quantity in quant_list:
-            for xlim in [6, 20]:
-                old_avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g", xlim)
-        sys_names = []
-        for system in monounsatsys:
-            sys_names.append(system + "PC")
-        for quantity in quant_list:
-            for xlim in [6, 20]:
-                old_avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g", xlim)
 
 
 def sum_over_H2(systems, system_names, groupname, nougvals, mol):
