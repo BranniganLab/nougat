@@ -267,7 +267,34 @@ def plot_average_area_per_lipid(systems):
     plt.show()
 
 
-def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, mol, xlim):
+def old_avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, mol, xlim):
+    """
+    Calculate the average of whatever quantity over the theta dimension.
+
+    Parameters
+    ----------
+    path : string
+        DESCRIPTION.
+    quantity : string
+        the measurement you're interested in averaging
+    systems : list
+        unique to Jesse: list of lipid types
+    system_names : list
+        unique to Jesse: list of lipid names given when I made the systems
+    groupname : string
+        a descriptor of what averages you're comparing
+    nougvals : string
+        the numbers that follow the coordsys in the nougat output naming convention
+    mol : string
+        the name of the protein
+    xlim : float
+        the limit of your x dimension for plotting
+
+    Returns
+    -------
+    None.
+
+    """
     fig, axs = plt.subplots()
     axs.set_xlim(0, xlim)
     limname = "zoomed_" + str(xlim)
@@ -289,8 +316,83 @@ def avg_over_theta(path, quantity, systems, system_names, groupname, nougvals, m
     plt.close()
 
 
-def run_avg_over_theta(mol, path):
+def avg_over_theta(path, quantity, sysname):
+    """
+    Compute average of the quantity in question over the theta dimension
 
+    Parameters
+    ----------
+    path : string
+        The directory in which nougat npy outputs are located
+    quantity : string
+        The variable you're averaging
+    sysname : string
+        The name of the system that you gave nougat orginally
+
+    Returns
+    -------
+    None.
+
+    """
+    data = np.load(path + sysname + "." + quantity + ".npy")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        avg_vals = np.nanmean(data, axis=1)
+    np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
+
+
+def run_avg_over_theta():
+    """
+    Set up all the different permutations of avg_over_theta that need to be \
+        computed.
+
+    Parameters
+    ----------
+    None.
+
+    Returns
+    -------
+    None.
+
+    """
+    quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
+                  "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
+                  "avg_rms_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
+                  "avg_H_plus2", "avg_H_minus", "avg_H_minus2", "avg_epsilon_H",
+                  "avg_total_t", "avg_z_minus", "avg_z_minus2", "avg_z_minus_H_minus",
+                  "avg_epsilon_over_t0", "avg_epsilon_H_over_t0",
+                  "avg_epsilon2_over_t02", "avg_tilde_t", "avg_z_minus2_over_t02",
+                  "avg_z_minus_H_minus_over_t0"]
+    for mol, path in zip(mols, paths):
+        for lipid in allsys:
+            if mol == "5x29":
+                system_name = "lg" + lipid
+                nougvals = "5_10_100_-1_1"
+            elif mol == "7k3g":
+                system_name = lipid + "PC"
+                nougvals = "5_10_0_-1_1"
+            for quantity in quant_list:
+                complete_path = os.path.join(path, system_name, system_name + "_polar_" + nougvals, "npy")
+                avg_over_theta(complete_path, quantity, system_name)
+
+
+def old_run_avg_over_theta(mol, path):
+    """
+    Set up all the different permutations of avg_over_theta that need to be \
+        computed.
+
+    Parameters
+    ----------
+    mol : string
+        "5x29" or "7k3g"
+    path : string
+        path to meta-directory for the given system
+
+    Returns
+    -------
+    None.
+
+    """
     quant_list = ["avg_K_plus", "avg_K_minus", "corr_epst0_Kplus",
                   "corr_mag_epst0_Hplus", "corr_epst0_Hplus", "avg_epsilon",
                   "avg_rms_epsilon_over_t0", "avg_epsilon2", "avg_H_plus",
@@ -312,26 +414,26 @@ def run_avg_over_theta(mol, path):
             sys_names.append("lg" + system)
         for quantity in quant_list:
             for xlim in [6, 20]:
-                avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29", xlim)
+                old_avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_100_-1_1", "5x29", xlim)
         sys_names = []
         for system in monounsatsys:
             sys_names.append("lg" + system)
         for quantity in quant_list:
             for xlim in [6, 20]:
-                avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29", xlim)
+                old_avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_100_-1_1", "5x29", xlim)
     elif mol == "7k3g":
         sys_names = []
         for system in satsys:
             sys_names.append(system + "PC")
         for quantity in quant_list:
             for xlim in [6, 20]:
-                avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g", xlim)
+                old_avg_over_theta(path, quantity, satsys, sys_names, "satsys", "5_10_0_-1_1", "7k3g", xlim)
         sys_names = []
         for system in monounsatsys:
             sys_names.append(system + "PC")
         for quantity in quant_list:
             for xlim in [6, 20]:
-                avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g", xlim)
+                old_avg_over_theta(path, quantity, monounsatsys, sys_names, "monounsatsys", "5_10_0_-1_1", "7k3g", xlim)
 
 
 def sum_over_H2(systems, system_names, groupname, nougvals, mol):
