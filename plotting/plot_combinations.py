@@ -6,6 +6,10 @@ Created on Mon Jul 17 10:54:23 2023.
 
 from itertools import product
 from itertools import combinations
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from utils import *
 
 
 def prep_config(category_names, lol_of_categories):
@@ -209,17 +213,82 @@ def plot_combination(paths, name, quantity):
     """
     fig, axs = plt.subplots()
     for path in paths:
-        data = np.load(path)
+        # find the correct system name
+        nougval = [i for i in path.split("/") if "polar" in i][0]
+        sysname = nougval.split("_")[0]
 
+        y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
+
+        # figure out what the x axis values should be
+        tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
+                                   missing_values='nan', filling_values=np.nan)
+        N1_bins, _, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        x_vals = tcl_output[0:N1_bins, 0]
+        x_vals = np.append(x_vals, tcl_output[N1_bins - 1, 1])
+
+        axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
+    plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
+color_dict = {
+    "lgDT": "red",
+    "lgDL": "orange",
+    "lgDY": "orange",
+    "lgDP": "green",
+    "lgPO": "green",
+    "lgDO": "green",
+    "lgDB": "blue",
+    "lgDG": "blue",
+    "lgDX": "purple",
+    "DTPC": "red",
+    "DLPC": "orange",
+    "DYPC": "orange",
+    "DPPC": "green",
+    "POPC": "green",
+    "DOPC": "green",
+    "DBPC": "blue",
+    "DGPC": "blue",
+    "DXPC": "purple"
+}
+
+style_dict = {
+    "lgDT": "solid",
+    "lgDL": "solid",
+    "lgDY": "dashed",
+    "lgDP": "solid",
+    "lgPO": "dotted",
+    "lgDO": "dashed",
+    "lgDB": "solid",
+    "lgDG": "dashed",
+    "lgDX": "solid",
+    "DTPC": "solid",
+    "DLPC": "solid",
+    "DYPC": "dashed",
+    "DPPC": "solid",
+    "POPC": "dotted",
+    "DOPC": "dashed",
+    "DBPC": "solid",
+    "DGPC": "dashed",
+    "DXPC": "solid"
+}
 
 if __name__ == "__main__":
     quant_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                   "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                   "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
-    # prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"],["Saturated", "Mono-unsaturated"],["capped","uncapped","protein-less"]])
+    # prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"], ["capped", "uncapped", "protein-less"]])
     config_dict = read_config('comp_config_main.txt', [
                               "length", "saturation", "structure"])
+    cwd = os.getcwd()
+    try:
+        os.mkdir("avg_over_theta_comparisons")
+    except:
+        pass
+    os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
         for quantity in quant_list:
             plot_combination(combination[0], combination[1], quantity)
+    os.chdir(cwd)
