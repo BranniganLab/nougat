@@ -108,7 +108,6 @@ proc cell_prep {config_path leaf_check} {
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# running cell_prep will do some important initial configuration based on user input. 
-    ;# check the extensive documentation at the top of this file for instructions.
     set config_dict [cell_prep $config_path 0]
 
     ;# set nframes based on $end input
