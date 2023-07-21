@@ -434,6 +434,36 @@ def normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim):
             plt.close()
 
 
+def plot_APL(path, sysname):
+    """
+    Plot Area Per Lipid from a nougat output
+
+    Parameters
+    ----------
+    path : string
+        Path to directory containing ___.APL.traj file
+    sysname : string
+        Name of system that you gave nougat
+
+    Returns
+    -------
+    None.
+
+    """
+    APL_traj = np.loadtxt(path + sysname + ".APL.traj")
+    fig, ax = plt.subplots()
+    X = APL_traj[:, 0]
+    Y = APL_traj[:, 1]
+    ax.plot(X, Y, color="blue")
+    ax.plot(X, rollingavg(Y, 20), color="red")
+    ax.legend(["Raw", "Rolling Average (20)"])
+    fig.supxlabel(r'$t \;(\mathrm{frames})$')
+    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
+    plt.savefig(path + sysname + ".APL_traj.pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
 colordict = {
     "DT": "red",
     "DL": "orange",
@@ -532,4 +562,5 @@ if __name__ == "__main__":
     # run_sum_over_H2(mol)
     # run_eps_corr_scatter(mol)
     # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
-    make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
+    # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
+    plot_APL("/home/js2746/4096/", 'DPPC')
