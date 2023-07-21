@@ -419,7 +419,7 @@ proc bin_prep {nframes polar min dr_N1 N2} {
         dict set bindims d1 $dr_N1
 
         #measure box size at final frame to get bin values
-        set box_x [molinfo top get a frame [expr $nframes-1]]
+        set box_x [molinfo top get a frame [expr $nframes]]
 
         set box_r [expr int($box_x)/2]
         set rrange [expr $box_r-$min]
