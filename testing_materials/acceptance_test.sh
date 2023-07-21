@@ -5,6 +5,7 @@ vmd -e /home/js2746/PolarHeightBinning/testing_materials/run_nougat_test.tcl
 bash /home/js2746/PolarHeightBinning/testing_materials/run_nougat_py_test.sh
 
 # Run test battery on resulting files
+cd /home/js2746/PolarHeightBinning/testing_materials
 python3 -m pytest tests/
 
 # Clean up if all tests passed
