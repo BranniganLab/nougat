@@ -15,19 +15,19 @@ proc load_and_run_test {trajpath groname xtcname test_name config d1 d2 polar} {
 
 ;# E protein cartesian
 set path "/home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory"
-load_and_run_test $path DT_test.gro DT_test.xtc E-protein /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 5 5 0
+load_and_run_test $path DT_test.gro DT_test.xtc test /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 5 5 0
 
 ;# E protein polar
 set path "/home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory"
-load_and_run_test $path DT_test.gro DT_test.xtc E-protein /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 3 12 1
+load_and_run_test $path DT_test.gro DT_test.xtc test /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 3 12 1
 
 ;# Molecularly flat membrane cartesian
 set path "/home/js2746/PolarHeightBinning/testing_materials/flat_surface_test"
-load_and_run_test $path flat.gro 0 flat /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 5 5 0
+load_and_run_test $path flat.gro 0 test /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 5 5 0
 
 ;# Molecularly flat membrane polar
 set path "/home/js2746/PolarHeightBinning/testing_materials/flat_surface_test"
-load_and_run_test $path flat.gro 0 flat /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 3 12 1
+load_and_run_test $path flat.gro 0 test /home/js2746/PolarHeightBinning/testing_materials/E-protein_trajectory/nougat_config_test_E-protein.txt 3 12 1
 
 ;# exit
 exit
