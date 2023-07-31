@@ -20,7 +20,12 @@ def coordsys(request):
 
 
 @pytest.fixture(scope='function', params=["zone", "ztwo", "zplus", "zzero"])
-def surface(request):
+def surface4(request):
+    return request.param
+
+
+@pytest.fixture(scope='function', params=["zone", "ztwo"])
+def surface2(request):
     return request.param
 
 
@@ -29,13 +34,25 @@ def quantity(request):
     return request.param
 
 
-def test_if_height_and_curvature_files_match(cwd, coordsys, surface, quantity):
-    if coordsys == "cart":
+def make_paths(wd, coord, surf, quant):
+    if coord == "cart":
         coordsys_path = "_cart_5_5_0_-1_1/npy/"
-    elif coordsys == "polar":
+    elif coord == "polar":
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
-    expected = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein." + surface + ".C1A.C1B." + coordsys + "." + quantity + ".npy"
-    test_input = cwd + "/E-protein_trajectory/test" + coordsys_path + "test." + surface + ".C1A.C1B." + coordsys + "." + quantity + ".npy"
+    expected = wd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
+    test_input = wd + "/E-protein_trajectory/test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
+    return test_input, expected
+
+
+def test_if_height_and_curvature_files_match(cwd, coordsys, surface4, quantity):
+    test_input, expected = make_paths(cwd, coordsys, surface4, quantity)
+    f1 = np.load(test_input)
+    f2 = np.load(expected)
+    assert f1.all() == f2.all()
+
+
+def test_if_thickness_files_match(cwd, coordsys, surface2):
+    test_input, expected = make_paths(cwd, coordsys, surface2, "thickness")
     f1 = np.load(test_input)
     f2 = np.load(expected)
     assert f1.all() == f2.all()
