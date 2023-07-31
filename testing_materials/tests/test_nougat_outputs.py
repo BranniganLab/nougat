@@ -7,7 +7,6 @@ Created on Fri Jul 21 11:18:40 2023.
 import pytest
 import numpy as np
 import os
-from itertools import product
 
 
 @pytest.fixture
@@ -15,29 +14,31 @@ def cwd():
     return os.getcwd()
 
 
-@pytest.fixture
-def test_paths(cwd):
-    coordsys = ["cart", "polar"]
-    surface = [".zone.", ".ztwo.", ".zplus.", ".zzero."]
-    quant = [".meancurvature.npy", ".height.npy"]
-    paths = []
-
-    for prod in product(coordsys, surface, quant):
-        if prod[0] == "cart":
-            coordsys_path = "_cart_5_5_0_-1_1/npy/"
-        elif prod[0] == "polar":
-            coordsys_path = "_polar_3_12_0_-1_1/npy/"
-        expected = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein" + prod[1] + "C1A.C1B." + prod[0] + prod[2]
-        test_data = cwd + "/E-protein_trajectory/test" + coordsys_path + "test" + prod[1] + "C1A.C1B." + prod[0] + prod[2]
-        paths.append(tuple([expected, test_data]))
-    return paths
+@pytest.fixture(scope='function', params=["cart", "polar"])
+def coordsys(request):
+    return request.param
 
 
-def test_if_files_match(test_paths):
-    for file_pair in test_paths:
-        f1 = np.load(file_pair[0])
-        f2 = np.load(file_pair[1])
-        assert f1.all() == f2.all()
+@pytest.fixture(scope='function', params=["zone", "ztwo", "zplus", "zzero"])
+def surface(request):
+    return request.param
+
+
+@pytest.fixture(scope='function', params=["meancurvature", "height", "normal_vectors", "gausscurvature"])
+def quantity(request):
+    return request.param
+
+
+def test_if_height_and_curvature_files_match(cwd, coordsys, surface, quantity):
+    if coordsys == "cart":
+        coordsys_path = "_cart_5_5_0_-1_1/npy/"
+    elif coordsys == "polar":
+        coordsys_path = "_polar_3_12_0_-1_1/npy/"
+    expected = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein." + surface + ".C1A.C1B." + coordsys + "." + quantity + ".npy"
+    test_input = cwd + "/E-protein_trajectory/test" + coordsys_path + "test." + surface + ".C1A.C1B." + coordsys + "." + quantity + ".npy"
+    f1 = np.load(test_input)
+    f2 = np.load(expected)
+    assert f1.all() == f2.all()
 
 
 def test_whether_flat_cartesian(cwd):
