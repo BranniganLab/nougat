@@ -8,8 +8,8 @@ bash ./run_nougat_py_test.sh
 python3 -m pytest tests/
 
 # Clean up if all tests passed
-rm -r ./E-protein_trajectory/test_*
-rm -r ./flat_surface_test/test_*
+#rm -r ./E-protein_trajectory/test_*
+#rm -r ./flat_surface_test/test_*
 
 # Sound the all clear
 echo "Acceptance testing finished"
