@@ -63,7 +63,6 @@ proc cell_prep {config_path leaf_check} {
         Align [dict get $config_dict align_sel]
     }
 
-
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy]} {
@@ -142,7 +141,6 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    
     
     run_nougat $system $config_dict $bindims $polar "height_density" $foldername
     run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
