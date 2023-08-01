@@ -8,7 +8,7 @@
 # Results:
 #       Returns angle in degrees
 
-proc convertRadianToDegree{rad} {
+proc convertRadianToDegree {rad} {
     global M_PI
     return [expr $rad*180.0/$M_PI]
 }
@@ -632,7 +632,7 @@ proc prepareBins {frameNumber polar min drN1 N2} {
     
     if {$polar == 1} {
     
-        dict set bindims d1 $dr_N1
+        dict set bindims d1 $drN1
 
         #measure box size at final frame to get bin values
         set box_x [molinfo top get a frame [expr $frameNumber]]
