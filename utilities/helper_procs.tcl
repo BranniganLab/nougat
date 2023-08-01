@@ -485,7 +485,7 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set r_vals [vecexpr [vecexpr [vecexpr $xVals sq] [vecexpr $yVals sq] add] sqrt]
         
         ;#turn into bin numbers rather than r values
-        set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
+        set dim1_bins [vecexpr [vecexpr $r_vals $binWidth1 div] floor]
         
         ;#calculate theta: use atan2 to get values for al x,y pairs
         set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
