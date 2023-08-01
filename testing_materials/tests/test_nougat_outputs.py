@@ -11,30 +11,72 @@ import os
 
 @pytest.fixture
 def cwd():
+    """
+    Get current working directory.
+
+    """
     return os.getcwd()
 
 
 @pytest.fixture(scope='function', params=["cart", "polar"])
 def coordsys(request):
+    """
+    Supply the proper coordinate system name to the test function requesting it.
+
+    """
     return request.param
 
 
 @pytest.fixture(scope='function', params=["zone", "ztwo", "zplus", "zzero"])
 def surface4(request):
+    """
+    Supply all four surfaces to the test function requesting it.
+
+    """
     return request.param
 
 
 @pytest.fixture(scope='function', params=["zone", "ztwo"])
 def surface2(request):
+    """
+    Supply z1 and z2 to the test function requesting it.
+
+    """
     return request.param
 
 
 @pytest.fixture(scope='function', params=["meancurvature", "height", "normal_vectors", "gausscurvature"])
 def quantity(request):
+    """
+    Supply the quantity being measured to the test function requesting it.
+
+    """
     return request.param
 
 
 def make_paths(wd, coord, surf, quant):
+    """
+    Concatenate strings together to make the path to the correct test files.
+
+    Parameters
+    ----------
+    wd : string
+        Path to current working directory.
+    coord : string
+        Coordinate system; 'cart' or 'polar'
+    surf : sring
+        The membrane surface in question (z1, z2, z0, or z+)
+    quant : string
+        The quantity being measured (height, thickness, curvature, etc.)
+
+    Returns
+    -------
+    test_input : string
+        Path to the test data npy file.
+    expected : string
+        Path to the saved 'correct' data npy file.
+
+    """
     if coord == "cart":
         coordsys_path = "_cart_5_5_0_-1_1/npy/"
     elif coord == "polar":
