@@ -842,8 +842,8 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
 }
 
 
-proc calc_bin_info {start end step N1 N2 coordsys d1 d2} {
-    if {$coordsys == "CART"} {
+proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
+    if {$coordSystem == "CART"} {
         set d1list []
         set d2list []
         for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
@@ -871,7 +871,7 @@ proc calc_bin_info {start end step N1 N2 coordsys d1 d2} {
 
 
 proc outputNougatLog {start end step species system headNames coordSystem folderName N1 N2 d1 d2} {
-    set logFile [open "${foldername}/tcl_output/${system}.${coordsys}.log" w]
+    set logFile [open "${folderName}/tcl_output/${system}.${coordSystem}.log" w]
 
     ;# calculate average area, d1, and d2
     set binInfo [calc_bin_info $start $end $step $N1 $N2 $coordSystem $d1 $d2]
@@ -882,7 +882,7 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     ;# output species names and bead names
     puts $logFile "#SYSTEM CONTENTS"
     puts $logFile "$species" 
-    puts $logFile "$headnames"
+    puts $logFile "$headNames"
     puts $logFile ""
 
     ;# output density normalization info
