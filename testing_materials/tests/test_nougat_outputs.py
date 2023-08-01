@@ -90,14 +90,30 @@ def test_if_height_and_curvature_files_match(cwd, coordsys, surface4, quantity):
     test_input, expected = make_paths(cwd, coordsys, surface4, quantity)
     f1 = np.load(test_input)
     f2 = np.load(expected)
-    assert f1.all() == f2.all()
+    assert np.array_equal(f1, f2, equal_nan=True)
 
 
 def test_if_thickness_files_match(cwd, coordsys, surface2):
     test_input, expected = make_paths(cwd, coordsys, surface2, "thickness")
     f1 = np.load(test_input)
     f2 = np.load(expected)
-    assert f1.all() == f2.all()
+    assert np.array_equal(f1, f2, equal_nan=True)
+
+
+@pytest.mark.xfail(strict=True)
+def test_if_thickness_files_dont_match(cwd, coordsys, surface2):
+    test_input, expected = make_paths(cwd, coordsys, surface2, "thickness")
+    f1 = np.load(test_input)
+    f2 = np.load(expected)
+    assert (f1 != f2).all()
+
+
+@pytest.mark.xfail(strict=True)
+def test_if_height_and_curvature_files_dont_match(cwd, coordsys, surface4, quantity):
+    test_input, expected = make_paths(cwd, coordsys, surface4, quantity)
+    f1 = np.load(test_input)
+    f2 = np.load(expected)
+    assert (f1 != f2).all()
 
 
 def test_whether_flat_cartesian(cwd):
@@ -114,3 +130,21 @@ def test_whether_flat_polar(cwd):
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
+
+
+@pytest.mark.xfail(strict=True)
+def test_if_leaflets_are_distinct(cwd, coordsys, quantity):
+    zone_test, _ = make_paths(cwd, coordsys, "zone", quantity)
+    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", quantity)
+    f1 = np.load(zone_test)
+    f2 = np.load(ztwo_test)
+    assert np.array_equal(f1, f2, equal_nan=True)
+
+
+@pytest.mark.xfail(strict=True)
+def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys):
+    zone_test, _ = make_paths(cwd, coordsys, "zone", "thickness")
+    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", "thickness")
+    f1 = np.load(zone_test)
+    f2 = np.load(ztwo_test)
+    assert np.array_equal(f1, f2, equal_nan=True)
