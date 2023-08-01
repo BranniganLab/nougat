@@ -116,6 +116,24 @@ def test_if_height_and_curvature_files_dont_match(cwd, coordsys, surface4, quant
     assert (f1 != f2).all()
 
 
+@pytest.mark.xfail(strict=True)
+def test_if_leaflets_are_distinct(cwd, coordsys, quantity):
+    zone_test, _ = make_paths(cwd, coordsys, "zone", quantity)
+    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", quantity)
+    f1 = np.load(zone_test)
+    f2 = np.load(ztwo_test)
+    assert np.array_equal(f1, f2, equal_nan=True)
+
+
+@pytest.mark.xfail(strict=True)
+def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys):
+    zone_test, _ = make_paths(cwd, coordsys, "zone", "thickness")
+    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", "thickness")
+    f1 = np.load(zone_test)
+    f2 = np.load(ztwo_test)
+    assert np.array_equal(f1, f2, equal_nan=True)
+
+
 def test_whether_flat_cartesian(cwd):
     Hone = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.C1A.C1B.cart.meancurvature.npy")
     Htwo = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.C1A.C1B.cart.meancurvature.npy")
@@ -132,19 +150,13 @@ def test_whether_flat_polar(cwd):
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
-@pytest.mark.xfail(strict=True)
-def test_if_leaflets_are_distinct(cwd, coordsys, quantity):
-    zone_test, _ = make_paths(cwd, coordsys, "zone", quantity)
-    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", quantity)
-    f1 = np.load(zone_test)
-    f2 = np.load(ztwo_test)
-    assert np.array_equal(f1, f2, equal_nan=True)
-
-
-@pytest.mark.xfail(strict=True)
-def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys):
-    zone_test, _ = make_paths(cwd, coordsys, "zone", "thickness")
-    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", "thickness")
-    f1 = np.load(zone_test)
-    f2 = np.load(ztwo_test)
+def test_if_densities_match(cwd, coordsys, surface2):
+    if coordsys == "cart":
+        coordsys_path = "_cart_5_5_0_-1_1/npy/"
+    elif coordsys == "polar":
+        coordsys_path = "_polar_3_12_0_-1_1/npy/"
+    exp = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy"
+    test = cwd + "/E-protein_trajectory/test" + coordsys_path + "test.DTPC." + surface2 + "." + coordsys + ".density.npy"
+    f1 = np.load(exp)
+    f2 = np.load(test)
     assert np.array_equal(f1, f2, equal_nan=True)
