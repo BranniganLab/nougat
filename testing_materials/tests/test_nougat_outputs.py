@@ -134,9 +134,7 @@ def test_if_height_and_curvature_files_dont_match(cwd, coordsys, surface4, quant
 def test_if_leaflets_are_distinct(cwd, coordsys, quantity):
     zone_test, _ = make_paths(cwd, coordsys, "zone", quantity)
     ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", quantity)
-    f1 = np.load(zone_test)
-    f2 = np.load(ztwo_test)
-    assert np.array_equal(f1, f2, equal_nan=True)
+    assert arrays_equal(zone_test, ztwo_test)
 
 
 @pytest.mark.xfail(strict=True)
