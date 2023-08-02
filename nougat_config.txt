@@ -9,6 +9,7 @@ utilities_path = /home/js2746/PolarHeightBinning/utilities
 # if no inclusion, change to NULL 
 
 inclusion_sel = name BB SC1 to SC4
+#inclusion_sel = NULL
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
@@ -38,7 +39,7 @@ wrap_sel = resname $species
 
 
 reference_point = name BB and resid 15
-
+#reference_point = NULL
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -51,5 +52,5 @@ headnames = C1A C1B
 # before turning this on!
 
 #pore_sorter = NULL
+#pore_sorter = 7k3g
 pore_sorter = 5x29
-
