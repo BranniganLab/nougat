@@ -186,7 +186,7 @@ test popctailmiddleremoved {
 test basicleaflettop {
     Test: assignLeaflet
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane.gro
+   mol new ../testing_materials/lipid_membrane/insane2.gro
    assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
    set sel [atomselect top "resname POPC and z > 100"]
    set num [lsort -unique [$sel get user]]
@@ -199,7 +199,7 @@ test basicleaflettop {
 test basicleafletbottom {
     Test: assignLeaflet
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane.gro
+   mol new ../testing_materials/lipid_membrane/insane2.gro
    assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
    set sel [atomselect top "resname POPC and z < 100"]
    set num [lsort -unique [$sel get user]]
@@ -365,26 +365,26 @@ test rotatedsinlgeliptailAOrd {
 test fullmembraneliptailAOrd {
     Test: calculateOrderParameters
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane.gro
+   mol new ../testing_materials/lipid_membrane/insane2.gro
    set seltext [format {name "C.*" "D.*" and name ".*A"}]
    set sel1 [atomselect top "$seltext"]
    set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
 } -body {
     return [format "%.3f" $ordparams]
-} -result 0.949 -cleanup {
+} -result 0.930 -cleanup {
    mol delete top
 }
 
 test fullmembraneliptailBOrd {
     Test: calculateOrderParameters
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane.gro
+   mol new ../testing_materials/lipid_membrane/insane2.gro
    set seltext [format {name "C.*" and name ".*B"}]
    set sel1 [atomselect top "$seltext"]
    set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
 } -body {
     return [format "%.3f" $ordparams]
-} -result 0.960 -cleanup {
+} -result 0.958 -cleanup {
    mol delete top
 }
 
@@ -411,3 +411,31 @@ test cosinevec3 {
 } -body {
     return [format "%.3f" $costheta]
 } -result 0.055 -cleanup {}
+
+test printingBinInfo1 {
+    Test: printBinInfo
+} -setup {
+   exec mkdir testfiles
+   cd testfiles
+   set f1 [open "testfile.dat" w+] 
+   printBinInfo $f1 10 10 10
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
+} -body {
+    return [lindex $lines 0]
+} -result {110.00  120.00  } -cleanup { exec rm testfile.dat }
+
+test printingBinInfo2 {
+    Test: printBinInfo
+} -setup {
+   exec mkdir testfiles
+   cd testfiles
+   set f1 [open "testfile.dat" w+] 
+   printBinInfo $f1 10 10 10
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
+} -body {
+    return [lindex $lines 0]
+} -result {110.00  120.00  } -cleanup { exec rm testfile.dat }
