@@ -158,7 +158,7 @@ def read_log(sys_name, coordsys):
 
         # get density norm factor
         start_line = lines.index("#DENSITY NORMALIZATION") + 1
-        names_dict['density_norm'] = lines[start_line].split(":")[1]
+        names_dict['density_norm'] = float(lines[start_line].split(":")[1])
 
     return names_dict
 
