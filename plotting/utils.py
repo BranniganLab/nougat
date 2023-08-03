@@ -5,21 +5,46 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import matplotlib.pyplot as plt
-import matplotlib
 import numpy as np
 import warnings
-import glob
-import os
 
 
-def strip_blank_lines(f):
-    for l in f:
-        line = l.strip()
-        if line:
-            yield line
+def strip_blank_lines(file):
+    """
+    Remove any lines that are empty when reading a file.
+
+    Parameters
+    ----------
+    file : list
+        A list of all lines in a file.
+
+    Yields
+    ------
+    stripped_line : string
+        Each line that has text in it.
+
+    """
+    for line in file:
+        stripped_line = line.strip()
+        if stripped_line:
+            yield stripped_line
 
 
 def read_config(path):
+    """
+    Read the nougat.py config file and save everything to a dict.
+
+    Parameters
+    ----------
+    path : string
+        Path to the nougat.py config file.
+
+    Returns
+    -------
+    config_dict : dict
+        Dict containing all config entries in key/val pairs.
+
+    """
     config_dict = {}
     with open(path, "r+") as config_file:
         for line in strip_blank_lines(config_file):
@@ -35,8 +60,22 @@ def read_config(path):
     return config_dict
 
 
-def find_first_val(l):
-    for value in l:
+def find_first_val(in_list):
+    """
+    Find first non-nan value in a list.
+
+    Parameters
+    ----------
+    in_list : list
+        A list.
+
+    Returns
+    -------
+    float
+        The first non-nan value in the list. Returns nan if no such value exists.
+
+    """
+    for value in in_list:
         if np.isnan(value):
             continue
         else:
@@ -44,14 +83,28 @@ def find_first_val(l):
     return np.nan
 
 
-def find_last_val(l):
-    last_index = len(l) - 1
+def find_last_val(in_list):
+    """
+    Find last non-nan value in a list.
+
+    Parameters
+    ----------
+    in_list : list
+        A list.
+
+    Returns
+    -------
+    float
+        The last non-nan value in the list. Returns nan if no such value exists.
+
+    """
+    last_index = len(in_list) - 1
     while last_index >= 0:
-        if not np.isnan(l[last_index]):
-            return l[last_index]
+        if not np.isnan(in_list[last_index]):
+            return in_list[last_index]
         else:
             last_index -= 1
-    return "this didnt work"
+    return np.nan
 
 
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
@@ -85,6 +138,23 @@ def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure,
 
 
 def calc_avg_over_time(matrix_data):
+    """
+    Calculate mean over 3rd axis (time, in nougat terms) of an array. np.nanmean \
+        is wrapped inside of a catch_warnings loop so that the user does not get \
+        bombarded with a bunch of warnings every time a nan is encountered, \
+        which is supposed to be the whole point of nanmean anyway.
+
+    Parameters
+    ----------
+    matrix_data : numpy ndarray
+        A 3d array.
+
+    Returns
+    -------
+    avg : numpy ndarray
+        A 2d array (matrix_data averaged over the 3rd dimension).
+
+    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg = np.nanmean(matrix_data, axis=2)
@@ -242,12 +312,46 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
 
 
 def convert_to_cart(rval, thetaval):
+    """
+    Convert from polar to cartesian coordinates.
+
+    Parameters
+    ----------
+    rval : float
+        The r coordinate value.
+    thetaval : float
+        The theta coordinate value.
+
+    Returns
+    -------
+    xval : float
+        The x coordinate value.
+    yval : float
+        The y coordinate value.
+
+    """
     xval = rval * np.cos(thetaval)
     yval = rval * np.sin(thetaval)
     return xval, yval
 
 
 def coord_format(value):
+    """
+    Round an x/y coordinate and/or pad it with blank spaces so that it is the \
+        correct number of chars to fit in a pdb.
+
+    Parameters
+    ----------
+    value : float
+        A number.
+
+    Returns
+    -------
+    final_value : float
+        The same number, rounded and with blank spaces added to make it fit in \
+            a pdb file coordinate column.
+
+    """
     rounded = round(value, 3)
     leftside, rightside = str(rounded).split('.')
     if len(rightside) < 3:
@@ -270,7 +374,7 @@ def dimensions_analyzer(data, coordsys):
     counter = 1
     flag = True
     match_value = data[0, 0]
-    while (flag == True):
+    while (flag is True):
         try:
             if data[counter, 0] == match_value:
                 flag = False
