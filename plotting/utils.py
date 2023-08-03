@@ -195,8 +195,9 @@ def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
     np.save('npy/' + sys_name + "." + coordsys + ".areas.npy", areas)
 
 
-def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
+def mostly_empty(data_array):
     # if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+    N1_bins, N2_bins, Nframes = np.shape(data_array)
     for row in range(N1_bins):
         for col in range(N2_bins):
             zerocount = np.count_nonzero(data_array[row, col, :])
