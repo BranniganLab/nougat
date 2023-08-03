@@ -1,3 +1,3 @@
-package require tcltest
-namespace import ::tcltest::*
-runAllTests
+source ./unit_test.test
+
+exit
