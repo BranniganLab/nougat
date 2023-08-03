@@ -1,42 +1,30 @@
-import matplotlib.pyplot as plt
-import matplotlib
 import numpy as np
-import warnings
-import glob
-import os
 from utils import *
 
 
 def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    N1_bins, _, N2_bins, _, Nframes, dim1vals, dim2vals = dims
 
     for species in names_dict['species_list']:
         for tail in names_dict[species]:
-            zone = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + tail + '.zone.' + coordsys + '.order.dat', missing_values='nan', filling_values=np.nan)
-            ztwo = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + tail + '.ztwo.' + coordsys + '.order.dat', missing_values='nan', filling_values=np.nan)
+            for leaflet in ["zone", "ztwo"]:
+                order_file = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.order.dat', missing_values='nan', filling_values=np.nan)
 
-            # create a new array that has each frame in a different array level
-            order_up = np.zeros((N1_bins, N2_bins, Nframes))
-            order_down = np.zeros((N1_bins, N2_bins, Nframes))
-            for frm in range(Nframes):
-                order_up[:, :, frm] = zone[frm * N1_bins:(frm + 1) * N1_bins, 2:]
-                order_down[:, :, frm] = ztwo[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+                # create a new array that has each frame in a different array level
+                order_array = np.zeros((N1_bins, N2_bins, Nframes))
+                for frm in range(Nframes):
+                    order_array[:, :, frm] = order_file[frm * N1_bins:(frm + 1) * N1_bins, 2:]
 
-            order_up = mostly_empty(order_up)
-            order_down = mostly_empty(order_down)
+                order_array_pruned = mostly_empty(order_array)
 
-            avgouter = calc_avg_over_time(order_up)
-            avginner = calc_avg_over_time(order_down)
+                avgorder = calc_avg_over_time(order_array_pruned)
 
-            # make plots!
-            plot_maker(dim1vals, dim2vals, avgouter, sys_name, species + '.' + tail + '.zone', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys)
-            plot_maker(dim1vals, dim2vals, avginner, sys_name, species + '.' + tail + '.ztwo', scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys)
+                # make plots!
+                plot_maker(dim1vals, dim2vals, avgorder, sys_name, species + '.' + tail + '.zone''.' + leaflet, scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys)
 
-            # save as file for debugging / analysis
-            np.save('npy/' + sys_name + '.' + species + '.' + tail + '.zone.' + coordsys + '.order.npy', order_up)
-            np.save('npy/' + sys_name + '.' + species + '.' + tail + '.ztwo.' + coordsys + '.order.npy', order_down)
-            np.savetxt('dat/' + sys_name + '.' + species + '.' + tail + '.zone.' + coordsys + '.avgOrder.dat', avgouter, delimiter=',', fmt='%10.5f')
-            np.savetxt('dat/' + sys_name + '.' + species + '.' + tail + '.ztwo.' + coordsys + '.avgOrder.dat', avginner, delimiter=',', fmt='%10.5f')
+                # save as file for debugging / analysis
+                np.save('npy/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.order.npy', order_array_pruned)
+                np.savetxt('dat/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.avgOrder.dat', avgorder, delimiter=',', fmt='%10.5f')
 
             print(sys_name + ' ' + species + " " + tail + " order done!")
 
