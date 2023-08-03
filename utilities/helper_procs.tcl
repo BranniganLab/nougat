@@ -489,7 +489,7 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set r_vals [vecexpr [vecexpr [vecexpr $xVals sq] [vecexpr $yVals sq] add] sqrt]
         
         ;#turn into bin numbers rather than r values
-        set dim1_bins [vecexpr [vecexpr $r_vals $d1 div] floor]
+        set dim1_bins [vecexpr [vecexpr $r_vals $binWidth1 div] floor]
         
         ;#calculate theta: use atan2 to get values for al x,y pairs
         set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
@@ -636,10 +636,10 @@ proc prepareBins {frameNumber polar min drN1 N2} {
     
     if {$polar == 1} {
     
-        dict set bindims d1 $dr_N1
+        dict set bindims d1 $drN1
 
         #measure box size at final frame to get bin values
-        set box_x [molinfo top get a frame [expr $frameNumber-1]]
+        set box_x [molinfo top get a frame [expr $frameNumber]]
 
         set box_r [expr int($box_x)/2]
         set rrange [expr $box_r-$min]
@@ -845,6 +845,67 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
     return $res_dict
 }
 
+
+proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
+    if {$coordSystem == "CART"} {
+        set d1list []
+        set d2list []
+        for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
+            lappend d1list [expr $L1/$N1*1.0]
+            lappend d2list [expr $L2/$N2*1.0]
+        }
+        set avgd1 [vecexpr $d1list mean]
+        set avgd2 [vecexpr $d2list mean]
+    } else {
+        set avgd1 $d1 
+        set avgd2 $d2
+    }
+
+    set arealist []
+    for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
+        set L1 [molinfo top get a frame $frm]
+        set L2 [molinfo top get b frame $frm]
+        lappend arealist [expr $L1*$L2]
+    }
+    set avgarea [vecexpr $arealist mean]
+    
+
+    return [list $avgarea $avgd1 $avgd2]
+}
+
+
+proc outputNougatLog {start end step species system headNames coordSystem folderName N1 N2 d1 d2} {
+    set logFile [open "${folderName}/tcl_output/${system}.${coordSystem}.log" w]
+
+    ;# calculate average area, d1, and d2
+    set binInfo [calc_bin_info $start $end $step $N1 $N2 $coordSystem $d1 $d2]
+    set avgArea [lindex $binInfo 0]
+    set avgd1 [lindex $binInfo 1]
+    set avgd2 [lindex $binInfo 2]
+
+    ;# output species names and bead names
+    puts $logFile "#SYSTEM CONTENTS"
+    puts $logFile "$species" 
+    puts $logFile "$headNames"
+    puts $logFile ""
+
+    ;# output density normalization info
+    puts $logFile "#DENSITY NORMALIZATION"
+    set density_norm_factor [outputDensityNormInfo $start $end $step $species $system $headNames $coordSystem $avgArea $folderName]
+    foreach spec_norm_pair $density_norm_factor {
+        puts $logFile "$spec_norm_pair"
+    }
+    puts $logFile ""
+
+    ;# output bin number
+    puts $logFile "#BIN INFO"
+    puts $logFile "$N1 $N2"
+    puts $logFile "$avgd1 $avgd2"
+
+    close $logFile
+}
+
+
 # outputDensityNormInfo (Previously: output_density_norm_info)
 #
 #       Calculates the normalization factor for 
@@ -858,19 +919,14 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
 #       system          {str}       user defined name of the system
 #       headNames       {str}       names of beads that define neutral surface
 #       coordSystem     {str}       string either for either polar of cartesian coordiates
+#       avgArea         {flt}       average area of box across portion of traj under analysis
 #       folderName      {str}       name of folder
 #
 # Results:
 #       
 #       calculates the normalization factor for density enrichment calculations
 
-proc outputDensityNormInfo {start frameNumber step species system headNames coordSystem folderName} {
-    set arealist []
-    for {set frm $start} {$frm <= $frameNumber} {set frm [expr $frm+$step]} {
-        lappend arealist [expr [molinfo top get a frame $frm]*[molinfo top get b frame $frm]]
-    }
-    set avgarea [vecexpr $arealist mean]
-    set normfactor_outfile [open "${folderName}/tcl_output/${system}.${coordSystem}.density.normfactor.dat" w]
+proc outputDensityNormInfo {start end step species system headNames coordSystem avgArea folderName} {
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set names [lsort -unique [$sel get name]]
@@ -882,12 +938,12 @@ proc outputDensityNormInfo {start frameNumber step species system headNames coor
         }
         set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
-        set normfactor [expr $avgarea/[expr $Nb*$Sb/2.0]]
-        puts $normfactor_outfile "$spec $normfactor"
+        set normfactor [expr $avgArea/[expr $Nb*$Sb/2.0]]
+        lappend normlist "${spec}:${normfactor}"
     }
-    
-    close $normfactor_outfile
+    return $normlist
 }
+
 
 # sortTailLength (Previously: tail_length_sorter) --
 #

@@ -63,7 +63,6 @@ proc cell_prep {config_path leaf_check} {
         Align [dict get $config_dict align_sel]
     }
 
-
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy]} {
@@ -110,7 +109,6 @@ proc cell_prep {config_path leaf_check} {
 
 proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     ;# running cell_prep will do some important initial configuration based on user input. 
-    ;# check the extensive documentation at the top of this file for instructions.
     set config_dict [cell_prep $config_path 0]
 
     ;# set nframes based on $end input
@@ -143,7 +141,6 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
-    
     
     run_nougat $system $config_dict $bindims $polar "height_density" $foldername
     run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
@@ -225,9 +222,9 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         }
     }
 
-    ;# output density normalization info 
+    ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height_density"} {
-        outputDensityNormInfo [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername
+        outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
     }
 
     ;# close all outfiles
@@ -235,8 +232,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         close $channel
     }
 
-    ;# delete all atomselections in scope
-    ;# if the user defined atomselections in their VMD session,
+    ;# delete all atomselections in scope.
+    ;# if the user has previously defined atomselections in their VMD session,
     ;# these will be out of scope and cause an error.
     ;# catch will ignore this error, as it's not important to the user.
     foreach selection [atomselect list] {

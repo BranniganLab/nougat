@@ -16,19 +16,25 @@ def Make_surface_PDB(data,name,field,d1,d2,f,serial,bead,polar):
   beadnum = str(bead[1])
   beadname = "C"+beadnum+"  "
 
-  for rbin in range(row):
-    for thetabin in range(col):
-      if str(data[rbin][thetabin]) != "nan":
+  for d1bin in range(row):
+    for d2bin in range(col):
+      if str(data[d1bin][d2bin]) != "nan":
         seriallen = 5-(len(str(serial)))
         resseqlen = 4-(len(str(resseqnum)))
-        x = (d1*rbin + .5*d1)*(np.cos(thetabin*d2 + 0.5*d2))
+        if polar == 1:
+          x = (d1*d1bin + .5*d1)*(np.cos(d2bin*d2 + 0.5*d2))
+          y = (d1*d1bin + .5*d1)*(np.sin(d2bin*d2 + 0.5*d2))
+        else:
+          L1 = d1*row
+          L2 = d2*col 
+          x = (d1*d1bin + .5*d1) - L1/2
+          y = (d2*d2bin + .5*d2) - L2/2
         x = coord_format(x)
-        y = (d1*rbin + .5*d1)*(np.sin(thetabin*d2 + 0.5*d2))
         y = coord_format(y)
-        z = coord_format(data[rbin][thetabin])
-        rnum = bin_format(rbin)
-        thetanum = bin_format(thetabin)
-        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+rnum+thetanum+'      '+field[:4]+'  ',file=f)
+        z = coord_format(data[d1bin][d2bin])
+        d1num = bin_format(d1bin)
+        d2num = bin_format(d2bin)
+        print('HETATM'+(' '*seriallen)+str(serial)+' '+atom_name+' '+beadname+chain+(' '*resseqlen)+str(resseqnum)+'    '+x+y+z+d1num+d2num+'      '+field[:4]+'  ',file=f)
         serial += 1
         resseqnum +=1
   return serial
@@ -40,9 +46,7 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
 
   zplus=(zone+ztwo)/2
 
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-    avgzplus=np.nanmean(zplus, axis=2)
+  avgzplus = calc_avg_over_time(zplus)
 
   #make plots!
   plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
@@ -78,16 +82,16 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field
           height[:,:,frm] = height_data[frm*N1_bins:(frm+1)*N1_bins,2:]
 
         #if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
-        height = mostly_empty(height, N1_bins, N2_bins, Nframes)
+        pruned_height = mostly_empty(height, N1_bins, N2_bins, Nframes)
 
         #take the average height over all frames
-        avgHeight = calc_avg_over_time(height)
+        avgHeight = calc_avg_over_time(pruned_height)
 
         #make plots!
         plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
 
         #save as file for debugging / analysis AND make PDB!
-        np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', height)
+        np.save('npy/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.height.npy', pruned_height)
         np.savetxt('dat/'+sys_name+'.'+field+'.'+bead+'.'+coordsys+'.avgheight.dat', avgHeight,delimiter = ',',fmt='%10.5f')
         serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
         print(sys_name+' '+bead+' '+field+" height done!")

@@ -20,7 +20,10 @@ density_min = 0
 density_max = 2
 
 thick_min = 0
-thick_max = 2
+thick_max = 5
+
+thick_whole_min = 0
+thick_whole_max = 10
 
 order_min = 0. 
 order_max = .6
