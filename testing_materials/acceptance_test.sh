@@ -1,5 +1,10 @@
 #! /bin/sh
 
+# Run unit tests
+# cd ../test/ 
+# vmd -dispdev none -e ./unit_test.test > unit_tests.log
+# cd ../testing_materials/
+
 # Run nougat.tcl and nougat.py on test systems
 vmd -dispdev none -e ./run_nougat_test.tcl
 bash ./run_nougat_py_test.sh
