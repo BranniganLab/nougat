@@ -429,13 +429,25 @@ test printingBinInfo1 {
 test printingBinInfo2 {
     Test: printBinInfo
 } -setup {
-   exec mkdir testfiles
-   cd testfiles
    set f1 [open "testfile.dat" w+] 
    printBinInfo $f1 10 10 10
+   printBinInfo $f1 20 20 20
+   printBinInfo $f1 30 30 30
+   printBinInfo $f1 40 40 40
+   printBinInfo $f1 50 50 50
    close $f1
    set f1 [open "testfile.dat" r] 
    set lines [split [read $f1] \n]
 } -body {
     return [lindex $lines 0]
-} -result {110.00  120.00  } -cleanup { exec rm testfile.dat }
+} -result {110.00  120.00  420.00  440.00  930.00  960.00  1640.00  1680.00  2550.00  2600.00  } -cleanup { exec rm testfile.dat }
+
+test printingvalue1 {
+    Test: printValue
+} -setup {
+   set f1 [open "testfile.dat" w+] 
+} -body {
+    return [printValue $f1 10 3]
+} -result "Something went wrong - end_line should have value of 0 or 1 only" -cleanup { 
+close $f1
+exec rm testfile.dat }
