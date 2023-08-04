@@ -22,6 +22,8 @@ def make_animated_heatmap(data, coordsys, dim1vals, dim2vals, Vmax, Vmin, colorb
         else:
             ax = plt.subplot()
         plt.axis('off')
+        c = plt.pcolormesh(dim2vals, dim1vals, data[:,:,0], cmap="RdBu_r", zorder=0)
+        plt.colorbar(c)
         return ax
 
     def animate(frame):
