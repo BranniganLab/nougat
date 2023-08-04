@@ -50,7 +50,7 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
     avgzplus = calc_avg_over_time(zplus)
 
     # make plots!
-    plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
+    plot_maker(dim1vals, dim2vals, avgzplus, sys_name, 'zplus', scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys, scale_dict["colorbar"])
 
     # save as file for debugging / analysis AND make PDB!
     np.save('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.height.npy', zplus)
@@ -90,7 +90,7 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field
                 avgHeight = calc_avg_over_time(pruned_height)
 
                 # make plots!
-                plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys)
+                plot_maker(dim1vals, dim2vals, avgHeight, sys_name, field, scale_dict["height_max"], scale_dict["height_min"], inclusion, "avgHeight", bead, coordsys, scale_dict["colorbar"])
 
                 # save as file for debugging / analysis AND make PDB!
                 np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.npy', pruned_height)
