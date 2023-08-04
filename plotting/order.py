@@ -6,7 +6,7 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, scal
     N1_bins, _, N2_bins, _, Nframes, dim1vals, dim2vals = dims
 
     for species in names_dict['species_list']:
-        for tail in names_dict[species]:
+        for tail in names_dict['beads_list']:
             for leaflet in ["zone", "ztwo"]:
                 order_file = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.order.dat', missing_values='nan', filling_values=np.nan)
 
