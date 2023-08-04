@@ -479,7 +479,7 @@ def dimensions_analyzer(data, coordsys):
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
-def calc_elastic_terms(system, path, coordsys):
+def calc_elastic_terms(system, path, coordsys, scale_dict):
     """
     Calculate all the additional terms that appear in a hamiltonian or are \
         generally of interest.
@@ -493,6 +493,8 @@ def calc_elastic_terms(system, path, coordsys):
             system
     coordsys : string
         "polar" or "cart"
+    scale_dict : dict
+        contains scale bounds from the nougat config file
 
     Returns
     -------
@@ -564,7 +566,7 @@ def calc_elastic_terms(system, path, coordsys):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, True)
+        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict["colorbar"])
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
             avg_over_theta(path + '/npy/', name, system)
