@@ -1,6 +1,6 @@
 
 # SCALE BAR ON/OFF
-scale_bar = OFF
+colorbar = True
 
 # COLOR SCALE
 color_scale = RdBu_r

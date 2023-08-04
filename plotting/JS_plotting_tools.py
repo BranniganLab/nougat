@@ -95,7 +95,7 @@ def zoom_in(systems):
                 dim2 = np.linspace(0, 2 * np.pi, 11)
                 dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
                 print(data[:15, :].shape)
-                plot_maker(dim1vals, dim2vals, data[:15, :], system, field, max_scale_dict[value], min_scale_dict[value], False, value, False, "polar")
+                plot_maker(dim1vals, dim2vals, data[:15, :], system, field, max_scale_dict[value], min_scale_dict[value], False, value, False, "polar", True)
         os.chdir('../..')
 
 
@@ -228,7 +228,7 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name):
         pass
     for frame in range(nframes):
         frame_data = traj_data[:, :, frame]
-        plot_maker(dim1vals, dim2vals, frame_data, sys_name, str(frame), "auto", "auto", False, quantity, False, coordsys)
+        plot_maker(dim1vals, dim2vals, frame_data, sys_name, str(frame), "auto", "auto", False, quantity, False, coordsys, True)
 
     os.chdir(cwd)
 
