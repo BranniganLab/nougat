@@ -5,6 +5,7 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import matplotlib.pyplot as plt
+from matplotlib import animation
 import numpy as np
 import warnings
 
@@ -234,14 +235,14 @@ def read_log(sys_name, coordsys):
     return names_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, colorbar):
     """
-    Make 2D heatmaps.
+    Create and save 2D heatmaps.
 
     Parameters
     ----------
     dim1vals : list
-        meshgrid output 2
+        meshgrid output 1
     dim2vals : list
         meshgrid output 2
     data : array
@@ -255,13 +256,15 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     Vmin : float
         min value for colorbar
     protein : list or False
-        if protein present, list of helix coordinates; if no protein, False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
     dataname : string
         the type of measurement (thickness, height, curvature, etc)
     bead : string or False
         if bead specified, name of bead; else False
     coordsys : string
         "polar" or "cart"
+    colorbar : bool
+        Draws colorbar legend if True
 
     Returns
     -------
@@ -269,7 +272,39 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
 
     """
     fig = plt.figure()
+    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar)
+    if protein:
+        draw_protein(protein, coordsys)
+    save_figure(bead, name, field, coordsys, dataname)
+    plt.clf()
+    plt.close()
 
+
+def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
+    """
+    Create a 2d heatmap of your data.
+
+    Parameters
+    ----------
+    coordsys : string
+        "cart" or "polar"
+    dim1vals : list
+        meshgrid output 1
+    dim2vals : list
+        meshgrid output 2
+    data : numpy ndarray
+        the 2d array of values to be heatmapped
+    Vmax : float
+        max value for colorbar
+    Vmin : float
+        min value for colorbar
+    colorbar : bool
+        draws colorbar legend if True
+
+    Returns
+    -------
+
+    """
     if coordsys == "polar":
         ax = plt.subplot(projection="polar")
         if Vmax != "auto":
@@ -285,31 +320,69 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     else:
         print("something's wrong with coordsys")
 
-    # cbar = plt.colorbar(c)
-
-    if protein is not False:
-        print(protein)
-        for i in range(0, 10, 2):
-            protein[i + 1] = np.deg2rad(protein[i + 1])
-            if coordsys == "cart":
-                protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
-            plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
-        circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
-        if field == "zone":
-            ax.add_artist(circle1)
+    if colorbar:
+        cbar = plt.colorbar(c)
 
     plt.axis('off')
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-
     # fig.set_size_inches(6,6)
 
+
+def draw_protein(protein, coordsys):
+    """
+    Draw protein alpha helix positions.
+
+    Parameters
+    ----------
+    protein : list or False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
+    coordsys : string
+        "cart" or "polar"
+
+    Returns
+    -------
+    None.
+
+    """
+    for i in range(0, 10, 2):
+        protein[i + 1] = np.deg2rad(protein[i + 1])
+        if coordsys == "cart":
+            protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
+        plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
+
+    # This circle is a custom E protein thing and should be removed
+    # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
+    # if field == "zone":
+    #    ax.add_artist(circle1)
+
+
+def save_figure(bead, name, field, coordsys, dataname):
+    """
+    Save the current figure.
+
+    Parameters
+    ----------
+    bead : string or False
+        if bead specified, name of bead; else False
+    name : string
+        the system name you gave nougat.py
+    field : string
+        usually describes which membrane field (z1, z2, etc) to be heatmapped
+    coordsys : string
+        "cart" or "polar"
+    dataname : string
+        the type of measurement (thickness, height, curvature, etc)
+
+    Returns
+    -------
+    None.
+
+    """
     if bead is False:
         plt.savefig('pdf/' + name + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
     else:
         plt.savefig('pdf/' + name + "_" + bead + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
-    plt.clf()
-    plt.close()
 
 
 def convert_to_cart(rval, thetaval):
@@ -491,7 +564,7 @@ def calc_elastic_terms(system, path, coordsys):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
+        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, True)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
             avg_over_theta(path + '/npy/', name, system)
@@ -587,3 +660,7 @@ def measure_t0(path, system, coordsys):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avgt0 = np.nanmean(total_t) / 2.0
     return avgt0
+
+
+def make_animated_heatmap():
+    pass
