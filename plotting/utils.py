@@ -568,7 +568,7 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict["colorbar"])
+        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
             avg_over_theta(path + '/npy/', name, system)
