@@ -43,8 +43,8 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
         avginner = avginner * normfactor / areas
 
         # make plots!
-        plot_maker(dim1vals, dim2vals, avgouter, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict["colorbar"])
-        plot_maker(dim1vals, dim2vals, avginner, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict["colorbar"])
+        plot_maker(dim1vals, dim2vals, avgouter, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
+        plot_maker(dim1vals, dim2vals, avginner, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
 
         # save as file for debugging / analysis
         np.save('npy/' + sys_name + '.' + species + '.zone.' + coordsys + '.density.npy', density_up)

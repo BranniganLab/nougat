@@ -235,7 +235,7 @@ def read_log(sys_name, coordsys):
     return names_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, colorbar):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, config_dict):
     """
     Create and save 2D heatmaps.
 
@@ -263,8 +263,8 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
         if bead specified, name of bead; else False
     coordsys : string
         "polar" or "cart"
-    colorbar : bool
-        Draws colorbar legend if True
+    config_dict : dict
+        Dict containing config info
 
     Returns
     -------
@@ -279,7 +279,7 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     # fig.set_size_inches(6,6)
-    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar)
+    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
     if protein:
         draw_protein(protein, coordsys)
     save_figure(bead, name, field, coordsys, dataname)
