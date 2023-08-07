@@ -30,7 +30,7 @@ def make_animated_heatmap(data, coordsys, dim1vals, dim2vals, Vmax, Vmin, colorb
         return c
 
     anim = animation.FuncAnimation(fig, animate, frames=np.shape(data)[2], interval=333, repeat=False)
-    anim.save("/home/js2746/PolarHeightBinning/plotting/test2.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
+    anim.save("/home/js2746/PolarHeightBinning/plotting/test.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
     plt.close()
 
 
