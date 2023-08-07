@@ -571,10 +571,10 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
         plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
-            avg_over_theta(path + '/npy/', name, system)
+            avg_over_theta(path + '/npy/' + system + '.' + name)
 
 
-def avg_over_theta(path, quantity, sysname):
+def avg_over_theta(path):
     """
     Compute average of the quantity in question over the theta dimension.
 
@@ -582,23 +582,19 @@ def avg_over_theta(path, quantity, sysname):
     ----------
     path : string
         The directory in which nougat npy outputs are located
-    quantity : string
-        The variable you're averaging
-    sysname : string
-        The name of the system that you gave nougat orginally
 
     Returns
     -------
     None.
 
     """
-    data = np.load(path + sysname + "." + quantity + ".npy")
+    data = np.load(path + ".npy")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg_vals = np.nanmean(data, axis=1)
         std = np.nanstd(data, axis=1)
-    np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
-    np.save(path + sysname + "." + quantity + ".avg_over_theta.std.npy", std)
+    np.save(path + ".avg_over_theta.npy", avg_vals)
+    np.save(path + ".avg_over_theta.std.npy", std)
 
 
 def bad_measure_t0(zone, ztwo, coordsys):
