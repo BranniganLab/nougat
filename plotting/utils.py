@@ -586,6 +586,8 @@ def avg_over_theta(path, quantity, sysname):
         The variable you're averaging
     sysname : string
         The name of the system that you gave nougat orginally
+    config_dict : dict
+        Dict containing useful configuration info
 
     Returns
     -------
@@ -596,7 +598,9 @@ def avg_over_theta(path, quantity, sysname):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg_vals = np.nanmean(data, axis=1)
+        std = np.nanstd(data, axis=1)
     np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
+    np.save(path + sysname + "." + quantity + ".avg_over_theta.std.npy", std)
 
 
 def bad_measure_t0(zone, ztwo, coordsys):
