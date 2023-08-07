@@ -94,6 +94,9 @@ def analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field
 
                 # save as file for debugging / analysis AND make PDB!
                 np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.npy', pruned_height)
+                np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight.npy', avgHeight)
+                if coordsys == "polar":
+                    avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight')
                 np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight.dat', avgHeight, delimiter=',', fmt='%10.5f')
                 serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
                 print(sys_name + ' ' + bead + ' ' + field + " height done!")
