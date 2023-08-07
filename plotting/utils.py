@@ -586,8 +586,6 @@ def avg_over_theta(path, quantity, sysname):
         The variable you're averaging
     sysname : string
         The name of the system that you gave nougat orginally
-    config_dict : dict
-        Dict containing useful configuration info
 
     Returns
     -------
