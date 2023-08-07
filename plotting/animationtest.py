@@ -9,7 +9,6 @@ Created on Fri Aug  4 11:30:26 2023
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from matplotlib.animation import PillowWriter
 from utils import *
 import os
 
@@ -30,8 +29,8 @@ def make_animated_heatmap(data, coordsys, dim1vals, dim2vals, Vmax, Vmin, colorb
         label.set_text('Frame ' + str(frame))
         return c
 
-    anim = animation.FuncAnimation(fig, animate, frames=10, interval=333, repeat=False)
-    anim.save("/home/js2746/PolarHeightBinning/plotting/test.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
+    anim = animation.FuncAnimation(fig, animate, frames=np.shape(data)[2], interval=333, repeat=False)
+    anim.save("/home/js2746/PolarHeightBinning/plotting/test2.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
     plt.close()
 
 
