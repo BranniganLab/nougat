@@ -54,7 +54,10 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, dims, serial, pd
 
     # save as file for debugging / analysis AND make PDB!
     np.save('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.height.npy', zplus)
+    np.save('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight.npy', avgzplus)
     np.savetxt('dat/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight.dat', avgzplus, delimiter=',', fmt='%10.5f')
+    if coordsys == "polar":
+        avg_over_theta('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight')
     serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
     print(sys_name + ' ' + bead + " zplus height done!")
 
