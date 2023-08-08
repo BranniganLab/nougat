@@ -15,13 +15,13 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
 
     for leaflet in ["zone", "ztwo", "whole"]:
         if leaflet == "zone":
-            data = zone - zzero
+            thickness = zone - zzero
         elif leaflet == "ztwo":
-            data = zzero - ztwo
+            thickness = zzero - ztwo
         elif leaflet == "whole":
-            data = zone = ztwo
+            thickness = zone = ztwo
 
-        avgthickness = calc_avg_over_time(data)
+        avgthickness = calc_avg_over_time(thickness)
 
         # need to fix this to get t0 from an empty membrane
         # avgt0 = measure_t0(zone, ztwo, coordsys)
@@ -34,7 +34,10 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
             plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
 
         # save as file for debugging / analysis!
-        np.save('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.thickness.npy', data)
+        np.save('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.thickness.npy', thickness)
+        np.save('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness.npy', avgthickness)
+        if coordsys == "polar":
+            avg_over_theta('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness')
         np.savetxt('dat/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness.dat', avgouter, delimiter=',', fmt='%10.5f')
 
     print(sys_name + ' ' + bead + " thickness done!")
