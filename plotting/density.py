@@ -35,6 +35,9 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
 
             # save as file for debugging / analysis
             np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.npy', density_array)
+            np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.npy', avgdensity)
+            if polar is True:
+                avg_over_theta('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity')
             np.savetxt('dat/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.dat', avgdensity, delimiter=',', fmt='%10.5f')
 
         print(sys_name + ' ' + species + " density done!")
