@@ -38,6 +38,6 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
         np.save('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness.npy', avgthickness)
         if coordsys == "polar":
             avg_over_theta('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness')
-        np.savetxt('dat/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness.dat', avgouter, delimiter=',', fmt='%10.5f')
+        np.savetxt('dat/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.avgthickness.dat', avgthickness, delimiter=',', fmt='%10.5f')
 
     print(sys_name + ' ' + bead + " thickness done!")
