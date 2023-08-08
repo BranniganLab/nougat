@@ -19,7 +19,7 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
         elif leaflet == "ztwo":
             thickness = zzero - ztwo
         elif leaflet == "whole":
-            thickness = zone = ztwo
+            thickness = zone - ztwo
 
         avgthickness = calc_avg_over_time(thickness)
 
