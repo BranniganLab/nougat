@@ -37,7 +37,7 @@ def make_animated_heatmap(data, coordsys, dims, Vmax, Vmin, colorbar):
 
 
 def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar):
-    Nrbins, dr, _, _, _, dim1vals, dim2vals = dims
+    Nrbins, _, _, _, _, dim1vals, dim2vals = dims
     fig = plt.figure(layout="constrained")
     fig.set_figwidth(15)
     ax1 = plt.subplot(132, projection="polar")
@@ -56,7 +56,7 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
     avgavg = ax2.plot(X, avg_avgovertheta)
     std = ax2.fill_between(X, (avg_avgovertheta - std_data), (avg_avgovertheta + std_data), alpha=.1)
     ax2.set_ylim(Vmin, Vmax)
-    imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO.0000'
+    imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/movie_stills/lgPO.0000'
     img = np.asarray(Image.open(imgpath + "0.ppm"))
     f = ax3.imshow(img)
 
