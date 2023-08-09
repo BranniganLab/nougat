@@ -310,7 +310,7 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
 
     Returns
     -------
-
+    None.
     """
     if coordsys == "polar":
         if Vmax != "auto":
@@ -326,7 +326,7 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
         print("something's wrong with coordsys")
 
     if colorbar:
-        cbar = plt.colorbar(c)
+        plt.colorbar(c)
 
     plt.axis('off')
 
@@ -439,6 +439,22 @@ def coord_format(value):
 
 
 def bin_format(value):
+    """
+    Round a bin number and/or pad it with blank spaces so that it is the \
+        correct number of chars to fit in a pdb.
+
+    Parameters
+    ----------
+    value : int
+        The number of the bin.
+
+    Returns
+    -------
+    final_value : string
+        The same number, with .00 appended to the end and the correct number \
+            of blank spaces in front to fit in the pdb column.
+
+    """
     strval = str(value)
     length = len(strval)
     final_value = (' ' * (3 - length)) + strval + '.00'
@@ -466,6 +482,10 @@ def dimensions_analyzer(data, coordsys):
 
     # figure out how many frames there are in the traj
     Nframes = int(len(data[:, 0]) / N1_bins)
+
+    # error check
+    if (len(data[:, 0]) % N1_bins) != 0:
+        raise Exception("There is something wrong with the Nframes calculation")
 
     if coordsys == "polar":
         d1 = data[0, 1] - data[0, 0]
