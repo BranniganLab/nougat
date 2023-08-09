@@ -464,6 +464,77 @@ def plot_APL(path, sysname):
     plt.close()
 
 
+def compare_APLs(names, path):
+    """
+    Create plot of average APL for several different systems
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with APL.traj inside.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots()
+    for name in names:
+        APL_traj = np.loadtxt(path + name + "/" + name + ".APL.traj")
+        X = APL_traj[:, 0]
+        Y = APL_traj[:, 1]
+        ax.plot(X, rollingavg(Y, 20), color=APL_color_dict[name])
+    ax.legend(names)
+    fig.supxlabel(r'$t \;(\mathrm{frames})$')
+    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
+    plt.savefig(path + "comparison.APL_traj.pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
+def plot_APL_v_nL(names, path):
+    """
+    Create plot of average APL versus number of lipids in system
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with APL.traj inside.
+
+    Returns
+    -------
+    None.
+
+    """
+    fig, ax = plt.subplots(layout="constrained")
+    Y = []
+    errors = []
+    for name in names:
+        APL_traj = np.loadtxt(path + name + "/" + name + ".APL.traj")
+        Y.append(np.nanmean(APL_traj[:, 1]))
+        errors.append(np.nanstd(APL_traj[:, 1]))
+    X = np.int64(names)
+    ax.errorbar(X, Y, errors)
+    fig.supxlabel(r'$\mathrm{nL}$')
+    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
+    plt.savefig(path + "comparison2.APL_traj.pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
+APL_color_dict = {
+    "512": "red",
+    "1024": "orange",
+    "2048": "yellow",
+    "4096": "green",
+    "8192": "blue",
+    "32768": "purple"}
+
 colordict = {
     "DT": "red",
     "DL": "orange",
@@ -563,4 +634,6 @@ if __name__ == "__main__":
     # run_eps_corr_scatter(mol)
     # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
-    plot_APL("/home/js2746/4096/", 'DPPC')
+    # plot_APL("/home/js2746/KC_project/4096/", '4096')
+    # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
