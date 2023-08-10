@@ -40,24 +40,30 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
     Nrbins, _, _, _, _, dim1vals, dim2vals = dims
     fig = plt.figure(layout="constrained")
     fig.set_figwidth(15)
+
+    # polar 2d heatmap in middle
     ax1 = plt.subplot(132, projection="polar")
-    ax2 = plt.subplot(133)
-    ax3 = plt.subplot(131)
     label1 = ax1.text(1.5 * np.pi, 250, 'Frame 0', ha='center', va='center')
     ax1.axis('off')
-    ax3.axis('off')
     c = ax1.pcolormesh(dim2vals, dim1vals, heatmap_data[:, :, 0], cmap="RdBu_r", vmax=Vmax, vmin=Vmin, zorder=0)
     plt.colorbar(c)
+
+    # average over theta on right
     avgovertheta_data = np.nanmean(heatmap_data, axis=1)
-    avg_avgovertheta = np.nanmean(avgovertheta_data, axis=1)
+    avgoverthetaovertime = np.nanmean(avgovertheta_data, axis=1)
     std_data = 2 * np.nanstd(avgovertheta_data, axis=1)
     X = np.linspace(0, Nrbins, Nrbins)
+    ax2 = plt.subplot(133)
     e, = ax2.plot(X, avgovertheta_data[:, 0])
-    avgavg = ax2.plot(X, avg_avgovertheta)
-    std = ax2.fill_between(X, (avg_avgovertheta - std_data), (avg_avgovertheta + std_data), alpha=.1)
+    ax2.plot(X, avgoverthetaovertime)
+    ax2.fill_between(X, (avgoverthetaovertime - std_data), (avgoverthetaovertime + std_data), alpha=.1)
     ax2.set_ylim(Vmin, Vmax)
+
+    # VMD still on left
     imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/movie_stills/lgPO.0000'
     img = np.asarray(Image.open(imgpath + "0.ppm"))
+    ax3 = plt.subplot(131)
+    ax3.axis('off')
     f = ax3.imshow(img)
 
     def animate(frame):
