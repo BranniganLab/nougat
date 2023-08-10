@@ -451,7 +451,7 @@ def plot_APL(path, sysname):
 
     """
     APL_traj = np.loadtxt(path + sysname + ".APL.traj")
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(layout='constrained')
     X = APL_traj[:, 0]
     Y = APL_traj[:, 1]
     ax.plot(X, Y, color="blue")
@@ -462,6 +462,44 @@ def plot_APL(path, sysname):
     plt.savefig(path + sysname + ".APL_traj.pdf", dpi=700)
     plt.clf()
     plt.close()
+
+
+def plot_asymm_over_traj(path, sysname):
+    """
+    Plot the number of lipids per leaflet, plus lipids that have been discounted \
+        or discarded from the leaflet sorter.
+
+    Parameters
+    ----------
+    path : string
+        Path to directory containing ___.asymm.traj file
+    sysname : string
+        Name of system that you gave nougat
+
+    Returns
+    -------
+    None.
+
+    """
+    asymm_traj = np.loadtxt(path + sysname + ".asymm.traj")
+    fig, axs = plt.subplots(3, sharex=True, layout='constrained')
+    X = asymm_traj[:, 0] / 10  # magic number to convert from frames to us for my systems
+    outer = asymm_traj[:, 1]
+    inner = asymm_traj[:, 2]
+    sideways = asymm_traj[:, 3]
+    inside_inclusion = asymm_traj[:, 4]
+    total_asymm = outer - inner
+    axs[0].plot(X, outer, color="blue", label='Outer Leaflet')
+    axs[0].plot(X, inner, color="red", label="Inner leaflet")
+    axs[1].plot(X, sideways, color="green", label="Unclassifiable")
+    axs[1].plot(X, inside_inclusion, color="orange", label="Inside inclusion")
+    axs[2].plot(X, total_asymm, color="black", label="Lipid number asymmetry")
+    axs[0].legend()
+    axs[1].legend()
+    axs[2].legend()
+    fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
+    fig.supylabel(r'$nL$')
+    plt.savefig(path + sysname + ".asymm_traj.pdf", dpi=700)
 
 
 def compare_APLs(names, path):
@@ -497,7 +535,7 @@ def compare_APLs(names, path):
 
 def plot_APL_v_nL(names, path):
     """
-    Create plot of average APL versus number of lipids in system
+    Create plot of average APL versus number of lipids in system.
 
     Parameters
     ----------
@@ -521,7 +559,7 @@ def plot_APL_v_nL(names, path):
     X = np.int64(names)
     ax.errorbar(X, Y, errors)
     fig.supxlabel(r'$\mathrm{nL}$')
-    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
+    fig.supylabel(r'$\mathrm{Avg. Area / lipid} \;(\mathrm{\dot A^2})$')
     plt.savefig(path + "comparison2.APL_traj.pdf", dpi=700)
     plt.clf()
     plt.close()
@@ -634,6 +672,7 @@ if __name__ == "__main__":
     # run_eps_corr_scatter(mol)
     # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
-    # plot_APL("/home/js2746/KC_project/4096/", '4096')
+    # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
-    plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
