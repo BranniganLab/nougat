@@ -639,13 +639,7 @@ proc prepareBins {frameNumber polar min drN1 N2} {
 
         set box_r [expr int($box_x)/2]
         set rrange [expr $box_r-$min]
-        
-        #calculate number of dim1 bins from d1 and range1
-        if {[expr $rrange%$drN1] == 0} { 
-            dict set bindims N1 [expr [expr $rrange/$drN1]-1] 
-        } else {
-            dict set bindims N1 [expr $rrange/$drN1]
-        }
+        dict set bindims N1 [expr int([expr $rrange/$drN1])]
 
         #calculate dtheta in degrees and radians
         dict set bindims dthetadeg [expr 360/[expr $N2*1.0]]
