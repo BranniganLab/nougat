@@ -323,7 +323,7 @@ def plot_together(mols, paths, nougvals, xlim):
                     elif mol == "7k3g":
                         sysname = name + "PC"
                         figax = 0
-                    npzfile = np.load(path + "/" + sysname + "/" + sysname + nougval + "/npy/" + sysname + "." + quantity + "avg_over_theta.npz")
+                    npzfile = np.load(path + "/" + sysname + "/" + sysname + nougval + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npz")
                     if mol == "5x29":
                         start = np.where(npzfile['x'] == 2.75)[0][0]
                     elif mol == "7k3g":
@@ -341,9 +341,9 @@ def plot_together(mols, paths, nougvals, xlim):
             plt.close()
 
 
-def plot_avg_H2_over_time(system, path):
-    H1 = np.load(path + system + ".zone.C1A.C1B.polar.meancurvature.npy")
-    H2 = np.load(path + system + ".ztwo.C1A.C1B.polar.meancurvature.npy")
+def plot_avg_H2_over_time(system, path, coordsys):
+    H1 = np.load(path + system + ".zone.C1A.C1B." + coordsys + ".meancurvature.npy")
+    H2 = np.load(path + system + ".ztwo.C1A.C1B." + coordsys + ".meancurvature.npy")
     Hplus = (H1 + H2) / 2
     Hplus2 = Hplus * Hplus
     nframes = np.shape(Hplus)[2]
@@ -670,9 +670,9 @@ if __name__ == "__main__":
     # normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim)
     # run_sum_over_H2(mol)
     # run_eps_corr_scatter(mol)
-    # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/mixed_dm_flags/lgPO/lgPO_polar_5_10_0_-1_1/npy/")
+    plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1/npy/", "polar")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
     # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
-    plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
+    # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
