@@ -682,21 +682,3 @@ def measure_t0(path, system, coordsys):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avgt0 = np.nanmean(total_t) / 2.0
     return avgt0
-
-
-def make_animated_heatmap(data, coordsys, dim1vals, dim2vals, Vmax, Vmin, colorbar):
-    fig = plt.figure()
-
-    def init():
-        if coordsys == "polar":
-            ax = plt.subplot(projection="polar")
-        else:
-            ax = plt.subplot()
-        return ax
-
-    def animate(frame):
-        create_heatmap(coordsys, dim1vals, dim2vals, data[:, :, frame], Vmax, Vmin, colorbar)
-        return ax
-
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=np.shape(data)[2], repeat=False)
-    plt.show()
