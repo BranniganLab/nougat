@@ -193,7 +193,7 @@ def generate_combinations(config_dict):
         print("I only made this to work with 3 dimensions - sorry!")
 
 
-def plot_combination(paths, name, quantity):
+def plot_combination(paths, name, quantity, stds):
     """
     Plot the quantity specified from each of the paths on the same figure.
 
@@ -205,6 +205,8 @@ def plot_combination(paths, name, quantity):
         the name of the figure (output from generate_combinations)
     quantity : STRING
         the name of the values being plotted (e.g. height, thickness, etc.)
+    stds : BOOLEAN
+        Whether or not you want standard deviation shown on your plots
 
     Returns
     -------
@@ -222,12 +224,19 @@ def plot_combination(paths, name, quantity):
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
-        N1_bins, _, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
-        x_vals = tcl_output[0:N1_bins, 0]
-        x_vals = np.append(x_vals, tcl_output[N1_bins - 1, 1])
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        xmin = dr / 2
+        xmax = Nr * dr - xmin
+        x_vals = np.linspace(xmin, xmax, Nr) / 10
 
         axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
-    plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
+        if stds is True:
+            std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
+            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.1, color=color_dict[sysname])
+    if stds is True:
+        plt.savefig(name + "_" + quantity + "_with_stdv.pdf", dpi=700)
+    else:
+        plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
     plt.clf()
     plt.close()
 
@@ -290,5 +299,5 @@ if __name__ == "__main__":
     os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
         for quantity in quant_list:
-            plot_combination(combination[0], combination[1], quantity)
+            plot_combination(combination[0], combination[1], quantity, True)
     os.chdir(cwd)
