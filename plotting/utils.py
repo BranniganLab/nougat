@@ -656,7 +656,7 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_t0(path, system, coordsys):
+def measure_quant_in_empty_sys(path, system, coordsys, quantity):
     """
     Measure the average thickness of a membrane.
 
@@ -668,17 +668,19 @@ def measure_t0(path, system, coordsys):
         name of the system you gave nougat
     coordsys : string
         "polar" or "cart"; if polar, will ignore small r bins (area too small)
+    quantity : string
+        The quantity you want to take the average of
 
     Returns
     -------
-    avgt0 : float
-        the average thickness of the membrane
+    avg : float
+        the average quantity of the membrane
 
     """
-    total_t = np.load(path + '/npy/' + system + '.total_t.npy')
+    data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
     if coordsys == "polar":
-        total_t = total_t[4:, :, :]  # this could be smarter
+        data = data[4:, :, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
-        avgt0 = np.nanmean(total_t) / 2.0
-    return avgt0
+        avg = np.nanmean(data)
+    return avg
