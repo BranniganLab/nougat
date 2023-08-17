@@ -191,7 +191,7 @@ def generate_combinations(config_dict):
         print("I only made this to work with 3 dimensions - sorry!")
 
 
-def calculate_special_quantity(path, quantity, sysname):
+def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
     """
     Calculate a more complicated quantity that requires custom work.
 
@@ -211,9 +211,7 @@ def calculate_special_quantity(path, quantity, sysname):
 
     """
     empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
-    if quantity == "avg_height_both_leafs":
-        pass
-    elif quantity == "avg_tilde_total_t":
+    if quantity == "avg_tilde_total_t":
         exp_quantity = "total_t"
     elif quantity == "avg_tilde_epsilon2":
         exp_quantity = "epsilon2"
@@ -227,6 +225,34 @@ def calculate_special_quantity(path, quantity, sysname):
     np.save(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity)
     return np.load(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".avg_over_theta.npy")
+
+
+def calc_eps_t0(path, quantity, sysname):
+    """
+    Calculate epsilon over t0.
+
+    Parameters
+    ----------
+    path : STRING
+        The path to the files you are plotting
+    quantity : STRING
+        The name of the quantity needing to be calculated.
+    sysname : STRING
+        The name given to nougat.py.
+
+    Returns
+    -------
+    values : NDARRAY
+        The values corresponding to the y axis on the figure you are plotting.
+
+    """
+    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", "total_t")
+    normed_values = calc_avg_over_time(exp_value / bulk_avg)
+    np.save(path + "/npy/" + sysname + ".avg_epsilon_over_t0.npy", normed_values)
+    avg_over_theta(path + "/npy/" + sysname + ".avg_epsilon_over_t0")
+    return np.load(path + "/npy/" + sysname + ".avg_epsilon_over_t0.avg_over_theta.npy")
 
 
 def plot_combination(paths, name, quantity, stds, rmin):
@@ -260,7 +286,9 @@ def plot_combination(paths, name, quantity, stds, rmin):
         sysname = nougval.split("_")[0]
 
         if quantity in ["avg_height_both_leafs", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]:
-            y_vals = calculate_special_quantity(path, quantity, sysname)
+            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname)
+        elif quantity == "avg_epsilon_over_t0":
+            y_vals = calc_eps_t0(path, quantity, sysname)
         else:
             y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
@@ -306,7 +334,7 @@ y_label_dict = {
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-    "avg_tilde_H_plus2": r'$\langle(tilde H ^ +) ^ 2 \rangle$',
+    "avg_tilde_H_plus2": r'$\langle( \tilde H ^ +) ^ 2 \rangle$',
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
@@ -381,7 +409,7 @@ if __name__ == "__main__":
     quant_list1 = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                    "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                    "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
+                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
     config_dict = read_config('comp_config.txt', ["length", "saturation"])
     cwd = os.getcwd()
