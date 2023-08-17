@@ -71,10 +71,10 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
         calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, config_dict)
 
     calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
-    # calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
+    calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
     # calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
 
-    calc_elastic_terms(sys_name, ".", coordsys)
+    calc_elastic_terms(sys_name, ".", coordsys, config_dict)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ import warnings
 import glob
 import os
 from utils import *
-# from code_review2 import *
 
 
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_dict):
@@ -30,9 +29,9 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
     # normwhole = avgwhole/avgt0
 
     # make plots!
-    plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
-    plot_maker(dim1vals, dim2vals, avginner, sys_name, 'ztwo', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys)
-    plot_maker(dim1vals, dim2vals, avgwhole, sys_name, 'whole', scale_dict["thick_whole_max"], scale_dict["thick_whole_min"], inclusion, "avgThickness", bead, coordsys)
+    plot_maker(dim1vals, dim2vals, avgouter, sys_name, 'zone', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict["colorbar"])
+    plot_maker(dim1vals, dim2vals, avginner, sys_name, 'ztwo', scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict["colorbar"])
+    plot_maker(dim1vals, dim2vals, avgwhole, sys_name, 'whole', scale_dict["thick_whole_max"], scale_dict["thick_whole_min"], inclusion, "avgThickness", bead, coordsys, scale_dict["colorbar"])
     # plot_maker(dim1vals, dim2vals, normouter, sys_name, 'zone', 1.2, 0, inclusion, "normThickness", bead, coordsys)
     # plot_maker(dim1vals, dim2vals, norminner, sys_name, 'ztwo', 1.2, 0, inclusion, "normThickness", bead, coordsys)
     # plot_maker(dim1vals, dim2vals, normwhole, sys_name, 'whole', 1.2, 0, inclusion, "normThickness", bead, coordsys)

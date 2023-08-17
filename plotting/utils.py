@@ -5,21 +5,47 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import matplotlib.pyplot as plt
-import matplotlib
+from matplotlib import animation
 import numpy as np
 import warnings
-import glob
-import os
 
 
-def strip_blank_lines(f):
-    for l in f:
-        line = l.strip()
-        if line:
-            yield line
+def strip_blank_lines(file):
+    """
+    Remove any lines that are empty when reading a file.
+
+    Parameters
+    ----------
+    file : list
+        A list of all lines in a file.
+
+    Yields
+    ------
+    stripped_line : string
+        Each line that has text in it.
+
+    """
+    for line in file:
+        stripped_line = line.strip()
+        if stripped_line:
+            yield stripped_line
 
 
 def read_config(path):
+    """
+    Read the nougat.py config file and save everything to a dict.
+
+    Parameters
+    ----------
+    path : string
+        Path to the nougat.py config file.
+
+    Returns
+    -------
+    config_dict : dict
+        Dict containing all config entries in key/val pairs.
+
+    """
     config_dict = {}
     with open(path, "r+") as config_file:
         for line in strip_blank_lines(config_file):
@@ -35,8 +61,22 @@ def read_config(path):
     return config_dict
 
 
-def find_first_val(l):
-    for value in l:
+def find_first_val(in_list):
+    """
+    Find first non-nan value in a list.
+
+    Parameters
+    ----------
+    in_list : list
+        A list.
+
+    Returns
+    -------
+    float
+        The first non-nan value in the list. Returns nan if no such value exists.
+
+    """
+    for value in in_list:
         if np.isnan(value):
             continue
         else:
@@ -44,14 +84,28 @@ def find_first_val(l):
     return np.nan
 
 
-def find_last_val(l):
-    last_index = len(l) - 1
+def find_last_val(in_list):
+    """
+    Find last non-nan value in a list.
+
+    Parameters
+    ----------
+    in_list : list
+        A list.
+
+    Returns
+    -------
+    float
+        The last non-nan value in the list. Returns nan if no such value exists.
+
+    """
+    last_index = len(in_list) - 1
     while last_index >= 0:
-        if not np.isnan(l[last_index]):
-            return l[last_index]
+        if not np.isnan(in_list[last_index]):
+            return in_list[last_index]
         else:
             last_index -= 1
-    return "this didnt work"
+    return np.nan
 
 
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
@@ -85,6 +139,23 @@ def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure,
 
 
 def calc_avg_over_time(matrix_data):
+    """
+    Calculate mean over 3rd axis (time, in nougat terms) of an array. np.nanmean \
+        is wrapped inside of a catch_warnings loop so that the user does not get \
+        bombarded with a bunch of warnings every time a nan is encountered, \
+        which is supposed to be the whole point of nanmean anyway.
+
+    Parameters
+    ----------
+    matrix_data : numpy ndarray
+        A 3d array.
+
+    Returns
+    -------
+    avg : numpy ndarray
+        A 2d array (matrix_data averaged over the 3rd dimension).
+
+    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg = np.nanmean(matrix_data, axis=2)
@@ -125,8 +196,9 @@ def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
     np.save('npy/' + sys_name + "." + coordsys + ".areas.npy", areas)
 
 
-def mostly_empty(data_array, N1_bins, N2_bins, Nframes):
+def mostly_empty(data_array):
     # if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
+    N1_bins, N2_bins, Nframes = np.shape(data_array)
     for row in range(N1_bins):
         for col in range(N2_bins):
             zerocount = np.count_nonzero(data_array[row, col, :])
@@ -163,14 +235,14 @@ def read_log(sys_name, coordsys):
     return names_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, colorbar):
     """
-    Make 2D heatmaps.
+    Create and save 2D heatmaps.
 
     Parameters
     ----------
     dim1vals : list
-        meshgrid output 2
+        meshgrid output 1
     dim2vals : list
         meshgrid output 2
     data : array
@@ -184,13 +256,15 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     Vmin : float
         min value for colorbar
     protein : list or False
-        if protein present, list of helix coordinates; if no protein, False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
     dataname : string
         the type of measurement (thickness, height, curvature, etc)
     bead : string or False
         if bead specified, name of bead; else False
     coordsys : string
         "polar" or "cart"
+    colorbar : bool
+        Draws colorbar legend if True
 
     Returns
     -------
@@ -198,7 +272,39 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
 
     """
     fig = plt.figure()
+    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar)
+    if protein:
+        draw_protein(protein, coordsys)
+    save_figure(bead, name, field, coordsys, dataname)
+    plt.clf()
+    plt.close()
 
+
+def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
+    """
+    Create a 2d heatmap of your data.
+
+    Parameters
+    ----------
+    coordsys : string
+        "cart" or "polar"
+    dim1vals : list
+        meshgrid output 1
+    dim2vals : list
+        meshgrid output 2
+    data : numpy ndarray
+        the 2d array of values to be heatmapped
+    Vmax : float
+        max value for colorbar
+    Vmin : float
+        min value for colorbar
+    colorbar : bool
+        draws colorbar legend if True
+
+    Returns
+    -------
+
+    """
     if coordsys == "polar":
         ax = plt.subplot(projection="polar")
         if Vmax != "auto":
@@ -214,40 +320,112 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     else:
         print("something's wrong with coordsys")
 
-    # cbar = plt.colorbar(c)
-
-    if protein is not False:
-        print(protein)
-        for i in range(0, 10, 2):
-            protein[i + 1] = np.deg2rad(protein[i + 1])
-            if coordsys == "cart":
-                protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
-            plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
-        circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
-        if field == "zone":
-            ax.add_artist(circle1)
+    if colorbar:
+        cbar = plt.colorbar(c)
 
     plt.axis('off')
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-
     # fig.set_size_inches(6,6)
 
+
+def draw_protein(protein, coordsys):
+    """
+    Draw protein alpha helix positions.
+
+    Parameters
+    ----------
+    protein : list or False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
+    coordsys : string
+        "cart" or "polar"
+
+    Returns
+    -------
+    None.
+
+    """
+    for i in range(0, 10, 2):
+        protein[i + 1] = np.deg2rad(protein[i + 1])
+        if coordsys == "cart":
+            protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
+        plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
+
+    # This circle is a custom E protein thing and should be removed
+    # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
+    # if field == "zone":
+    #    ax.add_artist(circle1)
+
+
+def save_figure(bead, name, field, coordsys, dataname):
+    """
+    Save the current figure.
+
+    Parameters
+    ----------
+    bead : string or False
+        if bead specified, name of bead; else False
+    name : string
+        the system name you gave nougat.py
+    field : string
+        usually describes which membrane field (z1, z2, etc) to be heatmapped
+    coordsys : string
+        "cart" or "polar"
+    dataname : string
+        the type of measurement (thickness, height, curvature, etc)
+
+    Returns
+    -------
+    None.
+
+    """
     if bead is False:
         plt.savefig('pdf/' + name + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
     else:
         plt.savefig('pdf/' + name + "_" + bead + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
-    plt.clf()
-    plt.close()
 
 
 def convert_to_cart(rval, thetaval):
+    """
+    Convert from polar to cartesian coordinates.
+
+    Parameters
+    ----------
+    rval : float
+        The r coordinate value.
+    thetaval : float
+        The theta coordinate value.
+
+    Returns
+    -------
+    xval : float
+        The x coordinate value.
+    yval : float
+        The y coordinate value.
+
+    """
     xval = rval * np.cos(thetaval)
     yval = rval * np.sin(thetaval)
     return xval, yval
 
 
 def coord_format(value):
+    """
+    Round an x/y coordinate and/or pad it with blank spaces so that it is the \
+        correct number of chars to fit in a pdb.
+
+    Parameters
+    ----------
+    value : float
+        A number.
+
+    Returns
+    -------
+    final_value : float
+        The same number, rounded and with blank spaces added to make it fit in \
+            a pdb file coordinate column.
+
+    """
     rounded = round(value, 3)
     leftside, rightside = str(rounded).split('.')
     if len(rightside) < 3:
@@ -270,7 +448,7 @@ def dimensions_analyzer(data, coordsys):
     counter = 1
     flag = True
     match_value = data[0, 0]
-    while (flag == True):
+    while (flag is True):
         try:
             if data[counter, 0] == match_value:
                 flag = False
@@ -301,7 +479,7 @@ def dimensions_analyzer(data, coordsys):
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
-def calc_elastic_terms(system, path, coordsys):
+def calc_elastic_terms(system, path, coordsys, scale_dict):
     """
     Calculate all the additional terms that appear in a hamiltonian or are \
         generally of interest.
@@ -315,6 +493,8 @@ def calc_elastic_terms(system, path, coordsys):
             system
     coordsys : string
         "polar" or "cart"
+    scale_dict : dict
+        contains scale bounds from the nougat config file
 
     Returns
     -------
@@ -386,7 +566,7 @@ def calc_elastic_terms(system, path, coordsys):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys)
+        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict["colorbar"])
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
             avg_over_theta(path + '/npy/', name, system)
@@ -482,3 +662,7 @@ def measure_t0(path, system, coordsys):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avgt0 = np.nanmean(total_t) / 2.0
     return avgt0
+
+
+def make_animated_heatmap():
+    pass
