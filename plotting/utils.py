@@ -574,10 +574,6 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
     dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
     N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
-    # measure average thickness
-    avgt0 = measure_t0(path, system, coordsys)
-    np.save(path + '/npy/' + system + '.avg_t0.npy', avgt0)
-
     # make pretty pictures and save data
     data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
                  corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
