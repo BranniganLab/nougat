@@ -5,6 +5,7 @@ configure -verbose pbt
 # Software under test
 
 source ../utilities/helper_procs.tcl
+source ../nougat.tcl
 load ../utilities/vecexpr.so
 
  test tailtiltA {
@@ -609,4 +610,49 @@ test Mixmemjoiningnames {
     return $p
 } -result 1 -cleanup {
 mol delete top
+}
+
+test checkallfilescreated {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t1"]
+   set myfiles [ glob -nocomplain t1/tcl_output/PO.* ]
+   set filelength [llength $myfiles]
+} -body {
+    return $filelength
+} -result 9 -cleanup {
+mol delete top
+exec rm -r t1
+}
+
+test checkallfilescreated {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t2"]
+   set myfiles [ glob -nocomplain t2/tcl_output/PO.* ]
+   set match [string match -nocase *polar* [lindex $myfiles 0]]
+} -body {
+    return $match
+} -result 1 -cleanup {
+mol delete top
+exec rm -r t2
+}
+
+test checkallfilescreated {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 0] "t3"]
+   set myfiles [ glob -nocomplain t3/tcl_output/PO.* ]
+   set match [string match -nocase *polar* [lindex $myfiles 0]]
+} -body {
+    return $match
+} -result 0 -cleanup {
+mol delete top
+exec rm -r t3
 }
