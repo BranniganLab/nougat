@@ -551,13 +551,13 @@ test GNPmeasureboxsize {
     Test: measureBoxSize
 } -setup {
     mol new ../testing_materials/GNP_trajectory/em.gro
-    mol addfile ../testing_materials/GNP_trajectory/test.xtc
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
     set frame20 [format "%.0f" [measureBoxSize 20 x]]
     set frame25 [format "%.0f" [measureBoxSize 25 y]]
     set frame28 [format "%.0f" [measureBoxSize 28 z]]
 } -body {
     return "$frame20 $frame25 $frame28"
-} -result {160 164 120} -cleanup {
+} -result {175 175 116} -cleanup {
     mol delete top
 }
 
@@ -655,4 +655,103 @@ test checkfilename2 {
 } -result 0 -cleanup {
 mol delete top
 exec rm -r t3
+}
+
+test GNPprepcarttest {
+    Test: prepareBins
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    set bindims [prepareBins 0 0 0 10 10]
+} -body {
+    return [lindex $bindims 5]
+} -result 15.0 -cleanup {
+}
+
+test GNPprepcartNULLtest {
+    Test: prepareBins
+} -setup {
+} -body {
+    return [lindex $bindims 9]
+} -result "NULL" -cleanup {
+}
+
+test GNPprepcartpolartest {
+    Test: prepareBins
+} -setup {
+    set bindims [prepareBins 0 1 0 10 10]
+} -body {
+    return [lindex $bindims 5]
+} -result 36.0 -cleanup {
+}
+
+test GNPbinupdatetest {
+    Test: updateDimensions
+} -setup {
+    set bindims [prepareBins 0 0 0 10 10]
+    set bindims [updateDimensions $bindims 20]
+} -body {
+    return [format "%.2f" [lindex $bindims 5]]
+} -result 14.85 -cleanup {
+}
+
+test GNPbinupdatetest2 {
+    Test: updateDimensions
+} -setup {
+    set bindims [prepareBins 30 0 0 10 10]
+    set bindims [updateDimensions $bindims 51]
+} -body {
+    return [format "%.2f" [lindex $bindims 5]]
+} -result 14.76 -cleanup {
+mol delete top
+}
+
+test Betavaluetest {
+    Test: setBetaValues
+} -setup {
+    mol new ../testing_materials/lipid_membrane/insane2.gro
+    set waterlen [llength [[atomselect top "resname W"] get resid]]
+    setBetaValues NULL
+    set betaval [llength [[atomselect top "beta 16224 to 66446"] get beta]]
+    if {$waterlen == $betaval} {
+        set p 0
+    } else {
+        set p 1
+    }
+} -body {
+    return $p
+} -result 0 -cleanup {
+mol delete top
+}
+
+test createatomselects {
+    Test: createAtomSelections
+} -setup {
+    mol new ../testing_materials/lipid_membrane/insane2.gro
+    set selly [createAtomSelections "height_density" $config_dict]
+    set config_dict [cell_prep "nougat_config.txt" 1]
+    set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
+    set lipnum [llength [$sel get resid]]
+    set cselnum [llength [[dict get $selly z1z2] get resid]]
+    if {$lipnum == $cselnum} {
+        set p 0
+    } else {
+        set p 1
+    }
+} -body {
+    return $p
+} -result 0 -cleanup {
+mol delete top
+}
+
+test rotatingsys1 {
+    Test:rotateSystem
+} -setup {
+    mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+    rotateSystem x 180 0 1
+    set sel [atomselect top "name NC3"]
+} -body {
+    return [format "%.0f" [$sel get z]]
+} -result 119 -cleanup {
+mol delete top
 }
