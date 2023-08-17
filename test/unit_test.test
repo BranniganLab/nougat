@@ -446,8 +446,167 @@ test printingvalue1 {
     Test: printValue
 } -setup {
    set f1 [open "testfile.dat" w+] 
+   printValue $f1 10 0
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
 } -body {
-    return [printValue $f1 10 3]
-} -result "Something went wrong - end_line should have value of 0 or 1 only" -cleanup { 
-close $f1
-exec rm testfile.dat }
+    return [lindex $lines 0]
+} -result { 10} -cleanup { 
+exec rm testfile.dat 
+cd ../
+exec rm -rf testfiles 
+}
+
+test DPPCDOPCMemtailanalyzer {
+    Test: analyzeTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/DOPC_DPPCMem.gro
+   set sel [atomselect top "resname DPPC DOPC"]
+   set names [$sel get resname]
+   set pairnames [lsort -unique $names]
+} -body {
+    return [lindex [analyzeTails $pairnames] 0]
+} -result {{{C1A D2A C3A C4A} {C1B D2B C3B C4B}} {{C1A C2A C3A C4A} {C1B C2B C3B C4B}}} -cleanup {
+   mol delete top
+}
+
+test MixedMemtailanalyzer {
+    Test: analyzeTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+} -body {
+    return [lindex [analyzeTails {DLPC DOPC DPPC DTPC DYPC}] 0]
+} -result {{{C1A C2A C3A} {C1B C2B C3B}} {{C1A D2A C3A C4A} {C1B D2B C3B C4B}} {{C1A C2A C3A C4A} {C1B C2B C3B C4B}} {{C1A C2A} {C1B C2B}} {{C1A D2A C3A} {C1B D2B C3B}}} -cleanup {
+   mol delete top
+}
+
+test DPPCDOPCMemnumbertails {
+    Test: numberTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/DOPC_DPPCMem.gro
+   numberTails {DOPC DPPC} [lindex [analyzeTails {DOPC DPPC}] 0]
+   set sel [atomselect top "resname DPPC DOPC and not name GL1 GL2 NC3 PO4"]
+   set fieldvals [lsort -unique [$sel get user3]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {1.0 2.0} -cleanup {
+    mol delete top
+}
+
+test Multitailnumbertails {
+    Test: numberTails
+} -setup {
+   mol new ../testing_materials/Multi_Chain/Cardiolipin.gro
+   numberTails {CDL0} [lindex [analyzeTails {CDL0}] 0]
+   set sel [atomselect top "resname CDL0 and not name GL1 GL2 GL3 GL4 GL5 PO41 PO42"]
+   set fieldvals [lsort -unique [$sel get user3]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {1.0 2.0 3.0 4.0} -cleanup {
+    mol delete top
+}
+
+test POPCbins {
+    Test: assignBins
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set sel [atomselect top "resname POPC"]
+   set xval [$sel get x]
+   set yval [$sel get y]
+   set fieldvals [lsort -unique [lindex [assignBins $xval $yval 10 10 12 0 0] 0]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {0.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0} -cleanup {
+}
+
+test POPCmeasureboxsizeX {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 x]]
+} -result {199} -cleanup {}
+
+test POPCmeasureboxsizeY {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 y]]
+} -result {198} -cleanup {}
+
+test POPCmeasureboxsizeZ {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 z]]
+} -result {198} -cleanup {
+    mol delete top
+}
+
+test GNPmeasureboxsize {
+    Test: measureBoxSize
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc
+    set frame20 [format "%.0f" [measureBoxSize 20 x]]
+    set frame25 [format "%.0f" [measureBoxSize 25 y]]
+    set frame28 [format "%.0f" [measureBoxSize 28 z]]
+} -body {
+    return "$frame20 $frame25 $frame28"
+} -result {160 164 120} -cleanup {
+    mol delete top
+}
+
+test POPCtailength {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+} -body {
+    return [sortTailLength {POPC} [lindex [analyzeTails {POPC}] 0]]
+} -result {{{resname POPC and name C1A C1B C2B C3A C3B C4A C4B D2A}} 4} -cleanup {
+mol delete top
+}
+
+test Mixmemtailength {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+   set tailnames [sortTailLength {DLPC DOPC DPPC DTPC DYPC} [lindex [analyzeTails {DLPC DOPC DPPC DTPC DYPC}] 0]]
+} -body {
+    return [lindex $tailnames 1]
+} -result {2 3 4} -cleanup {
+mol delete top
+}
+
+test Mixmemjoiningnames {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+   set headname {C1A C1B} 
+   set names [concatenateNames $headname]
+   set names2 [join $headname "."]
+   if {$names == $names2} {
+   set p 1
+   } else {set p 0}
+} -body {
+    return $p
+} -result 1 -cleanup {
+}
+
+test Mixmemjoiningnames {
+    Test: sortTailLength
+} -setup {
+   set headname {C1A C4B} 
+   set names [concatenateNames $headname]
+   set names2 [join $headname "."]
+   if {$names == $names2} {
+   set p 1
+   } else {set p 0}
+} -body {
+    return $p
+} -result 1 -cleanup {
+mol delete top
+}

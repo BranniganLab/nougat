@@ -450,7 +450,7 @@ proc analyzeTails { species } {
 #       tailList    {list}      nested list of tails organized by lipid type (see analyzeTails)
 #
 # Results:
-#       tail list in user3 is assigned values based on tail length
+#       tail list in user3 is assigned values based on number of tails in lipid
 
 proc numberTails { species tailList } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
@@ -952,7 +952,7 @@ proc outputDensityNormInfo {start end step species system headNames coordSystem 
 #
 # Arguments:
 #       species         {list}      List of lipid types in system
-#       acylNames       {list}      List of lost of all bead names of all tails in the system 
+#       acylNames       {list}      List of list of all bead names of all tails in the system 
 #
 # Results:
 #   
