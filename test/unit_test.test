@@ -627,7 +627,7 @@ mol delete top
 exec rm -r t1
 }
 
-test checkallfilescreated {
+test checkfilename1 {
     Test: createOutfiles
 } -setup {
    mol new ../testing_materials/lipid_membrane/insane2.gro
@@ -642,7 +642,7 @@ mol delete top
 exec rm -r t2
 }
 
-test checkallfilescreated {
+test checkfilename2 {
     Test: createOutfiles
 } -setup {
    mol new ../testing_materials/lipid_membrane/insane2.gro

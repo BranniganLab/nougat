@@ -424,7 +424,6 @@ proc analyzeTails { species } {
             lappend taillist $tails
         }
     }
-    puts $taillist
     ;# returns top/bottom beads in lipid tails for leaflet sorting
     set findHeadsAndTails [findHeadsAndTails $taillist]
 
