@@ -184,20 +184,31 @@ def calc_avg_over_time(matrix_data):
         return avg
 
 
-def bin_prep(N1_bins, d1, N2_bins, d2, coordsys):
+def bin_prep(bin_info, coordsys):
+    """
+    Configure the arrays needed for plotting heatmaps.
 
-    dim1 = np.linspace(0, N1_bins * d1, N1_bins + 1)
+    Parameters
+    ----------
+    bin_info : DICT
+        Contains N1, N2, d1, and d2 information.
+    coordsys : STRING
+        "cart" or "polar.
+
+    Returns
+    -------
+    list
+        The two numpy ndarrays needed for plotting a heatmap.
+
+    """
+
+    dim1 = np.linspace(0, bin_info['N1'] * bin_info['d1'], bin_info['N1'] + 1)
     if coordsys == "polar":
-        dim2 = np.linspace(0, 2 * np.pi, N2_bins + 1)
+        dim2 = np.linspace(0, 2 * np.pi, bin_info['N2'] + 1)
     elif coordsys == "cart":
         dim2 = dim1
     dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
 
-    """
-    if density == "ON":
-        # save an array that represents the area per bin for normalizing density later
-        save_areas(N1_bins, d1, N2_bins, d2, 0, coordsys, sys_name)
-        """
     return [dim1vals, dim2vals]
 
 
@@ -277,7 +288,6 @@ def read_log(sys_name, coordsys):
         N1, N2 = np.int64(lines[bin_start_line].split(' '))
         d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
-        print(system_dict)
     return system_dict
 
 
