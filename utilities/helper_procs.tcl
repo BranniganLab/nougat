@@ -1256,7 +1256,7 @@ proc readPolar {polar} {
 
 # createAtomSelections (Previously: create_atomselections)--
 #
-#       creates dictionaies of atomselections  
+#       creates dictionaries of atomselections  
 #       
 # Arguments:
 #       quantity            {str}       quanities being evaluated, either height_density or tilt_order       
@@ -1270,14 +1270,14 @@ proc readPolar {polar} {
 # Necessary Revisions/Problems:
 #       Min is not fully implemented
 
-proc createAtomSelections {quantity configDictonary} {
+proc createAtomSelections {quantity configDictionary} {
     ;#atomselections setup as dict
     if {$quantity eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $configDictonary species] and name [dict get $configDictonary full_tails]"]
-        dict set selections z0 [atomselect top "resname [dict get $configDictonary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+        dict set selections z1z2 [atomselect top "resname [dict get $configDictionary species] and name [dict get $configDictionary headnames]"]
+        dict set selections z0 [atomselect top "resname [dict get $configDictionary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
 
     } elseif {$quantity eq "tilt_order"} {
-        set lists [sortTailLength [dict get $configDictonary species] [dict get $configDictonary acyl_names]]
+        set lists [sortTailLength [dict get $configDictionary species] [dict get $configDictionary acyl_names]]
         set sellist [lindex $lists 0]
         set lenlist [lindex $lists 1]
         foreach sel $sellist len $lenlist {
