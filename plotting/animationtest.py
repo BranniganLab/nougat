@@ -9,7 +9,7 @@ Created on Fri Aug  4 11:30:26 2023.
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from utils import bin_prep
+from utils import bin_prep, gifformat
 import os
 from PIL import Image
 
@@ -36,27 +36,6 @@ def make_animated_heatmap(data, coordsys, dims, Vmax, Vmin, colorbar):
     anim = animation.FuncAnimation(fig, animate, frames=np.shape(data)[2], interval=100, repeat=False)
     anim.save("/home/js2746/PolarHeightBinning/plotting/test.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
     plt.close()
-
-
-def gifformat(num, size):
-    """
-    Format number with proper amount of zeros in front.
-
-    Parameters
-    ----------
-    num : float/int
-        The number in need of formatting.
-    size : int
-        The number of spaces it needs to fill.
-
-    Returns
-    -------
-    padded_val : string
-        The number with the appropriate amount of zeros in front.
-    """
-    numzeros = size - len(str(num))
-    padded_val = "0" * numzeros + str(num)
-    return padded_val
 
 
 def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar):
