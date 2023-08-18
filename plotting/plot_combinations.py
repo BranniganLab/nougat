@@ -126,7 +126,6 @@ def read_config(config_file, category_names):
                     config_dict[str(counter)]["path"] = path
 
                     counter = counter + 1
-
     return config_dict
 
 
@@ -150,7 +149,6 @@ def generate_combinations(config_dict):
     """
     key_list = config_dict.keys()
     category_list = list(config_dict['TOC'].keys())
-
     if len(category_list) == 3:
         for category_combo in combinations(category_list, 2):
             for category1 in config_dict['TOC'][category_combo[0]]:
@@ -168,7 +166,7 @@ def generate_combinations(config_dict):
                     yield (templist, name)
     elif len(category_list) == 2:
         for category in category_list:
-            for item in config_dict['TOC'][category].keys():
+            for item in config_dict['TOC'][category]:
                 templist = []
                 for key in key_list:
                     if key == 'TOC':
@@ -177,8 +175,8 @@ def generate_combinations(config_dict):
                         if config_dict[key][category] == item:
                             if config_dict[key]['path'] != "NULL":
                                 templist.append(config_dict[key]['path'])
-                    name = category + "_" + item
-                    yield (templist, name)
+                name = category + "_" + item
+                yield (templist, name)
     elif len(category_list) == 1:
         for key in key_list:
             templist = []
@@ -193,7 +191,71 @@ def generate_combinations(config_dict):
         print("I only made this to work with 3 dimensions - sorry!")
 
 
-def plot_combination(paths, name, quantity):
+def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
+    """
+    Calculate a more complicated quantity that requires custom work.
+
+    Parameters
+    ----------
+    path : STRING
+        The path to the files you are plotting
+    quantity : STRING
+        The name of the quantity needing to be calculated.
+    sysname : STRING
+        The name given to nougat.py.
+
+    Returns
+    -------
+    values : NDARRAY
+        The values corresponding to the y axis on the figure you are plotting.
+
+    """
+    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    if quantity == "avg_tilde_total_t":
+        exp_quantity = "total_t"
+    elif quantity == "avg_tilde_epsilon2":
+        exp_quantity = "epsilon2"
+    elif quantity == "avg_tilde_H_plus2":
+        exp_quantity = "H_plus2"
+    else:
+        print("I think you spelled something wrong")
+    exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", exp_quantity)
+    normed_values = calc_avg_over_time(exp_value / bulk_avg)
+    np.save(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".npy", normed_values)
+    avg_over_theta(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity)
+    return np.load(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".avg_over_theta.npy")
+
+
+def calc_eps_t0(path, quantity, sysname):
+    """
+    Calculate epsilon over t0.
+
+    Parameters
+    ----------
+    path : STRING
+        The path to the files you are plotting
+    quantity : STRING
+        The name of the quantity needing to be calculated.
+    sysname : STRING
+        The name given to nougat.py.
+
+    Returns
+    -------
+    values : NDARRAY
+        The values corresponding to the y axis on the figure you are plotting.
+
+    """
+    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", "total_t")
+    normed_values = calc_avg_over_time(exp_value / bulk_avg)
+    np.save(path + "/npy/" + sysname + ".avg_epsilon_over_t0.npy", normed_values)
+    avg_over_theta(path + "/npy/" + sysname + ".avg_epsilon_over_t0")
+    return np.load(path + "/npy/" + sysname + ".avg_epsilon_over_t0.avg_over_theta.npy")
+
+
+def plot_combination(paths, name, quantity, stds, rmin):
     """
     Plot the quantity specified from each of the paths on the same figure.
 
@@ -205,32 +267,101 @@ def plot_combination(paths, name, quantity):
         the name of the figure (output from generate_combinations)
     quantity : STRING
         the name of the values being plotted (e.g. height, thickness, etc.)
+    stds : BOOLEAN
+        Whether or not you want standard deviation shown on your plots
+    rmin : FLOAT
+        The r value below which no line should be plotted.
 
     Returns
     -------
     None.
 
     """
-    fig, axs = plt.subplots()
+    fig, axs = plt.subplots(layout="constrained")
+    fig.supxlabel(r'$r \;(\mathrm{nm})$')
+    fig.supylabel(y_label_dict[quantity])
     for path in paths:
         # find the correct system name
         nougval = [i for i in path.split("/") if "polar" in i][0]
         sysname = nougval.split("_")[0]
 
-        y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
+        if quantity in ["avg_height_both_leafs", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]:
+            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname)
+        elif quantity == "avg_epsilon_over_t0":
+            y_vals = calc_eps_t0(path, quantity, sysname)
+        else:
+            y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
-        N1_bins, _, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
-        x_vals = tcl_output[0:N1_bins, 0]
-        x_vals = np.append(x_vals, tcl_output[N1_bins - 1, 1])
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        xmin = dr / 2
+        xmax = Nr * dr - xmin
+        x_vals = np.linspace(xmin, xmax, Nr) / 10
+        flag = True
+        i = 0
+        if rmin > x_vals[i]:
+            while flag is True and i < len(x_vals):
+                i += 1
+                if rmin < x_vals[i]:
+                    x_vals = x_vals[i:]
+                    y_vals = y_vals[i:]
+                    flag = False
 
         axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
-    plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
+        if stds is True:
+            std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
+            std_data = std_data[i:]
+            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.1, color=color_dict[sysname])
+        axs.set_xlim(0, xmax / 10)
+        if quantity + "_min" in scale_dict:
+            axs.set_ylim(scale_dict[quantity + "_min"], scale_dict[quantity + "_max"])
+    if stds is True:
+        plt.savefig(name + "_" + quantity + "_with_stdv.pdf", dpi=700)
+    else:
+        plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
     plt.clf()
     plt.close()
 
+
+y_label_dict = {
+    "avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
+    "avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
+    "avg_abs_epsilon_over_t0": r'$\langle | \epsilon / t_0 | \rangle$',
+    "avg_epsilon2_over_t02": r'$\langle ( \epsilon / t_0 )^2 \rangle$',
+    "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
+    "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
+    "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
+    "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
+    "avg_tilde_H_plus2": r'$\langle( \tilde H ^ +) ^ 2 \rangle$',
+    "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
+    "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
+    "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
+    "corr_mag_epst0_Hplus": r'$\langle | \epsilon| | H^+ | / t_0 \rangle - \langle |\epsilon| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
+    "corr_epst0_Hplus": r'$ \langle \epsilon H^+ / t_0 \rangle - \langle \epsilon/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
+    "avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;\epsilon / t_0 \rangle$',
+    "avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
+    "avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
+    "avg_H_plus": r'$\langle H^+ \rangle\; (\mathrm{\dot A^{-1}})$',
+    "avg_H_minus": r'$\langle H^- \rangle\; (\mathrm{\dot A^{-1}})$',
+    "avg_H_minus2": r'$\langle \left ( H^- \right )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
+    "avg_epsilon_H": r'$\langle  \epsilon H^+  \rangle$',
+    "avg_z_minus": r'$\langle z^- \rangle\; (\mathrm{\dot A})$',
+    "avg_z_minus2": r'$\langle \left ( z^- \right )^2 \rangle\; (\mathrm{\dot A^2})$',
+    "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
+    "avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$',
+    "avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
+    "corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Kplus": r'$\langle \epsilon K^+ \rangle - \langle \epsilon \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-1}})$',
+    "corr_mag_eps_Hplus": r'$\langle | \epsilon | | H^+ | \rangle - \langle | \epsilon | \rangle \langle | H^+ | \rangle\; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-2}})$'
+}
+
+scale_dict = {
+    "avg_K_plus_min": -.0001,
+    "avg_K_plus_max": .0001
+}
 
 color_dict = {
     "lgDT": "red",
@@ -275,13 +406,12 @@ style_dict = {
 }
 
 if __name__ == "__main__":
-    quant_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
-                  "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
-                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
-    # prep_config(["Lipid Tail Length", "Saturation", "Structure"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"], ["capped", "uncapped", "protein-less"]])
-    config_dict = read_config('comp_config_main.txt', [
-                              "length", "saturation", "structure"])
+    quant_list1 = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
+                   "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
+                   "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
+                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
+    # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
+    config_dict = read_config('comp_config.txt', ["length", "saturation"])
     cwd = os.getcwd()
     try:
         os.mkdir("avg_over_theta_comparisons")
@@ -289,6 +419,7 @@ if __name__ == "__main__":
         pass
     os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
-        for quantity in quant_list:
-            plot_combination(combination[0], combination[1], quantity)
+        for quantity in quant_list1:
+            plot_combination(combination[0], combination[1], quantity, True, 2.75)
+            plot_combination(combination[0], combination[1], quantity, False, 2.75)
     os.chdir(cwd)

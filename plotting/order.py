@@ -20,10 +20,13 @@ def calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, scal
                 avgorder = calc_avg_over_time(order_array_pruned)
 
                 # make plots!
-                plot_maker(dim1vals, dim2vals, avgorder, sys_name, species + '.' + tail + '.zone''.' + leaflet, scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys, scale_dict["colorbar"])
+                plot_maker(dim1vals, dim2vals, avgorder, sys_name, species + '.' + tail + '.zone''.' + leaflet, scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys, scale_dict)
 
                 # save as file for debugging / analysis
                 np.save('npy/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.order.npy', order_array_pruned)
+                np.save('npy/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.avgorder.npy', avgorder)
+                if coordsys == "polar":
+                    avg_over_theta('npy/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.avgorder')
                 np.savetxt('dat/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.avgOrder.dat', avgorder, delimiter=',', fmt='%10.5f')
 
             print(sys_name + ' ' + species + " " + tail + " order done!")

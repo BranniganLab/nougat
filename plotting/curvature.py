@@ -81,15 +81,20 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
         avgkcurvature = calc_avg_over_time(kcurvature)
 
         # make plots!
-        plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys, scale_dict["colorbar"])
-        plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys, scale_dict["colorbar"])
+        plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys, scale_dict)
+        plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys, scale_dict)
 
         # save as files for debugging / analysis
         np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgcurvature.dat', avgcurvature, delimiter=',', fmt='%10.5f')
         np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgKcurvature.dat', avgkcurvature, delimiter=',', fmt='%10.5f')
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.meancurvature.npy', meancurvature)
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.gausscurvature.npy', kcurvature)
+        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature.npy', avgcurvature)
+        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature.npy', avgkcurvature)
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.normal_vectors.npy', normal_vectors)
+        if polar is True:
+            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature')
+            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature')
 
         print(sys_name + ' ' + bead + ' ' + field + " curvatures done!")
 

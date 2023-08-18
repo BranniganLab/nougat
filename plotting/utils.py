@@ -108,6 +108,27 @@ def find_last_val(in_list):
     return np.nan
 
 
+def gifformat(num, size):
+    """
+    Format number with proper amount of zeros in front.
+
+    Parameters
+    ----------
+    num : float/int
+        The number in need of formatting.
+    size : int
+        The number of spaces it needs to fill.
+
+    Returns
+    -------
+    padded_val : string
+        The number with the appropriate amount of zeros in front.
+    """
+    numzeros = size - len(str(num))
+    padded_val = "0" * numzeros + str(num)
+    return padded_val
+
+
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
     if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
         if dtype == "dat":
@@ -235,7 +256,7 @@ def read_log(sys_name, coordsys):
     return names_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, colorbar):
+def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, config_dict):
     """
     Create and save 2D heatmaps.
 
@@ -263,8 +284,8 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
         if bead specified, name of bead; else False
     coordsys : string
         "polar" or "cart"
-    colorbar : bool
-        Draws colorbar legend if True
+    config_dict : dict
+        Dict containing config info
 
     Returns
     -------
@@ -272,7 +293,14 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
 
     """
     fig = plt.figure()
-    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar)
+    if coordsys == "polar":
+        ax = plt.subplot(projection="polar")
+    else:
+        ax = plt.subplot()
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    # fig.set_size_inches(6,6)
+    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
     if protein:
         draw_protein(protein, coordsys)
     save_figure(bead, name, field, coordsys, dataname)
@@ -303,16 +331,14 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
 
     Returns
     -------
-
+    None.
     """
     if coordsys == "polar":
-        ax = plt.subplot(projection="polar")
         if Vmax != "auto":
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0)
     elif coordsys == "cart":
-        ax = plt.subplot()
         if Vmax != "auto":
             c = plt.pcolormesh(dim1vals, dim2vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
@@ -321,12 +347,9 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
         print("something's wrong with coordsys")
 
     if colorbar:
-        cbar = plt.colorbar(c)
+        plt.colorbar(c)
 
     plt.axis('off')
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
-    # fig.set_size_inches(6,6)
 
 
 def draw_protein(protein, coordsys):
@@ -437,6 +460,22 @@ def coord_format(value):
 
 
 def bin_format(value):
+    """
+    Round a bin number and/or pad it with blank spaces so that it is the \
+        correct number of chars to fit in a pdb.
+
+    Parameters
+    ----------
+    value : int
+        The number of the bin.
+
+    Returns
+    -------
+    final_value : string
+        The same number, with .00 appended to the end and the correct number \
+            of blank spaces in front to fit in the pdb column.
+
+    """
     strval = str(value)
     length = len(strval)
     final_value = (' ' * (3 - length)) + strval + '.00'
@@ -464,6 +503,10 @@ def dimensions_analyzer(data, coordsys):
 
     # figure out how many frames there are in the traj
     Nframes = int(len(data[:, 0]) / N1_bins)
+
+    # error check
+    if (len(data[:, 0]) % N1_bins) != 0:
+        raise Exception("There is something wrong with the Nframes calculation")
 
     if coordsys == "polar":
         d1 = data[0, 1] - data[0, 0]
@@ -552,10 +595,6 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
     dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
     N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
 
-    # measure average thickness
-    avgt0 = measure_t0(path, system, coordsys)
-    np.save(path + '/npy/' + system + '.avg_t0.npy', avgt0)
-
     # make pretty pictures and save data
     data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
                  corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
@@ -566,13 +605,13 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict["colorbar"])
+        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
-            avg_over_theta(path + '/npy/', name, system)
+            avg_over_theta(path + '/npy/' + system + '.' + name)
 
 
-def avg_over_theta(path, quantity, sysname):
+def avg_over_theta(path):
     """
     Compute average of the quantity in question over the theta dimension.
 
@@ -580,21 +619,19 @@ def avg_over_theta(path, quantity, sysname):
     ----------
     path : string
         The directory in which nougat npy outputs are located
-    quantity : string
-        The variable you're averaging
-    sysname : string
-        The name of the system that you gave nougat orginally
 
     Returns
     -------
     None.
 
     """
-    data = np.load(path + sysname + "." + quantity + ".npy")
+    data = np.load(path + ".npy")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg_vals = np.nanmean(data, axis=1)
-    np.save(path + sysname + "." + quantity + ".avg_over_theta.npy", avg_vals)
+        std = np.nanstd(data, axis=1)
+    np.save(path + ".avg_over_theta.npy", avg_vals)
+    np.save(path + ".avg_over_theta.std.npy", std)
 
 
 def bad_measure_t0(zone, ztwo, coordsys):
@@ -636,7 +673,7 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_t0(path, system, coordsys):
+def measure_quant_in_empty_sys(path, system, coordsys, quantity):
     """
     Measure the average thickness of a membrane.
 
@@ -648,21 +685,19 @@ def measure_t0(path, system, coordsys):
         name of the system you gave nougat
     coordsys : string
         "polar" or "cart"; if polar, will ignore small r bins (area too small)
+    quantity : string
+        The quantity you want to take the average of
 
     Returns
     -------
-    avgt0 : float
-        the average thickness of the membrane
+    avg : float
+        the average quantity of the membrane
 
     """
-    total_t = np.load(path + '/npy/' + system + '.total_t.npy')
+    data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
     if coordsys == "polar":
-        total_t = total_t[4:, :, :]  # this could be smarter
+        data = data[4:, :, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
-        avgt0 = np.nanmean(total_t) / 2.0
-    return avgt0
-
-
-def make_animated_heatmap():
-    pass
+        avg = np.nanmean(data)
+    return avg
