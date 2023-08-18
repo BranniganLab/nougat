@@ -472,6 +472,9 @@ def plot_avg_H2_over_time(system, path, coordsys):
         x = x / 10.
         y = np.nanmean(item, axis=0)
         y = np.nanmean(y, axis=0)
+        # remove zero point
+        x = x[1:]
+        y = y[1:]
         rollavg = rollingavg(y, 10)
         if item is Hplus:
             figax = 0
