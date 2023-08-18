@@ -364,19 +364,19 @@ def make_paper_writing_group_plot(saturation):
     for lipid in sat_list:
         fname = path + lipid + "/" + lipid + "_polar_5_10_100_-1_1/npy/" + lipid + "."
         zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
-        zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy")
+        zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
         ztwo = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.npy")
-        ztwostd = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.std.npy")
+        ztwostd = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
         tilde_t = np.load(fname + "avg_tilde_total_t.avg_over_theta.npy")
-        tilde_tstd = np.load(fname + "avg_tilde_total_t.avg_over_theta.std.npy")
+        tilde_tstd = np.load(fname + "avg_tilde_total_t.avg_over_theta.std.npy") / np.sqrt(10)
         epst0 = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.npy")
-        epst0std = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.std.npy")
+        epst0std = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.std.npy") / np.sqrt(10)
         tilde_eps2 = np.load(fname + "avg_tilde_epsilon2.avg_over_theta.npy")
-        tilde_eps2std = np.load(fname + "avg_tilde_epsilon2.avg_over_theta.std.npy")
+        tilde_eps2std = np.load(fname + "avg_tilde_epsilon2.avg_over_theta.std.npy") / np.sqrt(10)
         tilde_Hplus2 = np.load(fname + "avg_tilde_H_plus2.avg_over_theta.npy")
-        tilde_Hplus2std = np.load(fname + "avg_tilde_H_plus2.avg_over_theta.std.npy")
+        tilde_Hplus2std = np.load(fname + "avg_tilde_H_plus2.avg_over_theta.std.npy") / np.sqrt(10)
         corr_Hplus_eps = np.load(fname + "corr_eps_Hplus.avg_over_theta.npy")
-        corr_Hplus_epsstd = np.load(fname + "corr_eps_Hplus.avg_over_theta.std.npy")
+        corr_Hplus_epsstd = np.load(fname + "corr_eps_Hplus.avg_over_theta.std.npy") / np.sqrt(10)
 
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path + lipid + "/" + lipid + "_polar_5_10_100_-1_1/tcl_output/" + lipid + '.zone.C1A.C1B.polar.height.dat',
@@ -388,6 +388,7 @@ def make_paper_writing_group_plot(saturation):
         x_vals = np.linspace(xmin, xmax, Nr) / 10
         flag = True
         i = 0
+        a = .4
         if rmin > x_vals[i]:
             while flag is True and i < len(x_vals):
                 i += 1
@@ -403,8 +404,8 @@ def make_paper_writing_group_plot(saturation):
         ztwostd = ztwostd[i:] / 10
         ax1.plot(x_vals, zone, color=colordict[lipid], label=lipid)
         ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
-        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=.1, color=colordict[lipid])
-        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=.1, color=colordict[lipid], linestyle="dashed")
+        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
+        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
         ax1.set_ylabel(r'$\langle \tilde h(r) \rangle \; (\mathrm{nm})$')
         ax1.set_ylim(-5, 1.5)
 
@@ -412,7 +413,7 @@ def make_paper_writing_group_plot(saturation):
         tilde_t = tilde_t[i:]
         tilde_tstd = tilde_tstd[i:]
         ax2.plot(x_vals, tilde_t, color=colordict[lipid], label=lipid)
-        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=.1, color=colordict[lipid])
+        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[lipid])
         ax2.set_ylabel(legend_dict['avg_tilde_total_t'])
         ax2.axhline(1, color="gray", linestyle="--")
         ax2.set_ylim(.8, 1.25)
@@ -421,7 +422,7 @@ def make_paper_writing_group_plot(saturation):
         epst0 = epst0[i:]
         epst0std = epst0std[i:]
         ax3.plot(x_vals, epst0, color=colordict[lipid])
-        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=.1, color=colordict[lipid])
+        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[lipid])
         ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'])
         ax3.set_ylim(-.1, .015)
 
@@ -429,7 +430,7 @@ def make_paper_writing_group_plot(saturation):
         tilde_eps2 = tilde_eps2[i:]
         tilde_eps2std = tilde_eps2std[i:]
         ax4.plot(x_vals, tilde_eps2, color=colordict[lipid])
-        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=.1, color=colordict[lipid])
+        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[lipid])
         ax4.set_ylabel(legend_dict['avg_tilde_epsilon2'])
         ax4.axhline(1, color="gray", linestyle="--")
         ax4.set_ylim(0, 18)
@@ -438,7 +439,7 @@ def make_paper_writing_group_plot(saturation):
         tilde_Hplus2 = tilde_Hplus2[i:]
         tilde_Hplus2std = tilde_Hplus2std[i:]
         ax5.plot(x_vals, tilde_Hplus2, color=colordict[lipid])
-        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=.1, color=colordict[lipid])
+        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[lipid])
         ax5.set_ylabel(legend_dict['avg_tilde_H_plus2'])
         ax5.axhline(1, color="gray", linestyle="--")
         ax5.set_ylim(0, 22)
@@ -447,7 +448,7 @@ def make_paper_writing_group_plot(saturation):
         corr_Hplus_eps = corr_Hplus_eps[i:]
         corr_Hplus_epsstd = corr_Hplus_epsstd[i:]
         ax6.plot(x_vals, corr_Hplus_eps, color=colordict[lipid])
-        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=.1, color=colordict[lipid])
+        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[lipid])
         ax6.set_ylim(-.25, 0)
         ax6.set_ylabel(legend_dict['corr_eps_Hplus'])
     ax1.set_xlim(0, xmax / 10 + 1)
@@ -808,4 +809,5 @@ if __name__ == "__main__":
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
+    make_paper_writing_group_plot("unsat")
     make_paper_writing_group_plot("sat")
