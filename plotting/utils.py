@@ -108,6 +108,27 @@ def find_last_val(in_list):
     return np.nan
 
 
+def gifformat(num, size):
+    """
+    Format number with proper amount of zeros in front.
+
+    Parameters
+    ----------
+    num : float/int
+        The number in need of formatting.
+    size : int
+        The number of spaces it needs to fill.
+
+    Returns
+    -------
+    padded_val : string
+        The number with the appropriate amount of zeros in front.
+    """
+    numzeros = size - len(str(num))
+    padded_val = "0" * numzeros + str(num)
+    return padded_val
+
+
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
     if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
         if dtype == "dat":
