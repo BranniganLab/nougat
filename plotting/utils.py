@@ -562,7 +562,7 @@ def dimensions_analyzer(data, coordsys):
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
-def calc_elastic_terms(system, path, coordsys, scale_dict):
+def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
     """
     Calculate all the additional terms that appear in a hamiltonian or are \
         generally of interest.
@@ -632,8 +632,8 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
     corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
 
     # get proper plot dimensions
-    dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    dims = bin_prep(bin_info, coordsys)
+    dim1vals, dim2vals = dims
 
     # make pretty pictures and save data
     data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,

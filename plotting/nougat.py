@@ -59,6 +59,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
 
     # figure out all the important info about the system you'll need
     system_dict = read_log(sys_name, coordsys)
+    save_areas(system_dict['bin_info']['N1'], system_dict['bin_info']['d1'], system_dict['bin_info']['N2'], system_dict['bin_info']['d2'], 0, coordsys, sys_name)
 
     # prep heatmap plots
     hmap_dims = bin_prep(system_dict['bin_info'], coordsys)
@@ -70,11 +71,11 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
         calculate_thickness(sys_name, bead, coordsys, inclusion, polar, hmap_dims, config_dict)
         calculate_curvature(sys_name, bead, coordsys, inclusion, polar, hmap_dims, field_list, config_dict, system_dict)
 
-    calculate_density(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
-    # calculate_order(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
-    # calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    calculate_density(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    # calculate_order(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
 
-    calc_elastic_terms(sys_name, ".", coordsys, config_dict)
+    calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 
 
 if __name__ == "__main__":
