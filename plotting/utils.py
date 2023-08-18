@@ -184,26 +184,21 @@ def calc_avg_over_time(matrix_data):
         return avg
 
 
-def bin_prep(sys_name, beadnames, coordsys, density):
+def bin_prep(N1_bins, d1, N2_bins, d2, coordsys):
 
-    sample_data = np.genfromtxt('tcl_output/' + sys_name + '.zone.' + beadnames + '.' + coordsys + '.height.dat', missing_values='nan', filling_values=np.nan)
-
-    N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, coordsys)
-
-    # prep plot dimensions
-    dim1 = sample_data[0:N1_bins, 0]
-    dim1 = np.append(dim1, sample_data[N1_bins - 1, 1])
+    dim1 = np.linspace(0, N1_bins * d1, N1_bins + 1)
     if coordsys == "polar":
         dim2 = np.linspace(0, 2 * np.pi, N2_bins + 1)
     elif coordsys == "cart":
-        dim2 = np.linspace(0, N2_bins + 1, N2_bins + 1)
+        dim2 = dim1
     dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
 
+    """
     if density == "ON":
         # save an array that represents the area per bin for normalizing density later
-        save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name)
-
-    return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
+        save_areas(N1_bins, d1, N2_bins, d2, 0, coordsys, sys_name)
+        """
+    return [dim1vals, dim2vals]
 
 
 def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
@@ -266,7 +261,7 @@ def read_log(sys_name, coordsys):
         system_dict['headnames'] = {}
         for line in range(len(system_dict["species"])):
             names_line = lines[headnames_start_line].split(':')
-            system_dict["headnames"][names_line[0]] = names_line[1]
+            system_dict["headnames"][names_line[0]] = ".".join(names_line[1].split(" "))
             headnames_start_line += 1
 
         # get density norm info from density section
@@ -274,15 +269,15 @@ def read_log(sys_name, coordsys):
         system_dict["density_norm"] = {}
         for line in range(len(system_dict["species"])):
             names_line = lines[density_start_line].split(':')
-            system_dict["density_norm"][names_line[0]] = names_line[1]
+            system_dict["density_norm"][names_line[0]] = float(names_line[1])
             density_start_line += 1
 
         # get bin size info from bin info section
         bin_start_line = lines.index("#BIN INFO") + 1
-        N1, N2 = lines[bin_start_line].split(' ')
-        d1, d2 = lines[bin_start_line + 1].split(' ')
+        N1, N2 = np.int64(lines[bin_start_line].split(' '))
+        d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
-
+        print(system_dict)
     return system_dict
 
 
