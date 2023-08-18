@@ -57,14 +57,14 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
 
     field_list = ["zone", "ztwo", "zzero"]
 
-    # figure out all the file names that you'll need to fetch
-    names_dict = read_log(sys_name, coordsys)
+    # figure out all the important info about the system you'll need
+    system_dict = read_log(sys_name, coordsys)
 
-    # get data dimensions and prep plots from one of your trajectories
-    dims = bin_prep(sys_name, names_dict['beads_list'][0], coordsys, "ON")
+    # prep heatmap plots
+    hmap_dims = bin_prep(system_dict['bin_info'], coordsys)
 
     # analyze height
-    analyze_height(sys_name, names_dict, coordsys, inclusion, polar, dims, field_list, config_dict)
+    analyze_height(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, field_list, config_dict)
 
     for bead in names_dict['beads_list']:
         calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, config_dict)
