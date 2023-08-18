@@ -111,7 +111,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
     for frm in range(Nframes):
         for row in range(N1_bins + 2):
             for col in range(N2_bins + 2):
-                if knan_test[row, col, frm] is False:
+                if knan_test[row, col, frm] == False:
 
                     del2x = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
                     del2x = del2x / (d1**2)
@@ -140,7 +140,7 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
                     normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
                     normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
 
-                elif nan_test[row, col, frm] is False:
+                elif nan_test[row, col, frm] == False:
                     del2x = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
                     del2x = del2x / d1**2
 
@@ -186,7 +186,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
     for frm in range(Nframes):
         for row in range(N1_bins):
             for col in range(N2_bins + 2):
-                if knan_test[row, col, frm] is False:
+                if knan_test[row, col, frm] == False:
 
                     # calculate d2h/dr2
                     del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
@@ -227,7 +227,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
                     normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
                     normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
 
-                elif nan_test[row, col, frm] is False:
+                elif nan_test[row, col, frm] == False:
 
                     # calculate d2h/dr2
                     del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]

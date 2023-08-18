@@ -843,28 +843,28 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
 
 
 proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
-    if {$coordSystem == "CART"} {
-        set d1list []
-        set d2list []
-        for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
-            lappend d1list [expr $L1/$N1*1.0]
-            lappend d2list [expr $L2/$N2*1.0]
-        }
-        set avgd1 [vecexpr $d1list mean]
-        set avgd2 [vecexpr $d2list mean]
-    } else {
-        set avgd1 $d1 
-        set avgd2 $d2
-    }
-
     set arealist []
+    set d1list []
+    set d2list []
     for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
         set L1 [molinfo top get a frame $frm]
         set L2 [molinfo top get b frame $frm]
         lappend arealist [expr $L1*$L2]
+        if {$coordSystem == "cart"} {
+            lappend d1list [expr $L1/$N1*1.0]
+            lappend d2list [expr $L2/$N2*1.0]
+        }
     }
     set avgarea [vecexpr $arealist mean]
-    
+    if {$coordSystem == "cart"} {
+        set avgd1 [vecexpr $d1list mean]
+        set avgd2 [vecexpr $d2list mean]
+    } elseif {$coordSystem == "polar"} {
+        set avgd1 $d1 
+        set avgd2 $d2
+    } else {
+        puts "Something went wrong with calc_bin_info"
+    }
 
     return [list $avgarea $avgd1 $avgd2]
 }
