@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Aug  4 11:30:26 2023
+Created on Fri Aug  4 11:30:26 2023.
 
 @author: js2746
 """
@@ -9,7 +9,7 @@ Created on Fri Aug  4 11:30:26 2023
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from utils import *
+from utils import bin_prep
 import os
 from PIL import Image
 
