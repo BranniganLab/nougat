@@ -66,13 +66,13 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
     # analyze height
     analyze_height(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, field_list, config_dict)
 
-    for bead in names_dict['beads_list']:
-        calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, config_dict)
-        calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, config_dict)
+    for bead in system_dict['headnames'].values():
+        calculate_thickness(sys_name, bead, coordsys, inclusion, polar, hmap_dims, config_dict)
+        calculate_curvature(sys_name, bead, coordsys, inclusion, polar, hmap_dims, field_list, config_dict, system_dict)
 
-    calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
-    # calculate_order(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
-    # calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, dims, config_dict)
+    calculate_density(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    # calculate_order(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    # calculate_tilt(sys_name, names_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
 
     calc_elastic_terms(sys_name, ".", coordsys, config_dict)
 
