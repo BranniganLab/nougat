@@ -270,8 +270,10 @@ def read_log(sys_name, coordsys):
         # get headnames from headnames section
         headnames_start_line = lines.index("#HEADNAMES") + 1
         system_dict['headnames'] = {}
+        system_dict['ntails'] = {}
         for line in range(len(system_dict["species"])):
             names_line = lines[headnames_start_line].split(':')
+            system_dict['ntails'][names_line[0]] = len(names_line[1].split(" "))
             system_dict["headnames"][names_line[0]] = ".".join(names_line[1].split(" "))
             headnames_start_line += 1
 
@@ -292,7 +294,6 @@ def read_log(sys_name, coordsys):
         # get nframes
         nframes_line = lines.index("#FRAMES") + 1
         system_dict['bin_info']['nframes'] = int(lines[nframes_line])
-    print(system_dict)
     return system_dict
 
 
@@ -741,8 +742,3 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg = np.nanmean(data)
     return avg
-
-
-if __name__ == "__main__":
-    os.chdir('../testing_materials/E-protein_trajectory/E-protein_cart_5_5_0_-1_1/')
-    read_log('E-protein', 'cart')
