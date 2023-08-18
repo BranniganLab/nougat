@@ -886,7 +886,7 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
 
     # output headnames corresponding to each species
     puts $logFile "#HEADNAMES"
-    puts $logFile "$headnames"
+    puts $logFile "${species}:${headNames}"
     puts $logFile ""
 
     ;# output density normalization info
@@ -901,6 +901,11 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     puts $logFile "#BIN INFO"
     puts $logFile "$N1 $N2"
     puts $logFile "$avgd1 $avgd2"
+    puts $logFile ""
+
+    ;# output nframes
+    puts $logFile "#FRAMES"
+    puts $logFile "[expr $end+1]"
 
     close $logFile
 }
