@@ -881,8 +881,12 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
 
     ;# output species names and bead names
     puts $logFile "#SYSTEM CONTENTS"
-    puts $logFile "$species" 
-    puts $logFile "$headNames"
+    puts $logFile "$species"
+    puts $logFile ""
+
+    # output headnames corresponding to each species
+    puts $logFile "#HEADNAMES"
+    puts $logFile "$headnames"
     puts $logFile ""
 
     ;# output density normalization info
