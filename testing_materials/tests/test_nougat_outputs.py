@@ -101,7 +101,7 @@ def make_npy_paths(wd, system, coord, surf, quant):
     return test_input, expected
 
 
-def make_tcl_paths(wd, system, coord, surf, quant):
+def make_tcl_paths(wd, system, coord, surf):
     """
     Concatenate strings together to make the path to the correct test files.
 
@@ -125,9 +125,9 @@ def make_tcl_paths(wd, system, coord, surf, quant):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/tcl_outputs/"
+        coordsys_path = "_cart_5_5_0_-1_1/tcl_output/"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/tcl_outputs/"
+        coordsys_path = "_polar_3_12_0_-1_1/tcl_output/"
     if system == "E-protein":
         directory = "/E-protein_trajectory/"
     elif system == "flat":
@@ -170,8 +170,8 @@ def test_if_height_and_curvature_npys_match(cwd, coordsys, surface4, quantity, s
     assert arrays_equal(test_input, expected, 'npy')
 
 
-def test_if_tcl_height_outputs_match(cwd, coordsys, surface4, system):
-    test_input, expected = make_tcl_paths(cwd, coordsys, surface4, system)
+def test_if_tcl_height_outputs_match(cwd, coordsys, surface2, system):
+    test_input, expected = make_tcl_paths(cwd, system, coordsys, surface2)
     assert arrays_equal(test_input, expected, 'dat')
 
 
