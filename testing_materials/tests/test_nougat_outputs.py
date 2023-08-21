@@ -54,7 +54,16 @@ def quantity(request):
     return request.param
 
 
-def make_paths(wd, coord, surf, quant):
+@pytest.fixture(scope='function', params=["E-protein", "flat"])
+def system(request):
+    """
+    Supply the system being tested to the test function requesting it.
+
+    """
+    return request.param
+
+
+def make_npy_paths(wd, system, coord, surf, quant):
     """
     Concatenate strings together to make the path to the correct test files.
 
@@ -62,6 +71,8 @@ def make_paths(wd, coord, surf, quant):
     ----------
     wd : string
         Path to current working directory.
+    system : string
+        Which test system the test pertains to.
     coord : string
         Coordinate system; 'cart' or 'polar'
     surf : sring
@@ -81,12 +92,52 @@ def make_paths(wd, coord, surf, quant):
         coordsys_path = "_cart_5_5_0_-1_1/npy/"
     elif coord == "polar":
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
-    expected = wd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
-    test_input = wd + "/E-protein_trajectory/test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
+    if system == "E-protein":
+        directory = "/E-protein_trajectory/"
+    elif system == "flat":
+        directory = "/flat_surface_test/"
+    expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
+    test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
     return test_input, expected
 
 
-def arrays_equal(path1, path2):
+def make_tcl_paths(wd, system, coord, surf, quant):
+    """
+    Concatenate strings together to make the path to the correct test files.
+
+    Parameters
+    ----------
+    wd : string
+        Path to current working directory.
+    system : string
+        Which test system the test pertains to.
+    coord : string
+        Coordinate system; 'cart' or 'polar'
+    surf : sring
+        The membrane surface in question (z1, z2, z0, or z+)
+
+    Returns
+    -------
+    test_input : string
+        Path to the test data npy file.
+    expected : string
+        Path to the saved 'correct' data npy file.
+
+    """
+    if coord == "cart":
+        coordsys_path = "_cart_5_5_0_-1_1/tcl_outputs/"
+    elif coord == "polar":
+        coordsys_path = "_polar_3_12_0_-1_1/tcl_outputs/"
+    if system == "E-protein":
+        directory = "/E-protein_trajectory/"
+    elif system == "flat":
+        directory = "/flat_surface_test/"
+    expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".height.dat"
+    test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + ".height.dat"
+    return test_input, expected
+
+
+def arrays_equal(path1, path2, filetype):
     """
     Determine whether two arrays have identical elements.
 
@@ -96,6 +147,8 @@ def arrays_equal(path1, path2):
         path to first npy file.
     path2 : string
         path to second npy file.
+    filetype : string
+        The filetype of f1 and f2
 
     Returns
     -------
@@ -103,45 +156,42 @@ def arrays_equal(path1, path2):
         Whether or not the two arrays contain identical elements.
 
     """
-    f1 = np.load(path1)
-    f2 = np.load(path2)
+    if filetype == "npy":
+        f1 = np.load(path1)
+        f2 = np.load(path2)
+    elif filetype == "dat":
+        f1 = np.genfromtxt(path1, missing_values="nan", filling_values=np.nan)
+        f2 = np.genfromtxt(path2, missing_values="nan", filling_values=np.nan)
     return np.array_equal(f1, f2, equal_nan=True)
 
 
-def test_if_height_and_curvature_files_match(cwd, coordsys, surface4, quantity):
-    test_input, expected = make_paths(cwd, coordsys, surface4, quantity)
-    assert arrays_equal(test_input, expected)
+def test_if_height_and_curvature_npys_match(cwd, coordsys, surface4, quantity, system):
+    test_input, expected = make_npy_paths(cwd, system, coordsys, surface4, quantity)
+    assert arrays_equal(test_input, expected, 'npy')
 
 
-def test_if_thickness_files_match(cwd, coordsys, surface2):
-    test_input, expected = make_paths(cwd, coordsys, surface2, "thickness")
-    assert arrays_equal(test_input, expected)
+def test_if_tcl_height_outputs_match(cwd, coordsys, surface4, system):
+    test_input, expected = make_tcl_paths(cwd, coordsys, surface4, system)
+    assert arrays_equal(test_input, expected, 'dat')
 
 
-@pytest.mark.xfail(strict=True)
-def test_if_thickness_files_dont_match(cwd, coordsys, surface2):
-    test_input, expected = make_paths(cwd, coordsys, surface2, "thickness")
-    assert (arrays_equal(test_input, expected) is False)
-
-
-@pytest.mark.xfail(strict=True)
-def test_if_height_and_curvature_files_dont_match(cwd, coordsys, surface4, quantity):
-    test_input, expected = make_paths(cwd, coordsys, surface4, quantity)
-    assert (arrays_equal(test_input, expected) is False)
+def test_if_thickness_files_match(cwd, coordsys, surface2, system):
+    test_input, expected = make_npy_paths(cwd, system, coordsys, surface2, "thickness")
+    assert arrays_equal(test_input, expected, 'npy')
 
 
 @pytest.mark.xfail(strict=True)
-def test_if_leaflets_are_distinct(cwd, coordsys, quantity):
-    zone_test, _ = make_paths(cwd, coordsys, "zone", quantity)
-    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", quantity)
-    assert arrays_equal(zone_test, ztwo_test)
+def test_if_leaflets_are_distinct(cwd, coordsys, quantity, system):
+    zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", quantity)
+    ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", quantity)
+    assert arrays_equal(zone_test, ztwo_test, 'npy')
 
 
 @pytest.mark.xfail(strict=True)
-def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys):
-    zone_test, _ = make_paths(cwd, coordsys, "zone", "thickness")
-    ztwo_test, _ = make_paths(cwd, coordsys, "ztwo", "thickness")
-    assert arrays_equal(zone_test, ztwo_test)
+def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
+    zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", "thickness")
+    ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", "thickness")
+    assert arrays_equal(zone_test, ztwo_test, 'npy')
 
 
 def test_whether_flat_cartesian(cwd):
@@ -167,4 +217,4 @@ def test_if_densities_match(cwd, coordsys, surface2):
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
     exp = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy"
     test = cwd + "/E-protein_trajectory/test" + coordsys_path + "test.DTPC." + surface2 + "." + coordsys + ".density.npy"
-    assert arrays_equal(test, exp)
+    assert arrays_equal(test, exp, 'npy')
