@@ -1282,7 +1282,7 @@ proc readPolar {polar} {
 proc createAtomSelections {quantity configDictionary} {
     ;#atomselections setup as dict
     if {$quantity eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $configDictionary species] and name [dict get $configDictionary headnames]"]
+        dict set selections z1z2 [atomselect top "resname [dict get $configDictionary species] and name [dict get $configDictionary full_tails]"]
         dict set selections z0 [atomselect top "resname [dict get $configDictionary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
 
     } elseif {$quantity eq "tilt_order"} {
