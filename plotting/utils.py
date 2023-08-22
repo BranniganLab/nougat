@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 import warnings
+import os
 
 
 def strip_blank_lines(file):
@@ -183,26 +184,32 @@ def calc_avg_over_time(matrix_data):
         return avg
 
 
-def bin_prep(sys_name, beadnames, coordsys, density):
+def bin_prep(bin_info, coordsys):
+    """
+    Configure the arrays needed for plotting heatmaps.
 
-    sample_data = np.genfromtxt('tcl_output/' + sys_name + '.zone.' + beadnames + '.' + coordsys + '.height.dat', missing_values='nan', filling_values=np.nan)
+    Parameters
+    ----------
+    bin_info : DICT
+        Contains N1, N2, d1, and d2 information.
+    coordsys : STRING
+        "cart" or "polar.
 
-    N1_bins, d1, N2_bins, d2, Nframes, min_val = dimensions_analyzer(sample_data, coordsys)
+    Returns
+    -------
+    list
+        The two numpy ndarrays needed for plotting a heatmap.
 
-    # prep plot dimensions
-    dim1 = sample_data[0:N1_bins, 0]
-    dim1 = np.append(dim1, sample_data[N1_bins - 1, 1])
+    """
+
+    dim1 = np.linspace(0, bin_info['N1'] * bin_info['d1'], bin_info['N1'] + 1)
     if coordsys == "polar":
-        dim2 = np.linspace(0, 2 * np.pi, N2_bins + 1)
+        dim2 = np.linspace(0, 2 * np.pi, bin_info['N2'] + 1)
     elif coordsys == "cart":
-        dim2 = np.linspace(0, N2_bins + 1, N2_bins + 1)
+        dim2 = dim1
     dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
 
-    if density == "ON":
-        # save an array that represents the area per bin for normalizing density later
-        save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name)
-
-    return [N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals]
+    return [dim1vals, dim2vals]
 
 
 def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
@@ -230,30 +237,64 @@ def mostly_empty(data_array):
 
 
 def read_log(sys_name, coordsys):
-    # this proc is not robust to multiple lipid species in the same system!!
-    # specifically, species with differing headnames
-    names_dict = {}
-    names_dict['beads_list'] = []
+    """
+    Read log file output by nougat.tcl and save important info for later.
+
+    Parameters
+    ----------
+    sys_name : STRING
+        The name of the system you designated with nougat.tcl and nougat.py.
+    coordsys : STRING
+        'cart' or 'polar'.
+
+    Returns
+    -------
+    system_dict : DICT
+        A dictionary containing the list of lipid species, their respective \
+            headnames, their respective density normalization factors, and \
+            the bin sizes.
+
+    """
+    system_dict = {}
+
     # open log file
     with open("tcl_output/" + sys_name + "." + coordsys + ".log", "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
-        # get contents of line 1 and save as species_list
-        names_dict['species_list'] = lines[1].split(' ')
+        species_list = []
+        # get all lipid species names from line 2
+        for species in lines[1].split(' '):
+            species_list.append(species)
+        system_dict["species"] = species_list
 
-        # get contents of line 2 and save as beads_list
-        headnames = lines[2].split(' ')
-        filename = headnames[0]
-        for indx in range(1, len(headnames)):
-            filename = filename + "." + headnames[indx]
-        if filename not in names_dict['beads_list']:
-            names_dict['beads_list'].append(filename)
+        # get headnames from headnames section
+        headnames_start_line = lines.index("#HEADNAMES") + 1
+        system_dict['headnames'] = {}
+        system_dict['ntails'] = {}
+        for line in range(len(system_dict["species"])):
+            names_line = lines[headnames_start_line].split(':')
+            system_dict['ntails'][names_line[0]] = len(names_line[1].split(" "))
+            system_dict["headnames"][names_line[0]] = ".".join(names_line[1].split(" "))
+            headnames_start_line += 1
 
-        # get density norm factor
-        start_line = lines.index("#DENSITY NORMALIZATION") + 1
-        names_dict['density_norm'] = float(lines[start_line].split(":")[1])
+        # get density norm info from density section
+        density_start_line = lines.index("#DENSITY NORMALIZATION") + 1
+        system_dict["density_norm"] = {}
+        for line in range(len(system_dict["species"])):
+            names_line = lines[density_start_line].split(':')
+            system_dict["density_norm"][names_line[0]] = float(names_line[1])
+            density_start_line += 1
 
-    return names_dict
+        # get bin size info from bin info section
+        bin_start_line = lines.index("#BIN INFO") + 1
+        N1, N2 = np.int64(lines[bin_start_line].split(' '))
+        d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
+        system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
+
+        # get nframes
+        nframes_line = lines.index("#FRAMES") + 1
+        system_dict['bin_info']['nframes'] = int(lines[nframes_line])
+    return system_dict
 
 
 def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, config_dict):
@@ -522,7 +563,7 @@ def dimensions_analyzer(data, coordsys):
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
 
 
-def calc_elastic_terms(system, path, coordsys, scale_dict):
+def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
     """
     Calculate all the additional terms that appear in a hamiltonian or are \
         generally of interest.
@@ -592,8 +633,8 @@ def calc_elastic_terms(system, path, coordsys, scale_dict):
     corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
 
     # get proper plot dimensions
-    dims = bin_prep(system, "C1A.C1B", coordsys, "OFF")
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    dims = bin_prep(bin_info, coordsys)
+    dim1vals, dim2vals = dims
 
     # make pretty pictures and save data
     data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,

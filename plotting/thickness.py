@@ -1,14 +1,10 @@
-import matplotlib.pyplot as plt
-import matplotlib
+"""Functions related to calculating thickness."""
 import numpy as np
-import warnings
-import glob
-import os
 from utils import *
 
 
 def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_dict):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    dim1vals, dim2vals = dims
     zone = np.load('npy/' + sys_name + '.zone.' + bead + '.' + coordsys + '.height.npy')
     ztwo = np.load('npy/' + sys_name + '.ztwo.' + bead + '.' + coordsys + '.height.npy')
     zzero = np.load('npy/' + sys_name + '.zzero.' + bead + '.' + coordsys + '.height.npy')

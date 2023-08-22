@@ -1,17 +1,16 @@
-import matplotlib.pyplot as plt
-import matplotlib
+"""Functions related to calculating density."""
 import numpy as np
-import warnings
-import glob
-import os
 from utils import *
 
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    N1_bins = names_dict['bin_info']['N1']
+    N2_bins = names_dict['bin_info']['N2']
+    Nframes = names_dict['bin_info']['nframes']
+    dim1vals, dim2vals = dims
     areas = np.load('npy/' + sys_name + "." + coordsys + ".areas.npy")
 
-    for species in names_dict['species_list']:
+    for species in names_dict['species']:
         for leaflet in ["zone", "ztwo"]:
             data = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
 
@@ -24,7 +23,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
             avgdensity = calc_avg_over_time(density_array)
 
             # normalize
-            normfactor = names_dict["density_norm"]
+            normfactor = names_dict["density_norm"][species]
             avgdensity = avgdensity * normfactor / areas
 
             # make plots!
