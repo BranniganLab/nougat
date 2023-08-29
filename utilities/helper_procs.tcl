@@ -652,6 +652,8 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         global M_PI
         dict set bindims d2 [expr 2*$M_PI/$N2]
         dict set bindims N2 $N2
+
+        polarAreaWarning $d1 $N1 $min $d2
     
     } elseif {$polar == 0} {
 
@@ -662,9 +664,46 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         set bindims [updateDimensions $bindims 0]
 
         dict set bindims dthetadeg "NULL"
+    
     }
 
     return $bindims
+}
+
+# polarAreaWarning --
+#
+#       Prints a warning if the bin area gets too small
+#
+# Arguments:
+#       d1          {float}         length of r bin
+#       N1          {int}           number of r bins
+#       min         {float}         starting r value for bin 0
+#       d2          {float}         length of theta bin
+#
+# Result:
+#
+#       Printed warning; no return.
+
+proc polarAreaWarning {d1 N1 min d2} {
+    set baseArea [expr $d1*$d2]
+    set i 0
+    set area 0
+    while {($i < $N1) && ($area < 66.67)} {
+        set distToCenter [expr [expr $min + $i * $d1] + [expr $d1 / 2.0]]
+        set area [expr $baseArea * $distToCenter]
+        puts $i
+        puts $area
+        incr i 
+    }
+    if {$i==0} {
+        return
+    } elseif {$i == $N1} {
+        puts "WARNING: All bins are smaller than .67 nm^2"
+        puts "Consider resizing your bins, or take results with a grain of salt."
+    } else {
+        puts "WARNING: Bins closer than edge of radial ring [expr $i-2] are smaller than .67 nm^2"
+        puts "Consider resizing your bins, or take results with a grain of salt."
+    }
 }
 
 # calculateReferenceHeight (Previously: calc_ref_height)--
@@ -753,6 +792,11 @@ proc updateDimensions {bindims frame} {
 
     dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
     dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+
+    if {[expr $d1*$d2] < 6.7} {
+        puts "WARNING: bin size is less than .67 nm^2"
+        puts "consider resizing your bins to be bigger."
+    }
 
     return $bindims
 }
