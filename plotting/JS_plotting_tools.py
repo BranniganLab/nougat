@@ -355,7 +355,7 @@ def make_paper_writing_group_plot(saturation):
     None.
 
     """
-    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, layout='constrained')
+    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, layout='constrained', figsize=(7, 7))
     if saturation == "sat":
         sat_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
     elif saturation == "unsat":
@@ -406,54 +406,72 @@ def make_paper_writing_group_plot(saturation):
         ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
         ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
         ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
-        ax1.set_ylabel(r'$\langle \tilde h(r) \rangle \; (\mathrm{nm})$')
-        ax1.set_ylim(-5, 1.5)
+        ax1.set_ylabel(r'$\langle \tilde h \rangle \; (\mathrm{nm})$', fontsize=10)
+        ax1.tick_params(axis='both', which='major', labelsize=7)
+        ax1.tick_params(axis='both', which='minor', labelsize=7)
+        ax1.yaxis.set_major_formatter('{x:0<5.1f}')
+        # ax1.set_ylim(-5, 1.5)
 
         # tilde t plot
         tilde_t = tilde_t[i:]
         tilde_tstd = tilde_tstd[i:]
         ax2.plot(x_vals, tilde_t, color=colordict[lipid], label=lipid)
         ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[lipid])
-        ax2.set_ylabel(legend_dict['avg_tilde_total_t'])
+        ax2.set_ylabel(legend_dict['avg_tilde_total_t'], fontsize=10)
         ax2.axhline(1, color="gray", linestyle="--")
-        ax2.set_ylim(.8, 1.25)
+        ax2.tick_params(axis='both', which='major', labelsize=7)
+        ax2.tick_params(axis='both', which='minor', labelsize=7)
+        ax2.yaxis.set_major_formatter('{x:0<5.1f}')
+        # ax2.set_ylim(.8, 1.25)
 
         # eps/t0 plot
         epst0 = epst0[i:]
         epst0std = epst0std[i:]
         ax3.plot(x_vals, epst0, color=colordict[lipid])
         ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[lipid])
-        ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'])
-        ax3.set_ylim(-.1, .015)
+        ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'], fontsize=10)
+        ax3.tick_params(axis='both', which='major', labelsize=7)
+        ax3.tick_params(axis='both', which='minor', labelsize=7)
+        ax3.yaxis.set_major_formatter('{x:0<5.1f}')
+        # ax3.set_ylim(-.1, .015)
 
         # tilde epsilon squared plot
         tilde_eps2 = tilde_eps2[i:]
         tilde_eps2std = tilde_eps2std[i:]
         ax4.plot(x_vals, tilde_eps2, color=colordict[lipid])
         ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[lipid])
-        ax4.set_ylabel(legend_dict['avg_tilde_epsilon2'])
+        ax4.set_ylabel(legend_dict['avg_tilde_epsilon2'], fontsize=10)
         ax4.axhline(1, color="gray", linestyle="--")
-        ax4.set_ylim(0, 18)
+        ax4.tick_params(axis='both', which='major', labelsize=7)
+        ax4.tick_params(axis='both', which='minor', labelsize=7)
+        ax4.yaxis.set_major_formatter('{x:0<5.1f}')
+        # ax4.set_ylim(0, 18)
 
         # tilde Hplus squared plot
         tilde_Hplus2 = tilde_Hplus2[i:]
         tilde_Hplus2std = tilde_Hplus2std[i:]
         ax5.plot(x_vals, tilde_Hplus2, color=colordict[lipid])
         ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[lipid])
-        ax5.set_ylabel(legend_dict['avg_tilde_H_plus2'])
+        ax5.set_ylabel(legend_dict['avg_tilde_H_plus2'], fontsize=10)
         ax5.axhline(1, color="gray", linestyle="--")
-        ax5.set_ylim(0, 22)
+        ax5.tick_params(axis='both', which='major', labelsize=7)
+        ax5.tick_params(axis='both', which='minor', labelsize=7)
+        ax5.yaxis.set_major_formatter('{x:0<5.1f}')
+        # ax5.set_ylim(0, 22)
 
         # correlation between epsilon and Hplus plot
         corr_Hplus_eps = corr_Hplus_eps[i:]
         corr_Hplus_epsstd = corr_Hplus_epsstd[i:]
         ax6.plot(x_vals, corr_Hplus_eps, color=colordict[lipid])
         ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[lipid])
-        ax6.set_ylim(-.25, 0)
-        ax6.set_ylabel(legend_dict['corr_eps_Hplus'])
+        # ax6.set_ylim(-.25, 0)
+        ax6.set_ylabel(legend_dict['corr_eps_Hplus'], fontsize=10)
+        ax6.tick_params(axis='both', which='major', labelsize=7)
+        ax6.tick_params(axis='both', which='minor', labelsize=7)
+        ax6.yaxis.set_major_formatter('{x:0<5.1f}')
     ax1.set_xlim(0, xmax / 10 + 1)
-    ax5.set_xlabel(r'$r\;(\mathrm{nm})$')
-    ax6.set_xlabel(r'$r\;(\mathrm{nm})$')
+    ax5.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
+    ax6.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
 
     plt.savefig("/home/js2746/Desktop/comparisonfig_" + saturation + ".pdf", dpi=700)
     plt.clf()
@@ -784,7 +802,8 @@ legend_dict = {
     "corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
     "corr_eps_Kplus": r'$\langle \epsilon K^+ \rangle - \langle \epsilon \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-1}})$',
     "corr_mag_eps_Hplus": r'$\langle | \epsilon | | H^+ | \rangle - \langle | \epsilon | \rangle \langle | H^+ | \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-1}})$'
+    # "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-1}})$'
+    "corr_eps_Hplus": r'$\langle \delta_{\epsilon , H^+}\rangle \; (\mathrm{\dot A^{-1}})$'
 }
 
 allsys = ["DT", "DL", "DP", "DB", "DX", "DY", "DO", "DG"]
@@ -806,7 +825,7 @@ if __name__ == "__main__":
     # normalize_by_bulk(mols, paths, nougvals, bulkpath, bulknougvals, xlim)
     # run_sum_over_H2(mol)
     # run_eps_corr_scatter(mol)
-    # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1/npy/", "polar")
+    # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_cart_10_10_0_-1_1/npy/", "cart")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
     # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
