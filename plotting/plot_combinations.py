@@ -310,10 +310,12 @@ def plot_combination(paths, name, quantity, stds, rmin):
                     flag = False
 
         axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
+        if "tilde" in quantity:
+            axs.axhline(1, color="gray", linestyle=":")
         if stds is True:
             std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
-            std_data = std_data[i:]
-            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.1, color=color_dict[sysname])
+            std_data = std_data[i:] / np.sqrt(10)
+            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.4, color=color_dict[sysname])
         axs.set_xlim(0, xmax / 10)
         if quantity + "_min" in scale_dict:
             axs.set_ylim(scale_dict[quantity + "_min"], scale_dict[quantity + "_max"])
@@ -360,7 +362,9 @@ y_label_dict = {
 
 scale_dict = {
     "avg_K_plus_min": -.0001,
-    "avg_K_plus_max": .0001
+    "avg_K_plus_max": .0001,
+    "avg_tilde_epsilon2_min": 0,
+    "avg_tilde_epsilon2_max": 16
 }
 
 color_dict = {
@@ -411,6 +415,7 @@ if __name__ == "__main__":
                    "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                    "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
+
     config_dict = read_config('comp_config.txt', ["length", "saturation"])
     cwd = os.getcwd()
     try:

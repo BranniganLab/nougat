@@ -622,21 +622,26 @@ def plot_asymm_over_traj(path, sysname):
 
     """
     asymm_traj = np.loadtxt(path + sysname + ".asymm.traj")
-    fig, axs = plt.subplots(3, sharex=True, layout='constrained')
+    fig, axs = plt.subplots(4, sharex=True, layout='constrained')
     X = asymm_traj[:, 0] / 10  # magic number to convert from frames to us for my systems
     outer = asymm_traj[:, 1]
     inner = asymm_traj[:, 2]
     sideways = asymm_traj[:, 3]
     inside_inclusion = asymm_traj[:, 4]
     total_asymm = outer - inner
+    total = outer + inner
+    f_outer = outer / total
+    f_inner = inner / total
     axs[0].plot(X, outer, color="blue", label='Outer Leaflet')
     axs[0].plot(X, inner, color="red", label="Inner leaflet")
     axs[1].plot(X, sideways, color="green", label="Unclassifiable")
     axs[1].plot(X, inside_inclusion, color="orange", label="Inside inclusion")
     axs[2].plot(X, total_asymm, color="black", label="Lipid number asymmetry")
+    axs[3].plot(X, f_outer, color="blue", label="Outer Leaflet Fraction")
     axs[0].legend()
     axs[1].legend()
     axs[2].legend()
+    axs[3].legend()
     fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
     fig.supylabel(r'$nL$')
     plt.savefig(path + sysname + ".asymm_traj.pdf", dpi=700)
@@ -830,6 +835,6 @@ if __name__ == "__main__":
     # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
-    # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
-    make_paper_writing_group_plot("unsat")
-    make_paper_writing_group_plot("sat")
+    plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
+    # make_paper_writing_group_plot("unsat")
+    # make_paper_writing_group_plot("sat")
