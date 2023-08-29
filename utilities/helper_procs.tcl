@@ -1396,13 +1396,13 @@ proc get_theta {x y} {
     }
 
     ;# change to degrees
-    return [ConvertRadianToDegree $theta]
+    return [convertRadianToDegree $theta]
 }
 
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
-proc Protein_Position {name hnames tnames chainNames folderName} {
+proc Protein_Position {name hnames chainNames folderName} {
     ;# in order to use this, must have your TMD chains separated and saved as occupancy 1
 
     set lastframe [expr [molinfo top get numframes]-1]
@@ -1417,13 +1417,14 @@ proc Protein_Position {name hnames tnames chainNames folderName} {
     set ztwo_Ht [vecexpr $ztwo_zvals mean]
     $ztwo_sel delete
 
-    set zmid_sel [atomselect top "name $tnames and within 6 of name BB"]
+    set zmid_sel [atomselect top "((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)) and within 6 of name BB"]
     set zmid_zvals [$zmid_sel get z]
     set zmid_Ht [vecexpr $zmid_zvals mean]
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-    set fout [open "${folderName}/tcl_output/${name}_helcoords_${eqtxt}.dat" w]
+        puts "$eqtxt"
+        set fout [open "${folderName}/tcl_output/${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chainNames {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
