@@ -653,7 +653,7 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         dict set bindims d2 [expr 2*$M_PI/$N2]
         dict set bindims N2 $N2
 
-        polarAreaWarning $d1 $N1 $min $d2
+        polarAreaWarning [dict get $bindims d1] [dict get $bindims N1] $min [dict get $bindims d2]
     
     } elseif {$polar == 0} {
 
@@ -691,8 +691,6 @@ proc polarAreaWarning {d1 N1 min d2} {
     while {($i < $N1) && ($area < 66.67)} {
         set distToCenter [expr [expr $min + $i * $d1] + [expr $d1 / 2.0]]
         set area [expr $baseArea * $distToCenter]
-        puts $i
-        puts $area
         incr i 
     }
     if {$i==0} {
