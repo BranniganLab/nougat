@@ -231,3 +231,30 @@ proc measure_APL_over_traj {sys_name lipids} {
     }
     close $outfile
 }
+
+
+proc Delete_Random_Lipids {seltext upper_final lower_final} {
+    set final_list []
+    for {set i 1} {$i <= 2} {incr i} {
+        set sel [atomselect top "${seltext} and user ${i}"]
+        set resids [lsort -unique [$sel get resid]]
+        set Nl [llength $resids]
+        set num_to_del [expr $Nl - $upper_final]
+        if {$num_to_del < 1} {
+            puts "you need to add lipids, not delete them!"
+            return
+        } else {
+            set dellist []
+            for {set j 0} {$j < $num_to_del} {incr j} {
+                set resid_to_del [lindex $resids [expr {int(rand()*$Nl)}]]
+                if {[lsearch -exact $dellist $resid_to_del] == -1} {
+                    lappend dellist $resid_to_del
+                } else {
+                    set j [expr $j-1]
+                }
+            }
+        }
+        lappend final_list $dellist
+    }
+    return $final_list
+}
