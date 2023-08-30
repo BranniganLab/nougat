@@ -65,7 +65,7 @@ proc cell_prep {config_path leaf_check} {
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
-    if {[dict get $config_dict custom_occupancy] != "NULL"} {
+    if {[dict exists $config_dict custom_occupancy] && ([dict get $config_dict custom_occupancy] != "NULL")} {
         separate_chains top 15
         set_occupancy top 
     }
@@ -222,7 +222,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         ;# this will only work if your TMD helices are set to occupancy 1
         ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
         ;# this proc is currently broken, anyways (yes, there is a github issue)
-        if {[dict get $config_dict custom_position] != "NULL"} {
+        if {[dict exists $config_dict custom_position] && ([dict get $config_dict custom_position] != "NULL")} {
             puts "[dict get $config_dict custom_position]"
             Protein_Position $system [dict get $config_dict headnames] [dict get $config_dict custom_position] $foldername
         }

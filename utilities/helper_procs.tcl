@@ -663,7 +663,7 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         
         set bindims [updateDimensions $bindims 0]
 
-        dict set bindims dthetadeg "NULL"
+        dict set bindims dthetadeg "NULL" 
     
     }
 
@@ -788,8 +788,11 @@ proc updateDimensions {bindims frame} {
     set x [molinfo top get a frame $frame]
     set y [molinfo top get b frame $frame]
 
-    dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
-    dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+    set d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
+    set d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+
+    dict set bindims d1 $d1 
+    dict set bindims d2 $d2 
 
     if {[expr $d1*$d2] < 6.7} {
         puts "WARNING: bin size is less than .67 nm^2"
