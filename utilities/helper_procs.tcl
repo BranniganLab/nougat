@@ -950,7 +950,7 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
 
     ;# output nframes
     puts $logFile "#FRAMES"
-    puts $logFile "[expr $end+1]"
+    puts $logFile "[expr [expr $end-$start] / 2]"
 
     close $logFile
 }
