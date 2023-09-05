@@ -191,7 +191,7 @@ def generate_combinations(config_dict):
         print("I only made this to work with 3 dimensions - sorry!")
 
 
-def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
+def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name):
     """
     Calculate a more complicated quantity that requires custom work.
 
@@ -210,7 +210,10 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
+    elif species_name in ["lgDY", "lgDO", "lgDG"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
     if quantity == "avg_tilde_total_t":
         exp_quantity = "total_t"
     elif quantity == "avg_tilde_epsilon2":
@@ -220,14 +223,14 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
     else:
         print("I think you spelled something wrong")
     exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", exp_quantity)
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", exp_quantity)
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     np.save(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity)
     return np.load(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".avg_over_theta.npy")
 
 
-def calc_eps_t0(path, quantity, sysname):
+def calc_eps_t0(path, quantity, sysname, species_name):
     """
     Calculate epsilon over t0.
 
@@ -246,9 +249,12 @@ def calc_eps_t0(path, quantity, sysname):
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
+    elif species_name in ["lgDY", "lgDO", "lgDG"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", "total_t")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t")
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     np.save(path + "/npy/" + sysname + ".avg_epsilon_over_t0.npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + ".avg_epsilon_over_t0")
@@ -283,12 +289,16 @@ def plot_combination(paths, name, quantity, stds, rmin):
     for path in paths:
         # find the correct system name
         nougval = [i for i in path.split("/") if "polar" in i][0]
-        sysname = nougval.split("_")[0]
+        sysname = nougval.split("_polar")[0]
+        if "_" in sysname:
+            species_name = sysname.split("_")[0]
+        else:
+            species_name = sysname
 
         if quantity in ["avg_height_both_leafs", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]:
-            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname)
+            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name)
         elif quantity == "avg_epsilon_over_t0":
-            y_vals = calc_eps_t0(path, quantity, sysname)
+            y_vals = calc_eps_t0(path, quantity, sysname, species_name)
         else:
             y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
@@ -309,13 +319,13 @@ def plot_combination(paths, name, quantity, stds, rmin):
                     y_vals = y_vals[i:]
                     flag = False
 
-        axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
+        axs.plot(x_vals, y_vals, color=color_dict[species_name], linestyle=style_dict[species_name])
         if "tilde" in quantity:
-            axs.axhline(1, color="gray", linestyle=":")
+            axs.axhline(1, color="gray", linestyle="")
         if stds is True:
             std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
             std_data = std_data[i:] / np.sqrt(10)
-            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.4, color=color_dict[sysname])
+            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.4, color=color_dict[species_name])
         axs.set_xlim(0, xmax / 10)
         if quantity + "_min" in scale_dict:
             axs.set_ylim(scale_dict[quantity + "_min"], scale_dict[quantity + "_max"])
