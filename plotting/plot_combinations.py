@@ -355,8 +355,8 @@ y_label_dict = {
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
-    "corr_mag_epst0_Hplus": r'$\langle | \epsilon| | H^+ | / t_0 \rangle - \langle |\epsilon| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Hplus": r'$ \langle \epsilon H^+ / t_0 \rangle - \langle \epsilon/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
+    "corr_mag_epst0_Hplus": r'$\langle \delta_{| \epsilon| | H^+ | / t_0} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_epst0_Hplus": r'$ \langle \delta_{\epsilon H^+ / t_0} \rangle; ( \mathrm{\dot A^{-1}} )$',
     "avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;\epsilon / t_0 \rangle$',
     "avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
@@ -369,17 +369,17 @@ y_label_dict = {
     "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
     "avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$',
     "avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Kplus": r'$\langle \epsilon K^+ \rangle - \langle \epsilon \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_mag_eps_Hplus": r'$\langle | \epsilon | | H^+ | \rangle - \langle | \epsilon | \rangle \langle | H^+ | \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-2}})$'
+    "corr_epst0_Kplus": r'$\langle \delta_{\epsilon / t_0, K^+} \rangle\; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Kplus": r'$\langle \delta_{\epsilon, K^+} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_mag_eps_Hplus": r'$\langle \delta_{| \epsilon |, | H^+ |} \rangle; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Hplus": r'$\langle  \delta_{\epsilon, H^+} \rangle; (\mathrm{\dot A^{-2}})$'
 }
 
 scale_dict = {
     "avg_K_plus_min": -.0001,
     "avg_K_plus_max": .0001,
     "avg_tilde_epsilon2_min": 0,
-    "avg_tilde_epsilon2_max": 18
+    "avg_tilde_epsilon2_max": 5
 }
 
 color_dict = {
