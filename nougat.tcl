@@ -58,7 +58,7 @@ proc cell_prep {config_path leaf_check} {
     }
 
     ;# center, wrap, and align the system
-    Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]   
+    Center_System [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }

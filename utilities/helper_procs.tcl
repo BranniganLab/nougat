@@ -948,10 +948,6 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     puts $logFile "$avgd1 $avgd2"
     puts $logFile ""
 
-    ;# output nframes
-    puts $logFile "#FRAMES"
-    puts $logFile "[expr [expr $end-$start] / 2]"
-
     close $logFile
 }
 
@@ -1488,7 +1484,7 @@ proc Protein_Position {name hnames chainNames folderName} {
     }
 }
 
-proc Center_System {wrap_sel species inclusion_sel} {
+proc Center_System {wrap_sel inclusion_sel} {
     puts "${wrap_sel}"
     puts "Center_System now running"
 
