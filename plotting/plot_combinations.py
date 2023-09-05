@@ -214,17 +214,11 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, specie
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
     elif species_name in ["lgDY", "lgDO", "lgDG"]:
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
-    if quantity == "avg_tilde_total_t":
-        exp_quantity = "total_t"
-        rms = False
-    elif quantity == "avg_tilde_epsilon2":
-        exp_quantity = "epsilon2"
-        rms = True
-    elif quantity == "avg_tilde_H_plus2":
-        exp_quantity = "H_plus2"
+    if "_rms_" in quantity:
         rms = True
     else:
-        print("I think you spelled something wrong")
+        rms = False
+    exp_quantity = quantity.split("tilde_")[1]
     exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
     bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", exp_quantity)
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
@@ -300,7 +294,7 @@ def plot_combination(paths, name, quantity, stds, rmin):
         else:
             species_name = sysname
 
-        if quantity in ["avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]:
+        if quantity in ["avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2", "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]:
             y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name)
         elif quantity == "avg_epsilon_over_t0":
             y_vals = calc_eps_t0(path, quantity, sysname, species_name)
@@ -349,9 +343,11 @@ y_label_dict = {
     "avg_epsilon2_over_t02": r'$\langle ( \epsilon / t_0 )^2 \rangle$',
     "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
-    "avg_tilde_epsilon2": r'$\langle \sqrt{\tilde \epsilon ^ 2} \rangle$',
+    "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
+    "avg_rms_tilde_epsilon2": r'$\langle \sqrt{\tilde \epsilon ^ 2} \rangle$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-    "avg_tilde_H_plus2": r'$\langle \sqrt{\tilde H_+ ^ 2} \rangle$',
+    "avg_tilde_H_plus2": r'$\langle \tilde H_+ ^ 2 \rangle$',
+    "avg_rms_tilde_H_plus2": r'$\langle \sqrt{\tilde H_+ ^ 2} \rangle$',
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
@@ -428,7 +424,9 @@ if __name__ == "__main__":
     quant_list1 = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                    "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                    "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
+                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0",
+                   "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2",
+                   "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
 
     config_dict = read_config('comp_config.txt', ["length", "saturation"])
