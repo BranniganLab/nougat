@@ -355,14 +355,28 @@ def make_paper_writing_group_plot(saturation):
     None.
 
     """
-    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, layout='constrained', figsize=(7, 7))
+    fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, figsize=(7, 7))
     if saturation == "sat":
         sat_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
+        nougat_values = "_polar_5_10_100_-1_1/npy/"
     elif saturation == "unsat":
         sat_list = ["lgDY", "lgDO", "lgDG"]
+        nougat_values = "_polar_10_10_100_150_1/npy/"
     path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
     for lipid in sat_list:
-        fname = path + lipid + "/" + lipid + "_polar_5_10_100_-1_1/npy/" + lipid + "."
+        if lipid == "lgDY":
+            dirname = "lgDY_15us"
+            sysname = "lgDY_15us"
+        elif lipid == "lgDO":
+            dirname = "lgDO_30us"
+            sysname = "lgDO_30us"
+        elif lipid == "lgDG":
+            dirname = "lgDG_15us"
+            sysname = "lgDG_15"
+        else:
+            dirname = lipid + "_2us"
+            sysname = lipid
+        fname = path + dirname + "/" + sysname + nougat_values + sysname + "."
         zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
         zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
         ztwo = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.npy")
@@ -371,18 +385,18 @@ def make_paper_writing_group_plot(saturation):
         tilde_tstd = np.load(fname + "avg_tilde_total_t.avg_over_theta.std.npy") / np.sqrt(10)
         epst0 = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.npy")
         epst0std = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.std.npy") / np.sqrt(10)
-        tilde_eps2 = np.load(fname + "avg_tilde_epsilon2.avg_over_theta.npy")
-        tilde_eps2std = np.load(fname + "avg_tilde_epsilon2.avg_over_theta.std.npy") / np.sqrt(10)
-        tilde_Hplus2 = np.load(fname + "avg_tilde_H_plus2.avg_over_theta.npy")
-        tilde_Hplus2std = np.load(fname + "avg_tilde_H_plus2.avg_over_theta.std.npy") / np.sqrt(10)
+        tilde_eps2 = np.load(fname + "avg_rms_tilde_epsilon2.avg_over_theta.npy")
+        tilde_eps2std = np.load(fname + "avg_rms_tilde_epsilon2.avg_over_theta.std.npy") / np.sqrt(10)
+        tilde_Hplus2 = np.load(fname + "avg_rms_tilde_H_plus2.avg_over_theta.npy")
+        tilde_Hplus2std = np.load(fname + "avg_rms_tilde_H_plus2.avg_over_theta.std.npy") / np.sqrt(10)
         corr_Hplus_eps = np.load(fname + "corr_eps_Hplus.avg_over_theta.npy")
         corr_Hplus_epsstd = np.load(fname + "corr_eps_Hplus.avg_over_theta.std.npy") / np.sqrt(10)
 
         # figure out what the x axis values should be
-        tcl_output = np.genfromtxt(path + lipid + "/" + lipid + "_polar_5_10_100_-1_1/tcl_output/" + lipid + '.zone.C1A.C1B.polar.height.dat',
+        tcl_output = np.genfromtxt(fname.split("npy/")[0] + "tcl_output/" + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
         Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
-        rmin = 2.75
+        rmin = 1.25
         xmin = dr / 2
         xmax = Nr * dr - xmin
         x_vals = np.linspace(xmin, xmax, Nr) / 10
@@ -402,26 +416,28 @@ def make_paper_writing_group_plot(saturation):
         ztwo = ztwo[i:] / 10
         zonestd = zonestd[i:] / 10
         ztwostd = ztwostd[i:] / 10
-        ax1.plot(x_vals, zone, color=colordict[lipid], label=lipid)
+        ax1.plot(x_vals, zone, color=colordict[lipid], label=mismatch_dict[lipid])
         ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
         ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
         ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
-        ax1.set_ylabel(r'$\langle \tilde h \rangle \; (\mathrm{nm})$', fontsize=10)
+        ax1.set_ylabel(r'$\langle \tilde z \rangle \; (\mathrm{nm})$', fontsize=10)
         ax1.tick_params(axis='both', which='major', labelsize=7)
         ax1.tick_params(axis='both', which='minor', labelsize=7)
-        ax1.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax1.yaxis.set_major_formatter('{x:5.3f}')
+        ax1.text(0.02, 0.95, "A", transform=ax1.transAxes, fontsize=10, va='top')
         # ax1.set_ylim(-5, 1.5)
 
         # tilde t plot
         tilde_t = tilde_t[i:]
         tilde_tstd = tilde_tstd[i:]
-        ax2.plot(x_vals, tilde_t, color=colordict[lipid], label=lipid)
+        ax2.plot(x_vals, tilde_t, color=colordict[lipid])
         ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[lipid])
         ax2.set_ylabel(legend_dict['avg_tilde_total_t'], fontsize=10)
         ax2.axhline(1, color="gray", linestyle="--")
         ax2.tick_params(axis='both', which='major', labelsize=7)
         ax2.tick_params(axis='both', which='minor', labelsize=7)
-        ax2.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax2.yaxis.set_major_formatter('{x:5.3f}')
+        ax2.text(0.02, 0.95, "B", transform=ax2.transAxes, fontsize=10, va='top')
         # ax2.set_ylim(.8, 1.25)
 
         # eps/t0 plot
@@ -432,7 +448,9 @@ def make_paper_writing_group_plot(saturation):
         ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'], fontsize=10)
         ax3.tick_params(axis='both', which='major', labelsize=7)
         ax3.tick_params(axis='both', which='minor', labelsize=7)
-        ax3.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax3.axhline(0, color="gray", linestyle="--")
+        ax3.yaxis.set_major_formatter('{x:5.3f}')
+        ax3.text(0.02, 0.95, "C", transform=ax3.transAxes, fontsize=10, va='top')
         # ax3.set_ylim(-.1, .015)
 
         # tilde epsilon squared plot
@@ -440,11 +458,12 @@ def make_paper_writing_group_plot(saturation):
         tilde_eps2std = tilde_eps2std[i:]
         ax4.plot(x_vals, tilde_eps2, color=colordict[lipid])
         ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[lipid])
-        ax4.set_ylabel(legend_dict['avg_tilde_epsilon2'], fontsize=10)
+        ax4.set_ylabel(legend_dict['avg_rms_tilde_epsilon2'], fontsize=10)
         ax4.axhline(1, color="gray", linestyle="--")
         ax4.tick_params(axis='both', which='major', labelsize=7)
         ax4.tick_params(axis='both', which='minor', labelsize=7)
-        ax4.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax4.yaxis.set_major_formatter('{x:5.3f}')
+        ax4.text(0.02, 0.95, "D", transform=ax4.transAxes, fontsize=10, va='top')
         # ax4.set_ylim(0, 18)
 
         # tilde Hplus squared plot
@@ -452,11 +471,12 @@ def make_paper_writing_group_plot(saturation):
         tilde_Hplus2std = tilde_Hplus2std[i:]
         ax5.plot(x_vals, tilde_Hplus2, color=colordict[lipid])
         ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[lipid])
-        ax5.set_ylabel(legend_dict['avg_tilde_H_plus2'], fontsize=10)
+        ax5.set_ylabel(legend_dict['avg_rms_tilde_H_plus2'], fontsize=10)
         ax5.axhline(1, color="gray", linestyle="--")
         ax5.tick_params(axis='both', which='major', labelsize=7)
         ax5.tick_params(axis='both', which='minor', labelsize=7)
-        ax5.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax5.yaxis.set_major_formatter('{x:5.3f}')
+        ax5.text(0.02, 0.95, "E", transform=ax5.transAxes, fontsize=10, va='top')
         # ax5.set_ylim(0, 22)
 
         # correlation between epsilon and Hplus plot
@@ -465,15 +485,23 @@ def make_paper_writing_group_plot(saturation):
         ax6.plot(x_vals, corr_Hplus_eps, color=colordict[lipid])
         ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[lipid])
         # ax6.set_ylim(-.25, 0)
+        ax6.axhline(0, color="gray", linestyle="--")
         ax6.set_ylabel(legend_dict['corr_eps_Hplus'], fontsize=10)
         ax6.tick_params(axis='both', which='major', labelsize=7)
         ax6.tick_params(axis='both', which='minor', labelsize=7)
-        ax6.yaxis.set_major_formatter('{x:0<5.1f}')
+        ax6.yaxis.set_major_formatter('{x:<5.3f}')
+        ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
     ax1.set_xlim(0, xmax / 10 + 1)
     ax5.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
     ax6.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
 
-    plt.savefig("/home/js2746/Desktop/comparisonfig_" + saturation + ".pdf", dpi=700)
+    lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
+    lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
+
+    fig.tight_layout()
+    plt.savefig("/home/js2746/Desktop/comparisonfig_" + saturation + ".pdf", bbox_inches='tight', dpi=700)
+    # plt.show()
     plt.clf()
     plt.close()
 
@@ -777,6 +805,17 @@ min_scale_dict = {
     "avg_rms_epsilon_over_t0": .95
 }
 
+mismatch_dict = {
+    "lgDT": "-6%",
+    "lgDL": "-44%",
+    "lgDP": "-59%",
+    "lgDB": "-68%",
+    "lgDX": "-74%",
+    "lgDY": "-38%",
+    "lgDO": "-54%",
+    "lgDG": "-64%"
+}
+
 legend_dict = {
     "avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
     "avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
@@ -785,13 +824,15 @@ legend_dict = {
     "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
+    "avg_rms_tilde_epsilon2": r'$ \sqrt{\langle \tilde \epsilon ^ 2 \rangle}$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-    "avg_tilde_H_plus2": r'$\langle( \tilde H ^ +) ^ 2 \rangle$',
+    "avg_tilde_H_plus2": r'$\langle (\tilde H^+)^ 2 \rangle$',
+    "avg_rms_tilde_H_plus2": r'$ \sqrt{\langle(\tilde H^+)^2\rangle}$',
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
-    "corr_mag_epst0_Hplus": r'$\langle | \epsilon| | H^+ | / t_0 \rangle - \langle |\epsilon| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Hplus": r'$ \langle \epsilon H^+ / t_0 \rangle - \langle \epsilon/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
+    "corr_mag_epst0_Hplus": r'$\langle \delta_{| \epsilon| | H^+ | / t_0} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_epst0_Hplus": r'$ \langle \delta_{\epsilon H^+ / t_0} \rangle; ( \mathrm{\dot A^{-1}} )$',
     "avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;\epsilon / t_0 \rangle$',
     "avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
@@ -804,11 +845,10 @@ legend_dict = {
     "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
     "avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$',
     "avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Kplus": r'$\langle \epsilon K^+ \rangle - \langle \epsilon \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_mag_eps_Hplus": r'$\langle | \epsilon | | H^+ | \rangle - \langle | \epsilon | \rangle \langle | H^+ | \rangle\; (\mathrm{\dot A^{-2}})$',
-    # "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-1}})$'
-    "corr_eps_Hplus": r'$\langle \delta_{\epsilon , H^+}\rangle \; (\mathrm{\dot A^{-1}})$'
+    "corr_epst0_Kplus": r'$\langle \delta_{\epsilon / t_0, K^+} \rangle\; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Kplus": r'$\langle \delta_{\epsilon, K^+} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_mag_eps_Hplus": r'$\langle \delta_{| \epsilon |, | H^+ |} \rangle$',
+    "corr_eps_Hplus": r'$\langle  \delta_{\epsilon, H^+} \rangle$'
 }
 
 allsys = ["DT", "DL", "DP", "DB", "DX", "DY", "DO", "DG"]
@@ -835,6 +875,6 @@ if __name__ == "__main__":
     # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
-    plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    # make_paper_writing_group_plot("unsat")
-    # make_paper_writing_group_plot("sat")
+    # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
+    make_paper_writing_group_plot("unsat")
+    make_paper_writing_group_plot("sat")
