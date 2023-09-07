@@ -253,7 +253,8 @@ def calc_eps_t0(path, quantity, sysname, species_name):
     elif species_name in ["lgDY", "lgDO", "lgDG"]:
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t") / 2.0
+    print(f't0 of {species_name} is {bulk_avg}')
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + "." + quantity)
@@ -344,10 +345,10 @@ y_label_dict = {
     "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
-    "avg_rms_tilde_epsilon2": r'$\langle \sqrt{\tilde \epsilon ^ 2} \rangle$',
+    "avg_rms_tilde_epsilon2": r'$ \sqrt{\langle \tilde \epsilon ^ 2 \rangle}$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-    "avg_tilde_H_plus2": r'$\langle \tilde H_+ ^ 2 \rangle$',
-    "avg_rms_tilde_H_plus2": r'$\langle \sqrt{\tilde H_+ ^ 2} \rangle$',
+    "avg_tilde_H_plus2": r'$\langle (\tilde H^+)^ 2 \rangle$',
+    "avg_rms_tilde_H_plus2": r'$ \sqrt{\langle(\tilde H^+)^2\rangle}$',
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
@@ -367,15 +368,15 @@ y_label_dict = {
     "avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "corr_epst0_Kplus": r'$\langle \delta_{\epsilon / t_0, K^+} \rangle\; (\mathrm{\dot A^{-2}})$',
     "corr_eps_Kplus": r'$\langle \delta_{\epsilon, K^+} \rangle; (\mathrm{\dot A^{-1}})$',
-    "corr_mag_eps_Hplus": r'$\langle \delta_{| \epsilon |, | H^+ |} \rangle; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Hplus": r'$\langle  \delta_{\epsilon, H^+} \rangle; (\mathrm{\dot A^{-2}})$'
+    "corr_mag_eps_Hplus": r'$\langle \delta_{| \epsilon |, | H^+ |} \rangle$',
+    "corr_eps_Hplus": r'$\langle  \delta_{\epsilon, H^+} \rangle$'
 }
 
 scale_dict = {
     "avg_K_plus_min": -.0001,
     "avg_K_plus_max": .0001,
     "avg_tilde_epsilon2_min": 0,
-    "avg_tilde_epsilon2_max": 5
+    "avg_tilde_epsilon2_max": 18
 }
 
 color_dict = {
