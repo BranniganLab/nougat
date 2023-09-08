@@ -391,6 +391,8 @@ def make_paper_writing_group_plot(saturation):
         tilde_Hplus2std = np.load(fname + "avg_rms_tilde_H_plus2.avg_over_theta.std.npy") / np.sqrt(10)
         corr_Hplus_eps = np.load(fname + "corr_eps_Hplus.avg_over_theta.npy")
         corr_Hplus_epsstd = np.load(fname + "corr_eps_Hplus.avg_over_theta.std.npy") / np.sqrt(10)
+        epsHplus = np.load(fname + "avg_epsilon_H.avg_over_theta.npy")
+        epsHplusstd = np.load(fname + "avg_epsilon_H.avg_over_theta.std.npy") / np.sqrt(10)
 
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(fname.split("npy/")[0] + "tcl_output/" + sysname + '.zone.C1A.C1B.polar.height.dat',
@@ -479,6 +481,7 @@ def make_paper_writing_group_plot(saturation):
         ax5.text(0.02, 0.95, "E", transform=ax5.transAxes, fontsize=10, va='top')
         # ax5.set_ylim(0, 22)
 
+        """
         # correlation between epsilon and Hplus plot
         corr_Hplus_eps = corr_Hplus_eps[i:]
         corr_Hplus_epsstd = corr_Hplus_epsstd[i:]
@@ -491,6 +494,20 @@ def make_paper_writing_group_plot(saturation):
         ax6.tick_params(axis='both', which='minor', labelsize=7)
         ax6.yaxis.set_major_formatter('{x:<5.3f}')
         ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
+        """
+        # epsilon times Hplus plot
+        epsHplus = epsHplus[i:]
+        epsHplusstd = epsHplusstd[i:]
+        ax6.plot(x_vals, epsHplus, color=colordict[lipid])
+        ax6.fill_between(x_vals, (epsHplus - epsHplusstd), (epsHplus + epsHplusstd), alpha=a, color=colordict[lipid])
+        # ax6.set_ylim(-.25, 0)
+        ax6.axhline(0, color="gray", linestyle="--")
+        ax6.set_ylabel(legend_dict['avg_epsilon_H'], fontsize=10)
+        ax6.tick_params(axis='both', which='major', labelsize=7)
+        ax6.tick_params(axis='both', which='minor', labelsize=7)
+        ax6.yaxis.set_major_formatter('{x:<5.3f}')
+        ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
+
     ax1.set_xlim(0, xmax / 10 + 1)
     ax5.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
     ax6.set_xlabel(r'$r\;(\mathrm{nm})$', fontsize=10)
