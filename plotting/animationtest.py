@@ -9,7 +9,7 @@ Created on Fri Aug  4 11:30:26 2023.
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from utils import bin_prep, gifformat
+from utils import bin_prep, gifformat, read_log, calc_avg_over_time
 import os
 from PIL import Image
 
@@ -38,8 +38,10 @@ def make_animated_heatmap(data, coordsys, dims, Vmax, Vmin, colorbar):
     plt.close()
 
 
-def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar):
-    Nrbins, dr, _, _, _, dim1vals, dim2vals = dims
+def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar, bin_info):
+    dim1vals, dim2vals = dims
+    Nrbins = bin_info["N1"]
+    dr = bin_info["d1"]
     fig = plt.figure(layout="constrained")
     fig.set_figwidth(15)
 
@@ -89,9 +91,49 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
     plt.close()
 
 
+def smooth(hmap, window_size):
+    """
+    Performs moving window average on 2nd axis (time).
+
+    Parameters
+    ----------
+    hmap : numpy ndarray
+        An array containing data that needs to be smoothed over time.
+    window_size : int
+        The window size for smoothing.
+
+    Returns
+    -------
+    numpy ndarray
+        The input array, smoothed over axis 2.
+
+    """
+    if window_size % 1 != 0:
+        print("give me integer")
+        return
+    elif window_size < 1:
+        print("give me positive integer")
+        return
+    elif window_size % 2 == 0:
+        print("give me odd integer")
+        return
+    elif window_size == 1:
+        print("window_size is set to 1, so no smoothing was done")
+        return hmap
+
+    middle = window_size // 2
+    hmap_copy = hmap.copy()
+    for frame in range(np.shape(hmap)[2] - 2 * middle):
+        hmap_copy[:, :, frame + middle] = calc_avg_over_time(hmap[:, :, frame: frame + window_size])
+
+    return hmap_copy
+
+
 os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1")
+bin_info_dict = read_log("lgPO", "polar")
 hmap_data = np.load("npy/lgPO.H_plus2.npy")
-dims = bin_prep("lgPO", "C1A.C1B", "polar", "OFF")
-make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, .0001, 0, True)
+hmap_data = smooth(hmap_data, 5)
+dims = bin_prep(bin_info_dict["bin_info"], "polar")
+make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, .0001, 0, True, bin_info_dict["bin_info"])
 # make_animated_heatmap(hmap_data, "cart", dims, .025, -.025, True)
 os.chdir("/home/js2746/PolarHeightBinning/plotting")
