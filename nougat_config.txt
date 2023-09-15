@@ -1,7 +1,7 @@
 
-qwrap_path = /home/js2746/PolarHeightBinning/utilities
-vecexpr_path = /home/js2746/PolarHeightBinning/utilities
-utilities_path = /home/js2746/PolarHeightBinning/utilities
+qwrap_path = ../utilities
+vecexpr_path = ../utilities
+utilities_path = ../utilities
 
 
 

@@ -1,0 +1,21 @@
+Info) VMD for LINUXAMD64, version 1.9.4a27 (February 8, 2019)
+Info) http://www.ks.uiuc.edu/Research/vmd/                         
+Info) Email questions and bug reports to vmd@ks.uiuc.edu           
+Info) Please include this reference in published work using VMD:   
+Info)    Humphrey, W., Dalke, A. and Schulten, K., `VMD - Visual   
+Info)    Molecular Dynamics', J. Molec. Graphics 1996, 14.1, 33-38.
+Info) -------------------------------------------------------------
+Info) Multithreading available, 16 CPUs detected.
+Info)   CPU features: SSE2 AVX AVX2 FMA AVX512F AVX512CD 
+Info) Free system memory: 25GB (80%)
+Info) Creating CUDA device pool and initializing hardware...
+Info) Detected 1 available CUDA accelerator:
+Info) [0] NVIDIA GeForce RTX 3060 28 SM_8.6 1.78 GHz, 12GB RAM, KTO, AE2, ZCP
+Info) Detected 1 available TachyonL/OptiX ray tracing accelerator
+Info)   Compiling 1 OptiX shaders on 1 target GPU...
+Info) Dynamically loaded 3 plugins in directory:
+Info) /opt/sw/packages/vmd/1.9.4/lib/plugins/LINUXAMD64/molfile
+after#0
+ERROR) Error opening file ./run_unit_tests.tcl
+ERROR) couldn't open "./run_unit_tests.tcl": no such file or directory
+vmd > vmd > 
