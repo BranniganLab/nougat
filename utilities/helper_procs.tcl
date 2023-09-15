@@ -742,7 +742,7 @@ proc calculateReferenceHeight {configDict frm} {
 # Results:
 #
 #       returns dictionary containing various pieces of information 
-#       for an atomselection
+#       for lipids in system
 
 proc getSelInfo {sel refHeight} {
     dict set sel_info xvals_list [$sel get x]

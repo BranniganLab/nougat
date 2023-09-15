@@ -755,3 +755,45 @@ test rotatingsys1 {
 } -result 119 -cleanup {
 mol delete top
 }
+
+test NullRefHeight {
+    Test: calculateReferenceHeight
+} -setup {
+} -body {
+    return [calculateReferenceHeight [read_config_file nougat_config.txt] 0]
+} -result "NULL" -cleanup {}
+
+test fullRefHeight {
+    Test: calculateReferenceHeight
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+} -body {
+    return [format "%.2f" [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]]
+} -result 60.10 -cleanup {
+}
+
+test checkingselectinfo {
+    Test: getSelInfo
+} -setup {
+    set sel [atomselect top "index 0"]
+    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set sel_info [getSelInfo $sel $height]
+} -body {
+    return [format "%.2f" [lindex [dict get $sel_info xvals_list] 0]]
+} -result 131.20 -cleanup {
+}
+
+test checkingselectinfo2 {
+    Test: getSelInfo
+} -setup {
+    cell_prep nougat_config2.txt 0
+    set seltext [format {name "C.*" and name ".*B" ".*A"}]
+    set sel [atomselect top $seltext]
+    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set sel_info [getSelInfo $sel $height]
+} -body {
+    return [format "%.2f" [lindex [dict get $sel_info tail_list] 0]]
+} -result 0.00 -cleanup {
+mol delete top
+}
