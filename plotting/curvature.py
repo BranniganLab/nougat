@@ -1,15 +1,12 @@
-import matplotlib.pyplot as plt
-import matplotlib
+"""Functions relating to calculation of curvature."""
 import numpy as np
-import warnings
-import glob
-import os
 from utils import *
-# from code_review2 import *
 
 
-def init_curvature_data(height, polar, dims):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+def init_curvature_data(height, polar, system_dict):
+    N1_bins = system_dict['bin_info']['N1']
+    N2_bins = system_dict['bin_info']['N2']
+    Nframes = system_dict['bin_info']['nframes']
 
     # create arrays for storing curvature data
     if polar is True:
@@ -44,8 +41,10 @@ def init_curvature_data(height, polar, dims):
     return curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 
-def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, scale_dict):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, scale_dict, system_dict):
+    N1_bins = system_dict['bin_info']['N1']
+    N2_bins = system_dict['bin_info']['N2']
+    dim1vals, dim2vals = dims
 
     leaflist = field_list.copy()
     leaflist.append("zplus")
@@ -53,17 +52,17 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
     for field in leaflist:
         field_height = np.load('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.npy')
 
-        curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, dims)
+        curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, system_dict)
 
         # if a bin is empty, you can't (nicely) measure the curvature of its neighbors
         nan_test, knan_test = empty_neighbor_test(curvature_inputs)
 
         # measure the laplacian and gaussian curvatures
         if polar is True:
-            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
+            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
             # curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(dims, curvature_inputs)
         elif polar is False:
-            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims)
+            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
 
         # unwrap along dim2 direction
         meancurvature = curvature_outputs[:, 1:N2_bins + 1, :]
@@ -81,21 +80,30 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
         avgkcurvature = calc_avg_over_time(kcurvature)
 
         # make plots!
-        plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys, scale_dict["colorbar"])
-        plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys, scale_dict["colorbar"])
+        plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys, scale_dict)
+        plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys, scale_dict)
 
         # save as files for debugging / analysis
         np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgcurvature.dat', avgcurvature, delimiter=',', fmt='%10.5f')
         np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgKcurvature.dat', avgkcurvature, delimiter=',', fmt='%10.5f')
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.meancurvature.npy', meancurvature)
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.gausscurvature.npy', kcurvature)
+        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature.npy', avgcurvature)
+        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature.npy', avgkcurvature)
         np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.normal_vectors.npy', normal_vectors)
+        if polar is True:
+            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature')
+            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature')
 
         print(sys_name + ' ' + bead + ' ' + field + " curvatures done!")
 
 
-def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
+    N1_bins = system_dict['bin_info']['N1']
+    d1 = system_dict['bin_info']['d1']
+    N2_bins = system_dict['bin_info']['N2']
+    d2 = system_dict['bin_info']['d2']
+    Nframes = system_dict['bin_info']['nframes']
 
     # mean curvature: Hxx + Hyy
     # gaussian curvature: HxxHyy - Hxy^2
@@ -165,8 +173,12 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
     return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 
-def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, dims):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
+    N1_bins = system_dict['bin_info']['N1']
+    d1 = system_dict['bin_info']['d1']
+    N2_bins = system_dict['bin_info']['N2']
+    d2 = system_dict['bin_info']['d2']
+    Nframes = system_dict['bin_info']['nframes']
 
     # mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
     # gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)

@@ -1,56 +1,43 @@
-import matplotlib.pyplot as plt
-import matplotlib
+"""Functions related to calculating density."""
 import numpy as np
-import warnings
-import glob
-import os
 from utils import *
 
 
 def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
+    N1_bins = names_dict['bin_info']['N1']
+    N2_bins = names_dict['bin_info']['N2']
+    Nframes = names_dict['bin_info']['nframes']
+    dim1vals, dim2vals = dims
     areas = np.load('npy/' + sys_name + "." + coordsys + ".areas.npy")
 
-    for species in names_dict['species_list']:
-        zone = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.zone.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
-        ztwo = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.ztwo.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
+    for species in names_dict['species']:
+        for leaflet in ["zone", "ztwo"]:
+            data = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
 
-        # create a new array that has each frame in a different array level
-        density_up = np.zeros((N1_bins, N2_bins, Nframes))
-        density_down = np.zeros((N1_bins, N2_bins, Nframes))
-        for frm in range(Nframes):
-            density_up[:, :, frm] = zone[frm * N1_bins:(frm + 1) * N1_bins, 2:]
-            density_down[:, :, frm] = ztwo[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+            # create a new array that has each frame in a different array level
+            density_array = np.zeros((N1_bins, N2_bins, Nframes))
 
-        avgouter = calc_avg_over_time(density_up)
-        avginner = calc_avg_over_time(density_down)
+            for frm in range(Nframes):
+                density_array[:, :, frm] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
 
-        """ this part deprecated now that log file implemented
-    found = False
-    with open('tcl_output/'+sys_name+'.'+coordsys+'.density.normfactor.dat', 'r') as normfile:
-      norms = normfile.readlines()
-      while found is False:
-        for line in norms:
-          vals = line.strip().split(' ')
-          if vals[0] == species:
-            normfactor = float(vals[1])
-            found = True
-    """
-        normfactor = names_dict["density_norm"]
+            avgdensity = calc_avg_over_time(density_array)
 
-        # normalize
-        avgouter = avgouter * normfactor / areas
-        avginner = avginner * normfactor / areas
+            # normalize
+            normfactor = names_dict["density_norm"][species]
+            avgdensity = avgdensity * normfactor / areas
 
-        # make plots!
-        plot_maker(dim1vals, dim2vals, avgouter, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict["colorbar"])
-        plot_maker(dim1vals, dim2vals, avginner, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict["colorbar"])
+            # make plots!
+            if leaflet == "zone":
+                plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
+            elif leaflet == "ztwo":
+                plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
 
-        # save as file for debugging / analysis
-        np.save('npy/' + sys_name + '.' + species + '.zone.' + coordsys + '.density.npy', density_up)
-        np.save('npy/' + sys_name + '.' + species + '.ztwo.' + coordsys + '.density.npy', density_down)
-        np.savetxt('dat/' + sys_name + '.' + species + '.zone.' + coordsys + '.avgdensity.dat', avgouter, delimiter=',', fmt='%10.5f')
-        np.savetxt('dat/' + sys_name + '.' + species + '.ztwo.' + coordsys + '.avgdensity.dat', avginner, delimiter=',', fmt='%10.5f')
+            # save as file for debugging / analysis
+            np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.npy', density_array)
+            np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.npy', avgdensity)
+            if polar is True:
+                avg_over_theta('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity')
+            np.savetxt('dat/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.dat', avgdensity, delimiter=',', fmt='%10.5f')
 
         print(sys_name + ' ' + species + " density done!")
 

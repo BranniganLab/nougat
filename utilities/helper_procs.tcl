@@ -655,6 +655,8 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         global M_PI
         dict set bindims d2 [expr 2*$M_PI/$N2]
         dict set bindims N2 $N2
+
+        polarAreaWarning [dict get $bindims d1] [dict get $bindims N1] $min [dict get $bindims d2]
     
     } elseif {$polar == 0} {
 
@@ -664,10 +666,45 @@ proc prepareBins {frameNumber polar min drN1 N2} {
         
         set bindims [updateDimensions $bindims 0]
 
-        dict set bindims dthetadeg "NULL"
+        dict set bindims dthetadeg "NULL" 
+    
     }
 
     return $bindims
+}
+
+# polarAreaWarning --
+#
+#       Prints a warning if the bin area gets too small
+#
+# Arguments:
+#       d1          {float}         length of r bin
+#       N1          {int}           number of r bins
+#       min         {float}         starting r value for bin 0
+#       d2          {float}         length of theta bin
+#
+# Result:
+#
+#       Printed warning; no return.
+
+proc polarAreaWarning {d1 N1 min d2} {
+    set baseArea [expr $d1*$d2]
+    set i 0
+    set area 0
+    while {($i < $N1) && ($area < 66.67)} {
+        set distToCenter [expr [expr $min + $i * $d1] + [expr $d1 / 2.0]]
+        set area [expr $baseArea * $distToCenter]
+        incr i 
+    }
+    if {$i==0} {
+        return
+    } elseif {$i == $N1} {
+        puts "WARNING: All bins are smaller than .67 nm^2"
+        puts "Consider resizing your bins, or take results with a grain of salt."
+    } else {
+        puts "WARNING: Bins closer than edge of radial ring [expr $i-2] are smaller than .67 nm^2"
+        puts "Consider resizing your bins, or take results with a grain of salt."
+    }
 }
 
 # calculateReferenceHeight (Previously: calc_ref_height)--
@@ -754,8 +791,16 @@ proc updateDimensions {bindims frame} {
     set x [molinfo top get a frame $frame]
     set y [molinfo top get b frame $frame]
 
-    dict set bindims d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
-    dict set bindims d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+    set d1 [expr $x/[expr [dict get $bindims N1]*1.0]]
+    set d2 [expr $y/[expr [dict get $bindims N2]*1.0]]
+
+    dict set bindims d1 $d1 
+    dict set bindims d2 $d2 
+
+    if {[expr $d1*$d2] < 6.7} {
+        puts "WARNING: bin size is less than .67 nm^2"
+        puts "consider resizing your bins to be bigger."
+    }
 
     return $bindims
 }
@@ -846,28 +891,28 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
 
 
 proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
-    if {$coordSystem == "CART"} {
-        set d1list []
-        set d2list []
-        for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
-            lappend d1list [expr $L1/$N1*1.0]
-            lappend d2list [expr $L2/$N2*1.0]
-        }
-        set avgd1 [vecexpr $d1list mean]
-        set avgd2 [vecexpr $d2list mean]
-    } else {
-        set avgd1 $d1 
-        set avgd2 $d2
-    }
-
     set arealist []
+    set d1list []
+    set d2list []
     for {set frm $start} {$frm <= $end} {set frm [expr $frm+$step]} {
         set L1 [molinfo top get a frame $frm]
         set L2 [molinfo top get b frame $frm]
         lappend arealist [expr $L1*$L2]
+        if {$coordSystem == "cart"} {
+            lappend d1list [expr $L1/$N1*1.0]
+            lappend d2list [expr $L2/$N2*1.0]
+        }
     }
     set avgarea [vecexpr $arealist mean]
-    
+    if {$coordSystem == "cart"} {
+        set avgd1 [vecexpr $d1list mean]
+        set avgd2 [vecexpr $d2list mean]
+    } elseif {$coordSystem == "polar"} {
+        set avgd1 $d1 
+        set avgd2 $d2
+    } else {
+        puts "Something went wrong with calc_bin_info"
+    }
 
     return [list $avgarea $avgd1 $avgd2]
 }
@@ -884,8 +929,12 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
 
     ;# output species names and bead names
     puts $logFile "#SYSTEM CONTENTS"
-    puts $logFile "$species" 
-    puts $logFile "$headNames"
+    puts $logFile "$species"
+    puts $logFile ""
+
+    # output headnames corresponding to each species
+    puts $logFile "#HEADNAMES"
+    puts $logFile "${species}:${headNames}"
     puts $logFile ""
 
     ;# output density normalization info
@@ -900,6 +949,7 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     puts $logFile "#BIN INFO"
     puts $logFile "$N1 $N2"
     puts $logFile "$avgd1 $avgd2"
+    puts $logFile ""
 
     close $logFile
 }
@@ -1259,7 +1309,7 @@ proc readPolar {polar} {
 
 # createAtomSelections (Previously: create_atomselections)--
 #
-#       creates dictionaies of atomselections  
+#       creates dictionaries of atomselections  
 #       
 # Arguments:
 #       quantity            {str}       quanities being evaluated, either height_density or tilt_order       
@@ -1273,14 +1323,14 @@ proc readPolar {polar} {
 # Necessary Revisions/Problems:
 #       Min is not fully implemented
 
-proc createAtomSelections {quantity configDictonary} {
+proc createAtomSelections {quantity configDictionary} {
     ;#atomselections setup as dict
     if {$quantity eq "height_density"} {
-        dict set selections z1z2 [atomselect top "resname [dict get $configDictonary species] and name [dict get $configDictonary full_tails]"]
-        dict set selections z0 [atomselect top "resname [dict get $configDictonary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
+        dict set selections z1z2 [atomselect top "resname [dict get $configDictionary species] and name [dict get $configDictionary full_tails]"]
+        dict set selections z0 [atomselect top "resname [dict get $configDictionary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
 
     } elseif {$quantity eq "tilt_order"} {
-        set lists [sortTailLength [dict get $configDictonary species] [dict get $configDictonary acyl_names]]
+        set lists [sortTailLength [dict get $configDictionary species] [dict get $configDictionary acyl_names]]
         set sellist [lindex $lists 0]
         set lenlist [lindex $lists 1]
         foreach sel $sellist len $lenlist {
@@ -1390,37 +1440,37 @@ proc get_theta {x y} {
     }
 
     ;# change to degrees
-    return [ConvertRadianToDegree $theta]
+    return [convertRadianToDegree $theta]
 }
 
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
-proc Protein_Position {name hnames tnames} {
-    ;# in order to use this, must have your TMD chains separated and saved as occupancy 3
-    set chain_names [list "A" "B" "C" "D" "E"]
+proc Protein_Position {name hnames chainNames folderName} {
+    ;# in order to use this, must have your TMD chains separated and saved as occupancy 1
 
     set lastframe [expr [molinfo top get numframes]-1]
 
-    set zone_sel [atomselect top "(name $hnames and chain U) and within 6 of name BB"]
+    set zone_sel [atomselect top "(name $hnames and user 1) and within 6 of name BB"]
     set zone_zvals [$zone_sel get z]
     set zone_Ht [vecexpr $zone_zvals mean]
     $zone_sel delete
 
-    set ztwo_sel [atomselect top "(name $hnames and chain L) and within 6 of name BB"]
+    set ztwo_sel [atomselect top "(name $hnames and user 2) and within 6 of name BB"]
     set ztwo_zvals [$ztwo_sel get z]
     set ztwo_Ht [vecexpr $ztwo_zvals mean]
     $ztwo_sel delete
 
-    set zmid_sel [atomselect top "name $tnames and within 6 of name BB"]
+    set zmid_sel [atomselect top "((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)) and within 6 of name BB"]
     set zmid_zvals [$zmid_sel get z]
     set zmid_Ht [vecexpr $zmid_zvals mean]
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
-    set fout [open "${name}_helcoords_${eqtxt}.dat" w]
+        puts "$eqtxt"
+        set fout [open "${folderName}/tcl_output/${name}_helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
-        foreach chnm $chain_names {
+        foreach chnm $chainNames {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
                 set com [measure center $sel weight mass]
                 $sel delete
@@ -1437,7 +1487,7 @@ proc Protein_Position {name hnames tnames} {
     }
 }
 
-proc Center_System {wrap_sel species inclusion_sel} {
+proc Center_System {wrap_sel inclusion_sel} {
     puts "${wrap_sel}"
     puts "Center_System now running"
 
