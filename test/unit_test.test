@@ -822,3 +822,35 @@ test Normalizationdensitytest {
 } -result "POPC:34.50" -cleanup {
 mol delete top
 }
+
+test Avgheightdensity {
+    Test: averageTiltAndOrderParameter
+} -setup {
+   mol new ../testing_materials/GNP_trajectory/em.gro
+   mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+   start_nougat PO nougat_config.txt 12 12 0 1 1 0
+   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.height.dat" r]
+   set filedata [read $fp]
+   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.totdensity.dat" r]
+   set filedata2 [read $fp2]
+   set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
+} -body {
+    return $match
+} -result {12.49 5.00} -cleanup {
+mol delete top
+}
+
+test Avgtiltord {
+    Test: averageTiltAndOrderParameter
+} -setup {
+   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail0.ztwo.cart.tilt.dat" r]
+   set filedata [read $fp]
+   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail1.zone.cart.order.dat" r]
+   set filedata2 [read $fp2]
+   set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
+} -body {
+    return $match
+} -result {0.104 0.317} -cleanup {
+mol delete top
+exec rm -r PO_cart_12_12_0_1_1
+}
