@@ -191,7 +191,7 @@ def generate_combinations(config_dict):
         print("I only made this to work with 3 dimensions - sorry!")
 
 
-def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
+def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name):
     """
     Calculate a more complicated quantity that requires custom work.
 
@@ -210,24 +210,26 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname):
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
-    if quantity == "avg_tilde_total_t":
-        exp_quantity = "total_t"
-    elif quantity == "avg_tilde_epsilon2":
-        exp_quantity = "epsilon2"
-    elif quantity == "avg_tilde_H_plus2":
-        exp_quantity = "H_plus2"
+    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
+    elif species_name in ["lgDY", "lgDO", "lgDG"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
+    if "_rms_" in quantity:
+        rms = True
     else:
-        print("I think you spelled something wrong")
+        rms = False
+    exp_quantity = quantity.split("tilde_")[1]
     exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", exp_quantity)
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", exp_quantity)
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
-    np.save(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".npy", normed_values)
-    avg_over_theta(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity)
-    return np.load(path + "/npy/" + sysname + ".avg_tilde_" + exp_quantity + ".avg_over_theta.npy")
+    if rms is True:
+        normed_values = np.sqrt(normed_values)
+    np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
+    avg_over_theta(path + "/npy/" + sysname + "." + quantity)
+    return np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
 
-def calc_eps_t0(path, quantity, sysname):
+def calc_eps_t0(path, quantity, sysname, species_name):
     """
     Calculate epsilon over t0.
 
@@ -246,13 +248,17 @@ def calc_eps_t0(path, quantity, sysname):
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + sysname + "/" + sysname + "_polar_5_10_0_-1_1"
+    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
+    elif species_name in ["lgDY", "lgDO", "lgDG"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, sysname, "polar", "total_t")
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t") / 2.0
+    print(f't0 of {species_name} is {bulk_avg}')
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
-    np.save(path + "/npy/" + sysname + ".avg_epsilon_over_t0.npy", normed_values)
-    avg_over_theta(path + "/npy/" + sysname + ".avg_epsilon_over_t0")
-    return np.load(path + "/npy/" + sysname + ".avg_epsilon_over_t0.avg_over_theta.npy")
+    np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
+    avg_over_theta(path + "/npy/" + sysname + "." + quantity)
+    return np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
 
 def plot_combination(paths, name, quantity, stds, rmin):
@@ -283,12 +289,16 @@ def plot_combination(paths, name, quantity, stds, rmin):
     for path in paths:
         # find the correct system name
         nougval = [i for i in path.split("/") if "polar" in i][0]
-        sysname = nougval.split("_")[0]
+        sysname = nougval.split("_polar")[0]
+        if "_" in sysname:
+            species_name = sysname.split("_")[0]
+        else:
+            species_name = sysname
 
-        if quantity in ["avg_height_both_leafs", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]:
-            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname)
+        if quantity in ["avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2", "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]:
+            y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name)
         elif quantity == "avg_epsilon_over_t0":
-            y_vals = calc_eps_t0(path, quantity, sysname)
+            y_vals = calc_eps_t0(path, quantity, sysname, species_name)
         else:
             y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
 
@@ -309,11 +319,13 @@ def plot_combination(paths, name, quantity, stds, rmin):
                     y_vals = y_vals[i:]
                     flag = False
 
-        axs.plot(x_vals, y_vals, color=color_dict[sysname], linestyle=style_dict[sysname])
+        axs.plot(x_vals, y_vals, color=color_dict[species_name], linestyle=style_dict[species_name])
+        if "tilde" in quantity:
+            axs.axhline(1, color="gray", linestyle="")
         if stds is True:
             std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
-            std_data = std_data[i:]
-            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.1, color=color_dict[sysname])
+            std_data = std_data[i:] / np.sqrt(10)
+            axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.4, color=color_dict[species_name])
         axs.set_xlim(0, xmax / 10)
         if quantity + "_min" in scale_dict:
             axs.set_ylim(scale_dict[quantity + "_min"], scale_dict[quantity + "_max"])
@@ -333,13 +345,15 @@ y_label_dict = {
     "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
+    "avg_rms_tilde_epsilon2": r'$ \sqrt{\langle \tilde \epsilon ^ 2 \rangle}$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
-    "avg_tilde_H_plus2": r'$\langle( \tilde H ^ +) ^ 2 \rangle$',
+    "avg_tilde_H_plus2": r'$\langle (\tilde H^+)^ 2 \rangle$',
+    "avg_rms_tilde_H_plus2": r'$ \sqrt{\langle(\tilde H^+)^2\rangle}$',
     "avg_tilde_total_t": r'$\langle \tilde t \rangle$',
     "avg_epsilon": r'$\langle \epsilon \rangle\; (\mathrm{\dot A})$',
     "avg_total_t": r'$\langle t \rangle\; (\mathrm{\dot A})$',
-    "corr_mag_epst0_Hplus": r'$\langle | \epsilon| | H^+ | / t_0 \rangle - \langle |\epsilon| / t_0 \rangle \langle |H^+ | \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Hplus": r'$ \langle \epsilon H^+ / t_0 \rangle - \langle \epsilon/ t_0 \rangle \langle H^+ \rangle \; ( \mathrm{\dot A^{-1}} )$',
+    "corr_mag_epst0_Hplus": r'$\langle \delta_{| \epsilon| | H^+ | / t_0} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_epst0_Hplus": r'$ \langle \delta_{\epsilon H^+ / t_0} \rangle; ( \mathrm{\dot A^{-1}} )$',
     "avg_rms_epsilon_over_t0": r'$\langle \mathrm{rms}\;\epsilon / t_0 \rangle$',
     "avg_K_plus": r'$\langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_K_minus": r'$\langle K^- \rangle\; (\mathrm{\dot A^{-2}})$',
@@ -352,15 +366,17 @@ y_label_dict = {
     "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
     "avg_z_minus2_over_t02": r'$\langle \left ( z^- / t_0 \right )^2 \rangle$',
     "avg_z_minus_H_minus_over_t0": r'$\langle z^- H^- / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_epst0_Kplus": r'$\langle \epsilon K^+ / t_0 \rangle - \langle \epsilon / t_0 \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Kplus": r'$\langle \epsilon K^+ \rangle - \langle \epsilon \rangle \langle K^+ \rangle\; (\mathrm{\dot A^{-1}})$',
-    "corr_mag_eps_Hplus": r'$\langle | \epsilon | | H^+ | \rangle - \langle | \epsilon | \rangle \langle | H^+ | \rangle\; (\mathrm{\dot A^{-2}})$',
-    "corr_eps_Hplus": r'$\langle  \epsilon H^+ \rangle - \langle  \epsilon  \rangle \langle  H^+  \rangle\; (\mathrm{\dot A^{-2}})$'
+    "corr_epst0_Kplus": r'$\langle \delta_{\epsilon / t_0, K^+} \rangle\; (\mathrm{\dot A^{-2}})$',
+    "corr_eps_Kplus": r'$\langle \delta_{\epsilon, K^+} \rangle; (\mathrm{\dot A^{-1}})$',
+    "corr_mag_eps_Hplus": r'$\langle \delta_{| \epsilon |, | H^+ |} \rangle$',
+    "corr_eps_Hplus": r'$\langle  \delta_{\epsilon, H^+} \rangle$'
 }
 
 scale_dict = {
     "avg_K_plus_min": -.0001,
-    "avg_K_plus_max": .0001
+    "avg_K_plus_max": .0001,
+    "avg_tilde_epsilon2_min": 0,
+    "avg_tilde_epsilon2_max": 18
 }
 
 color_dict = {
@@ -409,8 +425,11 @@ if __name__ == "__main__":
     quant_list1 = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                    "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                    "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0", "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2"]
+                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0",
+                   "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2",
+                   "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
+
     config_dict = read_config('comp_config.txt', ["length", "saturation"])
     cwd = os.getcwd()
     try:

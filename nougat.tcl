@@ -58,23 +58,16 @@ proc cell_prep {config_path leaf_check} {
     }
 
     ;# center, wrap, and align the system
-    Center_System [dict get $config_dict wrap_sel] $species [dict get $config_dict inclusion_sel]   
+    Center_System [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }
 
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
-    if {[dict exists $config_dict custom_occupancy]} {
+    if {[dict exists $config_dict custom_occupancy] && ([dict get $config_dict custom_occupancy] != "NULL")} {
         separate_chains top 15
         set_occupancy top 
-    }
-
-    ;# this will only work if your TMD helices are set to occupancy 1
-    ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
-    ;# this proc is currently broken, anyways (yes, there is a github issue)
-    if {[dict exists $config_dict custom_position]} {
-        Protein_Position $system $headnames $acyl_names ;# FIX ME
     }
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet
@@ -111,6 +104,11 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     ;# running cell_prep will do some important initial configuration based on user input. 
     set config_dict [cell_prep $config_path 0]
 
+    set coordsys [readPolar $polar]
+    set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
+    file mkdir $foldername
+    file copy -force $config_path $foldername
+
     ;# set nframes based on $end input
     set maxframes [molinfo top get numframes]
     if {$end == -1} {
@@ -133,11 +131,6 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     dict set config_dict nframes $nframes 
     dict set config_dict step $step 
     dict set config_dict min $min
-
-    set coordsys [readPolar $polar]
-    set foldername "${system}_${coordsys}_${dr_N1}_${N2}_${start}_${end}_${step}"
-    file mkdir $foldername
-    file copy -force $config_path $foldername
 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
@@ -225,6 +218,14 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
     ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height_density"} {
         outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
+        
+        ;# this will only work if your TMD helices are set to occupancy 1
+        ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all
+        ;# this proc is currently broken, anyways (yes, there is a github issue)
+        if {[dict exists $config_dict custom_position] && ([dict get $config_dict custom_position] != "NULL")} {
+            puts "[dict get $config_dict custom_position]"
+            Protein_Position $system [dict get $config_dict headnames] [dict get $config_dict custom_position] $foldername
+        }
     }
 
     ;# close all outfiles

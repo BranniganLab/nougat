@@ -291,9 +291,6 @@ def read_log(sys_name, coordsys):
         d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
 
-        # get nframes
-        nframes_line = lines.index("#FRAMES") + 1
-        system_dict['bin_info']['nframes'] = int(lines[nframes_line])
     return system_dict
 
 

@@ -54,3 +54,11 @@ headnames = C1A C1B
 #pore_sorter = NULL
 #pore_sorter = 7k3g
 pore_sorter = 5x29
+
+
+# custom protein position proc: create a list of distinguishable inclusion chain names
+# and make sure the inclusion is set to occupancy 1 before doing this!
+custom_position = NULL
+custom_occupancy = NULL
+#custom_position = A B C D E
+#custom_occupancy = ON

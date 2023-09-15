@@ -65,7 +65,6 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, dims, fiel
     d1 = system_dict['bin_info']['d1']
     N2_bins = system_dict['bin_info']['N2']
     d2 = system_dict['bin_info']['d2']
-    Nframes = system_dict['bin_info']['nframes']
     dim1vals, dim2vals = dims
 
     pdbname = sys_name + "." + coordsys + ".avgheight.pdb"
@@ -81,6 +80,8 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, dims, fiel
 
                 # import traj values
                 height_data = np.genfromtxt('tcl_output/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.dat', missing_values='nan', filling_values=np.nan)
+                Nframes = int(np.shape(height_data)[0] / N1_bins)
+                system_dict['bin_info']['nframes'] = Nframes
 
                 # create a new array that has each frame in a different array level
                 height = np.zeros((N1_bins, N2_bins, Nframes))
@@ -110,4 +111,4 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, dims, fiel
         # print last line of pdb file
         print('END', file=pdb)
 
-    return
+    return system_dict
