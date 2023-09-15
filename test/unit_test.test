@@ -797,3 +797,28 @@ test checkingselectinfo2 {
 } -result 0.00 -cleanup {
 mol delete top
 }
+
+test dummydictionary {
+    Test: createResidueDictionaries
+} -setup {
+    mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+    set sel [atomselect top "resname POPC"]
+    set resd [createResidueDictionaries {POPC} "C1A C1B" {POPC} {C1A C1B C1A C1B C1A C1B C1A C1B} {0 5 10} {0 5 10} 0 $sel] 
+} -body {
+    return [dict keys $resd]
+} -result {0,0,0} -cleanup {
+mol delete top
+}
+
+test Normalizationdensitytest {
+    Test: outputDensityNormInfo
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    set L1 [molinfo top get a]
+    set L2 [molinfo top get b]
+    set area [expr $L1*$L2]
+} -body {
+    return [format "%.10s" [lindex [outputDensityNormInfo 0 0 1 {POPC} "PO" {C1A C1B} 0 $area "PO"] 0]]
+} -result "POPC:34.50" -cleanup {
+mol delete top
+}
