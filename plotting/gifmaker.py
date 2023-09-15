@@ -131,10 +131,10 @@ def smooth(hmap, window_size):
     return hmap_copy
 
 
-os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_10_12_0_-1_1")
+os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1")
 bin_info_dict = read_log("lgPO", "polar")
 hmap_data = np.load("npy/lgPO.H_plus.npy")
-hmap_data = smooth(hmap_data, 5)
+hmap_data = smooth(hmap_data, 11)
 dims = bin_prep(bin_info_dict["bin_info"], "polar")
 make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, "auto", 0, True, bin_info_dict["bin_info"])
 # make_animated_heatmap(hmap_data, "cart", dims, .025, -.025, True)
