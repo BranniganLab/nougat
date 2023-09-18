@@ -160,9 +160,13 @@ proc concatenateList {inputList delimiter} {
 #       tailList  {List}  nested list of tails organized by lipid type (see analyzeTails) 
 #   
 # Results:
-#       Returns a list of lists containing the starting beads and 
+#       Returns a nested lists containing the starting beads and 
 #       ending beads for a given lipid's acyl chains.
-# E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
+#
+#       Ex.
+#       >>> findHeadsAndTails {{{C1A D2A C3A C4A} {C1B C2B C3B C4B}}}
+#       {{C1A C1B}} {{C4A C4B}}
+#       E.G. POPC start beads would be "C1A C1B" and end beads would be "C4A C4B"
 
 proc findHeadsAndTails { tailList } {
     for {set i 0} {$i < [llength $tailList]} {incr i} {
@@ -420,7 +424,6 @@ proc analyzeTails { species } {
             lappend taillist $tails
         }
     }
-
     ;# returns top/bottom beads in lipid tails for leaflet sorting
     set findHeadsAndTails [findHeadsAndTails $taillist]
 
@@ -446,7 +449,7 @@ proc analyzeTails { species } {
 #       tailList    {list}      nested list of tails organized by lipid type (see analyzeTails)
 #
 # Results:
-#       tail list in user3 is assigned values based on tail length
+#       tail list in user3 is assigned values based on number of tails in lipid
 
 proc numberTails { species tailList } {
     for {set lipidtype 0} {$lipidtype < [llength $species]} {incr lipidtype} {
@@ -739,7 +742,7 @@ proc calculateReferenceHeight {configDict frm} {
 # Results:
 #
 #       returns dictionary containing various pieces of information 
-#       for an atomselection
+#       for lipids in system
 
 proc getSelInfo {sel refHeight} {
     dict set sel_info xvals_list [$sel get x]
@@ -998,7 +1001,7 @@ proc outputDensityNormInfo {start end step species system headNames coordSystem 
 #
 # Arguments:
 #       species         {list}      List of lipid types in system
-#       acylNames       {list}      List of lost of all bead names of all tails in the system 
+#       acylNames       {list}      List of list of all bead names of all tails in the system 
 #
 # Results:
 #   
