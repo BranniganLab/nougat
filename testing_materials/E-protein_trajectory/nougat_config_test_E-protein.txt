@@ -1,7 +1,7 @@
 
-qwrap_path = /home/jje63/Documents/Github_Repos/nougat/utilities
-vecexpr_path = /home/jje63/Documents/Github_Repos/nougat/utilities
-utilities_path = /home/jje63/Documents/Github_Repos/nougat/utilities
+qwrap_path = ../../utilities
+vecexpr_path = ../../utilities
+utilities_path = ../../utilities
 
 
 
