@@ -1,0 +1,856 @@
+package require tcltest
+namespace import ::tcltest::*
+
+configure -verbose pbt
+# Software under test
+
+source ../utilities/helper_procs.tcl
+source ../nougat.tcl
+load ../utilities/vecexpr.so
+
+ test tailtiltA {
+    Test: fitVecsToSel
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643} {-0.024989655264393507 -0.008996903827067389 -0.9996472242002643}} -cleanup {
+   mol delete top
+}
+
+test tailtiltB {
+    Test: fitVecsToSel
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253} {0.01699727942753822 -0.008331713045145085 -0.9998208214724253}} -cleanup {
+   mol delete top
+}
+
+test tailtilt90 {
+    Test: fitVecsToSel
+} -setup {
+   mol new ../testing_materials/lipid_membrane/90degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434} {0.016996254027375264 -0.9998208399974864 0.008331581828062434}} -cleanup {
+   mol delete top
+}
+
+test tailtilt30 {
+    Test: fitVecsToSel
+} -setup {
+   mol new ../testing_materials/lipid_membrane/30degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251} {0.01700683127071718 -0.5071939901785861 -0.8616641016178251}} -cleanup {
+   mol delete top
+}
+
+test tailtilt180 {
+    Test: fitVecsToSel
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+} -body {
+    return [fitVecsToSel 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]]
+} -result {{0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383} {0.016997296684880182 0.008331912205216686 0.999820819519383}} -cleanup {
+   mol delete top
+}
+
+test fittailszshift {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get z] 1]
+} -result -6.0 -cleanup {
+   mol delete top
+}
+
+test fittailssinglepoint {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechainstacked.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get z] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailsdoublelength {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechaindoublelength.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get z] 1]
+} -result -12.0 -cleanup {
+   mol delete top
+}
+
+test fittailscheckx {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get x] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailschecky {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/singlechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get y] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test fittailssquarez {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/squarechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get z] 1]
+} -result 20.0 -cleanup {
+   mol delete top
+}
+
+test fittailssquarex {
+    Test: fitTailVectors
+} -setup {
+   mol new ../testing_materials/Single_chain/squarechain.gro
+   set sel1 [atomselect top "all"]
+} -body {
+    return [fitTailVectors 4 [$sel1 get x] 1]
+} -result 0.0 -cleanup {
+   mol delete top
+}
+
+test joinvcatlist {
+    Test: concatenateList
+} -setup {
+   set data {1 2 3 4 5}
+   set test [join $data " , "] 
+    set test2 [concatenateList $data ,]
+    if {$test == $test2} {
+    set l 0
+    } else {
+    set l 1
+    }
+} -body {
+    return $l
+} -result 0 -cleanup {}
+
+test catlistorfunc {
+    Test: concatenateList
+} -setup {
+   set data {1 2 3 4 5}
+} -body {
+    return [concatenateList $data "or"]
+} -result "(1) or (2) or (3) or (4) or (5)" -cleanup {}
+
+test basicpopctail {
+    Test: findHeadsAndTails
+} -setup {
+   set data {{{C1A D2A C3A C4A} {C1B C2B C3B C4B}}}
+} -body {
+    return [findHeadsAndTails $data]
+} -result {{{C1A C1B}} {{C4A C4B}}} -cleanup {}
+
+test popctailmiddleremoved {
+    Test: findHeadsAndTails
+} -setup {
+   set data {{{C1A C4A} {C1B C4B}}}
+} -body {
+    return [findHeadsAndTails $data]
+} -result {{{C1A C1B}} {{C4A C4B}}} -cleanup {}
+
+test basicleaflettop {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
+   set sel [atomselect top "resname POPC and z > 100"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 1.0 -cleanup {
+   mol delete top
+}
+
+test basicleafletbottom {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL 
+   set sel [atomselect top "resname POPC and z < 100"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 2.0 -cleanup {
+   mol delete top
+}
+
+test Singlelipidturned {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/fullmemsingletilt.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 8 NULL 
+   set sel [atomselect top "resname POPC and resid 1000"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 3.0 -cleanup {
+   mol delete top
+}
+
+test Singlelipidturnedminwindow {
+    Test: assignLeaflet
+} -setup {
+   mol new ../testing_materials/lipid_membrane/fullmemsingletilt.gro
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 2 NULL 
+   set sel [atomselect top "resname POPC and resid 1000"]
+   set num [lsort -unique [$sel get user]]
+} -body {
+    return $num
+} -result 2.0 -cleanup {
+   mol delete top
+}
+
+test 90Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 1.5708]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 90 -cleanup {}
+
+test 180Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 3.14159]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 180 -cleanup {}
+
+test 640Degrees {
+    Test: convertRadianToDegree
+} -setup {
+   set num [convertRadianToDegree 11.1701]
+   set rnum [expr round($num)]
+} -body {
+    return $rnum
+} -result 640 -cleanup {}
+
+test Onelength {
+    Test: calculateLsqNormFactor
+} -setup {
+   set Normlist [calculateLsqNormFactor 1]
+} -body {
+    return $Normlist
+} -result {0.0} -cleanup {}
+
+test fourlength {
+    Test: calculateLsqNormFactor
+} -setup {
+   set Normlist [calculateLsqNormFactor 4]
+} -body {
+    return $Normlist
+} -result {-1.5 -0.5 0.5 1.5} -cleanup {}
+
+test fivelength {
+    Test: calculateLsqNormFactor
+} -setup {
+   set Normlist [calculateLsqNormFactor 5]
+} -body {
+    return $Normlist
+} -result {-2.0 -1.0 0.0 1.0 2.0} -cleanup {}
+
+test longlength {
+    Test: calculateLsqNormFactor
+} -setup {
+   set Normlist [calculateLsqNormFactor 20]
+} -body {
+    return $Normlist
+} -result {-9.5 -8.5 -7.5 -6.5 -5.5 -4.5 -3.5 -2.5 -1.5 -0.5 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5} -cleanup {}
+
+test polar {
+    Test: readPolar
+} -setup {
+   set coord [readPolar 1]
+} -body {
+    return $coord
+} -result "polar" -cleanup {}
+
+test cartesien {
+    Test: readPolar
+} -setup {
+   set coord [readPolar 0]
+} -body {
+    return $coord
+} -result "cart" -cleanup {}
+
+test sinlgeliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.924 -cleanup {
+   mol delete top
+}
+
+test sinlgeliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/singlelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.942 -cleanup {
+   mol delete top
+}
+
+test rotatedsinlgeliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.924 -cleanup {
+   mol delete top
+}
+
+test rotatedsinlgeliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] 0 0]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.942 -cleanup {
+   mol delete top
+}
+
+test fullmembraneliptailAOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set seltext [format {name "C.*" "D.*" and name ".*A"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.930 -cleanup {
+   mol delete top
+}
+
+test fullmembraneliptailBOrd {
+    Test: calculateOrderParameters
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set seltext [format {name "C.*" and name ".*B"}]
+   set sel1 [atomselect top "$seltext"]
+   set ordparams [lindex [calculateOrderParameters 4 [$sel1 get x] [$sel1 get y] [$sel1 get z]] end end]
+} -body {
+    return [format "%.3f" $ordparams]
+} -result 0.958 -cleanup {
+   mol delete top
+}
+
+test cosinevec1 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {1 2 2} {0 0 0}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.667 -cleanup {}
+
+test cosinevec2 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {7 8 9} {0 0 0}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.646 -cleanup {}
+
+test cosinevec3 {
+    Test: getCosineTheta
+} -setup {
+   set costheta [getCosineTheta {20 5 3} {2 2 2}]
+} -body {
+    return [format "%.3f" $costheta]
+} -result 0.055 -cleanup {}
+
+test printingBinInfo1 {
+    Test: printBinInfo
+} -setup {
+   exec mkdir testfiles
+   cd testfiles
+   set f1 [open "testfile.dat" w+] 
+   printBinInfo $f1 10 10 10
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
+} -body {
+    return [lindex $lines 0]
+} -result {110.00  120.00  } -cleanup { exec rm testfile.dat }
+
+test printingBinInfo2 {
+    Test: printBinInfo
+} -setup {
+   set f1 [open "testfile.dat" w+] 
+   printBinInfo $f1 10 10 10
+   printBinInfo $f1 20 20 20
+   printBinInfo $f1 30 30 30
+   printBinInfo $f1 40 40 40
+   printBinInfo $f1 50 50 50
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
+} -body {
+    return [lindex $lines 0]
+} -result {110.00  120.00  420.00  440.00  930.00  960.00  1640.00  1680.00  2550.00  2600.00  } -cleanup { exec rm testfile.dat }
+
+test printingvalue1 {
+    Test: printValue
+} -setup {
+   set f1 [open "testfile.dat" w+] 
+   printValue $f1 10 0
+   close $f1
+   set f1 [open "testfile.dat" r] 
+   set lines [split [read $f1] \n]
+} -body {
+    return [lindex $lines 0]
+} -result { 10} -cleanup { 
+exec rm testfile.dat 
+cd ../
+exec rm -rf testfiles 
+}
+
+test DPPCDOPCMemtailanalyzer {
+    Test: analyzeTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/DOPC_DPPCMem.gro
+   set sel [atomselect top "resname DPPC DOPC"]
+   set names [$sel get resname]
+   set pairnames [lsort -unique $names]
+} -body {
+    return [lindex [analyzeTails $pairnames] 0]
+} -result {{{C1A D2A C3A C4A} {C1B D2B C3B C4B}} {{C1A C2A C3A C4A} {C1B C2B C3B C4B}}} -cleanup {
+   mol delete top
+}
+
+test MixedMemtailanalyzer {
+    Test: analyzeTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+} -body {
+    return [lindex [analyzeTails {DLPC DOPC DPPC DTPC DYPC}] 0]
+} -result {{{C1A C2A C3A} {C1B C2B C3B}} {{C1A D2A C3A C4A} {C1B D2B C3B C4B}} {{C1A C2A C3A C4A} {C1B C2B C3B C4B}} {{C1A C2A} {C1B C2B}} {{C1A D2A C3A} {C1B D2B C3B}}} -cleanup {
+   mol delete top
+}
+
+test DPPCDOPCMemnumbertails {
+    Test: numberTails
+} -setup {
+   mol new ../testing_materials/lipid_membrane/DOPC_DPPCMem.gro
+   numberTails {DOPC DPPC} [lindex [analyzeTails {DOPC DPPC}] 0]
+   set sel [atomselect top "resname DPPC DOPC and not name GL1 GL2 NC3 PO4"]
+   set fieldvals [lsort -unique [$sel get user3]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {1.0 2.0} -cleanup {
+    mol delete top
+}
+
+test Multitailnumbertails {
+    Test: numberTails
+} -setup {
+   mol new ../testing_materials/Multi_Chain/Cardiolipin.gro
+   numberTails {CDL0} [lindex [analyzeTails {CDL0}] 0]
+   set sel [atomselect top "resname CDL0 and not name GL1 GL2 GL3 GL4 GL5 PO41 PO42"]
+   set fieldvals [lsort -unique [$sel get user3]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {1.0 2.0 3.0 4.0} -cleanup {
+    mol delete top
+}
+
+test POPCbins {
+    Test: assignBins
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set sel [atomselect top "resname POPC"]
+   set xval [$sel get x]
+   set yval [$sel get y]
+   set fieldvals [lsort -unique [lindex [assignBins $xval $yval 10 10 12 0 0] 0]] 
+   $sel delete
+} -body {
+    return $fieldvals
+} -result {0.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0} -cleanup {
+}
+
+test POPCmeasureboxsizeX {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 x]]
+} -result {199} -cleanup {}
+
+test POPCmeasureboxsizeY {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 y]]
+} -result {198} -cleanup {}
+
+test POPCmeasureboxsizeZ {
+    Test: measureBoxSize
+} -setup {
+} -body {
+    return [format "%.0f" [measureBoxSize 0 z]]
+} -result {198} -cleanup {
+    mol delete top
+}
+
+test GNPmeasureboxsize {
+    Test: measureBoxSize
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    set frame20 [format "%.0f" [measureBoxSize 20 x]]
+    set frame25 [format "%.0f" [measureBoxSize 25 y]]
+    set frame28 [format "%.0f" [measureBoxSize 28 z]]
+} -body {
+    return "$frame20 $frame25 $frame28"
+} -result {175 175 116} -cleanup {
+    mol delete top
+}
+
+test POPCtailength {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+} -body {
+    return [sortTailLength {POPC} [lindex [analyzeTails {POPC}] 0]]
+} -result {{{resname POPC and name C1A C1B C2B C3A C3B C4A C4B D2A}} 4} -cleanup {
+mol delete top
+}
+
+test Mixmemtailength {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+   set tailnames [sortTailLength {DLPC DOPC DPPC DTPC DYPC} [lindex [analyzeTails {DLPC DOPC DPPC DTPC DYPC}] 0]]
+} -body {
+    return [lindex $tailnames 1]
+} -result {2 3 4} -cleanup {
+mol delete top
+}
+
+test Mixmemjoiningnames {
+    Test: sortTailLength
+} -setup {
+   mol new ../testing_materials/lipid_membrane/MixedMem.gro
+   set headname {C1A C1B} 
+   set names [concatenateNames $headname]
+   set names2 [join $headname "."]
+   if {$names == $names2} {
+   set p 1
+   } else {set p 0}
+} -body {
+    return $p
+} -result 1 -cleanup {
+}
+
+test Mixmemjoiningnames {
+    Test: sortTailLength
+} -setup {
+   set headname {C1A C4B} 
+   set names [concatenateNames $headname]
+   set names2 [join $headname "."]
+   if {$names == $names2} {
+   set p 1
+   } else {set p 0}
+} -body {
+    return $p
+} -result 1 -cleanup {
+mol delete top
+}
+
+test checkallfilescreated {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t1"]
+   set myfiles [ glob -nocomplain t1/tcl_output/PO.* ]
+   set filelength [llength $myfiles]
+} -body {
+    return $filelength
+} -result 9 -cleanup {
+mol delete top
+exec rm -r t1
+}
+
+test checkfilename1 {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t2"]
+   set myfiles [ glob -nocomplain t2/tcl_output/PO.* ]
+   set match [string match -nocase *polar* [lindex $myfiles 0]]
+} -body {
+    return $match
+} -result 1 -cleanup {
+mol delete top
+exec rm -r t2
+}
+
+test checkfilename2 {
+    Test: createOutfiles
+} -setup {
+   mol new ../testing_materials/lipid_membrane/insane2.gro
+   set config_dict [cell_prep "nougat_config.txt" 1] 
+   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 0] "t3"]
+   set myfiles [ glob -nocomplain t3/tcl_output/PO.* ]
+   set match [string match -nocase *polar* [lindex $myfiles 0]]
+} -body {
+    return $match
+} -result 0 -cleanup {
+mol delete top
+exec rm -r t3
+}
+
+test GNPprepcarttest {
+    Test: prepareBins
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    set bindims [prepareBins 0 0 0 10 10]
+} -body {
+    return [lindex $bindims 5]
+} -result 15.0 -cleanup {
+}
+
+test GNPprepcartNULLtest {
+    Test: prepareBins
+} -setup {
+} -body {
+    return [lindex $bindims 9]
+} -result "NULL" -cleanup {
+}
+
+test GNPprepcartpolartest {
+    Test: prepareBins
+} -setup {
+    set bindims [prepareBins 0 1 0 10 10]
+} -body {
+    return [lindex $bindims 5]
+} -result 36.0 -cleanup {
+}
+
+test GNPbinupdatetest {
+    Test: updateDimensions
+} -setup {
+    set bindims [prepareBins 0 0 0 10 10]
+    set bindims [updateDimensions $bindims 20]
+} -body {
+    return [format "%.2f" [lindex $bindims 5]]
+} -result 14.85 -cleanup {
+}
+
+test GNPbinupdatetest2 {
+    Test: updateDimensions
+} -setup {
+    set bindims [prepareBins 30 0 0 10 10]
+    set bindims [updateDimensions $bindims 51]
+} -body {
+    return [format "%.2f" [lindex $bindims 5]]
+} -result 14.76 -cleanup {
+mol delete top
+}
+
+test Betavaluetest {
+    Test: setBetaValues
+} -setup {
+    mol new ../testing_materials/lipid_membrane/insane2.gro
+    set waterlen [llength [[atomselect top "resname W"] get resid]]
+    setBetaValues NULL
+    set betaval [llength [[atomselect top "beta 16224 to 66446"] get beta]]
+    if {$waterlen == $betaval} {
+        set p 0
+    } else {
+        set p 1
+    }
+} -body {
+    return $p
+} -result 0 -cleanup {
+mol delete top
+}
+
+test createatomselects {
+    Test: createAtomSelections
+} -setup {
+    mol new ../testing_materials/lipid_membrane/insane2.gro
+    set selly [createAtomSelections "height_density" $config_dict]
+    set config_dict [cell_prep "nougat_config.txt" 1]
+    set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
+    set lipnum [llength [$sel get resid]]
+    set cselnum [llength [[dict get $selly z1z2] get resid]]
+    if {$lipnum == $cselnum} {
+        set p 0
+    } else {
+        set p 1
+    }
+} -body {
+    return $p
+} -result 0 -cleanup {
+mol delete top
+}
+
+test rotatingsys1 {
+    Test:rotateSystem
+} -setup {
+    mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+    rotateSystem x 180 0 1
+    set sel [atomselect top "name NC3"]
+} -body {
+    return [format "%.0f" [$sel get z]]
+} -result 119 -cleanup {
+mol delete top
+}
+
+test NullRefHeight {
+    Test: calculateReferenceHeight
+} -setup {
+} -body {
+    return [calculateReferenceHeight [read_config_file nougat_config.txt] 0]
+} -result "NULL" -cleanup {}
+
+test fullRefHeight {
+    Test: calculateReferenceHeight
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+} -body {
+    return [format "%.2f" [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]]
+} -result 60.10 -cleanup {
+}
+
+test checkingselectinfo {
+    Test: getSelInfo
+} -setup {
+    set sel [atomselect top "index 0"]
+    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set sel_info [getSelInfo $sel $height]
+} -body {
+    return [format "%.2f" [lindex [dict get $sel_info xvals_list] 0]]
+} -result 131.20 -cleanup {
+}
+
+test checkingselectinfo2 {
+    Test: getSelInfo
+} -setup {
+    cell_prep nougat_config2.txt 0
+    set seltext [format {name "C.*" and name ".*B" ".*A"}]
+    set sel [atomselect top $seltext]
+    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set sel_info [getSelInfo $sel $height]
+} -body {
+    return [format "%.2f" [lindex [dict get $sel_info tail_list] 0]]
+} -result 0.00 -cleanup {
+mol delete top
+}
+
+test dummydictionary {
+    Test: createResidueDictionaries
+} -setup {
+    mol new ../testing_materials/lipid_membrane/180degreelipid.gro
+    set sel [atomselect top "resname POPC"]
+    set resd [createResidueDictionaries {POPC} "C1A C1B" {POPC} {C1A C1B C1A C1B C1A C1B C1A C1B} {0 5 10} {0 5 10} 0 $sel] 
+} -body {
+    return [dict keys $resd]
+} -result {0,0,0} -cleanup {
+mol delete top
+}
+
+test Normalizationdensitytest {
+    Test: outputDensityNormInfo
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    set L1 [molinfo top get a]
+    set L2 [molinfo top get b]
+    set area [expr $L1*$L2]
+} -body {
+    return [format "%.10s" [lindex [outputDensityNormInfo 0 0 1 {POPC} "PO" {C1A C1B} 0 $area "PO"] 0]]
+} -result "POPC:34.50" -cleanup {
+mol delete top
+}
+
+test Avgheightdensity {
+    Test: averageTiltAndOrderParameter
+} -setup {
+   mol new ../testing_materials/GNP_trajectory/em.gro
+   mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+   start_nougat PO nougat_config.txt 12 12 0 1 1 0
+   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.height.dat" r]
+   set filedata [read $fp]
+   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.totdensity.dat" r]
+   set filedata2 [read $fp2]
+   set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
+} -body {
+    return $match
+} -result {12.49 5.00} -cleanup {
+mol delete top
+}
+
+test Avgtiltord {
+    Test: averageTiltAndOrderParameter
+} -setup {
+   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail0.ztwo.cart.tilt.dat" r]
+   set filedata [read $fp]
+   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail1.zone.cart.order.dat" r]
+   set filedata2 [read $fp2]
+   set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
+} -body {
+    return $match
+} -result {0.104 0.317} -cleanup {
+mol delete top
+exec rm -r PO_cart_12_12_0_1_1
+}

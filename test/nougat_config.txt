@@ -8,8 +8,8 @@ utilities_path = ../utilities
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
 
-inclusion_sel = name BB SC1 to SC4
-#inclusion_sel = NULL
+#inclusion_sel = name BB SC1 to SC4
+inclusion_sel = NULL
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
@@ -38,8 +38,8 @@ wrap_sel = resname $species
 # replace the text with "NULL"
 
 
-reference_point = name BB and resid 15
-#reference_point = NULL
+#reference_point = name BB and resid 15
+reference_point = NULL
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
@@ -51,14 +51,6 @@ headnames = C1A C1B
 # custom pore sorter: you must edit the pore_sorter proc to make it work for your protein/inclusion
 # before turning this on!
 
-#pore_sorter = NULL
+pore_sorter = NULL
 #pore_sorter = 7k3g
-pore_sorter = 5x29
-
-
-# custom protein position proc: create a list of distinguishable inclusion chain names
-# and make sure the inclusion is set to occupancy 1 before doing this!
-custom_position = NULL
-custom_occupancy = NULL
-#custom_position = A B C D E
-#custom_occupancy = ON
+#pore_sorter = 5x29
