@@ -174,6 +174,32 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
 
 
 def take_finite_differences(curvature_inputs, system_dict):
+    """
+    Take 1st and 2nd order finite differences of height field.
+
+    Parameters
+    ----------
+    curvature_inputs : numpy ndarray
+        height field h(a,b,t) where a and b can be x/y or r/theta, depending on\
+            coordinate system.
+    system_dict : dict
+        dictionary with key 'bin_info' that holds number and size of bins in\
+            each direction.
+
+    Returns
+    -------
+    h_1 : numpy ndarray
+        first order difference along dimension 1 (x/r).
+    h_2 : numpy ndarray
+        first order difference along dimension 2 (y/theta).
+    h_11 : numpy ndarray
+        second order difference along dimension 1 (x/r).
+    h_22 : numpy ndarray
+        second order difference along dimension 2 (y/theta).
+    h_12 : numpy ndarray
+        second order cross difference along dimensions 1 and 2.
+
+    """
     N1_bins = system_dict['bin_info']['N1']
     d1 = system_dict['bin_info']['d1']
     N2_bins = system_dict['bin_info']['N2']
