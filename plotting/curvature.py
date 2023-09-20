@@ -173,6 +173,25 @@ def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, 
     return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
 
+def take_finite_differences(curvature_inputs, system_dict):
+    N1_bins = system_dict['bin_info']['N1']
+    d1 = system_dict['bin_info']['d1']
+    N2_bins = system_dict['bin_info']['N2']
+    d2 = system_dict['bin_info']['d2']
+
+    # 1st order finite difference: (left - right) / (2*distance)
+    # 2nd order finite difference: (left + right - 2*center) / distance^2
+    # 2nd order cross derivative: (left-up + right-down - left-down - right-up) / (4*d1*d2)
+
+    h_1 = (curvature_inputs[0:N1_bins - 2, 1:N2_bins - 1, :] - curvature_inputs[2:N1_bins, 1:N2_bins - 1, :]) / (2 * d1)
+    h_11 = (curvature_inputs[0:N1_bins - 2, 1:N2_bins - 1, :] + curvature_inputs[2:N1_bins, 1:N2_bins - 1, :] - 2 * curvature_inputs[1:N1_bins - 1, 1:N2_bins - 1]) / d1**2
+    h_2 = (curvature_inputs[1:N1_bins - 1, 0:N2_bins - 2, :] - curvature_inputs[1:N1_bins - 1, 2:N2_bins, :]) / (2 * d2)
+    h_22 = (curvature_inputs[1:N1_bins - 1, 0:N2_bins - 2, :] + curvature_inputs[1:N1_bins - 1, 2:N2_bins, :] - 2 * curvature_inputs[1:N1_bins - 1, 1:N2_bins - 1, :]) / d2**2
+    h_12 = (curvature_inputs[0:N1_bins - 2, 0:N2_bins - 2, :] + curvature_inputs[2:N1_bins, 2:N2_bins, :] - curvature_inputs[0:N1_bins - 2, 2:N2_bins, :] - curvature_inputs[2:N1_bins, 0:N2_bins - 2, :]) / (4 * d1 * d2)
+
+    return h_1, h_2, h_11, h_22, h_12
+
+
 def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
     N1_bins = system_dict['bin_info']['N1']
     d1 = system_dict['bin_info']['d1']
@@ -285,25 +304,25 @@ def empty_neighbor_test(curvature_inputs):
     for frm in range(dim3):
         for row in range(1, dim1 - 1):
             for col in range(1, dim2 - 1):
-                if nan_test2[row - 1, col, frm] == True:
+                if nan_test2[row - 1, col, frm] is True:
                     nan_test[row, col, frm] = True
                     knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col, frm] == True:
+                elif nan_test2[row + 1, col, frm] is True:
                     nan_test[row, col, frm] = True
                     knan_test[row, col, frm] = True
-                elif nan_test2[row, col - 1, frm] == True:
+                elif nan_test2[row, col - 1, frm] is True:
                     nan_test[row, col, frm] = True
                     knan_test[row, col, frm] = True
-                elif nan_test2[row, col + 1, frm] == True:
+                elif nan_test2[row, col + 1, frm] is True:
                     nan_test[row, col, frm] = True
                     knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col + 1, frm] == True:
+                elif nan_test2[row + 1, col + 1, frm] is True:
                     knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col + 1, frm] == True:
+                elif nan_test2[row - 1, col + 1, frm] is True:
                     knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col - 1, frm] == True:
+                elif nan_test2[row + 1, col - 1, frm] is True:
                     knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col - 1, frm] == True:
+                elif nan_test2[row - 1, col - 1, frm] is True:
                     knan_test[row, col, frm] = True
 
     nan_test[0, :, :] = True
