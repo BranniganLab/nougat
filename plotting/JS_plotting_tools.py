@@ -422,7 +422,7 @@ def make_paper_writing_group_plot(saturation):
         ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
         ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
         ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
-        ax1.set_ylabel(r'$\langle \tilde z \rangle \; (\mathrm{nm})$', fontsize=10)
+        ax1.set_ylabel(r'$\langle \Delta z \rangle \; (\mathrm{nm})$', fontsize=10)
         ax1.tick_params(axis='both', which='major', labelsize=7)
         ax1.tick_params(axis='both', which='minor', labelsize=7)
         ax1.yaxis.set_major_formatter('{x:5.3f}')
