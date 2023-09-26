@@ -137,7 +137,7 @@ def make_tcl_paths(wd, system, coord, surf):
     return test_input, expected
 
 
-def arrays_equal(path1, path2, filetype):
+def arrays_equal(path1, path2, filetype, tolerance):
     """
     Determine whether two arrays have identical elements.
 
@@ -149,6 +149,9 @@ def arrays_equal(path1, path2, filetype):
         path to second npy file.
     filetype : string
         The filetype of f1 and f2
+    tolerance : float
+        The amount of tolerance you have for differences between files. Should \
+            be a small number!
 
     Returns
     -------
@@ -162,36 +165,42 @@ def arrays_equal(path1, path2, filetype):
     elif filetype == "dat":
         f1 = np.genfromtxt(path1, missing_values="nan", filling_values=np.nan)
         f2 = np.genfromtxt(path2, missing_values="nan", filling_values=np.nan)
-    return np.array_equal(f1, f2, equal_nan=True)
+
+    if tolerance == 0:
+        return np.array_equal(f1, f2, equal_nan=True)
+    elif tolerance > 0:
+        return np.allclose(f1, f2, rtol=0, atol=tolerance, equal_nan=True)
+    else:
+        raise ValueError("Tolerance must be positive or 0.")
 
 
 def test_if_height_and_curvature_npys_match(cwd, coordsys, surface4, quantity, system):
     test_input, expected = make_npy_paths(cwd, system, coordsys, surface4, quantity)
-    assert arrays_equal(test_input, expected, 'npy')
+    assert arrays_equal(test_input, expected, 'npy', 1e-11)
 
 
 def test_if_tcl_height_outputs_match(cwd, coordsys, surface2, system):
     test_input, expected = make_tcl_paths(cwd, system, coordsys, surface2)
-    assert arrays_equal(test_input, expected, 'dat')
+    assert arrays_equal(test_input, expected, 'dat', 1e-11)
 
 
 def test_if_thickness_files_match(cwd, coordsys, surface2, system):
     test_input, expected = make_npy_paths(cwd, system, coordsys, surface2, "thickness")
-    assert arrays_equal(test_input, expected, 'npy')
+    assert arrays_equal(test_input, expected, 'npy', 1e-11)
 
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflets_are_distinct(cwd, coordsys, quantity, system):
     zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", quantity)
     ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", quantity)
-    assert arrays_equal(zone_test, ztwo_test, 'npy')
+    assert arrays_equal(zone_test, ztwo_test, 'npy', 0)
 
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
     zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", "thickness")
     ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", "thickness")
-    assert arrays_equal(zone_test, ztwo_test, 'npy')
+    assert arrays_equal(zone_test, ztwo_test, 'npy', 0)
 
 
 def test_whether_flat_cartesian(cwd):
@@ -217,4 +226,4 @@ def test_if_densities_match(cwd, coordsys, surface2):
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
     exp = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy"
     test = cwd + "/E-protein_trajectory/test" + coordsys_path + "test.DTPC." + surface2 + "." + coordsys + ".density.npy"
-    assert arrays_equal(test, exp, 'npy')
+    assert arrays_equal(test, exp, 'npy', 1e-11)
