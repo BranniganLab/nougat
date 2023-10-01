@@ -6,7 +6,7 @@ from utils import *
 def init_curvature_data(height, polar, system_dict):
     N1_bins = system_dict['bin_info']['N1']
     N2_bins = system_dict['bin_info']['N2']
-    Nframes = np.shape(height)[2]
+    Nframes = np.shape(height)[0]
 
     # create arrays for storing curvature data
     if polar is True:
@@ -273,7 +273,7 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
     d1 = system_dict['bin_info']['d1']
     N2_bins = system_dict['bin_info']['N2']
     d2 = system_dict['bin_info']['d2']
-    Nframes = np.shape(curvature_inputs)[2]
+    Nframes = np.shape(curvature_inputs)[0]
 
     # mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
     # gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
@@ -281,24 +281,24 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
     for frm in range(Nframes):
         for row in range(N1_bins):
             for col in range(N2_bins + 2):
-                if knan_test[row, col, frm] == False:
+                if knan_test[frm, row, col] == False:
 
                     # calculate d2h/dr2
-                    del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
+                    del2r = curvature_inputs[frm, row - 1, col] + curvature_inputs[frm, row + 1, col] - 2 * curvature_inputs[frm, row, col]
                     del2r = del2r / d1**2
 
                     # calculate dh/dr
-                    delr = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
+                    delr = (curvature_inputs[frm, row + 1, col] - curvature_inputs[frm, row - 1, col]) / (2 * d1)
 
                     # calculate d2h/drdtheta
-                    delrdeltheta = (curvature_inputs[row + 1, col + 1, frm] - curvature_inputs[row + 1, col, frm] - curvature_inputs[row, col + 1, frm] + 2 * curvature_inputs[row, col, frm] - curvature_inputs[row - 1, col, frm] - curvature_inputs[row, col - 1, frm] + curvature_inputs[row - 1, col - 1, frm])
+                    delrdeltheta = (curvature_inputs[frm, row + 1, col + 1] - curvature_inputs[frm, row + 1, col] - curvature_inputs[frm, row, col + 1] + 2 * curvature_inputs[frm, row, col] - curvature_inputs[frm, row - 1, col] - curvature_inputs[frm, row, col - 1] + curvature_inputs[frm, row - 1, col - 1])
                     delrdeltheta = delrdeltheta / (2 * d1 * d2)
 
                     # calculate dh/dtheta
-                    deltheta = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
+                    deltheta = (curvature_inputs[frm, row, col + 1] - curvature_inputs[frm, row, col - 1]) / (2 * d2)
 
                     # calculate d2h/dtheta2
-                    del2theta = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
+                    del2theta = curvature_inputs[frm, row, col - 1] + curvature_inputs[frm, row, col + 1] - 2 * curvature_inputs[frm, row, col]
                     del2theta = del2theta / d2**2
 
                     # calculate coefficients
@@ -316,26 +316,26 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
                     norm_vec_z = 1 / normalization_factor
 
                     # calculate polar laplacian and gaussian curvature
-                    curvature_outputs[row, col, frm] = (del2r + c1 * delr + c2 * del2theta) / 2.0
-                    kgauss_outputs[row, col, frm] = c1 * delr * del2r + 2 * c3 * delrdeltheta * deltheta - c4 * deltheta**2 - c2 * (delrdeltheta**2 - del2r * del2theta)
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
+                    curvature_outputs[frm, row, col] = (del2r + c1 * delr + c2 * del2theta) / 2.0
+                    kgauss_outputs[frm, row, col] = c1 * delr * del2r + 2 * c3 * delrdeltheta * deltheta - c4 * deltheta**2 - c2 * (delrdeltheta**2 - del2r * del2theta)
+                    normal_vector_outputs[frm, row, col * 3] = norm_vec_x
+                    normal_vector_outputs[frm, row, col * 3 + 1] = norm_vec_y
+                    normal_vector_outputs[frm, row, col * 3 + 2] = norm_vec_z
 
-                elif nan_test[row, col, frm] == False:
+                elif nan_test[frm, row, col] == False:
 
                     # calculate d2h/dr2
-                    del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
+                    del2r = curvature_inputs[frm, row - 1, col] + curvature_inputs[frm, row + 1, col] - 2 * curvature_inputs[frm, row, col]
                     del2r = del2r / d1**2
 
                     # calculate dh/dr
-                    delr = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
+                    delr = (curvature_inputs[frm, row + 1, col] - curvature_inputs[frm, row - 1, col]) / (2 * d1)
 
                     # calculate dh/dtheta
-                    deltheta = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
+                    deltheta = (curvature_inputs[frm, row, col + 1] - curvature_inputs[frm, row, col - 1]) / (2 * d2)
 
                     # calculate d2h/dtheta2
-                    del2theta = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
+                    del2theta = curvature_inputs[frm, row, col - 1] + curvature_inputs[frm, row, col + 1] - 2 * curvature_inputs[frm, row, col]
                     del2theta = del2theta / d2**2
 
                     # calculate coefficients
@@ -350,18 +350,18 @@ def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs,
                     norm_vec_y = (-1 * c1 * np.cos(theta) * deltheta) - (np.sin(theta) * delr) / normalization_factor
                     norm_vec_z = 1 / normalization_factor
 
-                    curvature_outputs[row, col, frm] = (del2r + c1 * delr + c2 * del2theta) / 2.0
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
+                    curvature_outputs[frm, row, col] = (del2r + c1 * delr + c2 * del2theta) / 2.0
+                    kgauss_outputs[frm, row, col] = np.nan
+                    normal_vector_outputs[frm, row, col * 3] = norm_vec_x
+                    normal_vector_outputs[frm, row, col * 3 + 1] = norm_vec_y
+                    normal_vector_outputs[frm, row, col * 3 + 2] = norm_vec_z
 
                 else:
-                    curvature_outputs[row, col, frm] = np.nan
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 1, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 2, frm] = np.nan
+                    curvature_outputs[frm, row, col] = np.nan
+                    kgauss_outputs[frm, row, col] = np.nan
+                    normal_vector_outputs[frm, row, col * 3] = np.nan
+                    normal_vector_outputs[frm, row, col * 3 + 1] = np.nan
+                    normal_vector_outputs[frm, row, col * 3 + 2] = np.nan
 
     return curvature_outputs, kgauss_outputs, normal_vector_outputs
 
@@ -373,42 +373,42 @@ def empty_neighbor_test(curvature_inputs):
     knan_test = np.array(data, copy=True)
 
     shape = np.shape(data)
-    dim1 = shape[0]
-    dim2 = shape[1]
-    dim3 = shape[2]
+    dim1 = shape[1]
+    dim2 = shape[2]
+    dim3 = shape[0]
 
     for frm in range(dim3):
         for row in range(1, dim1 - 1):
             for col in range(1, dim2 - 1):
-                if nan_test2[row - 1, col, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row, col - 1, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row, col + 1, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col + 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col + 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col - 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col - 1, frm] == True:
-                    knan_test[row, col, frm] = True
+                if nan_test2[frm, row - 1, col] == True:
+                    nan_test[frm, row, col] = True
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row + 1, col] == True:
+                    nan_test[frm, row, col] = True
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row, col - 1] == True:
+                    nan_test[frm, row, col] = True
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row, col + 1] == True:
+                    nan_test[frm, row, col] = True
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row + 1, col + 1] == True:
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row - 1, col + 1] == True:
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row + 1, col - 1] == True:
+                    knan_test[frm, row, col] = True
+                elif nan_test2[frm, row - 1, col - 1] == True:
+                    knan_test[frm, row, col] = True
 
-    nan_test[0, :, :] = True
-    nan_test[dim1 - 1, :, :] = True
     nan_test[:, 0, :] = True
-    nan_test[:, dim2 - 1, :] = True
+    nan_test[:, dim1 - 1, :] = True
+    nan_test[:, :, 0] = True
+    nan_test[:, :, dim2 - 1] = True
 
-    knan_test[0, :, :] = True
-    knan_test[dim1 - 1, :, :] = True
     knan_test[:, 0, :] = True
-    knan_test[:, dim2 - 1, :] = True
+    knan_test[:, dim1 - 1, :] = True
+    knan_test[:, :, 0] = True
+    knan_test[:, :, dim2 - 1] = True
 
     return nan_test, knan_test
