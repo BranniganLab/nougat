@@ -233,7 +233,10 @@ proc measure_APL_over_traj {sys_name lipids} {
 }
 
 
-proc Delete_Random_Lipids {seltext upper_final lower_final} {
+
+
+
+proc Select_Random_Lipids {seltext upper_final lower_final} {
     set final_list []
     for {set i 1} {$i <= 2} {incr i} {
         set sel [atomselect top "${seltext} and user ${i}"]
@@ -256,5 +259,13 @@ proc Delete_Random_Lipids {seltext upper_final lower_final} {
         }
         lappend final_list $dellist
     }
-    return $final_list
+    return [join $final_list]
+}
+
+
+proc Delete_Random_Lipids {seltext upper_final lower_final outfile} {
+    set list_to_delete [Select_Random_Lipids $seltext $upper_final $lower_final]
+    set outputSelection [atomselect top "not ($seltext and resid ${list_to_delete})"]
+    $outputSelection set beta 0
+    $outputSelection writepdb $outfile 
 }
