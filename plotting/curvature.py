@@ -60,13 +60,13 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
         # measure the laplacian and gaussian curvatures
         if polar is True:
             curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
-            diffs = take_finite_differences(curvature_inputs, system_dict)
-            H = measure_mean_curvature(diffs, system_dict['bin_info'], "polar")
+            # diffs = take_finite_differences(curvature_inputs, system_dict)
+            # H = measure_mean_curvature(diffs, system_dict['bin_info'], "polar")
         elif polar is False:
             curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
-            diffs = take_finite_differences(curvature_inputs, system_dict)
-            H = measure_mean_curvature(diffs, system_dict['bin_info'], "polar")
-        print(np.allclose(curvature_outputs, H, rtol=0, atol=1e-11, equal_nan=True), field)
+            # diffs = take_finite_differences(curvature_inputs, system_dict)
+            # H = measure_mean_curvature(diffs, system_dict['bin_info'], "polar")
+        # print(np.allclose(curvature_outputs, H, rtol=0, atol=1e-11, equal_nan=True), field)
 
         # unwrap along dim2 direction
         meancurvature = curvature_outputs[:, :, 1:N2_bins + 1]
