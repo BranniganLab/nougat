@@ -15,10 +15,10 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
             data = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
 
             # create a new array that has each frame in a different array level
-            density_array = np.zeros((N1_bins, N2_bins, Nframes))
+            density_array = np.zeros((Nframes, N1_bins, N2_bins))
 
             for frm in range(Nframes):
-                density_array[:, :, frm] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+                density_array[frm, :, :] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
 
             avgdensity = calc_avg_over_time(density_array)
 
@@ -58,7 +58,7 @@ def calculate_total_density(sys_name, species_list, coordsys, inclusion, polar, 
             tot_density = tot_density + dens_per_species
             # normalize?
 
-        tot_avg_density = np.mean(tot_density, axis=2)
+        tot_avg_density = np.mean(tot_density, axis=0)
 
         # make plots!
         plot_maker(dim1vals, dim2vals, tot_avg_density, sys_name, species + '.' + leaflet, density_max, density_min, inclusion, "totAvgDensity", False, polar, scale_dict["colorbar"])
