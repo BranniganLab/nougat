@@ -180,7 +180,7 @@ def calc_avg_over_time(matrix_data):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
-        avg = np.nanmean(matrix_data, axis=2)
+        avg = np.nanmean(matrix_data, axis=0)
         return avg
 
 
