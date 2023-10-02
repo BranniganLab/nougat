@@ -75,9 +75,9 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
 
         # if cartesian, unwrap along dim1 direction too
         if polar is False:
-            meancurvature = meancurvature[:, :, 1:N1_bins + 1]
-            kcurvature = kcurvature[:, :, 1:N1_bins + 1]
-            normal_vectors = normal_vectors[:, :, 1:N1_bins + 1]
+            meancurvature = meancurvature[:, 1:N1_bins + 1, :]
+            kcurvature = kcurvature[:, 1:N1_bins + 1, :]
+            normal_vectors = normal_vectors[:, 1:N1_bins + 1, :]
 
         # take the average curvatures over all frames
         avgcurvature = calc_avg_over_time(meancurvature)
