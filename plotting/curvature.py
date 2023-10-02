@@ -67,7 +67,7 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
             diffs = take_finite_differences(curvature_inputs, system_dict)
             H = measure_mean_curvature(diffs, system_dict['bin_info'], "polar")
         print(np.allclose(curvature_outputs, H, rtol=0, atol=1e-11, equal_nan=True), field)
-        """
+
         # unwrap along dim2 direction
         meancurvature = curvature_outputs[:, :, 1:N2_bins + 1]
         kcurvature = kgauss_outputs[:, :, 1:N2_bins + 1]
@@ -75,9 +75,9 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
 
         # if cartesian, unwrap along dim1 direction too
         if polar is False:
-            meancurvature = meancurvature[:, 1:N1_bins + 1, :]
-            kcurvature = kcurvature[:, 1:N1_bins + 1, :]
-            normal_vectors = normal_vectors[:, 1:N1_bins + 1, :]
+            meancurvature = meancurvature[:, :, 1:N1_bins + 1]
+            kcurvature = kcurvature[:, :, 1:N1_bins + 1]
+            normal_vectors = normal_vectors[:, :, 1:N1_bins + 1]
 
         # take the average curvatures over all frames
         avgcurvature = calc_avg_over_time(meancurvature)
@@ -100,7 +100,6 @@ def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_
             avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature')
 
         print(sys_name + ' ' + bead + ' ' + field + " curvatures done!")
-        """
 
 
 def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
