@@ -84,9 +84,9 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, dims, fiel
                 system_dict['bin_info']['nframes'] = Nframes
 
                 # create a new array that has each frame in a different array level
-                height = np.zeros((N1_bins, N2_bins, Nframes))
+                height = np.zeros((Nframes, N1_bins, N2_bins))
                 for frm in range(Nframes):
-                    height[:, :, frm] = height_data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+                    height[frm, :, :] = height_data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
 
                 # if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
                 pruned_height = mostly_empty(height)
