@@ -296,6 +296,7 @@ def test_whether_flat_polar(cwd):
 
 # Test if time-averages match
 
+
 def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, system, avg_quantities):
     test_input, expected = make_avg_paths(cwd, system, coordsys, surface4, avg_quantities)
     assert arrays_equal(test_input, expected, 'dat', 1e-11)
