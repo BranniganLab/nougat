@@ -397,8 +397,7 @@ def make_paper_writing_group_plot(saturation):
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(fname.split("npy/")[0] + "tcl_output/" + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
-        _, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
-        Nr = len(zone)
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
         rmin = 1.25
         xmin = dr / 2
         xmax = Nr * dr - xmin
