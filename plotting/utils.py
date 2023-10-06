@@ -594,7 +594,7 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
 
     # measure terms of interest
     # removed z_minus terms until we have a better way of computing t0
-    epsilon = z_plus - z_0
+    epsilon = z_0 - z_plus
     epsilon2 = epsilon**2
     H_plus = (H_1 + H_2) / 2
     K_plus = (K_1 + K_2) / 2
@@ -734,7 +734,7 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
     """
     data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
     if coordsys == "polar":
-        data = data[4:, :, :]  # this could be smarter
+        data = data[:, 4:, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg = np.nanmean(data)
