@@ -254,7 +254,6 @@ def calc_eps_t0(path, quantity, sysname, species_name):
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
     bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t") / 2.0
-    print(f't0 of {species_name} is {bulk_avg}')
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + "." + quantity)
@@ -305,9 +304,7 @@ def plot_combination(paths, name, quantity, stds, rmin):
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
-        _, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
-        Nr = len(y_vals)
-        print(Nr, len(y_vals))
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
         xmin = dr / 2
         xmax = Nr * dr - xmin
         x_vals = np.linspace(xmin, xmax, Nr) / 10
@@ -441,7 +438,6 @@ if __name__ == "__main__":
     os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
         for quantity in quant_list1:
-            print(combination[0], combination[1])
             plot_combination(combination[0], combination[1], quantity, True, 0)
             plot_combination(combination[0], combination[1], quantity, False, 0)
     os.chdir(cwd)
