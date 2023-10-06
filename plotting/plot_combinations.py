@@ -305,7 +305,9 @@ def plot_combination(paths, name, quantity, stds, rmin):
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
                                    missing_values='nan', filling_values=np.nan)
-        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        _, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        Nr = len(y_vals)
+        print(Nr, len(y_vals))
         xmin = dr / 2
         xmax = Nr * dr - xmin
         x_vals = np.linspace(xmin, xmax, Nr) / 10
@@ -439,6 +441,7 @@ if __name__ == "__main__":
     os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
         for quantity in quant_list1:
-            plot_combination(combination[0], combination[1], quantity, True, 2.75)
-            plot_combination(combination[0], combination[1], quantity, False, 2.75)
+            print(combination[0], combination[1])
+            plot_combination(combination[0], combination[1], quantity, True, 0)
+            plot_combination(combination[0], combination[1], quantity, False, 0)
     os.chdir(cwd)
