@@ -341,7 +341,7 @@ def plot_together(mols, paths, nougvals, xlim):
             plt.close()
 
 
-def make_paper_writing_group_plot(saturation):
+def make_paper_writing_group_plot(comparison):
     """
     Make plot for paper writing group.
 
@@ -356,26 +356,42 @@ def make_paper_writing_group_plot(saturation):
 
     """
     fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, figsize=(7, 7))
-    if saturation == "sat":
-        sat_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
+    if comparison == "sat":
+        sys_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
         nougat_values = "_polar_5_10_100_-1_1/npy/"
-    elif saturation == "unsat":
-        sat_list = ["lgDY", "lgDO", "lgDG"]
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+    elif comparison == "unsat":
+        sys_list = ["lgDY", "lgDO", "lgDG"]
         nougat_values = "_polar_10_10_100_150_1/npy/"
-    path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
-    for lipid in sat_list:
-        if lipid == "lgDY":
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+    elif comparison == "stiffness":
+        sys_list = ["100kjmol", "1000kjmol", "5000", "lgPO_15"]
+        nougat_values = "_polar_10_10_0_-1_1/npy/"
+        path = "/home/js2746/5x29_stiffness/"
+    for system in sys_list:
+        if system == "lgDY":
             dirname = "lgDY_15us"
             sysname = "lgDY_15us"
-        elif lipid == "lgDO":
+        elif system == "lgDO":
             dirname = "lgDO_30us"
             sysname = "lgDO_30us"
-        elif lipid == "lgDG":
+        elif system == "lgDG":
             dirname = "lgDG_15us"
             sysname = "lgDG_15"
-        else:
-            dirname = lipid + "_2us"
-            sysname = lipid
+        elif system == "lgPO_15" and comparison == "stiffness":
+            dirname = "lgPO_50us"
+            sysname = "lgPO_15"
+            nougat_values = "_polar_10_10_100_150_1/npy/"
+            path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+        elif system in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+            dirname = system + "_2us"
+            sysname = system
+        elif system == "100kjmol":
+            dirname = "100"
+            sysname = system
+        elif system == "1000kjmol":
+            dirname = "1000"
+            sysname = system
         fname = path + dirname + "/" + sysname + nougat_values + sysname + "."
         zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
         zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
@@ -418,10 +434,10 @@ def make_paper_writing_group_plot(saturation):
         ztwo = ztwo[i:] / 10
         zonestd = zonestd[i:] / 10
         ztwostd = ztwostd[i:] / 10
-        ax1.plot(x_vals, zone, color=colordict[lipid], label=mismatch_dict[lipid])
-        ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
-        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
-        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
+        ax1.plot(x_vals, zone, color=colordict[system], label=stiffness_dict[system])
+        ax1.plot(x_vals, ztwo, color=colordict[system], linestyle="dashed")
+        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[system])
+        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[system], linestyle="dashed")
         ax1.set_ylabel(r'$\langle \Delta z \rangle \; (\mathrm{nm})$', fontsize=10)
         ax1.tick_params(axis='both', which='major', labelsize=7)
         ax1.tick_params(axis='both', which='minor', labelsize=7)
@@ -432,8 +448,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde t plot
         tilde_t = tilde_t[i:]
         tilde_tstd = tilde_tstd[i:]
-        ax2.plot(x_vals, tilde_t, color=colordict[lipid])
-        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[lipid])
+        ax2.plot(x_vals, tilde_t, color=colordict[system])
+        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[system])
         ax2.set_ylabel(legend_dict['avg_tilde_total_t'], fontsize=10)
         ax2.axhline(1, color="gray", linestyle="--")
         ax2.tick_params(axis='both', which='major', labelsize=7)
@@ -445,8 +461,8 @@ def make_paper_writing_group_plot(saturation):
         # eps/t0 plot
         epst0 = epst0[i:]
         epst0std = epst0std[i:]
-        ax3.plot(x_vals, epst0, color=colordict[lipid])
-        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[lipid])
+        ax3.plot(x_vals, epst0, color=colordict[system])
+        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[system])
         ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'], fontsize=10)
         ax3.tick_params(axis='both', which='major', labelsize=7)
         ax3.tick_params(axis='both', which='minor', labelsize=7)
@@ -458,8 +474,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde epsilon squared plot
         tilde_eps2 = tilde_eps2[i:]
         tilde_eps2std = tilde_eps2std[i:]
-        ax4.plot(x_vals, tilde_eps2, color=colordict[lipid])
-        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[lipid])
+        ax4.plot(x_vals, tilde_eps2, color=colordict[system])
+        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[system])
         ax4.set_ylabel(legend_dict['avg_rms_tilde_epsilon2'], fontsize=10)
         ax4.axhline(1, color="gray", linestyle="--")
         ax4.tick_params(axis='both', which='major', labelsize=7)
@@ -471,8 +487,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde Hplus squared plot
         tilde_Hplus2 = tilde_Hplus2[i:]
         tilde_Hplus2std = tilde_Hplus2std[i:]
-        ax5.plot(x_vals, tilde_Hplus2, color=colordict[lipid])
-        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[lipid])
+        ax5.plot(x_vals, tilde_Hplus2, color=colordict[system])
+        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[system])
         ax5.set_ylabel(legend_dict['avg_rms_tilde_H_plus2'], fontsize=10)
         ax5.axhline(1, color="gray", linestyle="--")
         ax5.tick_params(axis='both', which='major', labelsize=7)
@@ -485,8 +501,8 @@ def make_paper_writing_group_plot(saturation):
         # correlation between epsilon and Hplus plot
         corr_Hplus_eps = corr_Hplus_eps[i:]
         corr_Hplus_epsstd = corr_Hplus_epsstd[i:]
-        ax6.plot(x_vals, corr_Hplus_eps, color=colordict[lipid])
-        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[lipid])
+        ax6.plot(x_vals, corr_Hplus_eps, color=colordict[system])
+        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[system])
         # ax6.set_ylim(-.25, 0)
         ax6.axhline(0, color="gray", linestyle="--")
         ax6.set_ylabel(legend_dict['corr_eps_Hplus'], fontsize=10)
@@ -496,13 +512,13 @@ def make_paper_writing_group_plot(saturation):
         ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
         """
         # epsilon times Hplus plot
-        epsHplus = epsHplus[i:]
-        epsHplusstd = epsHplusstd[i:]
-        ax6.plot(x_vals, epsHplus, color=colordict[lipid])
-        ax6.fill_between(x_vals, (epsHplus - epsHplusstd), (epsHplus + epsHplusstd), alpha=a, color=colordict[lipid])
+        epsHplus = -1 * epsHplus[i:]
+        epsHplusstd = -1 * epsHplusstd[i:]
+        ax6.plot(x_vals, epsHplus, color=colordict[system])
+        ax6.fill_between(x_vals, (epsHplus - epsHplusstd), (epsHplus + epsHplusstd), alpha=a, color=colordict[system])
         # ax6.set_ylim(-.25, 0)
         ax6.axhline(0, color="gray", linestyle="--")
-        ax6.set_ylabel(legend_dict['avg_epsilon_H'], fontsize=10)
+        ax6.set_ylabel(legend_dict['neg_avg_epsilon_H'], fontsize=10)
         ax6.tick_params(axis='both', which='major', labelsize=7)
         ax6.tick_params(axis='both', which='minor', labelsize=7)
         ax6.yaxis.set_major_formatter('{x:<5.3f}')
@@ -514,10 +530,11 @@ def make_paper_writing_group_plot(saturation):
 
     lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
+    # lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Elastic Network Bond Strength')
 
     fig.tight_layout()
-    plt.savefig("/home/js2746/Desktop/comparisonfig_" + saturation + ".pdf", bbox_inches='tight', dpi=700)
+    plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight', dpi=700)
     # plt.show()
     plt.clf()
     plt.close()
@@ -781,7 +798,11 @@ colordict = {
     "lgDO": "green",
     "lgPO": "green",
     "lgDP": "green",
-    "lgDG": "blue"
+    "lgDG": "blue",
+    "100kjmol": "red",
+    "1000kjmol": "blue",
+    "5000": "purple",
+    "lgPO_15": "green"
 }
 max_scale_dict = {
     "avg_epsilon_over_t0": .1,
@@ -833,6 +854,13 @@ mismatch_dict = {
     "lgDG": "-64%"
 }
 
+stiffness_dict = {
+    "100kjmol": "100 kJ/mol",
+    "1000kjmol": "1000 kJ/mol",
+    "5000": "5000 kJ/mol",
+    "lgPO_15": "position restraints"
+}
+
 legend_dict = {
     "avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
     "avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
@@ -857,6 +885,7 @@ legend_dict = {
     "avg_H_minus": r'$\langle H^- \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_H_minus2": r'$\langle \left ( H^- \right )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_epsilon_H": r'$\langle  \epsilon H^+  \rangle$',
+    "neg_avg_epsilon_H": r'$-\langle  \epsilon H^+  \rangle$',
     "avg_z_minus": r'$\langle z^- \rangle\; (\mathrm{\dot A})$',
     "avg_z_minus2": r'$\langle \left ( z^- \right )^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
@@ -893,5 +922,6 @@ if __name__ == "__main__":
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    make_paper_writing_group_plot("unsat")
-    make_paper_writing_group_plot("sat")
+    # make_paper_writing_group_plot("unsat")
+    # make_paper_writing_group_plot("sat")
+    make_paper_writing_group_plot("stiffness")
