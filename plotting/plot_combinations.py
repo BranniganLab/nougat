@@ -178,8 +178,8 @@ def generate_combinations(config_dict):
                 name = category + "_" + item
                 yield (templist, name)
     elif len(category_list) == 1:
+        templist = []
         for key in key_list:
-            templist = []
             if key == 'TOC':
                 continue
             else:
@@ -214,6 +214,12 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, specie
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
     elif species_name in ["lgDY", "lgDO", "lgDG"]:
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
+    elif species_name in ["100kjmol", "1000kjmol", "5000", "lgPO"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1"
+        species_name = "lgPO"
+    else:
+        print("You need to specify where the empty system is")
+        raise Exception
     if "_rms_" in quantity:
         rms = True
     else:
@@ -252,6 +258,12 @@ def calc_eps_t0(path, quantity, sysname, species_name):
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
     elif species_name in ["lgDY", "lgDO", "lgDG"]:
         empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
+    elif species_name in ["100kjmol", "1000kjmol", "5000", "lgPO"]:
+        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1"
+        species_name = "lgPO"
+    else:
+        print("You need to specify where the empty system is")
+        raise Exception
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
     bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t") / 2.0
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
@@ -396,7 +408,10 @@ color_dict = {
     "DOPC": "green",
     "DBPC": "blue",
     "DGPC": "blue",
-    "DXPC": "purple"
+    "DXPC": "purple",
+    "100kjmol": "red",
+    "1000kjmol": "blue",
+    "5000": "purple"
 }
 
 style_dict = {
@@ -417,7 +432,10 @@ style_dict = {
     "DOPC": "dashed",
     "DBPC": "solid",
     "DGPC": "dashed",
-    "DXPC": "solid"
+    "DXPC": "solid",
+    "100kjmol": "solid",
+    "1000kjmol": "solid",
+    "5000": "solid"
 }
 
 if __name__ == "__main__":
@@ -428,8 +446,9 @@ if __name__ == "__main__":
                    "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2",
                    "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
+    # prep_config(["bond_strength"], [["100", "1000", "5000"]])
 
-    config_dict = read_config('comp_config.txt', ["length", "saturation"])
+    config_dict = read_config('comp_config_stiffness.txt', ["stiffness"])
     cwd = os.getcwd()
     try:
         os.mkdir("avg_over_theta_comparisons")
