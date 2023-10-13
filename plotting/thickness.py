@@ -24,10 +24,10 @@ def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_
         # normthickness = avgthickness/avgt0
 
         # make plots!
-        if leaflet == "whole":
-            plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_whole_max"], scale_dict["thick_whole_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
-        else:
-            plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
+        # if leaflet == "whole":
+        # plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_whole_max"], scale_dict["thick_whole_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
+        # else:
+        # plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
 
         # save as file for debugging / analysis!
         np.save('npy/' + sys_name + '.' + leaflet + '.' + bead + '.' + coordsys + '.thickness.npy', thickness)

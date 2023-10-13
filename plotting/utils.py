@@ -294,26 +294,20 @@ def read_log(sys_name, coordsys):
     return system_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, config_dict):
+def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, coordsys):
     """
     Create and save 2D heatmaps.
 
     Parameters
     ----------
-    dim1vals : list
-        meshgrid output 1
-    dim2vals : list
-        meshgrid output 2
+    dims : list
+        np.meshgrid output
     data : array
         the 2d array/matrix of values to be heatmapped
     name : string
         the system name you gave nougat.py
     field : string
         usually describes which membrane field (z1, z2, etc) to be heatmapped
-    Vmax : float
-        max value for colorbar
-    Vmin : float
-        min value for colorbar
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
     dataname : string
@@ -330,6 +324,12 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     None.
 
     """
+    dim1vals, dim2vals = dims
+    if dataname in config_dict:
+        Vmin, Vmax = config_dict[dataname].split(",")
+    else:
+        Vmin, Vmax = "auto"
+
     fig = plt.figure()
     if coordsys == "polar":
         ax = plt.subplot(projection="polar")
@@ -337,13 +337,10 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    # fig.set_size_inches(6,6)
     create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
     if protein:
         draw_protein(protein, coordsys)
-    save_figure(bead, name, field, coordsys, dataname)
-    plt.clf()
-    plt.close()
+    return fig, ax
 
 
 def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
@@ -444,6 +441,7 @@ def save_figure(bead, name, field, coordsys, dataname):
         plt.savefig('pdf/' + name + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
     else:
         plt.savefig('pdf/' + name + "_" + bead + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
+    plt.close()
 
 
 def convert_to_cart(rval, thetaval):
@@ -643,7 +641,7 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
                  "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
     for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
+        # plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
         np.save(path + '/npy/' + system + '.' + name + '.npy', data)
         if coordsys == "polar":
             avg_over_theta(path + '/npy/' + system + '.' + name)

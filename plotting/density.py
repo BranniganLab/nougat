@@ -27,10 +27,10 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
             avgdensity = avgdensity * normfactor / areas
 
             # make plots!
-            if leaflet == "zone":
-                plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
-            elif leaflet == "ztwo":
-                plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
+            # if leaflet == "zone":
+            #    plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.outer', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
+            # elif leaflet == "ztwo":
+            #    plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
 
             # save as file for debugging / analysis
             np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.npy', density_array)
