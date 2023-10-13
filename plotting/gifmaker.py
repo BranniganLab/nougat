@@ -38,7 +38,7 @@ def make_animated_heatmap(data, coordsys, dims, Vmax, Vmin, colorbar):
     plt.close()
 
 
-def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar, bin_info):
+def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, Vmin, colorbar, bin_info, imgpath):
     dim1vals, dim2vals = dims
     Nrbins = bin_info["N1"]
     dr = bin_info["d1"]
@@ -73,7 +73,6 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
     plt.colorbar(c)
 
     # VMD still on left
-    imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/movie_stills/lgPO.'
     img = np.asarray(Image.open(imgpath + "00000.ppm"))
     ax3 = plt.subplot(131)
     ax3.axis('off')
@@ -89,7 +88,7 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
 
     anim = animation.FuncAnimation(fig, animate, frames=np.shape(heatmap_data)[0], interval=100, repeat=False)
     # anim = animation.FuncAnimation(fig, animate, frames=3, interval=1000, repeat=False)
-    anim.save("lgPO_Hplus_over_traj.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
+    anim.save("5000kjmol_Hplus_over_traj.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
     plt.close()
 
 
@@ -131,11 +130,14 @@ def smooth(hmap, window_size):
     return hmap_copy
 
 
-os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1")
-bin_info_dict = read_log("lgPO", "polar")
-hmap_data = np.load("npy/lgPO.H_plus.npy")
+# os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1")
+os.chdir("/home/js2746/5x29_stiffness/5000/5000_polar_10_10_0_-1_1")
+bin_info_dict = read_log("5000", "polar")
+hmap_data = np.load("npy/5000.H_plus.npy")
 hmap_data = smooth(hmap_data, 11)
 dims = bin_prep(bin_info_dict["bin_info"], "polar")
-make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, "auto", 0, True, bin_info_dict["bin_info"])
+# imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/movie_stills/lgPO.'
+imgpath = '/home/js2746/5x29_stiffness/5000/movie/5000kjmol.'
+make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, "auto", 0, True, bin_info_dict["bin_info"], imgpath)
 # make_animated_heatmap(hmap_data, "cart", dims, .025, -.025, True)
-os.chdir("/home/js2746/PolarHeightBinning/plotting")
+# os.chdir("/home/js2746/PolarHeightBinning/plotting")
