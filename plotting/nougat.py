@@ -82,19 +82,20 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
         bead = system_dict['headnames'][species]
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + "." + quantity + ".dat")
+                print(sys_name, field, bead, coordsys, quantity)
+                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + "." + quantity + ".dat", delimiter=",")
                 fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, bead, coordsys)
                 save_figure(bead, sys_name, field, coordsys, quantity)
         for field in ["zone", "ztwo", "whole"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + ".avgthickness.dat")
+            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + ".avgthickness.dat", delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", bead, coordsys)
             save_figure(bead, sys_name, field, coordsys, "avg_thickness")
         for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + "." + field + "." + coordsys + ".avgdensity.dat")
+            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + "." + field + "." + coordsys + ".avgdensity.dat", delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgdensity", bead, coordsys)
             save_figure(bead, sys_name, field, coordsys, "avgdensity")
             for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat")
+                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
                 fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", bead, coordsys)
                 save_figure(bead, sys_name, field, coordsys, "avgorder")
 
