@@ -66,7 +66,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
     hmap_dims = bin_prep(system_dict['bin_info'], coordsys)
 
     # analyze height
-    system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, polar, field_list)
+    system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, field_list)
 
     for bead in system_dict['headnames'].values():
         calculate_thickness(sys_name, bead, coordsys, inclusion, polar, hmap_dims, config_dict)

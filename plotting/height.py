@@ -4,7 +4,7 @@ import numpy as np
 from utils import *
 
 
-def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, polar):
+def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, coordsys):
     resseqnum = 1
     atom_name = 'SURF'
     chain = 'X'
@@ -17,7 +17,7 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, polar):
             if str(data[d1bin][d2bin]) != "nan":
                 seriallen = 5 - (len(str(serial)))
                 resseqlen = 4 - (len(str(resseqnum)))
-                if polar == 1:
+                if coordsys == "polar":
                     x = (d1 * d1bin + .5 * d1) * (np.cos(d2bin * d2 + 0.5 * d2))
                     y = (d1 * d1bin + .5 * d1) * (np.sin(d2bin * d2 + 0.5 * d2))
                 else:
@@ -36,7 +36,7 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, polar):
     return serial
 
 
-def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, serial, pdb, d1, d2):
+def calculate_zplus(sys_name, bead, coordsys, inclusion, serial, pdb, d1, d2):
     zone = np.load('npy/' + sys_name + '.zone.' + bead + '.' + coordsys + '.height.npy')
     ztwo = np.load('npy/' + sys_name + '.ztwo.' + bead + '.' + coordsys + '.height.npy')
 
@@ -50,11 +50,11 @@ def calculate_zplus(sys_name, bead, coordsys, inclusion, polar, serial, pdb, d1,
     np.savetxt('dat/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight.dat', avgzplus, delimiter=',', fmt='%10.5f')
     if coordsys == "polar":
         avg_over_theta('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight')
-    serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, polar)
+    serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, coordsys)
     print(sys_name + ' ' + bead + " zplus height done!")
 
 
-def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, field_list):
+def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
     serial = 1
 
     N1_bins = system_dict['bin_info']['N1']
@@ -101,10 +101,10 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, polar, field_list
                 if coordsys == "polar":
                     avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight')
                 np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight.dat', avgHeight, delimiter=',', fmt='%10.5f')
-                serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, polar)
+                serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, coordsys)
                 print(sys_name + ' ' + bead + ' ' + field + " height done!")
 
-            calculate_zplus(sys_name, bead, coordsys, inclusion, polar, serial, pdb, d1, d2)
+            calculate_zplus(sys_name, bead, coordsys, inclusion, serial, pdb, d1, d2)
 
         # print last line of pdb file
         print('END', file=pdb)
