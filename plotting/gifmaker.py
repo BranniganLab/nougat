@@ -86,9 +86,9 @@ def make_animated_heatmap_with_avgovertheta(heatmap_data, coordsys, dims, Vmax, 
         f.set_array(img)
         return c, e, f
 
-    anim = animation.FuncAnimation(fig, animate, frames=np.shape(heatmap_data)[0], interval=100, repeat=False)
+    anim = animation.FuncAnimation(fig, animate, frames=np.shape(heatmap_data)[0] - 1, interval=100, repeat=False)
     # anim = animation.FuncAnimation(fig, animate, frames=3, interval=1000, repeat=False)
-    anim.save("5000kjmol_Hplus_over_traj.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
+    anim.save("COMtiltspin_z2t1order_over_traj.gif", progress_callback=lambda i, n: print(f'Saving frame {i} of {n}'))
     plt.close()
 
 
@@ -131,13 +131,14 @@ def smooth(hmap, window_size):
 
 
 # os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_polar_40_12_0_-1_1")
-os.chdir("/home/js2746/5x29_stiffness/5000/5000_polar_10_10_0_-1_1")
-bin_info_dict = read_log("5000", "polar")
-hmap_data = np.load("npy/5000.H_plus.npy")
-hmap_data = smooth(hmap_data, 11)
+os.chdir("/home/js2746/Bending/PC/whole_mols/5x29/COMtiltspin/COMtiltspin_polar_10_10_0_-1_2")
+bin_info_dict = read_log("COMtiltspin", "polar")
+hmap_data = np.load("npy/COMtiltspin.POPC.tail1.ztwo.polar.order.npy")
+print(np.shape(hmap_data))
+# hmap_data = smooth(hmap_data, 11)
 dims = bin_prep(bin_info_dict["bin_info"], "polar")
 # imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/movie_stills/lgPO.'
-imgpath = '/home/js2746/5x29_stiffness/5000/movie/5000kjmol.'
+imgpath = '/home/js2746/Bending/PC/whole_mols/5x29/COMtiltspin/movie/COMtiltspin.'
 make_animated_heatmap_with_avgovertheta(hmap_data, "polar", dims, "auto", 0, True, bin_info_dict["bin_info"], imgpath)
 # make_animated_heatmap(hmap_data, "cart", dims, .025, -.025, True)
-# os.chdir("/home/js2746/PolarHeightBinning/plotting")
+os.chdir("/home/js2746/PolarHeightBinning/plotting")

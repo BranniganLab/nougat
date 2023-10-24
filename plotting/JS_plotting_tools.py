@@ -368,6 +368,10 @@ def make_paper_writing_group_plot(comparison):
         sys_list = ["100kjmol", "1000kjmol", "5000", "lgPO_15"]
         nougat_values = "_polar_10_10_0_-1_1/npy/"
         path = "/home/js2746/5x29_stiffness/"
+    elif comparison == "elastic":
+        sys_list = ["COMtiltspin", "new_gmx_pos"]
+        nougat_values = "_polar_10_10_0_-1_2/npy/"
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/"
     for system in sys_list:
         if system == "lgDY":
             dirname = "lgDY_15us"
@@ -391,6 +395,9 @@ def make_paper_writing_group_plot(comparison):
             sysname = system
         elif system == "1000kjmol":
             dirname = "1000"
+            sysname = system
+        else:
+            dirname = system
             sysname = system
         fname = path + dirname + "/" + sysname + nougat_values + sysname + "."
         zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
@@ -531,7 +538,7 @@ def make_paper_writing_group_plot(comparison):
     lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
     # lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
-    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Elastic Network Bond Strength')
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Restraint type')
 
     fig.tight_layout()
     plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight', dpi=700)
@@ -802,7 +809,9 @@ colordict = {
     "100kjmol": "red",
     "1000kjmol": "blue",
     "5000": "purple",
-    "lgPO_15": "green"
+    "lgPO_15": "green",
+    "COMtiltspin": "red",
+    "new_gmx_pos": "blue"
 }
 max_scale_dict = {
     "avg_epsilon_over_t0": .1,
@@ -858,7 +867,9 @@ stiffness_dict = {
     "100kjmol": "100 kJ/mol",
     "1000kjmol": "1000 kJ/mol",
     "5000": "5000 kJ/mol",
-    "lgPO_15": "position restraints"
+    "lgPO_15": "position restraints",
+    "COMtiltspin": "elastic network",
+    "new_gmx_pos": "position restraints"
 }
 
 legend_dict = {
@@ -924,4 +935,4 @@ if __name__ == "__main__":
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
     # make_paper_writing_group_plot("unsat")
     # make_paper_writing_group_plot("sat")
-    make_paper_writing_group_plot("stiffness")
+    make_paper_writing_group_plot("elastic")
