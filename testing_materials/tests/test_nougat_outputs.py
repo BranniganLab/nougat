@@ -7,6 +7,10 @@ Created on Fri Jul 21 11:18:40 2023.
 import pytest
 import numpy as np
 import os
+from collections import namedtuple
+
+
+Comparison = namedtuple("Comparison", "test_data ref_data")
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -111,7 +115,7 @@ def make_npy_paths(wd, system, coord, surf, quant):
         directory = "/flat_surface_test/"
     expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
     test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
-    return test_input, expected
+    return Comparison(test_input, expected)
 
 
 def make_avg_paths(wd, system, coord, surf, quant):
@@ -153,7 +157,7 @@ def make_avg_paths(wd, system, coord, surf, quant):
     elif quant == "avgdensity":
         expected = wd + directory + system + coordsys_path + system + ".DTPC." + surf + "." + coord + "." + quant + ".dat"
         test_input = wd + directory + "test" + coordsys_path + "test." + "DTPC." + surf + "." + coord + "." + quant + ".dat"
-    return test_input, expected
+    return Comparison(test_input, expected)
 
 
 def make_tcl_paths(wd, system, coord, surf):
@@ -189,10 +193,10 @@ def make_tcl_paths(wd, system, coord, surf):
         directory = "/flat_surface_test/"
     expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".height.dat"
     test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + ".height.dat"
-    return test_input, expected
+    return Comparison(test_input, expected)
 
 
-def arrays_equal(path1, path2, filetype, tolerance):
+def arrays_equal(paths, filetype, tolerance):
     """
     Determine whether two arrays have identical elements.
 
@@ -215,11 +219,11 @@ def arrays_equal(path1, path2, filetype, tolerance):
 
     """
     if filetype == "npy":
-        f1 = np.load(path1)
-        f2 = np.load(path2)
+        f1 = np.load(paths[0])
+        f2 = np.load(paths[1])
     elif filetype == "dat":
-        f1 = np.genfromtxt(path1, missing_values="nan", filling_values=np.nan)
-        f2 = np.genfromtxt(path2, missing_values="nan", filling_values=np.nan)
+        f1 = np.genfromtxt(paths[0], missing_values="nan", filling_values=np.nan)
+        f2 = np.genfromtxt(paths[1], missing_values="nan", filling_values=np.nan)
 
     if tolerance == 0:
         return np.array_equal(f1, f2, equal_nan=True)
@@ -234,8 +238,8 @@ def arrays_equal(path1, path2, filetype, tolerance):
 # Test if TCL outputs match
 
 def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
-    test_input, expected = make_tcl_paths(cwd, system, coordsys, surface2)
-    assert arrays_equal(test_input, expected, 'dat', 1e-11)
+    paths = make_tcl_paths(cwd, system, coordsys, surface2)
+    assert arrays_equal(paths, 'dat', 1e-11)
 
 # Still needed: density, order, tilt tests
 
@@ -243,13 +247,13 @@ def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
 # Test if npy outputs match
 
 def test_if_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, system):
-    test_input, expected = make_npy_paths(cwd, system, coordsys, surface4, quantity)
-    assert arrays_equal(test_input, expected, 'npy', 1e-11)
+    paths = make_npy_paths(cwd, system, coordsys, surface4, quantity)
+    assert arrays_equal(paths, 'npy', 1e-11)
 
 
 def test_if_thicknesses_match(cwd, coordsys, surface2, system):
-    test_input, expected = make_npy_paths(cwd, system, coordsys, surface2, "thickness")
-    assert arrays_equal(test_input, expected, 'npy', 1e-11)
+    paths = make_npy_paths(cwd, system, coordsys, surface2, "thickness")
+    assert arrays_equal(paths, 'npy', 1e-11)
 
 
 def test_if_densities_match(cwd, coordsys, surface2):
@@ -259,21 +263,22 @@ def test_if_densities_match(cwd, coordsys, surface2):
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
     exp = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy"
     test = cwd + "/E-protein_trajectory/test" + coordsys_path + "test.DTPC." + surface2 + "." + coordsys + ".density.npy"
-    assert arrays_equal(test, exp, 'npy', 1e-11)
+    paths = Comparison(test, exp)
+    assert arrays_equal(paths, 'npy', 1e-11)
 
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflets_are_distinct(cwd, coordsys, quantity, system):
     zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", quantity)
     ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", quantity)
-    assert arrays_equal(zone_test, ztwo_test, 'npy', 0)
+    assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
     zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", "thickness")
     ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", "thickness")
-    assert arrays_equal(zone_test, ztwo_test, 'npy', 0)
+    assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
 def test_whether_flat_cartesian(cwd):
@@ -298,12 +303,12 @@ def test_whether_flat_polar(cwd):
 
 
 def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, system, avg_quantities):
-    test_input, expected = make_avg_paths(cwd, system, coordsys, surface4, avg_quantities)
-    assert arrays_equal(test_input, expected, 'dat', 1e-11)
+    paths = make_avg_paths(cwd, system, coordsys, surface4, avg_quantities)
+    assert arrays_equal(paths, 'dat', 1e-11)
 
 
 def test_if_avg_densities_match(cwd, coordsys, surface2, system):
-    test_input, expected = make_avg_paths(cwd, system, coordsys, surface2, "avgdensity")
-    assert arrays_equal(test_input, expected, 'dat', 1e-11)
+    paths = make_avg_paths(cwd, system, coordsys, surface2, "avgdensity")
+    assert arrays_equal(paths, 'dat', 1e-11)
 
 # Still needed: thickness, order, tilt
