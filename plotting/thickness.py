@@ -3,7 +3,7 @@ import numpy as np
 from utils import *
 
 
-def calculate_thickness(sys_name, bead, coordsys, inclusion, polar, dims, scale_dict):
+def calculate_thickness(sys_name, bead, coordsys, inclusion, dims, scale_dict):
     dim1vals, dim2vals = dims
     zone = np.load('npy/' + sys_name + '.zone.' + bead + '.' + coordsys + '.height.npy')
     ztwo = np.load('npy/' + sys_name + '.ztwo.' + bead + '.' + coordsys + '.height.npy')

@@ -3,7 +3,7 @@ import numpy as np
 from utils import *
 
 
-def calculate_order(sys_name, system_dict, coordsys, inclusion, polar, dims, scale_dict):
+def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict):
     N1_bins = system_dict['bin_info']['N1']
     N2_bins = system_dict['bin_info']['N2']
     Nframes = system_dict['bin_info']['nframes']

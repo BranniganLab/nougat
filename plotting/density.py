@@ -3,7 +3,7 @@ import numpy as np
 from utils import *
 
 
-def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, scale_dict):
+def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dict):
     N1_bins = names_dict['bin_info']['N1']
     N2_bins = names_dict['bin_info']['N2']
     Nframes = names_dict['bin_info']['nframes']
@@ -35,7 +35,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, polar, dims, sc
             # save as file for debugging / analysis
             np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.npy', density_array)
             np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.npy', avgdensity)
-            if polar is True:
+            if coordsys == "polar":
                 avg_over_theta('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity')
             np.savetxt('dat/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.dat', avgdensity, delimiter=',', fmt='%10.5f')
 
