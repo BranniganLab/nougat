@@ -219,15 +219,15 @@ proc track_asymmetry_over_traj {sys_name} {
     close $outfile
 }
 
-proc measure_APL_over_traj {sys_name lipids} {
-    set outfile [open "${sys_name}.APL.traj" w]
+proc measure_area_APL_over_traj {sys_name lipids} {
+    set outfile [open "${sys_name}.area.traj" w]
     set nframes [molinfo top get numframes]
     set sel [atomselect top "resname $lipids"]
     set num_lipids_per_leaf [expr [count_lipids $sel] / 2.0]
     for {set i 0} {$i < $nframes} {incr i} {
         set area [expr [molinfo top get a frame $i]*[molinfo top get b frame $i]]
         set apl [expr $area / $num_lipids_per_leaf]
-        puts $outfile "$i    $apl"
+        puts $outfile "$i    $area    $apl"
     }
     close $outfile
 }
