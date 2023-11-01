@@ -540,12 +540,9 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 # createOutfiles (Previously: create_outfiles) --
 #
 # Arguments:
-#       system          {str}       user defined name of the system
 #       quantity        {str}       quanities being evaluated, either height_density or tilt_order
-#       headNames       {str}       names of beads that define neutral surface  
 #       species         {list}      species of lipids in system
 #       tailList        {list}      nested list of tail names organized by lipid species
-#       coordSystem     {str}       string either for either polar of cartesian coordiates
 #       folderName      {str}       name of folder
 #
 # Results:
@@ -553,30 +550,46 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 #       seperates density by species and tilt and order segregate 
 #       by species and tail number
 
-proc createOutfiles {system quantity headNames species tailList coordSystem folderName} {
+proc createOutfiles {quantity species tailList folderName} {
     file mkdir "${folderName}/tcl_output"
+    
     if {$quantity eq "height_density"} {
-        dict set outfiles z1z2 heights_up fname [open "${folderName}/tcl_output/${system}.zone.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z1z2 heights_down fname [open "${folderName}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z0 heights_zzero fname [open "${folderName}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.height.dat" w]
-        dict set outfiles z1z2 counts_up fname [open "${folderName}/tcl_output/${system}.zone.${headNames}.${coordSystem}.totdensity.dat" w]
-        dict set outfiles z1z2 counts_down fname [open "${folderName}/tcl_output/${system}.ztwo.${headNames}.${coordSystem}.totdensity.dat" w]
-        dict set outfiles z0 counts_zzero fname [open "${folderName}/tcl_output/${system}.zzero.${headNames}.${coordSystem}.totdensity.dat" w]
+        set height "${folderName}/tcl_output/height"
+        file mkdir $height
+        dict set outfiles z1z2 heights_up fname [open "${height}/zone.dat" w]
+        dict set outfiles z1z2 heights_down fname [open "${height}/ztwo.dat" w]
+        dict set outfiles z0 heights_zzero fname [open "${height}/zzero.dat" w]
+
+        set density "${folderName}/tcl_output/density"
+        file mkdir $density
+        file mkdir "${density}/combined"
+        dict set outfiles z1z2 counts_up fname [open "${density}/combined/zone.dat" w]
+        dict set outfiles z1z2 counts_down fname [open "${density}/combined/ztwo.dat" w]
+        dict set outfiles z0 counts_zzero fname [open "${density}/combined/zzero.dat" w]
         foreach lipidtype $species {
-            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.zone.${coordSystem}.density.dat" w]
-            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.ztwo.${coordSystem}.density.dat" w]
-            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.zzero.${coordSystem}.density.dat" w]
+            file mkdir "${density}/${lipidtype}"
+            dict set outfiles z1z2 density_up_${lipidtype} fname [open "${density}/${lipidtype}/zone.dat" w]
+            dict set outfiles z1z2 density_down_${lipidtype} fname [open "${density}/${lipidtype}/ztwo.dat" w]
+            dict set outfiles z0 density_zzero_${lipidtype} fname [open "${density}/${lipidtype}/zzero.dat" w]
         }
     } elseif {$quantity eq "tilt_order"} {
+        set order "${folderName}/tcl_output/order"
+        set tilt "${folderName}/tcl_output/tilt"
+        file mkdir $order
+        file mkdir $tilt
         for {set i 0} {$i < [llength $tailList]} {incr i} {
             set lipidtype [lindex $species $i]
             for {set j 0} {$j < [llength [lindex $tailList $i]]} {incr j} {
                 set tailnum "tail$j"
+                set order_folder "${order}/${lipidtype}/${tailnum}"
+                set tilt_folder "${tilt}/${lipidtype}/${tailnum}"
+                file mkdir $order_folder
+                file mkdir $tilt_folder
                 set taillength [llength [lindex [lindex $tailList $i] $j]]
-                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordSystem}.tilt.dat" w]
-                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordSystem}.tilt.dat" w]
-                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.zone.${coordSystem}.order.dat" w]
-                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${folderName}/tcl_output/${system}.${lipidtype}.${tailnum}.ztwo.${coordSystem}.order.dat" w]
+                dict set outfiles $taillength tilts_up_${lipidtype}_${tailnum} fname [open "${tilt_folder}/zone.dat" w]
+                dict set outfiles $taillength tilts_down_${lipidtype}_${tailnum} fname [open "${tilt_folder}/ztwo.dat" w]
+                dict set outfiles $taillength order_up_${lipidtype}_${tailnum} fname [open "${order_folder}/zone.dat" w]
+                dict set outfiles $taillength order_down_${lipidtype}_${tailnum} fname [open "${order_folder}/ztwo.dat" w]
             }
         }
     }
@@ -919,7 +932,7 @@ proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
 
 
 proc outputNougatLog {start end step species system headNames coordSystem folderName N1 N2 d1 d2} {
-    set logFile [open "${folderName}/tcl_output/${system}.${coordSystem}.log" w]
+    set logFile [open "${folderName}/tcl_output/nougat.log" w]
 
     ;# calculate average area, d1, and d2
     set binInfo [calc_bin_info $start $end $step $N1 $N2 $coordSystem $d1 $d2]
@@ -927,14 +940,15 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     set avgd1 [lindex $binInfo 1]
     set avgd2 [lindex $binInfo 2]
 
+    ;# output system info
+    puts $logFile "#NAME AND COORDINATE SYSTEM USED"
+    puts $logFile "$system"
+    puts $logFile "$coordSystem"
+    puts $logFile ""
+
     ;# output species names and bead names
     puts $logFile "#SYSTEM CONTENTS"
     puts $logFile "$species"
-    puts $logFile ""
-
-    # output headnames corresponding to each species
-    puts $logFile "#HEADNAMES"
-    puts $logFile "${species}:${headNames}"
     puts $logFile ""
 
     ;# output density normalization info
