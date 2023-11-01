@@ -115,7 +115,7 @@ def make_npy_paths(wd, system, coord, surf, quant):
     elif system == "flat":
         directory = "/flat_surface_test/"
     expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
-    test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
+    test_input = wd + directory + "test" + coordsys_path + "test." + surf + "." + coord + "." + quant + ".npy"
     return Comparison(test_input, expected)
 
 
@@ -154,7 +154,7 @@ def make_avg_paths(wd, system, coord, surf, quant):
         directory = "/flat_surface_test/"
     if quant != "avgdensity":
         expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".avg" + quant + ".dat"
-        test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + ".avg" + quant + ".dat"
+        test_input = wd + directory + "test" + coordsys_path + "test." + surf + "." + coord + ".avg" + quant + ".dat"
     elif quant == "avgdensity":
         expected = wd + directory + system + coordsys_path + system + ".DTPC." + surf + "." + coord + "." + quant + ".dat"
         test_input = wd + directory + "test" + coordsys_path + "test." + "DTPC." + surf + "." + coord + "." + quant + ".dat"
@@ -193,7 +193,7 @@ def make_tcl_paths(wd, system, coord, surf):
     elif system == "flat":
         directory = "/flat_surface_test/"
     expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".height.dat"
-    test_input = wd + directory + "test" + coordsys_path + "test." + surf + ".C1A.C1B." + coord + ".height.dat"
+    test_input = wd + directory + "test" + coordsys_path + "height/" + surf + ".dat"
     return Comparison(test_input, expected)
 
 
@@ -283,16 +283,16 @@ def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
 
 
 def test_whether_flat_cartesian(cwd):
-    Hone = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.C1A.C1B.cart.meancurvature.npy")
-    Htwo = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.C1A.C1B.cart.meancurvature.npy")
+    Hone = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.cart.meancurvature.npy")
+    Htwo = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.cart.meancurvature.npy")
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
 def test_whether_flat_polar(cwd):
-    Hone = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.zone.C1A.C1B.polar.meancurvature.npy")
-    Htwo = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.ztwo.C1A.C1B.polar.meancurvature.npy")
+    Hone = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.zone.polar.meancurvature.npy")
+    Htwo = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.ztwo.polar.meancurvature.npy")
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
