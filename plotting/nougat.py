@@ -68,9 +68,8 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     # analyze height
     system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, field_list)
 
-    for bead in system_dict['headnames'].values():
-        calculate_thickness(sys_name, bead, coordsys, inclusion, hmap_dims, config_dict)
-        calculate_curvature(sys_name, bead, coordsys, field_list, system_dict)
+    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, config_dict)
+    calculate_curvature(sys_name, coordsys, field_list, system_dict)
 
     calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict)
     calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict)
@@ -78,27 +77,28 @@ def run_nougat(polar, inclusion_drawn, config_dict):
 
     calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 
+
+"""
     for species in system_dict['headnames'].keys():
-        bead = system_dict['headnames'][species]
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
-                print(sys_name, field, bead, coordsys, quantity)
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + "." + quantity + ".dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, bead, coordsys)
-                save_figure(bead, sys_name, field, coordsys, quantity)
+                print(sys_name, field, coordsys, quantity)
+                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + "." + quantity + ".dat", delimiter=",")
+                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, coordsys)
+                save_figure(sys_name, field, coordsys, quantity)
         for field in ["zone", "ztwo", "whole"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + bead + "." + coordsys + ".avgthickness.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", bead, coordsys)
-            save_figure(bead, sys_name, field, coordsys, "avg_thickness")
+            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + ".avgthickness.dat", delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", coordsys)
+            save_figure(sys_name, field, coordsys, "avg_thickness")
         for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + "." + field + "." + coordsys + ".avgdensity.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgdensity", bead, coordsys)
-            save_figure(bead, sys_name, field, coordsys, "avgdensity")
+            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgdensity", coordsys)
+            save_figure(sys_name, field, coordsys, "avgdensity")
             for tail in range(system_dict['ntails'][species]):
                 hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", bead, coordsys)
-                save_figure(bead, sys_name, field, coordsys, "avgorder")
-
+                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
+                plt.savefig('pdf/' + sys_name + "_" + field + "_" + coordsys + "tail" + str(tail) + "_avgorder.pdf")
+"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")

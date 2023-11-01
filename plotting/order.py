@@ -12,7 +12,7 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict
     for species in system_dict['species']:
         for tail in range(system_dict['ntails'][species]):
             for leaflet in ["zone", "ztwo"]:
-                order_file = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.tail' + str(tail) + '.' + leaflet + '.' + coordsys + '.order.dat', missing_values='nan', filling_values=np.nan)
+                order_file = np.genfromtxt('tcl_output/order/' + species + '/tail' + str(tail) + '/' + leaflet + '.dat', missing_values='nan', filling_values=np.nan)
 
                 # create a new array that has each frame in a different array level
                 order_array = np.zeros((Nframes, N1_bins, N2_bins))

@@ -12,7 +12,7 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dic
 
     for species in names_dict['species']:
         for leaflet in ["zone", "ztwo"]:
-            data = np.genfromtxt('tcl_output/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.dat', missing_values='nan', filling_values="0")
+            data = np.genfromtxt('tcl_output/density/' + species + '/' + leaflet + '.dat', missing_values='nan', filling_values="0")
 
             # create a new array that has each frame in a different array level
             density_array = np.zeros((Nframes, N1_bins, N2_bins))

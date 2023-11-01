@@ -236,16 +236,13 @@ def mostly_empty(data_array):
     return data_array
 
 
-def read_log(sys_name, coordsys):
+def read_log():
     """
     Read log file output by nougat.tcl and save important info for later.
 
     Parameters
     ----------
-    sys_name : STRING
-        The name of the system you designated with nougat.tcl and nougat.py.
-    coordsys : STRING
-        'cart' or 'polar'.
+    None.
 
     Returns
     -------
@@ -270,6 +267,14 @@ def read_log(sys_name, coordsys):
         for species in lines[species_start_line + 1].split(' '):
             species_list.append(species)
         system_dict["species"] = species_list
+
+        # get number of tails on each lipid
+        tails_start_line = lines.index("#NUMBER OF TAILS") + 1
+        system_dict["ntails"] = {}
+        for line in range(len(system_dict["species"])):
+            names_line = lines[tails_start_line].split(':')
+            system_dict["ntails"][names_line[0]] = int(names_line[1])
+            tails_start_line += 1
 
         # get density norm info from density section
         density_start_line = lines.index("#DENSITY NORMALIZATION") + 1
@@ -409,35 +414,6 @@ def draw_protein(protein, coordsys):
     #    ax.add_artist(circle1)
 
 
-def save_figure(bead, name, field, coordsys, dataname):
-    """
-    Save the current figure.
-
-    Parameters
-    ----------
-    bead : string or False
-        if bead specified, name of bead; else False
-    name : string
-        the system name you gave nougat.py
-    field : string
-        usually describes which membrane field (z1, z2, etc) to be heatmapped
-    coordsys : string
-        "cart" or "polar"
-    dataname : string
-        the type of measurement (thickness, height, curvature, etc)
-
-    Returns
-    -------
-    None.
-
-    """
-    if bead is False:
-        plt.savefig('pdf/' + name + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
-    else:
-        plt.savefig('pdf/' + name + "_" + bead + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
-    plt.close()
-
-
 def convert_to_cart(rval, thetaval):
     """
     Convert from polar to cartesian coordinates.
@@ -575,14 +551,14 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
 
     """
     # load height and curvature data
-    z_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.height.npy')
-    z_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.height.npy')
-    z_0 = np.load(path + '/npy/' + system + '.zzero.C1A.C1B.' + coordsys + '.height.npy')
-    z_plus = np.load(path + '/npy/' + system + '.zplus.C1A.C1B.' + coordsys + '.height.npy')
-    H_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.meancurvature.npy')
-    H_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.meancurvature.npy')
-    K_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.gausscurvature.npy')
-    K_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.gausscurvature.npy')
+    z_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.height.npy')
+    z_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.height.npy')
+    z_0 = np.load(path + '/npy/' + system + '.zzero.' + coordsys + '.height.npy')
+    z_plus = np.load(path + '/npy/' + system + '.zplus.' + coordsys + '.height.npy')
+    H_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.meancurvature.npy')
+    H_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.meancurvature.npy')
+    K_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.gausscurvature.npy')
+    K_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.gausscurvature.npy')
 
     # measure terms of interest
     # removed z_minus terms until we have a better way of computing t0

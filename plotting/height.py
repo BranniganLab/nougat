@@ -4,13 +4,12 @@ import numpy as np
 from utils import *
 
 
-def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, coordsys):
+def Make_surface_PDB(data, name, field, d1, d2, f, serial, coordsys):
     resseqnum = 1
     atom_name = 'SURF'
     chain = 'X'
     row, col = data.shape
-    beadnum = str(bead[1])
-    beadname = "C" + beadnum + "  "
+    beadname = "C1" + "  "
 
     for d1bin in range(row):
         for d2bin in range(col):
@@ -36,22 +35,22 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, bead, coordsys):
     return serial
 
 
-def calculate_zplus(sys_name, bead, coordsys, inclusion, serial, pdb, d1, d2):
-    zone = np.load('npy/' + sys_name + '.zone.' + bead + '.' + coordsys + '.height.npy')
-    ztwo = np.load('npy/' + sys_name + '.ztwo.' + bead + '.' + coordsys + '.height.npy')
+def calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2):
+    zone = np.load('npy/' + sys_name + '.zone.' + coordsys + '.height.npy')
+    ztwo = np.load('npy/' + sys_name + '.ztwo.' + coordsys + '.height.npy')
 
     zplus = (zone + ztwo) / 2
 
     avgzplus = calc_avg_over_time(zplus)
 
     # save as file for debugging / analysis AND make PDB!
-    np.save('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.height.npy', zplus)
-    np.save('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight.npy', avgzplus)
-    np.savetxt('dat/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight.dat', avgzplus, delimiter=',', fmt='%10.5f')
+    np.save('npy/' + sys_name + '.zplus.' + coordsys + '.height.npy', zplus)
+    np.save('npy/' + sys_name + '.zplus.' + coordsys + '.avgheight.npy', avgzplus)
+    np.savetxt('dat/' + sys_name + '.zplus.' + coordsys + '.avgheight.dat', avgzplus, delimiter=',', fmt='%10.5f')
     if coordsys == "polar":
-        avg_over_theta('npy/' + sys_name + '.zplus.' + bead + '.' + coordsys + '.avgheight')
-    serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, bead, coordsys)
-    print(sys_name + ' ' + bead + " zplus height done!")
+        avg_over_theta('npy/' + sys_name + '.zplus.' + coordsys + '.avgheight')
+    serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, coordsys)
+    print(sys_name + " zplus height done!")
 
 
 def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
@@ -70,41 +69,41 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
         print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
 
         # do height analysis
-        for bead in system_dict['headnames'].values():
-            for field in field_list:
 
-                # import traj values
-                height_data = np.genfromtxt('tcl_output/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.dat', missing_values='nan', filling_values=np.nan)
-                Nframes = int(np.shape(height_data)[0] / N1_bins)
+        for field in field_list:
 
-                if 'nframes' in system_dict['bin_info']:
-                    # error check: do we get the same nframes from each field?
-                    if Nframes != system_dict['bin_info']['nframes']:
-                        raise Exception
-                else:
-                    system_dict['bin_info']['nframes'] = Nframes
+            # import traj values
+            height_data = np.genfromtxt('tcl_output/height/' + field + '.dat', missing_values='nan', filling_values=np.nan)
+            Nframes = int(np.shape(height_data)[0] / N1_bins)
 
-                # create a new array that has each frame in a different array level
-                height = np.zeros((Nframes, N1_bins, N2_bins))
-                for frm in range(Nframes):
-                    height[frm, :, :] = height_data[frm * N1_bins: (frm + 1) * N1_bins, 2:]
+            if 'nframes' in system_dict['bin_info']:
+                # error check: do we get the same nframes from each field?
+                if Nframes != system_dict['bin_info']['nframes']:
+                    raise Exception
+            else:
+                system_dict['bin_info']['nframes'] = Nframes
 
-                # if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
-                pruned_height = mostly_empty(height)
+            # create a new array that has each frame in a different array level
+            height = np.zeros((Nframes, N1_bins, N2_bins))
+            for frm in range(Nframes):
+                height[frm, :, :] = height_data[frm * N1_bins: (frm + 1) * N1_bins, 2:]
 
-                # take the average height over all frames
-                avgHeight = calc_avg_over_time(pruned_height)
+            # if a bin is occupied <10% of the time, it shouldn't be treated as part of the membrane
+            pruned_height = mostly_empty(height)
 
-                # save as file for debugging / analysis AND make PDB!
-                np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.npy', pruned_height)
-                np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight.npy', avgHeight)
-                if coordsys == "polar":
-                    avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight')
-                np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgheight.dat', avgHeight, delimiter=',', fmt='%10.5f')
-                serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, bead, coordsys)
-                print(sys_name + ' ' + bead + ' ' + field + " height done!")
+            # take the average height over all frames
+            avgHeight = calc_avg_over_time(pruned_height)
 
-            calculate_zplus(sys_name, bead, coordsys, inclusion, serial, pdb, d1, d2)
+            # save as file for debugging / analysis AND make PDB!
+            np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.height.npy', pruned_height)
+            np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgheight.npy', avgHeight)
+            if coordsys == "polar":
+                avg_over_theta('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgheight')
+            np.savetxt('dat/' + sys_name + '.' + field + '.' + coordsys + '.avgheight.dat', avgHeight, delimiter=',', fmt='%10.5f')
+            serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, coordsys)
+            print(sys_name + ' ' + field + " height done!")
+
+        calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2)
 
         # print last line of pdb file
         print('END', file=pdb)
