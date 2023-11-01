@@ -217,7 +217,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
     ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height_density"} {
-        outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
+        outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] [dict get $config_dict acyl_names] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
         
         ;# this will only work if your TMD helices are set to occupancy 1
         ;# all it does is put a dot on the polar heatmap where a TMD helix should be, so not essential at all

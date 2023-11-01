@@ -931,7 +931,7 @@ proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
 }
 
 
-proc outputNougatLog {start end step species system headNames coordSystem folderName N1 N2 d1 d2} {
+proc outputNougatLog {start end step species tailList system headNames coordSystem folderName N1 N2 d1 d2} {
     set logFile [open "${folderName}/tcl_output/nougat.log" w]
 
     ;# calculate average area, d1, and d2
@@ -949,6 +949,15 @@ proc outputNougatLog {start end step species system headNames coordSystem folder
     ;# output species names and bead names
     puts $logFile "#SYSTEM CONTENTS"
     puts $logFile "$species"
+    puts $logFile ""
+
+    ;# output density normalization info
+    puts $logFile "#NUMBER OF TAILS"
+    for {set i 0} {$i < [llength $tailList]} {incr i} {
+        set lipidtype [lindex $species $i]
+        set ntails [llength [lindex $tailList $i]]
+        puts $logFile "${lipidtype}:${ntails}"
+    }
     puts $logFile ""
 
     ;# output density normalization info
