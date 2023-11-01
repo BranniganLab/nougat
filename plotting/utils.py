@@ -258,24 +258,18 @@ def read_log(sys_name, coordsys):
     system_dict = {}
 
     # open log file
-    with open("tcl_output/" + sys_name + "." + coordsys + ".log", "r+") as log_file:
+    with open("tcl_output/nougat.log", "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
+        system_dict["sysname"] = lines[1]
+        system_dict["coordsys"] = lines[2]
+
         species_list = []
-        # get all lipid species names from line 2
-        for species in lines[1].split(' '):
+        # get all lipid species names from species section
+        species_start_line = lines.index("#SYSTEM CONTENTS")
+        for species in lines[species_start_line + 1].split(' '):
             species_list.append(species)
         system_dict["species"] = species_list
-
-        # get headnames from headnames section
-        headnames_start_line = lines.index("#HEADNAMES") + 1
-        system_dict['headnames'] = {}
-        system_dict['ntails'] = {}
-        for line in range(len(system_dict["species"])):
-            names_line = lines[headnames_start_line].split(':')
-            system_dict['ntails'][names_line[0]] = len(names_line[1].split(" "))
-            system_dict["headnames"][names_line[0]] = ".".join(names_line[1].split(" "))
-            headnames_start_line += 1
 
         # get density norm info from density section
         density_start_line = lines.index("#DENSITY NORMALIZATION") + 1

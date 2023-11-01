@@ -5,7 +5,8 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import argparse
-import os
+from pathlib import Path
+
 import numpy as np
 from height import *
 from thickness import *
@@ -16,14 +17,12 @@ from order import *
 from utils import *
 
 
-def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
+def run_nougat(polar, inclusion_drawn, config_dict):
     """
     Run nougat's averaging and image processing routines.
 
     Parameters
     ----------
-    sys_name : string
-        The name assigned to the nougat.tcl run
     polar : boolean
         True for polar coordinate system; False for cartesian
     inclusion_drawn : boolean
@@ -37,7 +36,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
     None.
 
     """
-    cwd = os.getcwd()
+    cwd = Path.cwd()
 
     for filetype in ["npy", "dat", "pdf"]:
         dirname = os.path.join(cwd, filetype)
@@ -60,6 +59,7 @@ def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
 
     # figure out all the important info about the system you'll need
     system_dict = read_log(sys_name, coordsys)
+    sys_name = system_dict["sysname"]
     save_areas(system_dict['bin_info']['N1'], system_dict['bin_info']['d1'], system_dict['bin_info']['N2'], system_dict['bin_info']['d2'], 0, coordsys, sys_name)
 
     # prep heatmap plot dimensions
