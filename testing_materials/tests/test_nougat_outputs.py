@@ -192,7 +192,7 @@ def make_tcl_paths(wd, system, coord, surf):
         directory = "/E-protein_trajectory/"
     elif system == "flat":
         directory = "/flat_surface_test/"
-    expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".height.dat"
+    expected = wd + directory + system + coordsys_path + "height/" + surf + ".dat"
     test_input = wd + directory + "test" + coordsys_path + "height/" + surf + ".dat"
     return Comparison(test_input, expected)
 
