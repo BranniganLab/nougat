@@ -7,7 +7,7 @@ Created on Fri Jul 21 11:18:40 2023.
 import pytest
 import numpy as np
 import os
-import pathlib
+from pathlib import Path
 from collections import namedtuple
 
 
@@ -22,7 +22,7 @@ def cwd():
     Get current working directory.
 
     """
-    return os.getcwd()
+    return Path.cwd()
 
 
 @pytest.fixture(scope='function', params=["cart", "polar"])
@@ -107,15 +107,15 @@ def make_npy_paths(wd, system, coord, surf, quant):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/npy/"
+        coordsys_path = "_cart_5_5_0_-1_1/npy"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/npy/"
+        coordsys_path = "_polar_3_12_0_-1_1/npy"
     if system == "E-protein":
-        directory = "/E-protein_trajectory/"
+        directory = "E-protein_trajectory"
     elif system == "flat":
-        directory = "/flat_surface_test/"
-    expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy"
-    test_input = wd + directory + "test" + coordsys_path + "test." + surf + "." + coord + "." + quant + ".npy"
+        directory = "flat_surface_test"
+    expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy")
+    test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + "." + quant + ".npy")
     return Comparison(test_input, expected)
 
 
@@ -145,19 +145,19 @@ def make_avg_paths(wd, system, coord, surf, quant):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/dat/"
+        coordsys_path = "_cart_5_5_0_-1_1/dat"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/dat/"
+        coordsys_path = "_polar_3_12_0_-1_1/dat"
     if system == "E-protein":
-        directory = "/E-protein_trajectory/"
+        directory = "E-protein_trajectory"
     elif system == "flat":
-        directory = "/flat_surface_test/"
+        directory = "flat_surface_test"
     if quant != "avgdensity":
-        expected = wd + directory + system + coordsys_path + system + "." + surf + ".C1A.C1B." + coord + ".avg" + quant + ".dat"
-        test_input = wd + directory + "test" + coordsys_path + "test." + surf + "." + coord + ".avg" + quant + ".dat"
+        expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + ".C1A.C1B." + coord + ".avg" + quant + ".dat")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + ".avg" + quant + ".dat")
     elif quant == "avgdensity":
-        expected = wd + directory + system + coordsys_path + system + ".DTPC." + surf + "." + coord + "." + quant + ".dat"
-        test_input = wd + directory + "test" + coordsys_path + "test." + "DTPC." + surf + "." + coord + "." + quant + ".dat"
+        expected = wd.joinpath(directory, system + coordsys_path, system + ".DTPC." + surf + "." + coord + "." + quant + ".dat")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + "DTPC." + surf + "." + coord + "." + quant + ".dat")
     return Comparison(test_input, expected)
 
 
@@ -174,7 +174,7 @@ def make_tcl_paths(wd, system, coord, surf):
     coord: string
         Coordinate system; 'cart' or 'polar'
     surf: sring
-        The membrane surface in question (z1, z2, z0, or z +)
+        The membrane surface in question (z1, z2, z0, or z+)
 
     Returns
     -------
@@ -185,16 +185,16 @@ def make_tcl_paths(wd, system, coord, surf):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/tcl_output/"
+        coordsys_path = "_cart_5_5_0_-1_1/tcl_output"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/tcl_output/"
+        coordsys_path = "_polar_3_12_0_-1_1/tcl_output"
     if system == "E-protein":
-        directory = "/E-protein_trajectory/"
+        directory = "E-protein_trajectory"
     elif system == "flat":
-        directory = "/flat_surface_test/"
-    expected = wd + directory + system + coordsys_path + "height/" + surf + ".dat"
-    test_input = wd + directory + "test" + coordsys_path + "height/" + surf + ".dat"
-    return Comparison(test_input, expected)
+        directory = "flat_surface_test"
+    expected = wd.joinpath(directory, system + coordsys_path, "height", surf + ".dat")
+    test_input = wd.joinpath(directory, system + coordsys_path, "height", surf + ".dat")
+    return Comparison(test_input.resolve(), expected.resolve())
 
 
 def arrays_equal(paths, filetype, tolerance):
@@ -240,6 +240,7 @@ def arrays_equal(paths, filetype, tolerance):
 
 def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
     paths = make_tcl_paths(cwd, system, coordsys, surface2)
+    print(paths)
     assert arrays_equal(paths, 'dat', 1e-11)
 
 # Still needed: density, order, tilt tests
@@ -262,8 +263,8 @@ def test_if_densities_match(cwd, coordsys, surface2):
         coordsys_path = "_cart_5_5_0_-1_1/npy/"
     elif coordsys == "polar":
         coordsys_path = "_polar_3_12_0_-1_1/npy/"
-    exp = cwd + "/E-protein_trajectory/E-protein" + coordsys_path + "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy"
-    test = cwd + "/E-protein_trajectory/test" + coordsys_path + "test.DTPC." + surface2 + "." + coordsys + ".density.npy"
+    exp = cwd.joinpath("E-protein_trajectory/E-protein" + coordsys_path, "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy")
+    test = cwd.joinpath("E-protein_trajectory/test" + coordsys_path, "test.DTPC." + surface2 + "." + coordsys + ".density.npy")
     paths = Comparison(test, exp)
     assert arrays_equal(paths, 'npy', 1e-11)
 
@@ -283,16 +284,16 @@ def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
 
 
 def test_whether_flat_cartesian(cwd):
-    Hone = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.cart.meancurvature.npy")
-    Htwo = np.load(cwd + "/flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.cart.meancurvature.npy")
+    Hone = np.load(cwd.joinpath("flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.cart.meancurvature.npy"))
+    Htwo = np.load(cwd.joinpath("flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.cart.meancurvature.npy"))
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
 def test_whether_flat_polar(cwd):
-    Hone = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.zone.polar.meancurvature.npy")
-    Htwo = np.load(cwd + "/flat_surface_test/test_polar_3_12_0_-1_1/npy/test.ztwo.polar.meancurvature.npy")
+    Hone = np.load(cwd.joinpath("flat_surface_test/test_polar_3_12_0_-1_1/npy/test.zone.polar.meancurvature.npy"))
+    Htwo = np.load(cwd.joinpath("flat_surface_test/test_polar_3_12_0_-1_1/npy/test.ztwo.polar.meancurvature.npy"))
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
