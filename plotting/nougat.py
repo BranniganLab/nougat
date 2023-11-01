@@ -58,7 +58,7 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     field_list = ["zone", "ztwo", "zzero"]
 
     # figure out all the important info about the system you'll need
-    system_dict = read_log(sys_name, coordsys)
+    system_dict = read_log()
     sys_name = system_dict["sysname"]
     save_areas(system_dict['bin_info']['N1'], system_dict['bin_info']['d1'], system_dict['bin_info']['N2'], system_dict['bin_info']['d2'], 0, coordsys, sys_name)
 
@@ -102,7 +102,6 @@ def run_nougat(polar, inclusion_drawn, config_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
-    parser.add_argument("sys_name", help="what system did you name this?")
     parser.add_argument("config", help="what config file should nougat use?")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
@@ -110,6 +109,6 @@ if __name__ == "__main__":
 
     config_dict = read_config(args.config)
 
-    run_nougat(args.sys_name, args.polar, False, config_dict)
+    run_nougat(args.polar, False, config_dict)
 
     print("Thank you for using nougat!")

@@ -735,13 +735,13 @@ def compare_APLs(names, path):
 
     fig, ax = plt.subplots()
     for name in names:
-        APL_traj = np.loadtxt(path + name + "/" + name + ".APL.traj")
+        APL_traj = np.loadtxt(path + name + "/" + name + ".area.traj")
         X = APL_traj[:, 0]
         Y = APL_traj[:, 1]
-        ax.plot(X, rollingavg(Y, 20), color=APL_color_dict[name])
+        # ax.plot(X, rollingavg(Y, 20), color=APL_color_dict[name])
     ax.legend(names)
     fig.supxlabel(r'$t \;(\mathrm{frames})$')
-    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
+    fig.supylabel(r'$\mathrm{Area} \;(\mathrm{\dot A^2})$')
     plt.savefig(path + "comparison.APL_traj.pdf", dpi=700)
     plt.clf()
     plt.close()
