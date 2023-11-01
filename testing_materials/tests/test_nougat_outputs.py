@@ -113,7 +113,7 @@ def make_npy_paths(wd, system, coord, surf, quant):
         directory = "E-protein_trajectory"
     elif system == "flat":
         directory = "flat_surface_test"
-    expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + ".C1A.C1B." + coord + "." + quant + ".npy")
+    expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + "." + coord + "." + quant + ".npy")
     test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + "." + quant + ".npy")
     return Comparison(test_input, expected)
 
@@ -152,7 +152,7 @@ def make_avg_paths(wd, system, coord, surf, quant):
     elif system == "flat":
         directory = "flat_surface_test"
     if quant != "avgdensity":
-        expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + ".C1A.C1B." + coord + ".avg" + quant + ".dat")
+        expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + "." + coord + ".avg" + quant + ".dat")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + ".avg" + quant + ".dat")
     elif quant == "avgdensity":
         expected = wd.joinpath(directory, system + coordsys_path, system + ".DTPC." + surf + "." + coord + "." + quant + ".dat")
