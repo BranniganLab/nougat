@@ -6,7 +6,6 @@ Created on Fri Jul 21 11:18:40 2023.
 
 import pytest
 import numpy as np
-import os
 from pathlib import Path
 from collections import namedtuple
 
