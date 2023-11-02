@@ -235,3 +235,43 @@ def test_one_frame():
         data_array = np.ones((3, 3, 1))
         result = utils.mostly_empty(data_array)
         assert np.array_equal(result, data_array, equal_nan=True)
+
+def test_convert_to_cart_positive():
+        assert utils.convert_to_cart(1, 0) == (1, 0)
+        assert ("{:.5f}".format(utils.convert_to_cart(2, np.pi/4)[0]),"{:.5f}".format(utils.convert_to_cart(2, np.pi/4)[1])) == ("{:.5f}".format(np.sqrt(2)), "{:.5f}".format(np.sqrt(2)))
+        assert ("{:.0f}".format(utils.convert_to_cart(3, np.pi/2)[0]),"{:.0f}".format(utils.convert_to_cart(3, np.pi/2)[1])) == ('0', '3')
+
+def test_convert_to_cart_type_error():
+        with pytest.raises(TypeError):
+            utils.convert_to_cart("1", np.pi/6)
+        with pytest.raises(TypeError):
+            utils.convert_to_cart(2, "0")
+        with pytest.raises(TypeError):
+            utils.convert_to_cart("3", "0")
+        with pytest.raises(TypeError):
+            utils.convert_to_cart("4", "1")
+
+def test_positive_float_input():
+        result = utils.coord_format(12.345)
+        assert isinstance(result, str)
+        assert len(result) == 8
+        assert result[4] == '.'
+        assert result[5:] == '345'
+
+def test_negative_float_input():
+        result = utils.coord_format(-12.345)
+        assert isinstance(result, str)
+        assert len(result) == 8
+        assert result[4] == '.'
+        assert result[5:] == '345'
+
+def test_integer_value():
+        assert utils.bin_format(10) == ' 10.00'
+
+# Returns a string with no spaces and the value with .00 appended to the end when given a zero value.
+def test_zero_value():
+        assert utils.bin_format(0) == '  0.00'
+    
+# Returns a string with two spaces and the value with .00 appended to the end when given a single-digit integer value.
+def test_single_digit_integer_value():
+        assert utils.bin_format(5) == '  5.00'
