@@ -638,9 +638,9 @@ def plot_APL(path, sysname):
     APL_traj = np.loadtxt(path + sysname + ".APL.traj")
     fig, ax = plt.subplots(layout='constrained')
     X = APL_traj[:, 0]
-    Y = APL_traj[:, 1]
-    ax.plot(X, Y, color="blue")
-    ax.plot(X, rollingavg(Y, 20), color="red")
+    area = APL_traj[:, 1]
+    ax.plot(X, area, color="blue")
+    ax.plot(X, rollingavg(area, 20), color="red")
     ax.legend(["Raw", "Rolling Average (20)"])
     fig.supxlabel(r'$t \;(\mathrm{frames})$')
     fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
@@ -692,7 +692,7 @@ def plot_asymm_over_traj(path, sysname):
     plt.savefig(path + sysname + ".asymm_traj.pdf", dpi=700)
 
 
-def compare_APLs(names, path):
+def compare_APLs(names, paths):
     """
     Create plot of average APL for several different systems
 
@@ -710,15 +710,22 @@ def compare_APLs(names, path):
     """
 
     fig, ax = plt.subplots()
-    for name in names:
-        APL_traj = np.loadtxt(path + name + "/" + name + ".APL.traj")
+    for name, path in zip(names, paths):
+        APL_traj = np.loadtxt(path + name + ".APL.traj")
         X = APL_traj[:, 0]
-        Y = APL_traj[:, 1]
-        ax.plot(X, rollingavg(Y, 20), color=APL_color_dict[name])
-    ax.legend(names)
-    fig.supxlabel(r'$t \;(\mathrm{frames})$')
-    fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
-    plt.savefig(path + "comparison.APL_traj.pdf", dpi=700)
+        if name in ["COMtiltspin", "new_gmx"]:
+            X = X / 10.
+        else:
+            X = X / 2.
+        area = APL_traj[:, 1]
+        area = area / 100.0
+        ax.plot(X, area, color=APL_color_dict[name])
+        # ax.plot(X, rollingavg(area, 20), color=APL_color_dict[name])
+    # ax.legend(names)
+    ax.legend(["elastic network, immobilized protein, 5000kJ/mol", "absolute position restraint", "elastic network, mobile protein, 100kJ/mol", "elastic network, mobile protein, 250kJ/mol", "elastic network, mobile protein, 500kJ/mol", "elastic network, mobile protein, 1000kJ/mol", "elastic network, mobile protein, 5000kJ/mol"])
+    fig.supxlabel(r'$t \;(\mathrm{ns})$')
+    fig.supylabel(r'$\mathrm{Area} \;(\mathrm{nm}^2)$')
+    plt.savefig(path + "comparison.area.pdf", dpi=700)
     plt.clf()
     plt.close()
 
@@ -761,7 +768,15 @@ APL_color_dict = {
     "2048": "yellow",
     "4096": "green",
     "8192": "blue",
-    "32768": "purple"}
+    "32768": "purple",
+    "COMtiltspin": "black",
+    "new_gmx": "grey",
+    "100": "red",
+    "250": "orange",
+    "500": "green",
+    "1000": "blue",
+    "5000": "purple"
+}
 
 colordict = {
     "DT": "red",
@@ -878,6 +893,9 @@ paths = ["/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1", "/home/js274
 nougvals = ["_polar_5_10_100_-1_1", "_polar_5_10_0_-1_1"]
 bulkpath = "/home/js2746/Bending/PC/whole_mols/empty"
 bulknougvals = "_polar_5_10_0_-1_1"
+area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/", "/home/jesse/research/5x29_stiffness/100/", "/home/jesse/research/5x29_stiffness/250/", "/home/jesse/research/5x29_stiffness/500/", "/home/jesse/research/5x29_stiffness/1000/", "/home/jesse/research/5x29_stiffness/5000/"]
+# area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/"]
+# area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/",]
 
 if __name__ == "__main__":
     # for mol, path in zip(mols, paths):
@@ -889,9 +907,11 @@ if __name__ == "__main__":
     # run_eps_corr_scatter(mol)
     # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_cart_10_10_0_-1_1/npy/", "cart")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
-    # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
-    # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    # plot_APL("/home/jesse/research/COMtiltspin/", 'COMtiltspin')
+    compare_APLs(["COMtiltspin", "new_gmx", "100", "250", "500", "1000", "5000"], area_paths)
+    # compare_APLs(["COMtiltspin", "new_gmx", "100", "250", "500", "1000", "5000"], area_paths)
+    # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], ["/home/js2746/KC_project/"])
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    make_paper_writing_group_plot("unsat")
-    make_paper_writing_group_plot("sat")
+    # make_paper_writing_group_plot("unsat")
+    # make_paper_writing_group_plot("sat")
