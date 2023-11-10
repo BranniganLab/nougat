@@ -225,9 +225,10 @@ proc measure_area_APL_over_traj {sys_name lipids} {
     set sel [atomselect top "resname $lipids"]
     set num_lipids_per_leaf [expr [count_lipids $sel] / 2.0]
     for {set i 0} {$i < $nframes} {incr i} {
+        set z [molinfo top get c frame $i]
         set area [expr [molinfo top get a frame $i]*[molinfo top get b frame $i]]
         set apl [expr $area / $num_lipids_per_leaf]
-        puts $outfile "$i    $area    $apl"
+        puts $outfile "$i    $area    $apl    $z"
     }
     close $outfile
 }
