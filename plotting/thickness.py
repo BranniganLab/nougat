@@ -1,13 +1,14 @@
 """Functions related to calculating thickness."""
 import numpy as np
+from pathlib import Path
 from utils import *
 
 
-def calculate_thickness(sys_name, coordsys, inclusion, dims, scale_dict):
+def calculate_thickness(sys_name, coordsys, inclusion, dims, scale_dict, cwd):
     dim1vals, dim2vals = dims
-    zone = np.load('npy/' + sys_name + '.zone.' + coordsys + '.height.npy')
-    ztwo = np.load('npy/' + sys_name + '.ztwo.' + coordsys + '.height.npy')
-    zzero = np.load('npy/' + sys_name + '.zzero.' + coordsys + '.height.npy')
+    zone = np.load(cwd.joinpath("trajectory", "height", "zone.npy"))
+    ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
+    zzero = np.load(cwd.joinpath("trajectory", "height", "zzero.npy"))
 
     for leaflet in ["zone", "ztwo", "whole"]:
         if leaflet == "zone":
@@ -30,10 +31,10 @@ def calculate_thickness(sys_name, coordsys, inclusion, dims, scale_dict):
         # plot_maker(dim1vals, dim2vals, avgthickness, sys_name, leaflet, scale_dict["thick_max"], scale_dict["thick_min"], inclusion, "avgThickness", bead, coordsys, scale_dict)
 
         # save as file for debugging / analysis!
-        np.save('npy/' + sys_name + '.' + leaflet + '.' + coordsys + '.thickness.npy', thickness)
-        np.save('npy/' + sys_name + '.' + leaflet + '.' + coordsys + '.avgthickness.npy', avgthickness)
+        np.save(cwd.joinpath("trajectory", "thickness", field + ".npy"), thickness)
+        np.save(cwd.joinpath("average", "thickness", field + ".npy"), avgthickness)
         if coordsys == "polar":
-            avg_over_theta('npy/' + sys_name + '.' + leaflet + '.' + coordsys + '.avgthickness')
-        np.savetxt('dat/' + sys_name + '.' + leaflet + '.' + coordsys + '.avgthickness.dat', avgthickness, delimiter=',', fmt='%10.5f')
+            avg_over_theta(cwd.joinpath("average", "thickness", field))
+        np.savetxt(cwd.joinpath("average", "thickness", field + ".dat"), avgthickness, delimiter=',', fmt='%10.5f')
 
     print(sys_name + " thickness done!")

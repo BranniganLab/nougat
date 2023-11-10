@@ -1,9 +1,10 @@
 """Functions related to calculating order parameters."""
 import numpy as np
+from pathlib import Path
 from utils import *
 
 
-def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict):
+def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict, cwd):
     N1_bins = system_dict['bin_info']['N1']
     N2_bins = system_dict['bin_info']['N2']
     Nframes = system_dict['bin_info']['nframes']
@@ -12,7 +13,11 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict
     for species in system_dict['species']:
         for tail in range(system_dict['ntails'][species]):
             for leaflet in ["zone", "ztwo"]:
-                order_file = np.genfromtxt('tcl_output/order/' + species + '/tail' + str(tail) + '/' + leaflet + '.dat', missing_values='nan', filling_values=np.nan)
+                for folder in ["trajectory", "average"]:
+                    dirname = cwd.joinpath(folder, "order", species, "tail" + str(tail))
+                    dirname.mkdir(parents=True, exist_ok=True)
+
+                order_file = np.genfromtxt(cwd.joinpath("tcl_output", "order", species, "tail" + str(tail), leaflet + ".dat"), missing_values='nan', filling_values=np.nan)
 
                 # create a new array that has each frame in a different array level
                 order_array = np.zeros((Nframes, N1_bins, N2_bins))
@@ -27,11 +32,11 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict
                 # plot_maker(dim1vals, dim2vals, avgorder, sys_name, species + '.tail' + str(tail) + '.zone''.' + leaflet, scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys, scale_dict)
 
                 # save as file for debugging / analysis
-                np.save('npy/' + sys_name + '.' + species + '.tail' + str(tail) + '.' + leaflet + '.' + coordsys + '.order.npy', order_array_pruned)
-                np.save('npy/' + sys_name + '.' + species + '.tail' + str(tail) + '.' + leaflet + '.' + coordsys + '.avgorder.npy', avgorder)
+                np.save(cwd.joinpath("trajectory", "order", species, "tail" + str(tail), leaflet + ".npy"), order_array_pruned)
+                np.save(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".npy"), avgorder)
                 if coordsys == "polar":
-                    avg_over_theta('npy/' + sys_name + '.' + species + '.tail' + str(tail) + '.' + leaflet + '.' + coordsys + '.avgorder')
-                np.savetxt('dat/' + sys_name + '.' + species + '.tail' + str(tail) + '.' + leaflet + '.' + coordsys + '.avgOrder.dat', avgorder, delimiter=',', fmt='%10.5f')
+                    avg_over_theta(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet))
+                np.savetxt(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".dat"), avgorder, delimiter=',', fmt='%10.5f')
 
             print(sys_name + ' ' + species + " tail" + str(tail) + " order done!")
 

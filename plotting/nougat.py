@@ -36,44 +36,49 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     None.
 
     """
+
+    # make necessary folders
     cwd = Path.cwd()
+    for filetype in ["trajectory", "average"]:
+        for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
+            if quantity == "curvature":
+                for curv in ["mean", "gaussian", "normal_vectors"]:
+                    dirname = cwd.joinpath(filetype, quantity, curv)
+                    dirname.mkdir(parents=True, exist_ok=True)
+            else:
+                dirname = cwd.joinpath(filetype, quantity)
+                dirname.mkdir(parents=True, exist_ok=True)
 
-    for filetype in ["npy", "dat", "pdf"]:
-        dirname = os.path.join(cwd, filetype)
-        try:
-            os.mkdir(dirname)
-        except OSError:
-            continue
-
+    # define inclusion if present
     if inclusion_drawn is True:
         inclusion = add_inclusion(name, field_list)  # this proc doesn't exist yet!
     else:
         inclusion = False
 
+    # TO DO: eliminate coordsys
     if polar is True:
         coordsys = 'polar'
     elif polar is False:
         coordsys = 'cart'
 
-    field_list = ["zone", "ztwo", "zzero"]
-
     # figure out all the important info about the system you'll need
     system_dict = read_log()
     sys_name = system_dict["sysname"]
-    save_areas(system_dict['bin_info']['N1'], system_dict['bin_info']['d1'], system_dict['bin_info']['N2'], system_dict['bin_info']['d2'], 0, coordsys, sys_name)
 
     # prep heatmap plot dimensions
-    hmap_dims = bin_prep(system_dict['bin_info'], coordsys)
+    hmap_dims = bin_prep(system_dict['bin_info'], polar)
 
     # analyze height
-    system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, field_list)
+    system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, cwd)
 
-    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, config_dict)
-    calculate_curvature(sys_name, coordsys, field_list, system_dict)
+    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, config_dict, cwd)
+    calculate_curvature(sys_name, coordsys, system_dict, cwd)
 
-    calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict)
-    calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict)
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict)
+    save_areas(system_dict["bin_info"], 0, polar, sys_name, cwd)
+
+    calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
+    calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
+    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
 
     calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 

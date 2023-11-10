@@ -3,7 +3,7 @@ import numpy as np
 from utils import *
 
 
-def calculate_curvature(sys_name, coordsys, field_list, system_dict):
+def calculate_curvature(sys_name, coordsys, system_dict, cwd):
     """
     Calculate mean and Gaussian curvature, as well as normal vectors for each \
         surface.
@@ -14,20 +14,18 @@ def calculate_curvature(sys_name, coordsys, field_list, system_dict):
         System name you gave nougat.py.
     coordsys : str
         "polar" or "cart".
-    field_list : list
-        List containing fields for which to calculate curvature.
     system_dict : dict
         Dictionary containing key 'bin_info' that has bin dimensions.
+    cwd : PathLib Path object
+        Path to current working directory.
 
     Returns
     -------
     None.
 
     """
-    field_list.append("zplus")
-
-    for field in field_list:
-        field_height = np.load('npy/' + sys_name + '.' + field + '.' + coordsys + '.height.npy')
+    for field in ["zone", "ztwo", "zzero", "zplus"]:
+        field_height = np.load(cwd.joinpath("trajectory", "height", field + ".npy"))
 
         wrapped_height = make_pbc(field_height, coordsys, system_dict)
 
@@ -42,16 +40,16 @@ def calculate_curvature(sys_name, coordsys, field_list, system_dict):
         avgK = calc_avg_over_time(K)
 
         # save as files for debugging / analysis
-        np.savetxt('dat/' + sys_name + '.' + field + '.' + coordsys + '.avgcurvature.dat', avgH, delimiter=',', fmt='%10.5f')
-        np.savetxt('dat/' + sys_name + '.' + field + '.' + coordsys + '.avgKcurvature.dat', avgK, delimiter=',', fmt='%10.5f')
-        np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.meancurvature.npy', H)
-        np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.gausscurvature.npy', K)
-        np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgmeancurvature.npy', avgH)
-        np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.avggausscurvature.npy', avgK)
-        np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.normal_vectors.npy', Nvecs)
+        np.savetxt(cwd.joinpath("average", "curvature", "mean", field + ".dat"), avgH, delimiter=',', fmt='%10.5f')
+        np.savetxt(cwd.joinpath("average", "curvature", "gaussian", field + ".dat"), avgK, delimiter=',', fmt='%10.5f')
+        np.save(cwd.joinpath("trajectory", "curvature", "mean", field + ".npy"), H)
+        np.save(cwd.joinpath("trajectory", "curvature", "gaussian", field + ".npy"), K)
+        np.save(cwd.joinpath("average", "curvature", "mean", field + ".npy"), avgH)
+        np.save(cwd.joinpath("average", "curvature", "gaussian", field + ".npy"), avgK)
+        np.save(cwd.joinpath("trajectory", "curvature", "normal_vectors", field + ".npy"), Nvecs)
         if coordsys == "polar":
-            avg_over_theta('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgmeancurvature')
-            avg_over_theta('npy/' + sys_name + '.' + field + '.' + coordsys + '.avggausscurvature')
+            avg_over_theta(cwd.joinpath("average", "curvature", "mean", field))
+            avg_over_theta(cwd.joinpath("average", "curvature", "gaussian", field))
 
         print(sys_name + " " + field + " curvatures done!")
 

@@ -5,10 +5,8 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import animation
 import numpy as np
 import warnings
-import os
 
 
 def strip_blank_lines(file):
@@ -184,7 +182,7 @@ def calc_avg_over_time(matrix_data):
         return avg
 
 
-def bin_prep(bin_info, coordsys):
+def bin_prep(bin_info, polar):
     """
     Configure the arrays needed for plotting heatmaps.
 
@@ -192,8 +190,8 @@ def bin_prep(bin_info, coordsys):
     ----------
     bin_info : DICT
         Contains N1, N2, d1, and d2 information.
-    coordsys : STRING
-        "cart" or "polar.
+    polar : BOOL
+        Whether or not to use polar coordinates.
 
     Returns
     -------
@@ -203,25 +201,31 @@ def bin_prep(bin_info, coordsys):
     """
 
     dim1 = np.linspace(0, bin_info['N1'] * bin_info['d1'], bin_info['N1'] + 1)
-    if coordsys == "polar":
+    if polar:
         dim2 = np.linspace(0, 2 * np.pi, bin_info['N2'] + 1)
-    elif coordsys == "cart":
+    else:
         dim2 = dim1
     dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
 
     return [dim1vals, dim2vals]
 
 
-def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
+def save_areas(bin_info, min_val, polar, sys_name):
+    N1_bins = bin_info["N1"]
+    N2_bins = bin_info["N2"]
+    d1 = bin_info["d1"]
+    d2 = bin_info["d2"]
 
     areas = np.ones([N1_bins, N2_bins])
 
     areas = areas * d1 * d2
-    if coordsys == "polar":
+
+    if polar:
         for row in range(N1_bins):
             dist_to_center = min_val + row * d1 + d1 / 2.0
             areas[row, :] = areas[row, :] * dist_to_center
-    np.save('npy/' + sys_name + "." + coordsys + ".areas.npy", areas)
+
+    np.save('trajectory/density/' + sys_name + "." + coordsys + ".areas.npy", areas)
 
 
 def mostly_empty(data_array):
@@ -293,7 +297,7 @@ def read_log():
     return system_dict
 
 
-def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, coordsys):
+def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, polar):
     """
     Create and save 2D heatmaps.
 
@@ -313,8 +317,8 @@ def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, co
         the type of measurement (thickness, height, curvature, etc)
     bead : string or False
         if bead specified, name of bead; else False
-    coordsys : string
-        "polar" or "cart"
+    polar : bool
+        Whether or not to use polar coordinates
     config_dict : dict
         Dict containing config info
 
@@ -330,26 +334,26 @@ def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, co
         Vmin, Vmax = "auto"
 
     fig = plt.figure()
-    if coordsys == "polar":
+    if polar:
         ax = plt.subplot(projection="polar")
     else:
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
+    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
     if protein:
-        draw_protein(protein, coordsys)
+        draw_protein(protein, polar)
     return fig, ax
 
 
-def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
+def create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     """
     Create a 2d heatmap of your data.
 
     Parameters
     ----------
-    coordsys : string
-        "cart" or "polar"
+    polar : bool
+        Whether or not to use polar coordinates
     dim1vals : list
         meshgrid output 1
     dim2vals : list
@@ -367,18 +371,16 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     -------
     None.
     """
-    if coordsys == "polar":
+    if polar:
         if Vmax != "auto":
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0)
-    elif coordsys == "cart":
+    else:
         if Vmax != "auto":
             c = plt.pcolormesh(dim1vals, dim2vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
             c = plt.pcolormesh(dim1vals, dim2vals, data, cmap="RdBu_r", zorder=0)
-    else:
-        print("something's wrong with coordsys")
 
     if colorbar:
         plt.colorbar(c)
@@ -386,7 +388,7 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     plt.axis('off')
 
 
-def draw_protein(protein, coordsys):
+def draw_protein(protein, polar):
     """
     Draw protein alpha helix positions.
 
@@ -394,8 +396,8 @@ def draw_protein(protein, coordsys):
     ----------
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    coordsys : string
-        "cart" or "polar"
+    polar : bool
+        Whether or not to use polar coordinates
 
     Returns
     -------
@@ -404,7 +406,7 @@ def draw_protein(protein, coordsys):
     """
     for i in range(0, 10, 2):
         protein[i + 1] = np.deg2rad(protein[i + 1])
-        if coordsys == "cart":
+        if polar is False:
             protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
         plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
 
@@ -488,7 +490,7 @@ def bin_format(value):
     return final_value
 
 
-def dimensions_analyzer(data, coordsys):
+def dimensions_analyzer(data, polar):
     # figure out how many radial or x bins there are
     counter = 1
     flag = True
@@ -514,10 +516,10 @@ def dimensions_analyzer(data, coordsys):
     if (len(data[:, 0]) % N1_bins) != 0:
         raise Exception("There is something wrong with the Nframes calculation")
 
-    if coordsys == "polar":
+    if polar is False:
         d1 = data[0, 1] - data[0, 0]
         d2 = (np.pi * 2) / N2_bins
-    elif coordsys == "cart":
+    elif polar is True:
         # compute average d1, assume d2 is the same
         d1list = []
         for row in range(Nframes):
@@ -640,7 +642,7 @@ def avg_over_theta(path):
     np.save(path + ".avg_over_theta.std.npy", std)
 
 
-def bad_measure_t0(zone, ztwo, coordsys):
+def bad_measure_t0(zone, ztwo, polar):
     """
     Compute average bulk membrane thickness by measuring thickness at the box \
     border. This is not a good way of doing things and will be deprecated in \
@@ -652,8 +654,8 @@ def bad_measure_t0(zone, ztwo, coordsys):
         data for outer leaflet height
     ztwo : numpy array
         data for inner leaflet height
-    coordsys : string
-        "polar" or "cart"
+    polar : bool
+        Whether or not to use polar coordinates
 
     Returns
     -------
@@ -665,13 +667,13 @@ def bad_measure_t0(zone, ztwo, coordsys):
 
     avgthickness = calc_avg_over_time(thickness)
 
-    if coordsys == "cart":
+    if polar is False:
         leftcol = np.mean(avgthickness[:, 0])
         rightcol = np.mean(avgthickness[:, -1])
         toprow = np.mean(avgthickness[0, :])
         botrow = np.mean(avgthickness[-1, :])
         avgt0 = (leftcol + rightcol + toprow + botrow) / 4.0
-    elif coordsys == "polar":
+    elif polar is True:
         avgt0 = np.mean(avgthickness[-1:])
 
     avgt0 = avgt0 / 2.0
@@ -679,7 +681,7 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_quant_in_empty_sys(path, system, coordsys, quantity):
+def measure_quant_in_empty_sys(path, system, polar, quantity):
     """
     Measure the average thickness of a membrane.
 
@@ -689,8 +691,9 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
         path to the directory where your nougat outputs are
     system : string
         name of the system you gave nougat
-    coordsys : string
-        "polar" or "cart"; if polar, will ignore small r bins (area too small)
+    polar : bool
+        Whether or not to use polar coordinates\
+            if polar, will ignore small r bins (area too small)
     quantity : string
         The quantity you want to take the average of
 
@@ -701,7 +704,7 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
 
     """
     data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
-    if coordsys == "polar":
+    if polar:
         data = data[:, 4:, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)

@@ -1,6 +1,7 @@
 """Functions related to height analysis and pdb creation."""
 
 import numpy as np
+from pathlib import Path
 from utils import *
 
 
@@ -35,25 +36,25 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, coordsys):
     return serial
 
 
-def calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2):
-    zone = np.load('npy/' + sys_name + '.zone.' + coordsys + '.height.npy')
-    ztwo = np.load('npy/' + sys_name + '.ztwo.' + coordsys + '.height.npy')
+def calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2, cwd):
+    zone = np.load(cwd.joinpath("trajectory", "height", "zone.npy"))
+    ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
 
     zplus = (zone + ztwo) / 2
 
     avgzplus = calc_avg_over_time(zplus)
 
     # save as file for debugging / analysis AND make PDB!
-    np.save('npy/' + sys_name + '.zplus.' + coordsys + '.height.npy', zplus)
-    np.save('npy/' + sys_name + '.zplus.' + coordsys + '.avgheight.npy', avgzplus)
-    np.savetxt('dat/' + sys_name + '.zplus.' + coordsys + '.avgheight.dat', avgzplus, delimiter=',', fmt='%10.5f')
+    np.save(cwd.joinpath("trajectory", "height", "zplus.npy"), zplus)
+    np.save(cwd.joinpath("average", "height", "zplus.npy"), avgzplus)
+    np.savetxt(cwd.joinpath("average", "height", "zplus.dat"), avgzplus, delimiter=',', fmt='%10.5f')
     if coordsys == "polar":
-        avg_over_theta('npy/' + sys_name + '.zplus.' + coordsys + '.avgheight')
+        avg_over_theta(cwd.joinpath("average", "height", "zplus"))
     serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, coordsys)
     print(sys_name + " zplus height done!")
 
 
-def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
+def analyze_height(sys_name, system_dict, coordsys, inclusion, cwd):
     serial = 1
 
     N1_bins = system_dict['bin_info']['N1']
@@ -61,19 +62,18 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
     N2_bins = system_dict['bin_info']['N2']
     d2 = system_dict['bin_info']['d2']
 
-    pdbname = sys_name + "." + coordsys + ".avgheight.pdb"
-
-    with open(pdbname, "w") as pdb:
+    with open("avgheight.pdb", "w") as pdb:
 
         # print first line of pdb file
         print('CRYST1  150.000  150.000  110.000  90.00  90.00  90.00 P 1           1', file=pdb)
 
         # do height analysis
 
-        for field in field_list:
+        for field in ["zone", "ztwo", "zzero"]:
 
             # import traj values
-            height_data = np.genfromtxt('tcl_output/height/' + field + '.dat', missing_values='nan', filling_values=np.nan)
+            height_input_path = cwd.joinpath("tcl_output", "height", field + ".dat")
+            height_data = np.genfromtxt(height_input_path, missing_values='nan', filling_values=np.nan)
             Nframes = int(np.shape(height_data)[0] / N1_bins)
 
             if 'nframes' in system_dict['bin_info']:
@@ -95,15 +95,15 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, field_list):
             avgHeight = calc_avg_over_time(pruned_height)
 
             # save as file for debugging / analysis AND make PDB!
-            np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.height.npy', pruned_height)
-            np.save('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgheight.npy', avgHeight)
+            np.save(cwd.joinpath("trajectory", "height", field + ".npy"), pruned_height)
+            np.save(cwd.joinpath("average", "height", field + ".npy"), avgHeight)
             if coordsys == "polar":
-                avg_over_theta('npy/' + sys_name + '.' + field + '.' + coordsys + '.avgheight')
-            np.savetxt('dat/' + sys_name + '.' + field + '.' + coordsys + '.avgheight.dat', avgHeight, delimiter=',', fmt='%10.5f')
+                avg_over_theta(cwd.joinpath("average", "height", field))
+            np.savetxt(cwd.joinpath("average", "height", field + ".dat"), avgHeight, delimiter=',', fmt='%10.5f')
             serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, coordsys)
             print(sys_name + ' ' + field + " height done!")
 
-        calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2)
+        calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2, cwd)
 
         # print last line of pdb file
         print('END', file=pdb)
