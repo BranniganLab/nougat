@@ -226,7 +226,7 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, specie
         rms = False
     exp_quantity = quantity.split("tilde_")[1]
     exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", exp_quantity)
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, True, exp_quantity)
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     if rms is True:
         normed_values = np.sqrt(normed_values)
@@ -265,7 +265,7 @@ def calc_eps_t0(path, quantity, sysname, species_name):
         print("You need to specify where the empty system is")
         raise Exception
     exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, "polar", "total_t") / 2.0
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, True, "total_t") / 2.0
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
     avg_over_theta(path + "/npy/" + sysname + "." + quantity)

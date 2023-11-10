@@ -184,7 +184,7 @@ def sum_over_H2(systems, system_names, groupname, nougvals, mol):
     plt.show()
 
 
-def make_2d_series_over_time(path, quantity, coordsys, sys_name):
+def make_2d_series_over_time(path, quantity, polar, sys_name):
     """
     Make movie file of heatmap over trajectory.
 
@@ -194,8 +194,8 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name):
         the path the to nougat outputs directory you want.
     quantity : string
         the name of the measurement.
-    coordsys : string
-        "polar" or "cart".
+    polar : bool
+        Whether or not to use polar coordinates.
     sys_name : string
         the name you gave nougat.py when it made your files.
 
@@ -208,10 +208,15 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name):
     if cwd != path:
         os.chdir(path)
 
+    if polar:
+        coordsys = "polar"
+    else:
+        coordsys = "cart"
+
     # load the correct 2d data
     traj_data = np.load(path + "/npy/" + sys_name + "." + quantity + ".npy")
     nframes = np.shape(traj_data)[2]
-    dims = bin_prep(sys_name, "C1A.C1B", coordsys, 'OFF')
+    dims = bin_prep(sys_name, "C1A.C1B", polar, 'OFF')
     dim1vals = dims[5]
     dim2vals = dims[6]
 
@@ -735,14 +740,107 @@ def compare_APLs(names, path):
 
     fig, ax = plt.subplots()
     for name in names:
-        APL_traj = np.loadtxt(path + name + "/" + name + ".area.traj")
-        X = APL_traj[:, 0]
-        Y = APL_traj[:, 1]
-        # ax.plot(X, rollingavg(Y, 20), color=APL_color_dict[name])
-    ax.legend(names)
-    fig.supxlabel(r'$t \;(\mathrm{frames})$')
-    fig.supylabel(r'$\mathrm{Area} \;(\mathrm{\dot A^2})$')
-    plt.savefig(path + "comparison.APL_traj.pdf", dpi=700)
+        APL_traj = np.loadtxt(path + "/" + name + ".area.traj")
+        X = APL_traj[:, 0] / 100
+        Y = APL_traj[:, 2] / 100
+        ax.plot(X, Y)
+    ax.legend(["position restraints", "position restraints + higher APL", "elastic network"])
+    fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
+    fig.supylabel(r'$\mathrm{Area~per~lipid} \;(\mathrm{nm}^2)$')
+    plt.savefig(path + "/comparison.APL_traj.pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
+def compare_P(names, path):
+    """
+    Create plot of pressure tensor components for several different systems
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with $name.xvg inside.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    for name in names:
+        fig, ax = plt.subplots()
+        P_traj = np.loadtxt(path + "/" + name + ".xvg")
+        X = P_traj[:, 0] / 1000000
+        X = X[1:]
+        PXX = P_traj[:, 1]
+        PXX = PXX[1:]
+        PYY = P_traj[:, 2]
+        PYY = PYY[1:]
+        PZZ = P_traj[:, 3]
+        PZZ = PZZ[1:]
+        if name == "elastic_cp":
+            ax.set_title("Elastic Network")
+        elif name == "APL0.595_cp":
+            ax.set_title("Position Restraints - Original")
+        else:
+            ax.set_title("Position Restraints - Higher APL")
+        ax.plot(X, rollingavg(PXX, 2000), color="red")
+        ax.plot(X, rollingavg(PYY, 2000), color="blue")
+        ax.plot(X, rollingavg(PZZ, 2000), color="green")
+        ax.plot(X, rollingavg((PZZ - 0.5 * (PXX + PYY)), 2000), color="purple")
+        ax.legend(["PXX", "PYY", "PZZ", "Gamma"])
+        fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
+        fig.supylabel(r'$\mathrm{Pressure} \;(\mathrm{bar})$')
+        plt.savefig(path + "/" + name + "_comparison.P_traj.pdf", dpi=700)
+        plt.clf()
+        plt.close()
+
+
+def plot_P_v_A(names, path):
+    """
+    Create scatter plot of pressure (Y) versus box area (X) for several different systems
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with $name.xvg inside.
+
+    Returns
+    -------
+    None.
+
+    """
+    fig, ax = plt.subplots()
+    for name in names:
+        P_traj = np.loadtxt(path + "/" + name + ".xvg")
+        A_traj = np.loadtxt(path + "/" + name[:-3] + ".area.traj")
+        P_reduced = np.zeros((np.shape(A_traj)[0], 4))
+        for row in range(np.shape(P_traj)[0]):
+            if P_traj[row, 0] % 10000 == 0:
+                P_reduced[int(P_traj[row, 0] / 10000), :] = P_traj[row, :]
+
+        A_traj[:, 1] = A_traj[:, 1] / 100
+        if name == "APL0.67_cp":
+            A_traj[:, 1] = A_traj[:, 1] / 2397
+        else:
+            A_traj[:, 1] = A_traj[:, 1] / 2690
+        PXX = P_reduced[:, 1]
+        PYY = P_reduced[:, 2]
+        PZZ = P_reduced[:, 3]
+        GAMMA = PZZ - 0.5 * (PXX + PYY)
+        GAMMA = GAMMA[20:]
+        A_traj = A_traj[20:, 1]
+        GAMMA = np.mean(GAMMA)
+        A_traj = np.mean(A_traj)
+        ax.scatter(A_traj, GAMMA, label=name[:-3])
+    fig.legend()
+    fig.supxlabel(r'$\mathrm{Area~per~lipid} \;(\mathrm{nm}^2)$')
+    fig.supylabel(r'$\mathrm{Surface~Tension} \;(\mathrm{?})$')
+    plt.savefig(path + "/scatter.A_P_traj.pdf")
     plt.clf()
     plt.close()
 
@@ -931,8 +1029,11 @@ if __name__ == "__main__":
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
     # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    # compare_APLs(["APL0.595", "APL0.67", "elastic"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
+    # compare_P(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
+    plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
     # make_paper_writing_group_plot("unsat")
     # make_paper_writing_group_plot("sat")
-    make_paper_writing_group_plot("elastic")
+    # make_paper_writing_group_plot("elastic")
