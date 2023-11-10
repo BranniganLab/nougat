@@ -225,7 +225,7 @@ def save_areas(bin_info, min_val, polar, sys_name):
             dist_to_center = min_val + row * d1 + d1 / 2.0
             areas[row, :] = areas[row, :] * dist_to_center
 
-    np.save('trajectory/density/' + sys_name + "." + coordsys + ".areas.npy", areas)
+    np.save('trajectory/density/areas.npy', areas)
 
 
 def mostly_empty(data_array):

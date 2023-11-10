@@ -1,18 +1,19 @@
 """Functions related to calculating density."""
 import numpy as np
+from pathlib import Path
 from utils import *
 
 
-def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dict):
+def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dict, cwd):
     N1_bins = names_dict['bin_info']['N1']
     N2_bins = names_dict['bin_info']['N2']
     Nframes = names_dict['bin_info']['nframes']
     dim1vals, dim2vals = dims
-    areas = np.load('npy/' + sys_name + "." + coordsys + ".areas.npy")
+    areas = np.load(cwd.joinpath("trajectory", "density", "areas.npy"))
 
     for species in names_dict['species']:
         for leaflet in ["zone", "ztwo"]:
-            data = np.genfromtxt('tcl_output/density/' + species + '/' + leaflet + '.dat', missing_values='nan', filling_values="0")
+            data = np.genfromtxt(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), missing_values='nan', filling_values="0")
 
             # create a new array that has each frame in a different array level
             density_array = np.zeros((Nframes, N1_bins, N2_bins))
@@ -33,11 +34,11 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dic
             #    plot_maker(dim1vals, dim2vals, avgdensity, sys_name, species + '.inner', scale_dict["density_max"], scale_dict["density_min"], inclusion, "avgDensity", False, coordsys, scale_dict)
 
             # save as file for debugging / analysis
-            np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.density.npy', density_array)
-            np.save('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.npy', avgdensity)
+            np.save(cwd.joinpath("trajectory", "density", species, leaflet + ".npy"), density_array)
+            np.save(cwd.joinpath("average", "density", species, leaflet + ".npy"), avgdensity)
             if coordsys == "polar":
-                avg_over_theta('npy/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity')
-            np.savetxt('dat/' + sys_name + '.' + species + '.' + leaflet + '.' + coordsys + '.avgdensity.dat', avgdensity, delimiter=',', fmt='%10.5f')
+                avg_over_theta(cwd.joinpath("average", "density", species, leaflet))
+            np.savetxt(cwd.joinpath("average", "density", species, leaflet + ".dat"), avgdensity, delimiter=',', fmt='%10.5f')
 
         print(sys_name + ' ' + species + " density done!")
 
