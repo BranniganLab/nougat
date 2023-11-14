@@ -633,13 +633,13 @@ def avg_over_theta(path):
     None.
 
     """
-    data = np.load(path + ".npy")
+    data = np.load(path.with_suffix(".npy"))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg_vals = np.nanmean(data, axis=1)
         std = np.nanstd(data, axis=1)
-    np.save(path + ".avg_over_theta.npy", avg_vals)
-    np.save(path + ".avg_over_theta.std.npy", std)
+    np.save(path.with_suffix(".avg_over_theta.npy"), avg_vals)
+    np.save(path.with_suffix(".avg_over_theta.std.npy"), std)
 
 
 def bad_measure_t0(zone, ztwo, polar):

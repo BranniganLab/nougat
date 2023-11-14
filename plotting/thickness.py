@@ -10,12 +10,12 @@ def calculate_thickness(sys_name, coordsys, inclusion, dims, scale_dict, cwd):
     ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
     zzero = np.load(cwd.joinpath("trajectory", "height", "zzero.npy"))
 
-    for leaflet in ["zone", "ztwo", "whole"]:
-        if leaflet == "zone":
+    for field in ["zone", "ztwo", "whole"]:
+        if field == "zone":
             thickness = zone - zzero
-        elif leaflet == "ztwo":
+        elif field == "ztwo":
             thickness = zzero - ztwo
-        elif leaflet == "whole":
+        elif field == "whole":
             thickness = zone - ztwo
 
         avgthickness = calc_avg_over_time(thickness)

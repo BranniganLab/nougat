@@ -12,6 +12,9 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, scale_dic
     areas = np.load(cwd.joinpath("trajectory", "density", "areas.npy"))
 
     for species in names_dict['species']:
+        for folder in ["trajectory", "average"]:
+            species_dir = cwd.joinpath(folder, "density", species)
+            species_dir.mkdir(parents = True, exist_ok = True)
         for leaflet in ["zone", "ztwo"]:
             data = np.genfromtxt(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), missing_values='nan', filling_values="0")
 
