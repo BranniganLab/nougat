@@ -74,7 +74,7 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, config_dict, cwd)
     calculate_curvature(sys_name, coordsys, system_dict, cwd)
 
-    save_areas(system_dict["bin_info"], 0, polar, sys_name, cwd)
+    save_areas(system_dict["bin_info"], 0, polar, sys_name)
 
     calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
     calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
