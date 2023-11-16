@@ -75,10 +75,10 @@ def run_nougat(polar, inclusion_drawn):
     save_areas(system_dict["bin_info"], 0, polar, sys_name)
 
     calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
-    calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
+    # calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
 
-    calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
+    # calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 
 
 """

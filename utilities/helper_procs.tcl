@@ -1009,7 +1009,7 @@ proc outputNougatLog {start end step species tailList system headNames coordSyst
 
     ;# output density normalization info
     puts $logFile "#DENSITY NORMALIZATION"
-    set density_norm_factor [outputDensityNormInfo $start $end $step $species $system $headNames $coordSystem $avgArea $folderName]
+    set density_norm_factor [outputDensityNormInfo $species $avgArea]
     foreach spec_norm_pair $density_norm_factor {
         puts $logFile "$spec_norm_pair"
     }
@@ -1031,30 +1031,17 @@ proc outputNougatLog {start end step species tailList system headNames coordSyst
 #       density enrichment calculations
 #
 # Arguments:
-#       start           {int}       starting frame
-#       frameNumber     {int}       end frame
-#       step            {int}       step size between frames
 #       species         {list}      species of lipids in system
-#       system          {str}       user defined name of the system
-#       headNames       {str}       names of beads that define neutral surface
-#       coordSystem     {str}       string either for either polar of cartesian coordiates
 #       avgArea         {flt}       average area of box across portion of traj under analysis
-#       folderName      {str}       name of folder
 #
 # Results:
 #       
 #       calculates the normalization factor for density enrichment calculations
 
-proc outputDensityNormInfo {start end step species system headNames coordSystem avgArea folderName} {
+proc outputDensityNormInfo {species avgArea} {
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
-        set names [lsort -unique [$sel get name]]
-        set Sb 0
-        foreach name $names {
-            if {[lsearch $headNames $name] != -1} {
-                incr Sb
-            }
-        }
+        set Sb [llength [lsort -unique [$sel get name]]]
         set Nb [llength [lsort -unique [$sel get resid]]]
         $sel delete
         set normfactor [expr $avgArea/[expr $Nb*$Sb/2.0]]
