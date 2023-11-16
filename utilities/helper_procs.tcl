@@ -903,6 +903,53 @@ proc createResidueDictionaries { species headNames lipidList nameList dimOneBinL
 }
 
 
+# createDensityDictionaries 
+#
+#       creates dictionary containing various values needed downstream for density calculations
+#
+# Arguments:
+#       species         {list}      species of lipids in system
+#       headNames       {str}       names of beads that define neutral surface
+#       lipidList       {list}      all lipid resnames in system
+#       nameList        {list}      all lipid bead names in system
+#       dimOneBinList   {list}      list of bins in the x direction/radial bin's
+#       dimTwoBinList   {list}      list of bins in y direction
+#       leafletList     {list}      list of user values for lipids denoting upper, lower, 
+#                                   or middle leaflet
+#       selex           {atomsel}   from the dictionary created by the createAtomSelections proc
+#
+# Results:
+#  
+#       returns dictionary with various values corresponding to beads in 
+#       a particular bin
+
+proc createDensityDictionaries { species headNames lipidList nameList dimOneBinList dimTwoBinList leafletList selex} {
+    ;# initialize a nested dict with a dummy key and value
+    dict set res_dict dummy "dummy"
+
+    if {$selex ne "z0"} {
+        for {set i 0} {$i < [llength $lipidList]} {incr i} {
+            if {([lindex $leafletList $i] == 3) || ([lindex $leafletList $i] == 4)} {
+                continue
+            } elseif {([lsearch $species [lindex $lipidList $i]] != -1)} {
+                set bin "[lindex $dimOneBinList $i],[lindex $dimTwoBinList $i]"
+                set bin_leaf "$bin,[expr int([lindex $leafletList $i])]"
+                if {[dict exists $res_dict $bin_leaf]} {
+                    dict append res_dict $bin_leaf " $i"
+                } else {
+                    dict set res_dict $bin_leaf $i                
+                }
+            }
+        }
+    } 
+
+    ;# delete the dummy
+    dict unset res_dict dummy
+    
+    return $res_dict
+}
+
+
 proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
     set arealist []
     set d1list []
@@ -1192,7 +1239,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 #       Returns dictionary with average height, density and counts 
 #       of lipids for a specific bin 
 
-proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
+proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList dens_dict} {
     dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
@@ -1200,17 +1247,14 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
             set species [lindex $lipidList $indx]
             if {$leaf == 1} {
                 set field_key "z1z2"
-                set dens_key "density_up_${species}"
                 set height_key "heights_up"
                 set counts_key "counts_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
-                set dens_key "density_down_${species}"
                 set height_key "heights_down"
                 set counts_key "counts_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
-                set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
                 set counts_key "counts_zzero"
             } else {
@@ -1224,16 +1268,34 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
                 set newsum [expr {$oldavg * $oldcount + [lindex $zValsList $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $counts_key bin $correct_bin $newcount
-                if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
-                    set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
-                    dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]
-                } else {
-                    dict set outfiles $field_key $dens_key bin $correct_bin 1.0
-                }       
+                dict set outfiles $field_key $counts_key bin $correct_bin $newcount     
             } else {
                 dict set outfiles $field_key $height_key bin $correct_bin [lindex $zValsList $indx]
                 dict set outfiles $field_key $counts_key bin $correct_bin 1.0
+            }
+        }
+    }
+    dict for {bin indices} $dens_dict {
+        set leaf [string range $bin end end]
+        set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
+        foreach indx $indices {
+            set species [lindex $lipidList $indx]
+            if {$leaf == 1} {
+                set field_key "z1z2"
+                set dens_key "density_up_${species}"
+                set counts_key "counts_up"
+            } elseif {$leaf == 2} {
+                set field_key "z1z2"
+                set dens_key "density_down_${species}"
+                set counts_key "counts_down"
+            } else {
+                puts "something has gone wrong with the binning"
+                return
+            }
+            if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
+                set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
+                dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]  
+            } else {
                 dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
         }
