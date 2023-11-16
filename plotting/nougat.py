@@ -17,7 +17,7 @@ from order import *
 from utils import *
 
 
-def run_nougat(polar, inclusion_drawn, config_dict):
+def run_nougat(polar, inclusion_drawn):
     """
     Run nougat's averaging and image processing routines.
 
@@ -28,8 +28,6 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     inclusion_drawn : boolean
         This feature currently isn't implemented, but would be how you acccount
         include an inclusion in your graphics
-    config_dict : dict
-        Dictionary containing useful information about the system
 
     Returns
     -------
@@ -71,14 +69,14 @@ def run_nougat(polar, inclusion_drawn, config_dict):
     # analyze height
     system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, cwd)
 
-    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, config_dict, cwd)
+    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, cwd)
     calculate_curvature(sys_name, coordsys, system_dict, cwd)
 
     save_areas(system_dict["bin_info"], 0, polar, sys_name)
 
-    calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
-    calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, config_dict, cwd)
+    calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
+    calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
+    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
 
     calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 
@@ -107,13 +105,10 @@ def run_nougat(polar, inclusion_drawn, config_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
-    parser.add_argument("config", help="what config file should nougat use?")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
     args = parser.parse_args()
 
-    config_dict = read_config(args.config)
-
-    run_nougat(args.polar, False, config_dict)
+    run_nougat(args.polar, False)
 
     print("Thank you for using nougat!")

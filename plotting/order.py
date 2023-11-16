@@ -4,7 +4,7 @@ from pathlib import Path
 from utils import *
 
 
-def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict, cwd):
+def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, cwd):
     N1_bins = system_dict['bin_info']['N1']
     N2_bins = system_dict['bin_info']['N2']
     Nframes = system_dict['bin_info']['nframes']
@@ -28,9 +28,6 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict
 
                 avgorder = calc_avg_over_time(order_array_pruned)
 
-                # make plots!
-                # plot_maker(dim1vals, dim2vals, avgorder, sys_name, species + '.tail' + str(tail) + '.zone''.' + leaflet, scale_dict["order_max"], scale_dict["order_min"], inclusion, "avgOrder", False, coordsys, scale_dict)
-
                 # save as file for debugging / analysis
                 np.save(cwd.joinpath("trajectory", "order", species, "tail" + str(tail), leaflet + ".npy"), order_array_pruned)
                 np.save(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".npy"), avgorder)
@@ -49,16 +46,3 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, scale_dict
     #  calculate_total_order(sys_name, "all", names_dict, coordsys, inclusion, polar, dims)
     # elif len(names_dict['species_list']) < 1:
     #  print("Something is wrong with your species_list!")
-
-
-def calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims):
-    N1_bins, d1, N2_bins, d2, Nframes, dim1vals, dim2vals = dims
-
-    if species != "all":
-        for leaflet in ['zone', 'ztwo']:
-            tot_order = np.zeros((N1_bins, N2_bins, Nframes))
-
-            for tail in names_dict[species]:
-                order_per_tail = np.load('npy/' + sys_name + '.' + species + '.' + tail + '.' + leaflet + '.' + coordsys + '.order.npy')
-                tot_order = tot_order + order_per_tail
-                # weight average by density!

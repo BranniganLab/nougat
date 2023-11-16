@@ -152,15 +152,15 @@ def take_finite_differences(heights, system_dict):
     Returns
     -------
     h_1 : numpy ndarray
-        first order difference along dimension 1 (x/r).
+        first derivative along dimension 1 (x/r).
     h_2 : numpy ndarray
-        first order difference along dimension 2 (y/theta).
+        first derivative along dimension 2 (y/theta).
     h_11 : numpy ndarray
-        second order difference along dimension 1 (x/r).
+        second derivative along dimension 1 (x/r).
     h_22 : numpy ndarray
-        second order difference along dimension 2 (y/theta).
+        second derivative along dimension 2 (y/theta).
     h_12 : numpy ndarray
-        second order cross difference along dimensions 1 and 2.
+        second order cross term along dimensions 1 and 2.
 
     """
     N1_bins = system_dict['bin_info']['N1']
@@ -168,21 +168,20 @@ def take_finite_differences(heights, system_dict):
     N2_bins = system_dict['bin_info']['N2']
     d2 = system_dict['bin_info']['d2']
 
+    # Construct shifted matrices
     shift_row_up = heights[:, 0:N1_bins, 1:N2_bins + 1]
     shift_row_down = heights[:, 2:N1_bins + 2, 1:N2_bins + 1]
     shift_col_left = heights[:, 1:N1_bins + 1, 0:N2_bins]
     shift_col_right = heights[:, 1:N1_bins + 1, 2:N2_bins + 2]
     no_shift = heights[:, 1:N1_bins + 1, 1:N2_bins + 1]
     shift_up_left = heights[:, 0:N1_bins, 0:N2_bins]
-    # shift_up_right = heights[:, 0:N1_bins, 2:N2_bins + 2]
     shift_down_right = heights[:, 2:N1_bins + 2, 2:N2_bins + 2]
-    # shift_down_left = heights[:, 2:N1_bins+2, 0:N2_bins]
 
+    # Combine shifted matrices to get 1st and 2nd derivatives
     h_1 = (shift_row_down - shift_row_up) / (2 * d1)
     h_11 = (shift_row_up + shift_row_down - 2 * no_shift) / d1**2
     h_2 = (shift_col_right - shift_col_left) / (2 * d2)
     h_22 = (shift_col_left + shift_col_right - 2 * no_shift) / d2**2
-    # h_12 = (shift_up_left + shift_down_right - shift_up_right - shift_down_left) / (4 * d1 * d2)
     h_12 = (shift_up_left + shift_down_right + 2 * no_shift - shift_col_left - shift_col_right - shift_row_up - shift_row_down) / (2 * d1 * d2)
 
     return [h_1, h_2, h_11, h_22, h_12]
