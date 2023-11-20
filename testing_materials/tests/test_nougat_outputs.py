@@ -93,7 +93,7 @@ def make_npy_paths(wd, system, coord, surf, quant):
     coord: string
         Coordinate system; 'cart' or 'polar'
     surf: sring
-        The membrane surface in question (z1, z2, z0, or z +)
+        The membrane surface in question (z1, z2, z0, or z+)
     quant: string
         The quantity being measured(height, thickness, curvature, etc.)
 
@@ -106,15 +106,25 @@ def make_npy_paths(wd, system, coord, surf, quant):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/npy"
+        coordsys_path = "_cart_5_5_0_-1_1"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/npy"
+        coordsys_path = "_polar_3_12_0_-1_1"
     if system == "E-protein":
         directory = "E-protein_trajectory"
     elif system == "flat":
         directory = "flat_surface_test"
-    expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + "." + coord + "." + quant + ".npy")
-    test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + "." + quant + ".npy")
+    if (quant == "meancurvature") or (quant == "curvature"):
+        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "mean", surf + ".npy")
+    elif (quant == "gausscurvature") or (quant == "Kcurvature"):
+        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "gaussian", surf + ".npy")
+    elif quant == "normal_vectors":
+        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", quant, surf + ".npy")
+    elif (quant == "height") or (quant == "thickness"):
+        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", quant, surf + ".npy")
     return Comparison(test_input, expected)
 
 
@@ -144,19 +154,26 @@ def make_avg_paths(wd, system, coord, surf, quant):
 
     """
     if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/dat"
+        coordsys_path = "_cart_5_5_0_-1_1"
     elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/dat"
+        coordsys_path = "_polar_3_12_0_-1_1"
     if system == "E-protein":
         directory = "E-protein_trajectory"
     elif system == "flat":
         directory = "flat_surface_test"
     if quant != "avgdensity":
-        expected = wd.joinpath(directory, system + coordsys_path, system + "." + surf + "." + coord + ".avg" + quant + ".dat")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + surf + "." + coord + ".avg" + quant + ".dat")
+        if quant == "curvature":
+            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, "mean", surf + ".dat")
+        elif quant == "Kcurvature":
+            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "curvature", "gaussian", surf + ".dat")
+        elif (quant == "height") or (quant == "thickness"):
+            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, surf + ".dat")
     elif quant == "avgdensity":
-        expected = wd.joinpath(directory, system + coordsys_path, system + ".DTPC." + surf + "." + coord + "." + quant + ".dat")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "test." + "DTPC." + surf + "." + coord + "." + quant + ".dat")
+        expected = wd.joinpath(directory, system + coordsys_path, "dat", system + ".DTPC." + surf + "." + coord + "." + quant + ".dat")
+        test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "density", "DTPC", surf + ".dat")
     return Comparison(test_input, expected)
 
 
@@ -202,10 +219,8 @@ def arrays_equal(paths, filetype, tolerance):
 
     Parameters
     ----------
-    path1: string
-        path to first npy file.
-    path2: string
-        path to second npy file.
+    paths: named tuple
+        Named tuple of two path objects.
     filetype: string
         The filetype of f1 and f2
     tolerance: float
@@ -239,7 +254,6 @@ def arrays_equal(paths, filetype, tolerance):
 
 def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
     paths = make_tcl_paths(cwd, system, coordsys, surface2)
-    print(paths)
     assert arrays_equal(paths, 'dat', 1e-11)
 
 # Still needed: density, order, tilt tests
@@ -259,11 +273,11 @@ def test_if_thicknesses_match(cwd, coordsys, surface2, system):
 
 def test_if_densities_match(cwd, coordsys, surface2):
     if coordsys == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1/npy/"
+        coordsys_path = "_cart_5_5_0_-1_1"
     elif coordsys == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1/npy/"
-    exp = cwd.joinpath("E-protein_trajectory/E-protein" + coordsys_path, "E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy")
-    test = cwd.joinpath("E-protein_trajectory/test" + coordsys_path, "test.DTPC." + surface2 + "." + coordsys + ".density.npy")
+        coordsys_path = "_polar_3_12_0_-1_1"
+    exp = cwd.joinpath("E-protein_trajectory/E-protein" + coordsys_path, "npy/E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy")
+    test = cwd.joinpath("E-protein_trajectory/test" + coordsys_path, "trajectory", "density", "DTPC", surface2 + ".npy")
     paths = Comparison(test, exp)
     assert arrays_equal(paths, 'npy', 1e-11)
 
@@ -282,17 +296,13 @@ def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
-def test_whether_flat_cartesian(cwd):
-    Hone = np.load(cwd.joinpath("flat_surface_test/test_cart_5_5_0_-1_1/npy/test.zone.cart.meancurvature.npy"))
-    Htwo = np.load(cwd.joinpath("flat_surface_test/test_cart_5_5_0_-1_1/npy/test.ztwo.cart.meancurvature.npy"))
-    Hplus = Hone + Htwo / 2.0
-    avgHplus = np.nanmean(Hplus)
-    assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
-
-
-def test_whether_flat_polar(cwd):
-    Hone = np.load(cwd.joinpath("flat_surface_test/test_polar_3_12_0_-1_1/npy/test.zone.polar.meancurvature.npy"))
-    Htwo = np.load(cwd.joinpath("flat_surface_test/test_polar_3_12_0_-1_1/npy/test.ztwo.polar.meancurvature.npy"))
+def test_whether_flat(cwd, coordsys):
+    if coordsys == "cart":
+        settings = "_5_5_0_-1_1"
+    else:
+        settings = "_3_12_0_-1_1"
+    Hone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "zone.npy"))
+    Htwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "ztwo.npy"))
     Hplus = Hone + Htwo / 2.0
     avgHplus = np.nanmean(Hplus)
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
