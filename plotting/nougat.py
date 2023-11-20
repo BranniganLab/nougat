@@ -9,9 +9,8 @@ from pathlib import Path
 
 import numpy as np
 from height import *
-from thickness import *
 from curvature import *
-from density import *
+from quantity_analysis import *
 from tilt import *
 from order import *
 from utils import *
