@@ -54,9 +54,9 @@ def run_nougat(polar, inclusion_drawn):
         inclusion = False
 
     # TO DO: eliminate coordsys
-    if polar is True:
+    if polar:
         coordsys = 'polar'
-    elif polar is False:
+    else:
         coordsys = 'cart'
 
     # figure out all the important info about the system you'll need
@@ -69,14 +69,15 @@ def run_nougat(polar, inclusion_drawn):
     # analyze height
     system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, cwd)
 
-    calculate_thickness(sys_name, coordsys, inclusion, hmap_dims, cwd)
+    calculate_thickness(polar, cwd)
     calculate_curvature(sys_name, coordsys, system_dict, cwd)
 
     save_areas(system_dict["bin_info"], 0, polar, sys_name)
 
-    calculate_density(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
-    # calculate_order(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, hmap_dims, cwd)
+    calculate_density(system_dict, polar, cwd)
+
+    # calculate_order(sys_name, system_dict, coordsys, inclusion, cwd)
+    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
     # calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
 
