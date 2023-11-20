@@ -4,17 +4,17 @@ from pathlib import Path
 from utils import *
 
 
-def calculate_density(system_dict, polar, cwd):
+def calculate_density(polar, system_dict, cwd):
     """
     Calculate density enrichment for each species in the system and save to files.
 
     Parameters
     ----------
+    polar : bool
+        Whether or not to use polar coordinates instead of cartesian.
     system_dict : dict
         Dictionary containing list of species, bin sizes, and normalization \
             constants.
-    polar : bool
-        Whether or not to use polar coordinates instead of cartesian.
     cwd : Pathlib Path object
         Path to current working directory.
 
@@ -37,18 +37,18 @@ def calculate_density(system_dict, polar, cwd):
 
             density_array = counts_array / areas
 
-            avgdensity = calc_avg_over_time(density_array)
-
             # normalize
             normfactor = system_dict["density_norm"][species]
-            avgdensity = avgdensity * normfactor
+            density_enrichment = density_array * normfactor
+
+            avgdensity_enrichment = calc_avg_over_time(density_enrichment)
 
             # save as file for debugging / analysis
-            np.save(cwd.joinpath("trajectory", "density", species, leaflet + ".npy"), density_array)
-            np.save(cwd.joinpath("average", "density", species, leaflet + ".npy"), avgdensity)
+            np.save(cwd.joinpath("trajectory", "density", species, leaflet + ".npy"), density_enrichment)
+            np.save(cwd.joinpath("average", "density", species, leaflet + ".npy"), avgdensity_enrichment)
             if polar:
                 avg_over_theta(cwd.joinpath("average", "density", species, leaflet))
-            np.savetxt(cwd.joinpath("average", "density", species, leaflet + ".dat"), avgdensity, delimiter=',', fmt='%10.5f')
+            np.savetxt(cwd.joinpath("average", "density", species, leaflet + ".dat"), avgdensity_enrichment, delimiter=',', fmt='%10.5f')
 
         print(species + " density done!")
 
@@ -94,16 +94,16 @@ def calculate_thickness(polar, cwd):
     print("Thickness done!")
 
 
-def calculate_order(system_dict, polar, cwd):
+def calculate_order(polar, system_dict, cwd):
     """
     Parse order from .dat file and calculate time average before saving to file.
 
     Parameters
     ----------
-    system_dict : dict
-        Dict containing bin sizes and number of frames in trajectory.
     polar : bool
         Whether to use polar coordinates instead of cartesian.
+    system_dict : dict
+        Dict containing bin sizes and number of frames in trajectory.
     cwd : Pathlib Path object
         Path to current working directory.
 
