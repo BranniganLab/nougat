@@ -1041,10 +1041,12 @@ proc outputNougatLog {start end step species tailList system headNames coordSyst
 proc outputDensityNormInfo {species avgArea} {
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
-        set Sb [llength [lsort -unique [$sel get name]]]
-        set Nb [llength [lsort -unique [$sel get resid]]]
+        set beads_per_lipid [llength [lsort -unique [$sel get name]]]
+        set number_of_lipids [llength [lsort -unique [$sel get resid]]]
         $sel delete
-        set normfactor [expr $avgArea/[expr $Nb*$Sb/2.0]]
+        set number_of_beads [expr $number_of_lipids*$beads_per_lipid]
+        set bulk_density [expr $number_of_beads / $avgArea]
+        set normfactor [expr 1 / $bulk_density]
         lappend normlist "${spec}:${normfactor}"
     }
     return $normlist

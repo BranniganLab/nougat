@@ -14,21 +14,23 @@ def calculate_density(sys_name, names_dict, coordsys, inclusion, dims, cwd):
     for species in names_dict['species']:
         for folder in ["trajectory", "average"]:
             species_dir = cwd.joinpath(folder, "density", species)
-            species_dir.mkdir(parents = True, exist_ok = True)
+            species_dir.mkdir(parents=True, exist_ok=True)
         for leaflet in ["zone", "ztwo"]:
             data = np.genfromtxt(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), missing_values='nan', filling_values="0")
 
             # create a new array that has each frame in a different array level
-            density_array = np.zeros((Nframes, N1_bins, N2_bins))
+            counts_array = np.zeros((Nframes, N1_bins, N2_bins))
 
             for frm in range(Nframes):
-                density_array[frm, :, :] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+                counts_array[frm, :, :] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+
+            density_array = counts_array / areas
 
             avgdensity = calc_avg_over_time(density_array)
 
             # normalize
             normfactor = names_dict["density_norm"][species]
-            avgdensity = avgdensity * normfactor / areas
+            avgdensity = avgdensity * normfactor
 
             # save as file for debugging / analysis
             np.save(cwd.joinpath("trajectory", "density", species, leaflet + ".npy"), density_array)
