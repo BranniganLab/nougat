@@ -7,7 +7,7 @@ import shutil
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Run this hook if exitstatus is 0."""
+    """Run this hook if all pytests pass or xfail."""
     if exitstatus == 0:
         print("\nRemoving test files upon successful test completion!")
         shutil.rmtree("E-protein_trajectory/test_cart_5_5_0_-1_1")
