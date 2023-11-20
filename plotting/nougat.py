@@ -12,7 +12,6 @@ from height import *
 from curvature import *
 from quantity_analysis import *
 from tilt import *
-from order import *
 from utils import *
 
 
