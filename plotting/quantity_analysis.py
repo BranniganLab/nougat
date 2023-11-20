@@ -4,13 +4,13 @@ from pathlib import Path
 from utils import *
 
 
-def calculate_density(names_dict, polar, cwd):
+def calculate_density(system_dict, polar, cwd):
     """
     Calculate density enrichment for each species in the system and save to files.
 
     Parameters
     ----------
-    names_dict : dict
+    system_dict : dict
         Dictionary containing list of species, bin sizes, and normalization \
             constants.
     polar : bool
@@ -25,7 +25,7 @@ def calculate_density(names_dict, polar, cwd):
     """
     areas = np.load(cwd.joinpath("trajectory", "density", "areas.npy"))
 
-    for species in names_dict['species']:
+    for species in system_dict['species']:
 
         # make species-specific folders for density
         for folder in ["trajectory", "average"]:
@@ -33,14 +33,14 @@ def calculate_density(names_dict, polar, cwd):
             species_dir.mkdir(parents=True, exist_ok=True)
 
         for leaflet in ["zone", "ztwo"]:
-            counts_array = parse_dat_file(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), names_dict["bin_info"])
+            counts_array = parse_dat_file(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), system_dict["bin_info"])
 
             density_array = counts_array / areas
 
             avgdensity = calc_avg_over_time(density_array)
 
             # normalize
-            normfactor = names_dict["density_norm"][species]
+            normfactor = system_dict["density_norm"][species]
             avgdensity = avgdensity * normfactor
 
             # save as file for debugging / analysis

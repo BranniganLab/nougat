@@ -4,25 +4,34 @@ from pathlib import Path
 from utils import *
 
 
-def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, cwd):
-    N1_bins = system_dict['bin_info']['N1']
-    N2_bins = system_dict['bin_info']['N2']
-    Nframes = system_dict['bin_info']['nframes']
-    dim1vals, dim2vals = dims
+def calculate_order(system_dict, polar, cwd):
+    """
+    Parse order from .dat file and calculate time average before saving to file.
 
+    Parameters
+    ----------
+    system_dict : dict
+        Dict containing bin sizes and number of frames in trajectory.
+    polar : bool
+        Whether to use polar coordinates instead of cartesian.
+    cwd : Pathlib Path object
+        Path to current working directory.
+
+    Returns
+    -------
+    None.
+
+    """
     for species in system_dict['species']:
         for tail in range(system_dict['ntails'][species]):
             for leaflet in ["zone", "ztwo"]:
+
+                # make species- and tail-specific folders for outputs
                 for folder in ["trajectory", "average"]:
                     dirname = cwd.joinpath(folder, "order", species, "tail" + str(tail))
                     dirname.mkdir(parents=True, exist_ok=True)
 
-                order_file = np.genfromtxt(cwd.joinpath("tcl_output", "order", species, "tail" + str(tail), leaflet + ".dat"), missing_values='nan', filling_values=np.nan)
-
-                # create a new array that has each frame in a different array level
-                order_array = np.zeros((Nframes, N1_bins, N2_bins))
-                for frm in range(Nframes):
-                    order_array[frm, :, :] = order_file[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+                order_array = parse_dat_file(cwd.joinpath("tcl_output", "order", species, "tail" + str(tail), leaflet + ".dat"), system_dict["bin_info"])
 
                 order_array_pruned = mostly_empty(order_array)
 
@@ -31,18 +40,8 @@ def calculate_order(sys_name, system_dict, coordsys, inclusion, dims, cwd):
                 # save as file for debugging / analysis
                 np.save(cwd.joinpath("trajectory", "order", species, "tail" + str(tail), leaflet + ".npy"), order_array_pruned)
                 np.save(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".npy"), avgorder)
-                if coordsys == "polar":
+                if polar:
                     avg_over_theta(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet))
                 np.savetxt(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".dat"), avgorder, delimiter=',', fmt='%10.5f')
 
-            print(sys_name + ' ' + species + " tail" + str(tail) + " order done!")
-
-        # if len(names_dict[species]) > 1:
-        #  calculate_total_order(sys_name, species, names_dict, coordsys, inclusion, polar, dims)
-        # elif len(names_dict[species]) < 1:
-        #  print("Something is wrong with your tails list!")
-
-    # if len(names_dict['species_list']) > 1:
-    #  calculate_total_order(sys_name, "all", names_dict, coordsys, inclusion, polar, dims)
-    # elif len(names_dict['species_list']) < 1:
-    #  print("Something is wrong with your species_list!")
+            print(species + " tail" + str(tail) + " order done!")
