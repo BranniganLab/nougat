@@ -162,6 +162,37 @@ def gifformat(num, size):
 
 
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
+    """
+    Generate old filenames for legacy uses.
+
+    Parameters
+    ----------
+    sys_name : str
+        System name provided to nougat.tcl.
+    lipid_name : str
+        The lipid species present.
+    field : str
+        The surface being analyzed.
+    beadname : str
+        The beads specified as headnames.
+    coordsys : str
+        "polar" or "cart".
+    measure : str
+        That quantity being measured.
+    dtype : str
+        The file suffix (npy or dat, for example).
+
+    Raises
+    ------
+    RuntimeWarning
+        Raised if wrong str supplied as measure.
+
+    Returns
+    -------
+    filename : str
+        Complete legacy filename.
+
+    """
     if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
         if dtype == "dat":
             if measure == "thickness":
