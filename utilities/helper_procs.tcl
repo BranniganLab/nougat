@@ -999,8 +999,9 @@ proc outputDensityNormInfo {species avgArea} {
         set number_of_lipids [llength [lsort -unique [$sel get resid]]]
         set lipids_in_one_leaflet [expr {int([expr $number_of_lipids / 2.0])}]
         $sel delete
-        set number_of_beads [expr $lipids_in_one_leaflet*$beads_per_lipid]
-        set bulk_density [expr $number_of_beads / $avgArea]
+        set number_of_beads [expr $number_of_lipids*$beads_per_lipid]
+        set number_of_beads_per_leaflet [expr $number_of_beads / 2.0]
+        set bulk_density [expr $number_of_beads_per_leaflet / $avgArea]
         set normfactor [expr 1 / $bulk_density]
         lappend normlist "${spec}:${normfactor}"
     }

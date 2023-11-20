@@ -109,7 +109,7 @@ def create_outfile_directories(cwd):
                 dirname.mkdir(parents=True, exist_ok=True)
 
 
-def parse_dat_file(path, bin_info):
+def parse_dat_file(path, bin_info, quant):
     """
     Parse nougat .dat file and turn it into a numpy ndarray.
 
@@ -119,6 +119,8 @@ def parse_dat_file(path, bin_info):
         The path to the .dat file.
     bin_info : dict
         Dictionary containing bin sizes and number of frames in trajectory.
+    quant : str
+        The quantity being parsed.
 
     Returns
     -------
@@ -130,7 +132,10 @@ def parse_dat_file(path, bin_info):
     N2_bins = bin_info["N2"]
     Nframes = bin_info["nframes"]
 
-    data = np.genfromtxt(path, missing_values='nan', filling_values=np.nan)
+    if quant != "density":
+        data = np.genfromtxt(path, missing_values='nan', filling_values=np.nan)
+    else:
+        data = np.genfromtxt(path, missing_values='nan', filling_values="0")
 
     # create a new array that has each frame in a different array level
     data_array = np.zeros((Nframes, N1_bins, N2_bins))
@@ -419,7 +424,7 @@ def read_log():
     return system_dict
 
 
-def plot_maker(dims, data, protein, quant, bead, polar):
+def plot_maker(dims, data, protein, quant, polar):
     """
     Create and save 2D heatmaps.
 
@@ -433,8 +438,6 @@ def plot_maker(dims, data, protein, quant, bead, polar):
         if --inclusion turned on, list of helix coordinates; if no protein, False
     quant : str
         The quantity being plotted.
-    bead : string or False
-        if bead specified, name of bead; else False
     polar : bool
         Whether or not to use polar coordinates
 
