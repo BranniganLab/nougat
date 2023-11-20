@@ -51,7 +51,7 @@ def calculate_zplus(polar, serial, pdb, d1, d2, cwd):
     if polar:
         avg_over_theta(cwd.joinpath("average", "height", "zplus"))
     serial = Make_surface_PDB(avgzplus, 'zplus', d1, d2, pdb, serial, polar)
-    print(sys_name + " zplus height done!")
+    print("zplus height done!")
 
 
 def parse_height(system_dict, polar, cwd):

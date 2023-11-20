@@ -69,7 +69,6 @@ def calculate_thickness(polar, cwd):
     None.
 
     """
-    dim1vals, dim2vals = dims
     zone = np.load(cwd.joinpath("trajectory", "height", "zone.npy"))
     ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
     zzero = np.load(cwd.joinpath("trajectory", "height", "zzero.npy"))
