@@ -82,7 +82,7 @@ An explanation of the options is as follows:
 ```
 
 ###  Run nougat.py
-- python3 [path-to]/nougat/plotting/nougat.py [path-to]/nougat/plotting/nougat_plot_config.txt [system name] [-p for polar]
+- python3 [path-to]/nougat/plotting/nougat.py [-p for polar]
 
 ### Explore your results!
 All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat_plot_config.txt.
