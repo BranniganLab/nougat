@@ -32,7 +32,6 @@ def run_nougat(polar, inclusion_drawn):
     None.
 
     """
-
     # make necessary folders
     cwd = Path.cwd()
     for filetype in ["trajectory", "average"]:
@@ -68,13 +67,13 @@ def run_nougat(polar, inclusion_drawn):
     system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, cwd)
 
     calculate_thickness(polar, cwd)
-    calculate_curvature(sys_name, coordsys, system_dict, cwd)
+    calculate_curvature(polar, system_dict, cwd)
 
     save_areas(system_dict["bin_info"], 0, polar, sys_name)
 
-    calculate_density(system_dict, polar, cwd)
+    calculate_density(polar, system_dict, cwd)
 
-    # calculate_order(system_dict, polar, cwd)
+    # calculate_order(polar, system_dict, cwd)
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
     # calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
