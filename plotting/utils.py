@@ -279,6 +279,21 @@ def save_areas(bin_info, min_val, polar):
 
 
 def mostly_empty(data_array):
+    """
+    Replace bin values with np.nan if that bin has lipids in it less than 10% \
+        of the trajectory frames.
+
+    Parameters
+    ----------
+    data_array : numpy ndarray
+        The input data in a 3D array with dimensions time, [x, r], [y, theta].
+
+    Returns
+    -------
+    data_array : numpy ndarray
+        A pruned array.
+
+    """
     # if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
     Nframes, N1_bins, N2_bins = np.shape(data_array)
     for row in range(N1_bins):
@@ -541,6 +556,40 @@ def bin_format(value):
 
 
 def dimensions_analyzer(data, polar):
+    """
+    Determine system dimensions (number of bins, size of bins, number of frames) \
+        from .dat file.
+
+    Parameters
+    ----------
+    data : TYPE
+        DESCRIPTION.
+    polar : TYPE
+        Whether to use polar coordinates or cartesian.
+
+    Raises
+    ------
+    Exception
+        If the number of rows is not divisible by the number of frames, that \
+            means there is a problem in the construction or parsing of the file.
+
+    Returns
+    -------
+    N1_bins : int
+        DESCRIPTION.
+    d1 : float
+        DESCRIPTION.
+    N2_bins : int
+        DESCRIPTION.
+    d2 : float
+        DESCRIPTION.
+    Nframes : int
+        DESCRIPTION.
+    match_value : float
+        The first radial bin in polar coords should have match_value of 0 unless \
+            you've specified a min value.
+
+    """
     # figure out how many radial or x bins there are
     counter = 1
     flag = True
@@ -578,95 +627,6 @@ def dimensions_analyzer(data, polar):
         d2 = d1
 
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
-
-
-def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
-    """
-    Calculate all the additional terms that appear in a hamiltonian or are \
-        generally of interest.
-
-    Parameters
-    ----------
-    system : string
-        the same name you gave nougat.tcl and nougat.py
-    path : string
-        should point to the folder housing your nougat outputs for the given \
-            system
-    coordsys : string
-        "polar" or "cart"
-    scale_dict : dict
-        contains scale bounds from the nougat config file
-
-    Returns
-    -------
-    None.
-
-    """
-    # load height and curvature data
-    z_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.height.npy')
-    z_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.height.npy')
-    z_0 = np.load(path + '/npy/' + system + '.zzero.' + coordsys + '.height.npy')
-    z_plus = np.load(path + '/npy/' + system + '.zplus.' + coordsys + '.height.npy')
-    H_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.meancurvature.npy')
-    H_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.meancurvature.npy')
-    K_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.gausscurvature.npy')
-    K_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.gausscurvature.npy')
-
-    # measure terms of interest
-    # removed z_minus terms until we have a better way of computing t0
-    epsilon = z_0 - z_plus
-    epsilon2 = epsilon**2
-    H_plus = (H_1 + H_2) / 2
-    K_plus = (K_1 + K_2) / 2
-    K_minus = (K_1 - K_2) / 2
-    H_plus2 = H_plus**2
-    H_minus = (H_1 - H_2) / 2
-    H_minus2 = H_minus**2
-    epsilon_H = epsilon * H_plus
-    total_t = z_1 - z_2
-
-    # save useful trajectories
-    np.save(path + '/npy/' + system + '.epsilon.npy', epsilon)
-    np.save(path + '/npy/' + system + '.H_plus.npy', H_plus)
-    np.save(path + '/npy/' + system + '.epsilon2.npy', epsilon2)
-    np.save(path + '/npy/' + system + '.H_plus2.npy', H_plus2)
-    np.save(path + '/npy/' + system + '.total_t.npy', total_t)
-
-    # calculate averages
-    avg_epsilon = calc_avg_over_time(epsilon)
-    avg_epsilon2 = calc_avg_over_time(epsilon2)
-    avg_H_plus = calc_avg_over_time(H_plus)
-    avg_H_plus2 = calc_avg_over_time(H_plus2)
-    avg_H_minus = calc_avg_over_time(H_minus)
-    avg_H_minus2 = calc_avg_over_time(H_minus2)
-    avg_epsilon_H = calc_avg_over_time(epsilon_H)
-    avg_total_t = calc_avg_over_time(total_t)
-    avg_K_plus = calc_avg_over_time(K_plus)
-    avg_K_minus = calc_avg_over_time(K_minus)
-
-    # calculate correlations
-    corr_eps_Hplus = calc_avg_over_time(epsilon * H_plus) - (avg_epsilon * avg_H_plus)
-    corr_mag_eps_Hplus = calc_avg_over_time(np.sqrt(epsilon2) * np.sqrt(H_plus2)) - (np.sqrt(avg_epsilon2) * np.sqrt(avg_H_plus2))
-    corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
-
-    # get proper plot dimensions
-    dims = bin_prep(bin_info, coordsys)
-    dim1vals, dim2vals = dims
-
-    # make pretty pictures and save data
-    data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
-                 corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
-                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H,
-                 avg_total_t]
-    name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
-                 "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
-                 "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                 "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
-    for data, name in zip(data_list, name_list):
-        # plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
-        np.save(path + '/npy/' + system + '.' + name + '.npy', data)
-        if coordsys == "polar":
-            avg_over_theta(path + '/npy/' + system + '.' + name)
 
 
 def avg_over_theta(path):

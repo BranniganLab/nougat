@@ -135,3 +135,93 @@ def calculate_order(polar, system_dict, cwd):
                 np.savetxt(cwd.joinpath("average", "order", species, "tail" + str(tail), leaflet + ".dat"), avgorder, delimiter=',', fmt='%10.5f')
 
             print(species + " tail" + str(tail) + " order done!")
+
+
+# still need to convert to pathlib, remove coordsys!
+def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
+    """
+    Calculate all the additional terms that appear in a hamiltonian or are \
+        generally of interest.
+
+    Parameters
+    ----------
+    system : string
+        the same name you gave nougat.tcl and nougat.py
+    path : string
+        should point to the folder housing your nougat outputs for the given \
+            system
+    coordsys : string
+        "polar" or "cart"
+    scale_dict : dict
+        contains scale bounds from the nougat config file
+
+    Returns
+    -------
+    None.
+
+    """
+    # load height and curvature data
+    z_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.height.npy')
+    z_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.height.npy')
+    z_0 = np.load(path + '/npy/' + system + '.zzero.' + coordsys + '.height.npy')
+    z_plus = np.load(path + '/npy/' + system + '.zplus.' + coordsys + '.height.npy')
+    H_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.meancurvature.npy')
+    H_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.meancurvature.npy')
+    K_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.gausscurvature.npy')
+    K_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.gausscurvature.npy')
+
+    # measure terms of interest
+    # removed z_minus terms until we have a better way of computing t0
+    epsilon = z_0 - z_plus
+    epsilon2 = epsilon**2
+    H_plus = (H_1 + H_2) / 2
+    K_plus = (K_1 + K_2) / 2
+    K_minus = (K_1 - K_2) / 2
+    H_plus2 = H_plus**2
+    H_minus = (H_1 - H_2) / 2
+    H_minus2 = H_minus**2
+    epsilon_H = epsilon * H_plus
+    total_t = z_1 - z_2
+
+    # save useful trajectories
+    np.save(path + '/npy/' + system + '.epsilon.npy', epsilon)
+    np.save(path + '/npy/' + system + '.H_plus.npy', H_plus)
+    np.save(path + '/npy/' + system + '.epsilon2.npy', epsilon2)
+    np.save(path + '/npy/' + system + '.H_plus2.npy', H_plus2)
+    np.save(path + '/npy/' + system + '.total_t.npy', total_t)
+
+    # calculate averages
+    avg_epsilon = calc_avg_over_time(epsilon)
+    avg_epsilon2 = calc_avg_over_time(epsilon2)
+    avg_H_plus = calc_avg_over_time(H_plus)
+    avg_H_plus2 = calc_avg_over_time(H_plus2)
+    avg_H_minus = calc_avg_over_time(H_minus)
+    avg_H_minus2 = calc_avg_over_time(H_minus2)
+    avg_epsilon_H = calc_avg_over_time(epsilon_H)
+    avg_total_t = calc_avg_over_time(total_t)
+    avg_K_plus = calc_avg_over_time(K_plus)
+    avg_K_minus = calc_avg_over_time(K_minus)
+
+    # calculate correlations
+    corr_eps_Hplus = calc_avg_over_time(epsilon * H_plus) - (avg_epsilon * avg_H_plus)
+    corr_mag_eps_Hplus = calc_avg_over_time(np.sqrt(epsilon2) * np.sqrt(H_plus2)) - (np.sqrt(avg_epsilon2) * np.sqrt(avg_H_plus2))
+    corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
+
+    # get proper plot dimensions
+    dims = bin_prep(bin_info, coordsys)
+    dim1vals, dim2vals = dims
+
+    # make pretty pictures and save data
+    data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
+                 corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
+                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H,
+                 avg_total_t]
+    name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
+                 "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
+                 "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
+                 "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
+    for data, name in zip(data_list, name_list):
+        # plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
+        np.save(path + '/npy/' + system + '.' + name + '.npy', data)
+        if coordsys == "polar":
+            avg_over_theta(path + '/npy/' + system + '.' + name)
