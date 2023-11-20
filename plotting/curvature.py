@@ -3,17 +3,15 @@ import numpy as np
 from utils import *
 
 
-def calculate_curvature(sys_name, coordsys, system_dict, cwd):
+def calculate_curvature(polar, system_dict, cwd):
     """
     Calculate mean and Gaussian curvature, as well as normal vectors for each \
         surface.
 
     Parameters
     ----------
-    sys_name : str
-        System name you gave nougat.py.
-    coordsys : str
-        "polar" or "cart".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
     system_dict : dict
         Dictionary containing key 'bin_info' that has bin dimensions.
     cwd : PathLib Path object
@@ -27,13 +25,13 @@ def calculate_curvature(sys_name, coordsys, system_dict, cwd):
     for field in ["zone", "ztwo", "zzero", "zplus"]:
         field_height = np.load(cwd.joinpath("trajectory", "height", field + ".npy"))
 
-        wrapped_height = make_pbc(field_height, coordsys, system_dict)
+        wrapped_height = make_pbc(field_height, polar, system_dict)
 
         diffs = take_finite_differences(wrapped_height, system_dict)
-        r_vector = calculate_r(system_dict['bin_info'], coordsys)
-        H = measure_mean_curvature(diffs, r_vector, coordsys)
-        K = measure_gaussian_curvature(diffs, r_vector, coordsys)
-        Nvecs = measure_normal_vectors(diffs, system_dict['bin_info'], r_vector, coordsys)
+        r_vector = calculate_r(system_dict['bin_info'], polar)
+        H = measure_mean_curvature(diffs, r_vector, polar)
+        K = measure_gaussian_curvature(diffs, r_vector, polar)
+        Nvecs = measure_normal_vectors(diffs, system_dict['bin_info'], r_vector, polar)
 
         # take the average curvatures over all frames
         avgH = calc_avg_over_time(H)
@@ -47,14 +45,14 @@ def calculate_curvature(sys_name, coordsys, system_dict, cwd):
         np.save(cwd.joinpath("average", "curvature", "mean", field + ".npy"), avgH)
         np.save(cwd.joinpath("average", "curvature", "gaussian", field + ".npy"), avgK)
         np.save(cwd.joinpath("trajectory", "curvature", "normal_vectors", field + ".npy"), Nvecs)
-        if coordsys == "polar":
+        if polar:
             avg_over_theta(cwd.joinpath("average", "curvature", "mean", field))
             avg_over_theta(cwd.joinpath("average", "curvature", "gaussian", field))
 
-        print(sys_name + " " + field + " curvatures done!")
+        print(field + " curvatures done!")
 
 
-def make_pbc(height, coordsys, system_dict):
+def make_pbc(height, polar, system_dict):
     """
     Implement periodic boundary conditions by wrapping the height values.
 
@@ -62,8 +60,8 @@ def make_pbc(height, coordsys, system_dict):
     ----------
     height : numpy ndarray
         3D matrix containing height values.
-    coordsys : str
-        "polar" or "cart".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
     system_dict : dict
         Dictionary containing bin information in key 'bin_info'.
 
@@ -87,11 +85,11 @@ def make_pbc(height, coordsys, system_dict):
     wrapped_inputs[:, :, 0] = wrapped_inputs[:, :, N2_bins]
     wrapped_inputs[:, :, (N2_bins + 1)] = wrapped_inputs[:, :, 1]
 
-    if coordsys == "polar":
+    if polar:
         # set top and bottom row to nan
         wrapped_inputs[:, 0, :] = np.nan
         wrapped_inputs[:, N1_bins + 1, :] = np.nan
-    elif coordsys == "cart":
+    else:
         # if cartesian, wrap in both directions
         wrapped_inputs[:, 0, :] = wrapped_inputs[:, N1_bins, :]
         wrapped_inputs[:, (N1_bins + 1), :] = wrapped_inputs[:, 1, :]
@@ -104,7 +102,7 @@ def make_pbc(height, coordsys, system_dict):
     return wrapped_inputs
 
 
-def calculate_r(bin_info, coordsys):
+def calculate_r(bin_info, polar):
     """
     Calculate the r value for each bin, measuring at the center of the bin.
 
@@ -112,8 +110,8 @@ def calculate_r(bin_info, coordsys):
     ----------
     bin_info : dict
         Dictionary containing bin numbers and sizes.
-    coordsys : str
-        "polar" or "cart".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
     Returns
     -------
@@ -121,7 +119,7 @@ def calculate_r(bin_info, coordsys):
         A column vector listing all the r values for a given system.
 
     """
-    if coordsys == "polar":
+    if polar:
         dr = bin_info['d1']
         Nr = bin_info['N1']
 
@@ -130,7 +128,7 @@ def calculate_r(bin_info, coordsys):
 
         # turn row vector into column vector for correct multiplication later
         r = r[:, None]
-    elif coordsys == "cart":
+    else:
         r = np.nan
 
     return r
@@ -187,7 +185,7 @@ def take_finite_differences(heights, system_dict):
     return [h_1, h_2, h_11, h_22, h_12]
 
 
-def measure_mean_curvature(finite_differences, r, coordsys):
+def measure_mean_curvature(finite_differences, r, polar):
     """
     Measure mean curvature H of a membrane field.
 
@@ -197,8 +195,8 @@ def measure_mean_curvature(finite_differences, r, coordsys):
         List containing the finite differences generated by take_finite_differences.
     r : numpy ndarray
         A column vector listing all the r values for a given system.
-    coordsys : str
-        "cart" or "polar".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
     Returns
     -------
@@ -208,21 +206,18 @@ def measure_mean_curvature(finite_differences, r, coordsys):
     """
     h_1, _, h_11, h_22, _ = finite_differences
 
-    if coordsys == "polar":
+    if polar:
         # mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
         H = (h_11 + r**(-1) * h_1 + r**(-2) * h_22) / 2.0
 
-    elif coordsys == "cart":
+    else:
         # mean curvature: (Hxx + Hyy)/2
         H = (h_11 + h_22) / 2.0
-
-    else:
-        print("something is wrong with coordsys")
 
     return H
 
 
-def measure_gaussian_curvature(finite_differences, r, coordsys):
+def measure_gaussian_curvature(finite_differences, r, polar):
     """
     Measure Gaussian curvature K of a membrane field.
 
@@ -232,8 +227,8 @@ def measure_gaussian_curvature(finite_differences, r, coordsys):
         List containing the finite differences generated by take_finite_differences.
     r : numpy ndarray
         A column vector listing all the r values for a given system.
-    coordsys : str
-        "cart" or "polar".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
     Returns
     -------
@@ -243,21 +238,18 @@ def measure_gaussian_curvature(finite_differences, r, coordsys):
     """
     h_1, h_2, h_11, h_22, h_12 = finite_differences
 
-    if coordsys == "polar":
+    if polar:
         # Gaussian curvature: 1/r(h_r*h_rr) + 2/r^3(h_rtheta*h_theta) - 1/r^4(h_theta^2) - 1/r^2(h_rtheta^2 - h_rr*h_thetatheta)
         K = r**(-1) * (h_1 * h_11) + 2 * r**(-3) * (h_12 * h_2) - r**(-4) * h_2**2 - r**(-2) * (h_12**2 - h_11 * h_22)
 
-    elif coordsys == "cart":
+    else:
         # mean curvature: HxxHyy - Hxy^2
         K = h_22 * h_11 - h_12**2
-
-    else:
-        print("something is wrong with coordsys")
 
     return K
 
 
-def measure_normal_vectors(finite_differences, bin_info, r, coordsys):
+def measure_normal_vectors(finite_differences, bin_info, r, polar):
     """
     Measure Gaussian curvature K of a membrane field.
 
@@ -269,8 +261,8 @@ def measure_normal_vectors(finite_differences, bin_info, r, coordsys):
         Dictionary containing bin numbers and sizes for each dimension.
     r : numpy ndarray
         A column vector listing all the r values for a given system.
-    coordsys : str
-        "cart" or "polar".
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
     Returns
     -------
@@ -282,7 +274,7 @@ def measure_normal_vectors(finite_differences, bin_info, r, coordsys):
     N2 = bin_info['N2']
     d2 = bin_info['d2']
 
-    if coordsys == "polar":
+    if polar:
         # Determine theta value for each column
         theta = np.linspace(d2 / 2, d2 / 2 + d2 * (N2 - 1), N2)
 
@@ -293,14 +285,12 @@ def measure_normal_vectors(finite_differences, bin_info, r, coordsys):
         Ny = (-1 * r**(-1) * np.cos(theta) * h_2 - np.sin(theta) * h_1) * N**(-1)
         Nz = N**(-1)
 
-    elif coordsys == "cart":
+    else:
         # normal vector: [-h_r/N, -h_y/N, 1/N]
         # N = normalization constant = sqrt(h_x^2 + h_y^2 + 1)
         N = np.sqrt(h_2**2 + h_1**2 + 1)
         Nx = -1 * h_2 * N**(-1)
         Ny = -1 * h_1 * N**(-1)
         Nz = N**(-1)
-    else:
-        print("something is wrong with coordsys")
 
     return [Nx, Ny, Nz]
