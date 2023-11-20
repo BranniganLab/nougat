@@ -2,7 +2,7 @@
 
 # Run unit tests
 cd ../test/ 
-vmd -dispdev none -e ./run_unit_tests.tcl 2>&1 | tee -a pytest.log
+vmd -dispdev none -e ./run_unit_tests.tcl 2>&1 | tee -a tcl_unit_test.log
 cd ../testing_materials/
 
 # Run nougat.tcl and nougat.py on test systems
