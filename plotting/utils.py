@@ -83,6 +83,39 @@ def find_first_val(in_list):
     return np.nan
 
 
+def parse_dat_file(path, bin_info):
+    """
+    Parse nougat .dat file and turn it into a numpy ndarray.
+
+    Parameters
+    ----------
+    path : Pathlib Path object
+        The path to the .dat file.
+    bin_info : dict
+        Dictionary containing bin sizes and number of frames in trajectory.
+
+    Returns
+    -------
+    data_array : numpy ndarray
+        3D array with dimensions time, [x, r], [y, theta].
+
+    """
+    N1_bins = bin_info["N1"]
+    N2_bins = bin_info["N2"]
+    Nframes = bin_info["nframes"]
+
+    data = np.genfromtxt(path, missing_values='nan', filling_values=np.nan)
+
+    # create a new array that has each frame in a different array level
+    data_array = np.zeros((Nframes, N1_bins, N2_bins))
+
+    # put each frame in its own level of the matrix
+    for frm in range(Nframes):
+        data_array[frm, :, :] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+
+    return data_array
+
+
 def find_last_val(in_list):
     """
     Find last non-nan value in a list.
@@ -199,7 +232,6 @@ def bin_prep(bin_info, polar):
         The two numpy ndarrays needed for plotting a heatmap.
 
     """
-
     dim1 = np.linspace(0, bin_info['N1'] * bin_info['d1'], bin_info['N1'] + 1)
     if polar:
         dim2 = np.linspace(0, 2 * np.pi, bin_info['N2'] + 1)
@@ -210,7 +242,25 @@ def bin_prep(bin_info, polar):
     return [dim1vals, dim2vals]
 
 
-def save_areas(bin_info, min_val, polar, sys_name):
+def save_areas(bin_info, min_val, polar):
+    """
+    Calculate area of each bin and save to file.
+
+    Parameters
+    ----------
+    bin_info : dict
+        Dict containing bin sizes.
+    min_val : float
+        Distance from origin that first radial bin starts. Only used in polar \
+            coordinate systems. Default is zero.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+
+    Returns
+    -------
+    None.
+
+    """
     N1_bins = bin_info["N1"]
     N2_bins = bin_info["N2"]
     d1 = bin_info["d1"]

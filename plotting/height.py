@@ -5,7 +5,7 @@ from pathlib import Path
 from utils import *
 
 
-def Make_surface_PDB(data, name, field, d1, d2, f, serial, coordsys):
+def Make_surface_PDB(data, field, d1, d2, f, serial, polar):
     resseqnum = 1
     atom_name = 'SURF'
     chain = 'X'
@@ -17,7 +17,7 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, coordsys):
             if str(data[d1bin][d2bin]) != "nan":
                 seriallen = 5 - (len(str(serial)))
                 resseqlen = 4 - (len(str(resseqnum)))
-                if coordsys == "polar":
+                if polar:
                     x = (d1 * d1bin + .5 * d1) * (np.cos(d2bin * d2 + 0.5 * d2))
                     y = (d1 * d1bin + .5 * d1) * (np.sin(d2bin * d2 + 0.5 * d2))
                 else:
@@ -36,7 +36,7 @@ def Make_surface_PDB(data, name, field, d1, d2, f, serial, coordsys):
     return serial
 
 
-def calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2, cwd):
+def calculate_zplus(sys_name, polar, inclusion, serial, pdb, d1, d2, cwd):
     zone = np.load(cwd.joinpath("trajectory", "height", "zone.npy"))
     ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
 
@@ -48,13 +48,13 @@ def calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2, cwd):
     np.save(cwd.joinpath("trajectory", "height", "zplus.npy"), zplus)
     np.save(cwd.joinpath("average", "height", "zplus.npy"), avgzplus)
     np.savetxt(cwd.joinpath("average", "height", "zplus.dat"), avgzplus, delimiter=',', fmt='%10.5f')
-    if coordsys == "polar":
+    if polar:
         avg_over_theta(cwd.joinpath("average", "height", "zplus"))
-    serial = Make_surface_PDB(avgzplus, sys_name, 'zplus', d1, d2, pdb, serial, coordsys)
+    serial = Make_surface_PDB(avgzplus, 'zplus', d1, d2, pdb, serial, polar)
     print(sys_name + " zplus height done!")
 
 
-def analyze_height(sys_name, system_dict, coordsys, inclusion, cwd):
+def parse_height(system_dict, polar, cwd):
     serial = 1
 
     N1_bins = system_dict['bin_info']['N1']
@@ -97,13 +97,13 @@ def analyze_height(sys_name, system_dict, coordsys, inclusion, cwd):
             # save as file for debugging / analysis AND make PDB!
             np.save(cwd.joinpath("trajectory", "height", field + ".npy"), pruned_height)
             np.save(cwd.joinpath("average", "height", field + ".npy"), avgHeight)
-            if coordsys == "polar":
+            if polar:
                 avg_over_theta(cwd.joinpath("average", "height", field))
             np.savetxt(cwd.joinpath("average", "height", field + ".dat"), avgHeight, delimiter=',', fmt='%10.5f')
-            serial = Make_surface_PDB(avgHeight, sys_name, field, d1, d2, pdb, serial, coordsys)
-            print(sys_name + ' ' + field + " height done!")
+            serial = Make_surface_PDB(avgHeight, field, d1, d2, pdb, serial, polar)
+            print(field + " height done!")
 
-        calculate_zplus(sys_name, coordsys, inclusion, serial, pdb, d1, d2, cwd)
+        calculate_zplus(polar, serial, pdb, d1, d2, cwd)
 
         # print last line of pdb file
         print('END', file=pdb)
