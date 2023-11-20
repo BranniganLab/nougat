@@ -114,16 +114,16 @@ def make_npy_paths(wd, system, coord, surf, quant):
     elif system == "flat":
         directory = "flat_surface_test"
     if (quant == "meancurvature") or (quant == "curvature"):
-        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", "mean", surf + ".npy")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "mean", surf + ".npy")
     elif (quant == "gausscurvature") or (quant == "Kcurvature"):
-        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", "gaussian", surf + ".npy")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "gaussian", surf + ".npy")
     elif quant == "normal_vectors":
-        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", quant, surf + ".npy")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", quant, surf + ".npy")
     elif (quant == "height") or (quant == "thickness"):
-        expected = wd.joinpath(directory, system + coordsys_path, "npy", system + "." + surf + "." + coord + "." + quant + ".npy")
+        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", quant, surf + ".npy")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", quant, surf + ".npy")
     return Comparison(test_input, expected)
 
@@ -163,16 +163,16 @@ def make_avg_paths(wd, system, coord, surf, quant):
         directory = "flat_surface_test"
     if quant != "avgdensity":
         if quant == "curvature":
-            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            expected = wd.joinpath(directory, system + coordsys_path, "average", quant, "mean", surf + ".dat")
             test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, "mean", surf + ".dat")
         elif quant == "Kcurvature":
-            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            expected = wd.joinpath(directory, system + coordsys_path, "average", "curvature", "gaussian", surf + ".dat")
             test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "curvature", "gaussian", surf + ".dat")
         elif (quant == "height") or (quant == "thickness"):
-            expected = wd.joinpath(directory, system + coordsys_path, "dat", system + "." + surf + "." + coord + ".avg" + quant + ".dat")
+            expected = wd.joinpath(directory, system + coordsys_path, "average", quant, surf + ".dat")
             test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, surf + ".dat")
     elif quant == "avgdensity":
-        expected = wd.joinpath(directory, system + coordsys_path, "dat", system + ".DTPC." + surf + "." + coord + "." + quant + ".dat")
+        expected = wd.joinpath(directory, system + coordsys_path, "average", "density", "DTPC", surf + ".dat")
         test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "density", "DTPC", surf + ".dat")
     return Comparison(test_input, expected)
 
@@ -276,7 +276,7 @@ def test_if_densities_match(cwd, coordsys, surface2):
         coordsys_path = "_cart_5_5_0_-1_1"
     elif coordsys == "polar":
         coordsys_path = "_polar_3_12_0_-1_1"
-    exp = cwd.joinpath("E-protein_trajectory/E-protein" + coordsys_path, "npy/E-protein.DTPC." + surface2 + "." + coordsys + ".density.npy")
+    exp = cwd.joinpath("E-protein_trajectory/E-protein" + coordsys_path, "trajectory", "density", "DTPC", surface2 + ".npy")
     test = cwd.joinpath("E-protein_trajectory/test" + coordsys_path, "trajectory", "density", "DTPC", surface2 + ".npy")
     paths = Comparison(test, exp)
     assert arrays_equal(paths, 'npy', 1e-11)
