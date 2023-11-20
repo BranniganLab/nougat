@@ -36,7 +36,7 @@ def Make_surface_PDB(data, field, d1, d2, f, serial, polar):
     return serial
 
 
-def calculate_zplus(sys_name, polar, inclusion, serial, pdb, d1, d2, cwd):
+def calculate_zplus(polar, serial, pdb, d1, d2, cwd):
     zone = np.load(cwd.joinpath("trajectory", "height", "zone.npy"))
     ztwo = np.load(cwd.joinpath("trajectory", "height", "ztwo.npy"))
 

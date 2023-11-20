@@ -52,7 +52,6 @@ def run_nougat(polar, inclusion_drawn):
 
     # figure out all the important info about the system you'll need
     system_dict = read_log()
-    sys_name = system_dict["sysname"]
 
     # prep heatmap plot dimensions
     hmap_dims = bin_prep(system_dict['bin_info'], polar)
@@ -67,9 +66,10 @@ def run_nougat(polar, inclusion_drawn):
     calculate_density(polar, system_dict, cwd)
 
     # calculate_order(polar, system_dict, cwd)
+
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
-    # calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
+    # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
 
 """
