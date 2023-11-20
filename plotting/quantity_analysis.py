@@ -28,7 +28,7 @@ def calculate_density(polar, system_dict, cwd):
     for species in system_dict['species']:
 
         # make species-specific folders for density
-        for folder in ["trajectory", "average"]:
+        for folder in ["trajectory", "average", "figures"]:
             species_dir = cwd.joinpath(folder, "density", species)
             species_dir.mkdir(parents=True, exist_ok=True)
 

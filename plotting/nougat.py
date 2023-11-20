@@ -6,7 +6,7 @@ Created on Mon Jul 17 10:54:23 2023.
 
 import argparse
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import numpy as np
 from height import *
 from curvature import *
@@ -87,9 +87,9 @@ def run_nougat(polar, inclusion_drawn):
             fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", coordsys)
             save_figure(sys_name, field, coordsys, "avg_thickness")
         for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + "." + field + "." + coordsys + ".avgdensity.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgdensity", coordsys)
-            save_figure(sys_name, field, coordsys, "avgdensity")
+            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, field, inclusion, "avgdensity", polar)
+            plt.save(cwd.joinpath("figures", "density", species, field + ".pdf"))
             for tail in range(system_dict['ntails'][species]):
                 hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
                 fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
