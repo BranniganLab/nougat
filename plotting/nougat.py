@@ -6,7 +6,7 @@ Created on Mon Jul 17 10:54:23 2023.
 
 import argparse
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import numpy as np
 from height import *
 from curvature import *
@@ -34,7 +34,7 @@ def run_nougat(polar, inclusion_drawn):
     """
     # make necessary folders
     cwd = Path.cwd()
-    for filetype in ["trajectory", "average"]:
+    for filetype in ["trajectory", "average", "figures"]:
         for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
             if quantity == "curvature":
                 for curv in ["mean", "gaussian", "normal_vectors"]:
@@ -71,28 +71,25 @@ def run_nougat(polar, inclusion_drawn):
 
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
-
-"""
     for species in system_dict['headnames'].keys():
-        for field in ["zone", "ztwo", "zzero", "zplus"]:
-            for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
-                print(sys_name, field, coordsys, quantity)
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + "." + quantity + ".dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, coordsys)
-                save_figure(sys_name, field, coordsys, quantity)
-        for field in ["zone", "ztwo", "whole"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + ".avgthickness.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", coordsys)
-            save_figure(sys_name, field, coordsys, "avg_thickness")
+        # for field in ["zone", "ztwo", "zzero", "zplus"]:
+        # for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
+        # hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + "." + quantity + ".dat", delimiter=",")
+        # fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, coordsys)
+        # save_figure(sys_name, field, coordsys, quantity)
+        # for field in ["zone", "ztwo", "whole"]:
+        # hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + ".avgthickness.dat", delimiter=",")
+        # fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", coordsys)
+        # save_figure(sys_name, field, coordsys, "avg_thickness")
         for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + "." + field + "." + coordsys + ".avgdensity.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgdensity", coordsys)
-            save_figure(sys_name, field, coordsys, "avgdensity")
-            for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
-                plt.savefig('pdf/' + sys_name + "_" + field + "_" + coordsys + "tail" + str(tail) + "_avgorder.pdf")
-"""
+            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, field, inclusion, "avgdensity", polar)
+            plt.save(cwd.joinpath("figures", "density", species, field + ".pdf"))
+            # for tail in range(system_dict['ntails'][species]):
+            # hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
+            # fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
+            # plt.savefig('pdf/' + sys_name + "_" + field + "_" + coordsys + "tail" + str(tail) + "_avgorder.pdf")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")

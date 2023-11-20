@@ -393,7 +393,7 @@ def read_log():
     return system_dict
 
 
-def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, polar):
+def plot_maker(dims, data, protein, quant, bead, polar):
     """
     Create and save 2D heatmaps.
 
@@ -403,20 +403,14 @@ def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, po
         np.meshgrid output
     data : array
         the 2d array/matrix of values to be heatmapped
-    name : string
-        the system name you gave nougat.py
-    field : string
-        usually describes which membrane field (z1, z2, etc) to be heatmapped
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    dataname : string
-        the type of measurement (thickness, height, curvature, etc)
+    quant : str
+        The quantity being plotted.
     bead : string or False
         if bead specified, name of bead; else False
     polar : bool
         Whether or not to use polar coordinates
-    config_dict : dict
-        Dict containing config info
 
     Returns
     -------
@@ -424,8 +418,10 @@ def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, po
 
     """
     dim1vals, dim2vals = dims
-    if dataname in config_dict:
-        Vmin, Vmax = config_dict[dataname].split(",")
+
+    if quant == "density":
+        Vmin = 0
+        Vmax = 2
     else:
         Vmin, Vmax = "auto"
 
@@ -436,7 +432,7 @@ def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, po
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
+    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True)
     if protein:
         draw_protein(protein, polar)
     return fig, ax
