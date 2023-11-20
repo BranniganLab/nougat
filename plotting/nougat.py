@@ -71,7 +71,7 @@ def run_nougat(polar, inclusion_drawn):
 
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
-    for species in system_dict['headnames'].keys():
+    for species in system_dict['species']:
         # for field in ["zone", "ztwo", "zzero", "zplus"]:
         # for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
         # hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + "." + quantity + ".dat", delimiter=",")
@@ -83,8 +83,8 @@ def run_nougat(polar, inclusion_drawn):
         # save_figure(sys_name, field, coordsys, "avg_thickness")
         for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, field, inclusion, "avgdensity", polar)
-            plt.save(cwd.joinpath("figures", "density", species, field + ".pdf"))
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
+            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
             # for tail in range(system_dict['ntails'][species]):
             # hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
             # fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)

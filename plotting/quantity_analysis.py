@@ -33,7 +33,7 @@ def calculate_density(polar, system_dict, cwd):
             species_dir.mkdir(parents=True, exist_ok=True)
 
         for leaflet in ["zone", "ztwo"]:
-            counts_array = parse_dat_file(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), system_dict["bin_info"])
+            counts_array = parse_dat_file(cwd.joinpath("tcl_output", "density", species, leaflet + ".dat"), system_dict["bin_info"], "density")
 
             density_array = counts_array / areas
 
@@ -120,7 +120,7 @@ def calculate_order(polar, system_dict, cwd):
                     dirname = cwd.joinpath(folder, "order", species, "tail" + str(tail))
                     dirname.mkdir(parents=True, exist_ok=True)
 
-                order_array = parse_dat_file(cwd.joinpath("tcl_output", "order", species, "tail" + str(tail), leaflet + ".dat"), system_dict["bin_info"])
+                order_array = parse_dat_file(cwd.joinpath("tcl_output", "order", species, "tail" + str(tail), leaflet + ".dat"), system_dict["bin_info"], "order")
 
                 order_array_pruned = mostly_empty(order_array)
 
