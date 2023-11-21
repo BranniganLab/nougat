@@ -123,7 +123,7 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       delimiter  {str}   string to be input between items in inputList
 #
 # Results:
-#       Returns a list of elements with the specified delimiter between "NULL" will 
+#       Returns a list of elements with the specified delimiter between. "NULL" will 
 #       result in no delimiter with a single space separating elements."or" will 
 #       also enclose list items in parentheses for use as atomselection text.
 #
@@ -132,6 +132,9 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       {1 $ 2 $ 3 $ 4 $ 5}
 
 proc concatenateList {inputList delimiter} {
+    if {[llength $inputList] == 1} {
+        return [list $inputList]
+    }
     if {$delimiter eq "or"} {
         set output "([lindex $inputList 0])"
     } else {
@@ -148,6 +151,8 @@ proc concatenateList {inputList delimiter} {
             set output "${output} $delimiter [lindex $inputList $i]"
         }
     }
+
+    
     return $output
 }
 
@@ -251,7 +256,7 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
         ;# how many tails are in this lipid species?
         set numTails [llength $endNames]
 
-        set startSel [atomselect top "resname $lipidType and (name PO4 or name ROH)" frame $frm]
+        set startSel [atomselect top "resname $lipidType and (name PO4 ROH)" frame $frm]
         set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
         set startZ [$startSel get z]
         set endZ [$endSel get z]
@@ -402,26 +407,27 @@ proc analyzeTails { species } {
     set taillist []
     set letters "A B C D E F G H I J"
     foreach lipidtype $species {
-        set tails []
-        set sel [atomselect top "resname $lipidtype"]
-        set res [$sel get resid]
-        $sel delete
-        set sel [atomselect top "resname $lipidtype and resid [lindex $res 0]"]
-        set names [$sel get name]
-        $sel delete
-        foreach letter $letters {
-            set tail []
-            foreach nm $names {
-                if {[string match ??${letter} $nm]} {
-                    lappend tail $nm
+        if {$lipidtype == "CHOL"} {
+            lappend taillist {{ROH R1 R2 R3 R4 R5 C1 C2}}
+        } else {
+            set tails []
+            set sel [atomselect top "resname $lipidtype"]
+            set names [lsort -unique [$sel get name]]
+            $sel delete
+            foreach letter $letters {
+                set tail []
+                foreach nm $names {
+                    if {[string match ??${letter} $nm]} {
+                        lappend tail $nm
+                    }
+                }
+                if {[llength $tail] != 0} {
+                    lappend tails $tail
                 }
             }
-            if {[llength $tail] != 0} {
-                lappend tails $tail
+            if {[llength $tails] != 0} {
+                lappend taillist $tails
             }
-        }
-        if {[llength $tails] != 0} {
-            lappend taillist $tails
         }
     }
     ;# returns top/bottom beads in lipid tails for leaflet sorting
@@ -436,6 +442,7 @@ proc analyzeTails { species } {
             }
         }
     }
+    
 
     return [list $taillist $findHeadsAndTails $full_tails]
 }
