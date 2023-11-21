@@ -11,7 +11,11 @@ cd ../test/
 vmd -dispdev none -e ./run_unit_tests.tcl 2>&1 | tee -a ../testing_materials/tcl_unit_test.log
 cd ../testing_materials/
 
+# Check to make sure tests all passed
+
 # Run python unit tests and divert output to file and terminal.
+
+# Check to make sure tests all passed
 
 # Run nougat.tcl and nougat.py on test systems
 vmd -dispdev none -e ./run_nougat_test.tcl
