@@ -1,17 +1,33 @@
-#! /bin/sh
+#! /bin/bash
 
-# Remove old log files to prevent accidental appending. || True is to suppress
+# Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
-rm nougpy.log || True
-rm pytest.log || True
-rm tcl_unit_test.log || True
+rm -f nougpy.log 
+rm -f pytest.log 
+rm -f tcl_unit_test.log 
 
 # Run tcl unit tests and divert output to file AND to terminal (tee)
 cd ../test/ 
-vmd -dispdev none -e ./run_unit_tests.tcl 2>&1 | tee -a ../testing_materials/tcl_unit_test.log
+echo "Starting TCL unit testing"
+vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
 cd ../testing_materials/
+echo "TCL unit testing finished"
 
 # Check to make sure tests all passed
+if grep FAILED tcl_unit_test.log
+then
+	echo "TCL unit testing failed :("
+	echo "Do you want to continue with acceptance testing anyway?"
+	echo "(Choose the number that corresponds to your choice)"
+	select yn in "Yes, Continue" "No, Exit"; do
+    	case $yn in
+        	"Yes, Continue" ) break;;
+        	"No, Exit" ) exit;;
+    	esac
+	done
+else
+	echo "TCL unit testing passed :)"
+fi
 
 # Run python unit tests and divert output to file and terminal.
 
