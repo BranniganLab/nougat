@@ -1430,26 +1430,37 @@ proc createAtomSelections {quantity configDictionary} {
 
 
 
-;#********************************;#
-;# Liam scripts or custom scripts ;#
-;#********************************;#
-
-;# Alignment based off vmd alignment
-
-# Rotational fit around z axis only
-# used to prevent spin/swivel motion of a membrane protein,
-# without changing membrane orientation (no tilt)
+# Align --
 #
-# Jérôme Hénin <jerome.henin@cnrs.fr>
+#       Alignment based off vmd alignment 
+#       
+# Arguments:
+#       align_seltext       {str}       Selection text for aligning    
+#	tilt_flag	    {bool}	Rotational fit around z axis only
+# 					used to prevent spin/swivel motion of a membrane protein,
+# 					without changing membrane orientation (no tilt)
+#					Values: 1 (align all axes), 0 (don't align tilt)
+#					Default: 1 (align all)
+#	M_PI		    {float}	The value of pi.
+#	molid		    {string} 	The molid to align. Defuault: top
+# Results:
+#       
+#       The original trajector
+#       
+# Necessary Revisions/Problems:
+#	Why doesn't it know what M_PI is unless we pass it as an argument?
+#      
+# Based on a script by Jérôme Hénin <jerome.henin@cnrs.fr>
 
-proc Align { align_seltext tilt_flag } {
+proc Align { align_seltext {tilt_flag 1} {M_PI 3.14159265358979323846} {molid top}} {
     puts "Align start"
-    set nframes [molinfo top get numframes]
-    set system [atomselect top "all"]
-    set ref [atomselect top $align_seltext frame 0]
-    set align_by [atomselect top "index [$ref list]"]
+    set nframes [molinfo $molid get numframes]
+    set system [atomselect $molid "all"]
+    set ref [atomselect $molid $align_seltext frame 0]
+    set align_by [atomselect $molid "index [$ref list]"]
     for {set the_frame 1} {$the_frame < $nframes} {incr the_frame} {
         $align_by frame $the_frame
+        $system frame $the_frame
         set TM [measure fit $align_by $ref]
         if {$tilt_flag==0} {
 		    # Sine and cosine of z rotation are in first column of 4x4 matrix
@@ -1458,14 +1469,23 @@ proc Align { align_seltext tilt_flag } {
 		    # Negative sign to reverse rotation
 		    # Use atan2 for safety
 		    set alpha [expr {-180.0 / $M_PI * atan2($m01, $m00)}]
+		    set TM [transaxis z $alpha deg]
         }
         $system move $TM
-	    # Apply reverse
-	    $system move [transaxis z $alpha deg]
+	    
     }
     $ref delete
+    $system delete
+    $align_by delete
     puts "Align end"
 }
+
+
+;#********************************;#
+;# Liam scripts or custom scripts ;#
+;#********************************;#
+
+
 
 
 proc separate_chains {molid cutoff} {
