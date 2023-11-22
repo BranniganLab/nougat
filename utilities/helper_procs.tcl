@@ -1422,61 +1422,39 @@ proc createAtomSelections {quantity configDictionary} {
 }
 
 
-# Hadamard Product (element-wise matrix product)
-#
-#       Multiplies two, identically-sized matrices together element-wise
-#       
-# Arguments:
-#       matA    {matrix}	an MxN matrix
-#       matB	{matrix}        an MxN matrix
-#
-# Results:
-#       
-#       returns an MxN matrix such that result[i,j]=matA[i,j]*matB[i,j]
-#       
-# Necessary Revisions/Problems:
-#       None so far
-proc multHadamard { matA matB } {
-	set MA [llength $matA]
-	set NA [llength [lindex $matA 0]]
-	set MB [llength $matB]
-	set NB [llength [lindex $matB 0]]
-	if {$MA != $MB || $NA != $NB} {error "ERROR: These matrices are not the same size."}
-	
-	set result ""
-	for {set row 0} {$row < $MA} {incr row} {
-		set rA [lindex $matA $row]
-		set rB [lindex $matB $row]
-		vecexpr $rA $rB mult &rResult
-		lappend result $rResult
-	}
-	
-	return $result
-}
-
 
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
 
 ;# Alignment based off vmd alignment
-proc Align { stuff tilt_flag } {
-    set no_tilt {{1 1 0 1} {1 1 0 1} {0 0 1 1} {1 1 1 1}}
 
+# Rotational fit around z axis only
+# used to prevent spin/swivel motion of a membrane protein,
+# without changing membrane orientation (no tilt)
+#
+# Jérôme Hénin <jerome.henin@cnrs.fr>
+
+proc Align { align_seltext tilt_flag } {
     puts "Align start"
     set nframes [molinfo top get numframes]
-    set ref [atomselect top $stuff frame 0]
-    for {set frames 1} {$frames < $nframes} {incr frames} {
-        set com [atomselect top $stuff frame $frames]
-        set TM [measure fit $com $ref]
+    set system [atomselect top "all"]
+    set ref [atomselect top $align_seltext frame 0]
+    set align_by [atomselect top "index [$ref list]"]
+    for {set the_frame 1} {$the_frame < $nframes} {incr the_frame} {
+        $align_by frame $the_frame
+        set TM [measure fit $align_by $ref]
         if {$tilt_flag==0} {
-        	set TM [multHadamard $TM $no_tilt]
-        	lset TM 2 2 1
+		    # Sine and cosine of z rotation are in first column of 4x4 matrix
+		    set m00 [lindex $TM 0 0]
+		    set m01 [lindex $TM 0 1]
+		    # Negative sign to reverse rotation
+		    # Use atan2 for safety
+		    set alpha [expr {-180.0 / $M_PI * atan2($m01, $m00)}]
         }
-        $com delete
-        set move_sel [atomselect top "all" frame $frames]
-        $move_sel move $TM
-        $move_sel delete
+        $system move $TM
+	    # Apply reverse
+	    $system move [transaxis z $alpha deg]
     }
     $ref delete
     puts "Align end"
