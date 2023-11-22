@@ -1421,18 +1421,58 @@ proc createAtomSelections {quantity configDictionary} {
     return $selections
 }
 
+
+# Hadamard Product (element-wise matrix product)
+#
+#       Multiplies two, identically-sized matrices together element-wise
+#       
+# Arguments:
+#       matA    {matrix}	an MxN matrix
+#       matB	{matrix}        an MxN matrix
+#
+# Results:
+#       
+#       returns an MxN matrix such that result[i,j]=matA[i,j]*matB[i,j]
+#       
+# Necessary Revisions/Problems:
+#       None so far
+proc multHadamard { matA matB } {
+	set MA [llength $matA]
+	set NA [llength [lindex $matA 0]]
+	set MB [llength $matB]
+	set NB [llength [lindex $matB 0]]
+	if {$MA != $MB || $NA != $NB} {error "ERROR: These matrices are not the same size."}
+	
+	set result ""
+	for {set row 0} {$row < $MA} {incr row} {
+		set rA [lindex $matA $row]
+		set rB [lindex $matB $row]
+		vecexpr $rA $rB mult &rResult
+		lappend result $rResult
+	}
+	
+	return $result
+}
+
+
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
 
 ;# Alignment based off vmd alignment
-proc Align { stuff } {
+proc Align { stuff tilt_flag } {
+    set no_tilt {{1 1 0 1} {1 1 0 1} {0 0 1 1} {1 1 1 1}}
+
     puts "Align start"
     set nframes [molinfo top get numframes]
     set ref [atomselect top $stuff frame 0]
     for {set frames 1} {$frames < $nframes} {incr frames} {
         set com [atomselect top $stuff frame $frames]
         set TM [measure fit $com $ref]
+        if {$tilt_flag==0} {
+        	set TM [multHadamard $TM $no_tilt]
+        	lset TM 2 2 1
+        }
         $com delete
         set move_sel [atomselect top "all" frame $frames]
         $move_sel move $TM
