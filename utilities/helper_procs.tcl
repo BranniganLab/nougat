@@ -385,6 +385,29 @@ proc printFrame {N1 outfiles key d1 min N2 polar selex} {
     }
 }
 
+# mapIndices --
+#
+#       Sorts a list using indices provided (lmap isn't available in VMD)
+#
+# Arguments:
+#       indexlist   {list}      list of indices that will be used to rearrange valuelist
+#       valuelist   {list}      list of values that will be rearranged by order specified in indexlist
+#
+# Results:
+#       returns valuelist, rearranged based on the order specified in indexlist
+#
+# e.g. mapIndices {1 0 2} {item1 item2 item3} --> {item2 item1 item3}
+
+proc mapIndices {indexlist valuelist} {
+    set result {}
+    foreach i $indexlist {
+        lappend result [lindex $valuelist $i]
+    }
+    return $result
+}
+
+
+
 # analyzeTails (Previously: tail_analyzer)--
 #
 #       Sorts tails of lipids by head group and tail type
@@ -398,7 +421,7 @@ proc printFrame {N1 outfiles key d1 min N2 polar selex} {
 #
 # e.g. a membrane with DO and DP lipids would be: 
 # |-------------------------------------taillist------------------------------------|
-#   |------------------DO-----------------| |------------------DP-----------------|
+#   |------------------DP-----------------| |------------------DO-----------------|
 #     |-----tail0-----| |-----tail1-----|     |-----tail0-----| |-----tail1-----|
 #
 # { { {C1A C2A C3A C4A} {C1B C2B C3B C4B} } { {C1A D2A C3A C4A} {C1B D2B C3B C4B} } } 
@@ -412,17 +435,22 @@ proc analyzeTails { species } {
         } else {
             set tails []
             set sel [atomselect top "resname $lipidtype"]
-            set names [lsort -unique [$sel get name]]
+            set names [lsort -unique -dictionary [$sel get name]]
             $sel delete
             foreach letter $letters {
                 set tail []
                 foreach nm $names {
                     if {[string match ??${letter} $nm]} {
-                        lappend tail $nm
+                        lappend tail [string reverse $nm]
                     }
                 }
                 if {[llength $tail] != 0} {
-                    lappend tails $tail
+                    set tail [lsort $tail]
+                    set correct_order []
+                    foreach item $tail {
+                        lappend correct_order [string reverse $item]
+                    }
+                    lappend tails $correct_order
                 }
             }
             if {[llength $tails] != 0} {
