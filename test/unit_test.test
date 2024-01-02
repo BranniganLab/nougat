@@ -702,8 +702,8 @@ test createatomselects {
     Test: createAtomSelections
 } -setup {
     mol new ../testing_materials/lipid_membrane/insane2.gro
-    set selly [createAtomSelections "height_density" $config_dict]
     set config_dict [cell_prep "nougat_config.txt" 1]
+    set selly [createAtomSelections "height_density" $config_dict]
     set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
     set lipnum [llength [$sel get resid]]
     set cselnum [llength [[dict get $selly z1z2] get resid]]
@@ -798,20 +798,20 @@ mol delete top
 }
 
 test Avgheightdensity {
-    Test: averageTiltAndOrderParameter
+    Test: averageHeightAndDensity
 } -setup {
-   mol new ../testing_materials/GNP_trajectory/em.gro
-   mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
-   start_nougat PO nougat_config.txt 12 12 0 1 1 0
-   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.height.dat" r]
-   set filedata [read $fp]
-   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.totdensity.dat" r]
-   set filedata2 [read $fp2]
-   set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    start_nougat PO nougat_config.txt 12 12 0 1 1 0
+    set fp [open "PO_cart_12_12_0_1_1/tcl_output/height/zone.dat" r]
+    set filedata [read $fp]
+    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/density/POPC/zone.dat" r]
+    set filedata2 [read $fp2]
+    set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
 } -body {
     return $match
 } -result {12.49 5.00} -cleanup {
-mol delete top
+    mol delete top
 }
 
 test Avgtiltord {
