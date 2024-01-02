@@ -191,13 +191,10 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [createResidueDictionaries [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
-            if {$quantity_of_interest eq "height_density"} {
-                set dens_dict [createDensityDictionaries [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
-            }
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height_density"} {
-                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list] $dens_dict]
+                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [fitVecsToSel [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set orders [calculateOrderParameters [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
