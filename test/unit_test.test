@@ -792,8 +792,8 @@ test Normalizationdensitytest {
     set L2 [molinfo top get b]
     set area [expr $L1*$L2]
 } -body {
-    return [format "%.10s" [lindex [outputDensityNormInfo 0 0 1 {POPC} "PO" {C1A C1B} 0 $area "PO"] 0]]
-} -result "POPC:34.50" -cleanup {
+    return [format "%.10s" [outputDensityNormInfo {POPC} $area]]
+} -result "POPC:5.751" -cleanup {
     mol delete top
 }
 
