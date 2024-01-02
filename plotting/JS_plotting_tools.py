@@ -667,9 +667,9 @@ def plot_APL(path, sysname):
     APL_traj = np.loadtxt(path + sysname + ".APL.traj")
     fig, ax = plt.subplots(layout='constrained')
     X = APL_traj[:, 0]
-    Y = APL_traj[:, 1]
-    ax.plot(X, Y, color="blue")
-    ax.plot(X, rollingavg(Y, 20), color="red")
+    area = APL_traj[:, 1]
+    ax.plot(X, area, color="blue")
+    ax.plot(X, rollingavg(area, 20), color="red")
     ax.legend(["Raw", "Rolling Average (20)"])
     fig.supxlabel(r'$t \;(\mathrm{frames})$')
     fig.supylabel(r'$\mathrm{Area / lipid} \;(\mathrm{\dot A^2})$')
@@ -721,7 +721,7 @@ def plot_asymm_over_traj(path, sysname):
     plt.savefig(path + sysname + ".asymm_traj.pdf", dpi=700)
 
 
-def compare_APLs(names, path):
+def compare_APLs(names, paths):
     """
     Create plot of average APL for several different systems
 
@@ -883,7 +883,15 @@ APL_color_dict = {
     "2048": "yellow",
     "4096": "green",
     "8192": "blue",
-    "32768": "purple"}
+    "32768": "purple",
+    "COMtiltspin": "black",
+    "new_gmx": "grey",
+    "100": "red",
+    "250": "orange",
+    "500": "green",
+    "1000": "blue",
+    "5000": "purple"
+}
 
 colordict = {
     "DT": "red",
@@ -1016,6 +1024,9 @@ paths = ["/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1", "/home/js274
 nougvals = ["_polar_5_10_100_-1_1", "_polar_5_10_0_-1_1"]
 bulkpath = "/home/js2746/Bending/PC/whole_mols/empty"
 bulknougvals = "_polar_5_10_0_-1_1"
+area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/", "/home/jesse/research/5x29_stiffness/100/", "/home/jesse/research/5x29_stiffness/250/", "/home/jesse/research/5x29_stiffness/500/", "/home/jesse/research/5x29_stiffness/1000/", "/home/jesse/research/5x29_stiffness/5000/"]
+# area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/"]
+# area_paths = ["/home/jesse/research/COMtiltspin/", "/home/jesse/research/new_gmx_pos/",]
 
 if __name__ == "__main__":
     # for mol, path in zip(mols, paths):
