@@ -992,12 +992,14 @@ proc outputNougatLog {start end step species tailList system headNames coordSyst
 #       calculates the normalization factor for density enrichment calculations
 
 proc outputDensityNormInfo {species avgArea} {
+    set normlist []
     foreach spec $species {
         set sel [atomselect top "resname $spec"]
         set beads_per_lipid [llength [lsort -unique [$sel get name]]]
         set number_of_lipids [llength [lsort -unique [$sel get resid]]]
+        set lipids_in_one_leaflet [expr {int([expr $number_of_lipids / 2.0])}]
         $sel delete
-        set number_of_beads [expr $number_of_lipids*$beads_per_lipid]
+        set number_of_beads [expr $lipids_in_one_leaflet*$beads_per_lipid]
         set bulk_density [expr $number_of_beads / $avgArea]
         set normfactor [expr 1 / $bulk_density]
         lappend normlist "${spec}:${normfactor}"
