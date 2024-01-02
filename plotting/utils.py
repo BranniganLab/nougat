@@ -5,10 +5,8 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import animation
 import numpy as np
 import warnings
-import os
 
 
 def strip_blank_lines(file):
@@ -85,6 +83,39 @@ def find_first_val(in_list):
     return np.nan
 
 
+def parse_dat_file(path, bin_info):
+    """
+    Parse nougat .dat file and turn it into a numpy ndarray.
+
+    Parameters
+    ----------
+    path : Pathlib Path object
+        The path to the .dat file.
+    bin_info : dict
+        Dictionary containing bin sizes and number of frames in trajectory.
+
+    Returns
+    -------
+    data_array : numpy ndarray
+        3D array with dimensions time, [x, r], [y, theta].
+
+    """
+    N1_bins = bin_info["N1"]
+    N2_bins = bin_info["N2"]
+    Nframes = bin_info["nframes"]
+
+    data = np.genfromtxt(path, missing_values='nan', filling_values=np.nan)
+
+    # create a new array that has each frame in a different array level
+    data_array = np.zeros((Nframes, N1_bins, N2_bins))
+
+    # put each frame in its own level of the matrix
+    for frm in range(Nframes):
+        data_array[frm, :, :] = data[frm * N1_bins:(frm + 1) * N1_bins, 2:]
+
+    return data_array
+
+
 def find_last_val(in_list):
     """
     Find last non-nan value in a list.
@@ -131,6 +162,37 @@ def gifformat(num, size):
 
 
 def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
+    """
+    Generate old filenames for legacy uses.
+
+    Parameters
+    ----------
+    sys_name : str
+        System name provided to nougat.tcl.
+    lipid_name : str
+        The lipid species present.
+    field : str
+        The surface being analyzed.
+    beadname : str
+        The beads specified as headnames.
+    coordsys : str
+        "polar" or "cart".
+    measure : str
+        That quantity being measured.
+    dtype : str
+        The file suffix (npy or dat, for example).
+
+    Raises
+    ------
+    RuntimeWarning
+        Raised if wrong str supplied as measure.
+
+    Returns
+    -------
+    filename : str
+        Complete legacy filename.
+
+    """
     if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
         if dtype == "dat":
             if measure == "thickness":
@@ -180,11 +242,11 @@ def calc_avg_over_time(matrix_data):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
-        avg = np.nanmean(matrix_data, axis=2)
+        avg = np.nanmean(matrix_data, axis=0)
         return avg
 
 
-def bin_prep(bin_info, coordsys):
+def bin_prep(bin_info, polar):
     """
     Configure the arrays needed for plotting heatmaps.
 
@@ -192,8 +254,8 @@ def bin_prep(bin_info, coordsys):
     ----------
     bin_info : DICT
         Contains N1, N2, d1, and d2 information.
-    coordsys : STRING
-        "cart" or "polar.
+    polar : BOOL
+        Whether or not to use polar coordinates.
 
     Returns
     -------
@@ -201,51 +263,86 @@ def bin_prep(bin_info, coordsys):
         The two numpy ndarrays needed for plotting a heatmap.
 
     """
-
     dim1 = np.linspace(0, bin_info['N1'] * bin_info['d1'], bin_info['N1'] + 1)
-    if coordsys == "polar":
+    if polar:
         dim2 = np.linspace(0, 2 * np.pi, bin_info['N2'] + 1)
-    elif coordsys == "cart":
+    else:
         dim2 = dim1
     dim1vals, dim2vals = np.meshgrid(dim1, dim2, indexing='ij')
 
     return [dim1vals, dim2vals]
 
 
-def save_areas(N1_bins, d1, N2_bins, d2, min_val, coordsys, sys_name):
+def save_areas(bin_info, min_val, polar):
+    """
+    Calculate area of each bin and save to file.
+
+    Parameters
+    ----------
+    bin_info : dict
+        Dict containing bin sizes.
+    min_val : float
+        Distance from origin that first radial bin starts. Only used in polar \
+            coordinate systems. Default is zero.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+
+    Returns
+    -------
+    None.
+
+    """
+    N1_bins = bin_info["N1"]
+    N2_bins = bin_info["N2"]
+    d1 = bin_info["d1"]
+    d2 = bin_info["d2"]
 
     areas = np.ones([N1_bins, N2_bins])
 
     areas = areas * d1 * d2
-    if coordsys == "polar":
+
+    if polar:
         for row in range(N1_bins):
             dist_to_center = min_val + row * d1 + d1 / 2.0
             areas[row, :] = areas[row, :] * dist_to_center
-    np.save('npy/' + sys_name + "." + coordsys + ".areas.npy", areas)
+
+    np.save('trajectory/density/areas.npy', areas)
 
 
 def mostly_empty(data_array):
+    """
+    Replace bin values with np.nan if that bin has lipids in it less than 10% \
+        of the trajectory frames.
+
+    Parameters
+    ----------
+    data_array : numpy ndarray
+        The input data in a 3D array with dimensions time, [x, r], [y, theta].
+
+    Returns
+    -------
+    data_array : numpy ndarray
+        A pruned array.
+
+    """
     # if a bin only has lipids in it <10% of the time, it shouldn't be considered part of the membrane
-    N1_bins, N2_bins, Nframes = np.shape(data_array)
+    Nframes, N1_bins, N2_bins = np.shape(data_array)
     for row in range(N1_bins):
         for col in range(N2_bins):
-            zerocount = np.count_nonzero(data_array[row, col, :])
-            count = np.count_nonzero(np.isnan(data_array[row, col, :]))
+            zerocount = np.count_nonzero(data_array[:, row, col])
+            count = np.count_nonzero(np.isnan(data_array[:, row, col]))
             if (zerocount - count) / Nframes <= .1:
-                data_array[row, col, :] = np.nan
+                data_array[:, row, col] = np.nan
     return data_array
 
 
-def read_log(sys_name, coordsys):
+def read_log():
     """
     Read log file output by nougat.tcl and save important info for later.
 
     Parameters
     ----------
-    sys_name : STRING
-        The name of the system you designated with nougat.tcl and nougat.py.
-    coordsys : STRING
-        'cart' or 'polar'.
+    None.
 
     Returns
     -------
@@ -258,24 +355,26 @@ def read_log(sys_name, coordsys):
     system_dict = {}
 
     # open log file
-    with open("tcl_output/" + sys_name + "." + coordsys + ".log", "r+") as log_file:
+    with open("tcl_output/nougat.log", "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
+        system_dict["sysname"] = lines[1]
+        system_dict["coordsys"] = lines[2]
+
         species_list = []
-        # get all lipid species names from line 2
-        for species in lines[1].split(' '):
+        # get all lipid species names from species section
+        species_start_line = lines.index("#SYSTEM CONTENTS")
+        for species in lines[species_start_line + 1].split(' '):
             species_list.append(species)
         system_dict["species"] = species_list
 
-        # get headnames from headnames section
-        headnames_start_line = lines.index("#HEADNAMES") + 1
-        system_dict['headnames'] = {}
-        system_dict['ntails'] = {}
+        # get number of tails on each lipid
+        tails_start_line = lines.index("#NUMBER OF TAILS") + 1
+        system_dict["ntails"] = {}
         for line in range(len(system_dict["species"])):
-            names_line = lines[headnames_start_line].split(':')
-            system_dict['ntails'][names_line[0]] = len(names_line[1].split(" "))
-            system_dict["headnames"][names_line[0]] = ".".join(names_line[1].split(" "))
-            headnames_start_line += 1
+            names_line = lines[tails_start_line].split(':')
+            system_dict["ntails"][names_line[0]] = int(names_line[1])
+            tails_start_line += 1
 
         # get density norm info from density section
         density_start_line = lines.index("#DENSITY NORMALIZATION") + 1
@@ -294,34 +393,28 @@ def read_log(sys_name, coordsys):
     return system_dict
 
 
-def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, dataname, bead, coordsys, config_dict):
+def plot_maker(dims, data, name, field, config_dict, protein, dataname, bead, polar):
     """
     Create and save 2D heatmaps.
 
     Parameters
     ----------
-    dim1vals : list
-        meshgrid output 1
-    dim2vals : list
-        meshgrid output 2
+    dims : list
+        np.meshgrid output
     data : array
         the 2d array/matrix of values to be heatmapped
     name : string
         the system name you gave nougat.py
     field : string
         usually describes which membrane field (z1, z2, etc) to be heatmapped
-    Vmax : float
-        max value for colorbar
-    Vmin : float
-        min value for colorbar
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
     dataname : string
         the type of measurement (thickness, height, curvature, etc)
     bead : string or False
         if bead specified, name of bead; else False
-    coordsys : string
-        "polar" or "cart"
+    polar : bool
+        Whether or not to use polar coordinates
     config_dict : dict
         Dict containing config info
 
@@ -330,30 +423,33 @@ def plot_maker(dim1vals, dim2vals, data, name, field, Vmax, Vmin, protein, datan
     None.
 
     """
+    dim1vals, dim2vals = dims
+    if dataname in config_dict:
+        Vmin, Vmax = config_dict[dataname].split(",")
+    else:
+        Vmin, Vmax = "auto"
+
     fig = plt.figure()
-    if coordsys == "polar":
+    if polar:
         ax = plt.subplot(projection="polar")
     else:
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    # fig.set_size_inches(6,6)
-    create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
+    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, config_dict['colorbar'])
     if protein:
-        draw_protein(protein, coordsys)
-    save_figure(bead, name, field, coordsys, dataname)
-    plt.clf()
-    plt.close()
+        draw_protein(protein, polar)
+    return fig, ax
 
 
-def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
+def create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     """
     Create a 2d heatmap of your data.
 
     Parameters
     ----------
-    coordsys : string
-        "cart" or "polar"
+    polar : bool
+        Whether or not to use polar coordinates
     dim1vals : list
         meshgrid output 1
     dim2vals : list
@@ -371,18 +467,16 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     -------
     None.
     """
-    if coordsys == "polar":
+    if polar:
         if Vmax != "auto":
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
             c = plt.pcolormesh(dim2vals, dim1vals, data, cmap="RdBu_r", zorder=0)
-    elif coordsys == "cart":
+    else:
         if Vmax != "auto":
             c = plt.pcolormesh(dim1vals, dim2vals, data, cmap="RdBu_r", zorder=0, vmax=Vmax, vmin=Vmin)
         else:
             c = plt.pcolormesh(dim1vals, dim2vals, data, cmap="RdBu_r", zorder=0)
-    else:
-        print("something's wrong with coordsys")
 
     if colorbar:
         plt.colorbar(c)
@@ -390,7 +484,7 @@ def create_heatmap(coordsys, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     plt.axis('off')
 
 
-def draw_protein(protein, coordsys):
+def draw_protein(protein, polar):
     """
     Draw protein alpha helix positions.
 
@@ -398,8 +492,8 @@ def draw_protein(protein, coordsys):
     ----------
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    coordsys : string
-        "cart" or "polar"
+    polar : bool
+        Whether or not to use polar coordinates
 
     Returns
     -------
@@ -408,7 +502,7 @@ def draw_protein(protein, coordsys):
     """
     for i in range(0, 10, 2):
         protein[i + 1] = np.deg2rad(protein[i + 1])
-        if coordsys == "cart":
+        if polar is False:
             protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
         plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
 
@@ -416,34 +510,6 @@ def draw_protein(protein, coordsys):
     # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
     # if field == "zone":
     #    ax.add_artist(circle1)
-
-
-def save_figure(bead, name, field, coordsys, dataname):
-    """
-    Save the current figure.
-
-    Parameters
-    ----------
-    bead : string or False
-        if bead specified, name of bead; else False
-    name : string
-        the system name you gave nougat.py
-    field : string
-        usually describes which membrane field (z1, z2, etc) to be heatmapped
-    coordsys : string
-        "cart" or "polar"
-    dataname : string
-        the type of measurement (thickness, height, curvature, etc)
-
-    Returns
-    -------
-    None.
-
-    """
-    if bead is False:
-        plt.savefig('pdf/' + name + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
-    else:
-        plt.savefig('pdf/' + name + "_" + bead + "_" + field + "_" + coordsys + "_" + dataname + ".pdf", dpi=700)
 
 
 def convert_to_cart(rval, thetaval):
@@ -520,7 +586,41 @@ def bin_format(value):
     return final_value
 
 
-def dimensions_analyzer(data, coordsys):
+def dimensions_analyzer(data, polar):
+    """
+    Determine system dimensions (number of bins, size of bins, number of frames) \
+        from .dat file.
+
+    Parameters
+    ----------
+    data : TYPE
+        DESCRIPTION.
+    polar : TYPE
+        Whether to use polar coordinates or cartesian.
+
+    Raises
+    ------
+    Exception
+        If the number of rows is not divisible by the number of frames, that \
+            means there is a problem in the construction or parsing of the file.
+
+    Returns
+    -------
+    N1_bins : int
+        DESCRIPTION.
+    d1 : float
+        DESCRIPTION.
+    N2_bins : int
+        DESCRIPTION.
+    d2 : float
+        DESCRIPTION.
+    Nframes : int
+        DESCRIPTION.
+    match_value : float
+        The first radial bin in polar coords should have match_value of 0 unless \
+            you've specified a min value.
+
+    """
     # figure out how many radial or x bins there are
     counter = 1
     flag = True
@@ -546,10 +646,10 @@ def dimensions_analyzer(data, coordsys):
     if (len(data[:, 0]) % N1_bins) != 0:
         raise Exception("There is something wrong with the Nframes calculation")
 
-    if coordsys == "polar":
+    if polar is False:
         d1 = data[0, 1] - data[0, 0]
         d2 = (np.pi * 2) / N2_bins
-    elif coordsys == "cart":
+    elif polar is True:
         # compute average d1, assume d2 is the same
         d1list = []
         for row in range(Nframes):
@@ -558,95 +658,6 @@ def dimensions_analyzer(data, coordsys):
         d2 = d1
 
     return N1_bins, d1, N2_bins, d2, Nframes, match_value
-
-
-def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
-    """
-    Calculate all the additional terms that appear in a hamiltonian or are \
-        generally of interest.
-
-    Parameters
-    ----------
-    system : string
-        the same name you gave nougat.tcl and nougat.py
-    path : string
-        should point to the folder housing your nougat outputs for the given \
-            system
-    coordsys : string
-        "polar" or "cart"
-    scale_dict : dict
-        contains scale bounds from the nougat config file
-
-    Returns
-    -------
-    None.
-
-    """
-    # load height and curvature data
-    z_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.height.npy')
-    z_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.height.npy')
-    z_0 = np.load(path + '/npy/' + system + '.zzero.C1A.C1B.' + coordsys + '.height.npy')
-    z_plus = np.load(path + '/npy/' + system + '.zplus.C1A.C1B.' + coordsys + '.height.npy')
-    H_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.meancurvature.npy')
-    H_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.meancurvature.npy')
-    K_1 = np.load(path + '/npy/' + system + '.zone.C1A.C1B.' + coordsys + '.gausscurvature.npy')
-    K_2 = np.load(path + '/npy/' + system + '.ztwo.C1A.C1B.' + coordsys + '.gausscurvature.npy')
-
-    # measure terms of interest
-    # removed z_minus terms until we have a better way of computing t0
-    epsilon = z_plus - z_0
-    epsilon2 = epsilon**2
-    H_plus = (H_1 + H_2) / 2
-    K_plus = (K_1 + K_2) / 2
-    K_minus = (K_1 - K_2) / 2
-    H_plus2 = H_plus**2
-    H_minus = (H_1 - H_2) / 2
-    H_minus2 = H_minus**2
-    epsilon_H = epsilon * H_plus
-    total_t = z_1 - z_2
-
-    # save useful trajectories
-    np.save(path + '/npy/' + system + '.epsilon.npy', epsilon)
-    np.save(path + '/npy/' + system + '.H_plus.npy', H_plus)
-    np.save(path + '/npy/' + system + '.epsilon2.npy', epsilon2)
-    np.save(path + '/npy/' + system + '.H_plus2.npy', H_plus2)
-    np.save(path + '/npy/' + system + '.total_t.npy', total_t)
-
-    # calculate averages
-    avg_epsilon = calc_avg_over_time(epsilon)
-    avg_epsilon2 = calc_avg_over_time(epsilon2)
-    avg_H_plus = calc_avg_over_time(H_plus)
-    avg_H_plus2 = calc_avg_over_time(H_plus2)
-    avg_H_minus = calc_avg_over_time(H_minus)
-    avg_H_minus2 = calc_avg_over_time(H_minus2)
-    avg_epsilon_H = calc_avg_over_time(epsilon_H)
-    avg_total_t = calc_avg_over_time(total_t)
-    avg_K_plus = calc_avg_over_time(K_plus)
-    avg_K_minus = calc_avg_over_time(K_minus)
-
-    # calculate correlations
-    corr_eps_Hplus = calc_avg_over_time(epsilon * H_plus) - (avg_epsilon * avg_H_plus)
-    corr_mag_eps_Hplus = calc_avg_over_time(np.sqrt(epsilon2) * np.sqrt(H_plus2)) - (np.sqrt(avg_epsilon2) * np.sqrt(avg_H_plus2))
-    corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
-
-    # get proper plot dimensions
-    dims = bin_prep(bin_info, coordsys)
-    dim1vals, dim2vals = dims
-
-    # make pretty pictures and save data
-    data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
-                 corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
-                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H,
-                 avg_total_t]
-    name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
-                 "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
-                 "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                 "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
-    for data, name in zip(data_list, name_list):
-        plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
-        np.save(path + '/npy/' + system + '.' + name + '.npy', data)
-        if coordsys == "polar":
-            avg_over_theta(path + '/npy/' + system + '.' + name)
 
 
 def avg_over_theta(path):
@@ -663,16 +674,16 @@ def avg_over_theta(path):
     None.
 
     """
-    data = np.load(path + ".npy")
+    data = np.load(path.with_suffix(".npy"))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg_vals = np.nanmean(data, axis=1)
         std = np.nanstd(data, axis=1)
-    np.save(path + ".avg_over_theta.npy", avg_vals)
-    np.save(path + ".avg_over_theta.std.npy", std)
+    np.save(path.with_suffix(".avg_over_theta.npy"), avg_vals)
+    np.save(path.with_suffix(".avg_over_theta.std.npy"), std)
 
 
-def bad_measure_t0(zone, ztwo, coordsys):
+def bad_measure_t0(zone, ztwo, polar):
     """
     Compute average bulk membrane thickness by measuring thickness at the box \
     border. This is not a good way of doing things and will be deprecated in \
@@ -684,8 +695,8 @@ def bad_measure_t0(zone, ztwo, coordsys):
         data for outer leaflet height
     ztwo : numpy array
         data for inner leaflet height
-    coordsys : string
-        "polar" or "cart"
+    polar : bool
+        Whether or not to use polar coordinates
 
     Returns
     -------
@@ -697,13 +708,13 @@ def bad_measure_t0(zone, ztwo, coordsys):
 
     avgthickness = calc_avg_over_time(thickness)
 
-    if coordsys == "cart":
+    if polar is False:
         leftcol = np.mean(avgthickness[:, 0])
         rightcol = np.mean(avgthickness[:, -1])
         toprow = np.mean(avgthickness[0, :])
         botrow = np.mean(avgthickness[-1, :])
         avgt0 = (leftcol + rightcol + toprow + botrow) / 4.0
-    elif coordsys == "polar":
+    elif polar is True:
         avgt0 = np.mean(avgthickness[-1:])
 
     avgt0 = avgt0 / 2.0
@@ -711,7 +722,7 @@ def bad_measure_t0(zone, ztwo, coordsys):
     return avgt0
 
 
-def measure_quant_in_empty_sys(path, system, coordsys, quantity):
+def measure_quant_in_empty_sys(path, system, polar, quantity):
     """
     Measure the average thickness of a membrane.
 
@@ -721,8 +732,9 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
         path to the directory where your nougat outputs are
     system : string
         name of the system you gave nougat
-    coordsys : string
-        "polar" or "cart"; if polar, will ignore small r bins (area too small)
+    polar : bool
+        Whether or not to use polar coordinates\
+            if polar, will ignore small r bins (area too small)
     quantity : string
         The quantity you want to take the average of
 
@@ -733,8 +745,8 @@ def measure_quant_in_empty_sys(path, system, coordsys, quantity):
 
     """
     data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
-    if coordsys == "polar":
-        data = data[4:, :, :]  # this could be smarter
+    if polar:
+        data = data[:, 4:, :]  # this could be smarter
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
         avg = np.nanmean(data)

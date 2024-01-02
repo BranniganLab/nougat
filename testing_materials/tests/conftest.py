@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Thu Aug 17 10:44:25 2023
+Created on Thu Aug 17 10:44:25 2023.
 
 @author: js2746
 """
@@ -9,12 +7,7 @@ import shutil
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Runs this hook if exitstatus is 0
-​
-    Args:
-        session (_type_): _description_
-        exitstatus (_type_): _description_
-    """
+    """Run this hook if all pytests pass or xfail."""
     if exitstatus == 0:
         print("\nRemoving test files upon successful test completion!")
         shutil.rmtree("E-protein_trajectory/test_cart_5_5_0_-1_1")
