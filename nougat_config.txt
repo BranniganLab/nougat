@@ -1,7 +1,7 @@
 
-qwrap_path = ../utilities
-vecexpr_path = ../utilities
-utilities_path = ../utilities
+qwrap_path = /home/js2746/PolarHeightBinning/utilities
+vecexpr_path = /home/js2746/PolarHeightBinning/utilities
+utilities_path = /home/js2746/PolarHeightBinning/utilities
 
 
 
@@ -29,6 +29,7 @@ wrap_sel = resname $species
 # if your inclusion tumbles in the membrane (like a nanoparticle), comment out align_sel below
 
 #align_sel = name BB
+tilt_flag = 1
 
 
 # provide atomselection-style text that defines the reference point that should correspond with height 0 (on average) in your plots.
