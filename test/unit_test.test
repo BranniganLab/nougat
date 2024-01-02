@@ -8,7 +8,7 @@ source ../utilities/helper_procs.tcl
 source ../nougat.tcl
 load ../utilities/vecexpr.so
 
- test tailtiltA {
+test tailtiltA {
     Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/singlelipid.gro
@@ -303,7 +303,7 @@ test polar {
     return $coord
 } -result "polar" -cleanup {}
 
-test cartesien {
+test cartesian {
     Test: readPolar
 } -setup {
    set coord [readPolar 0]
@@ -612,19 +612,23 @@ test Mixmemjoiningnames {
 mol delete top
 }
 
-test checkallfilescreated {
+test checkheightdensityfilescreated {
     Test: createOutfiles
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane2.gro
-   set config_dict [cell_prep "nougat_config.txt" 1] 
-   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t1"]
-   set myfiles [ glob -nocomplain t1/tcl_output/PO.* ]
-   set filelength [llength $myfiles]
+    set outfiles [createOutfiles height_density "POPC DTPC" "I DONT MATTER" "t1"]
+    foreach channel [file channels "file*"] {
+        close $channel
+    }
+    set heightfiles [ glob -nocomplain t1/tcl_output/height/* ]
+    set filelength [llength $heightfiles]
+    foreach folder "POPC DTPC combined" {
+        set densityfiles [ glob -nocomplain t1/tcl_output/density/$folder/* ]
+        set filelength [expr $filelength + [llength $densityfiles]]
+    }
 } -body {
     return $filelength
-} -result 9 -cleanup {
-mol delete top
-exec rm -r t1
+} -result 12 -cleanup {
+    exec rm -r t1
 }
 
 test checkfilename1 {
