@@ -1,0 +1,3 @@
+shopt -q globstar
+**/__pycache__
+*.log
