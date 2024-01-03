@@ -46,19 +46,17 @@ def run_nougat(polar, inclusion_drawn):
     # figure out all the important info about the system you'll need
     system_dict = read_log()
 
-    # prep heatmap plot dimensions
-    hmap_dims = bin_prep(system_dict['bin_info'], polar)
-
     # read in height files and calculate surface heights
     # parse_height returns system_dict bc it adds nframes to the dictionary
     system_dict = parse_height(system_dict, polar, cwd)
 
     calculate_thickness(polar, cwd)
+
     calculate_curvature(polar, system_dict, cwd)
 
-    save_areas(system_dict["bin_info"], 0, polar)
+    # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
 
-    # $$$$$$$$$$ UNTESTED FEATURES IN DEVELOPMENT BELOW $$$$$$$$$$$
+    save_areas(system_dict["bin_info"], 0, polar)
 
     calculate_density(polar, system_dict, cwd)
 
@@ -68,33 +66,7 @@ def run_nougat(polar, inclusion_drawn):
 
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
-    if polar:
-        coordsys = "polar"
-    else:
-        coordsys = "cart"
-
-    for species in system_dict['species']:
-        for field in ["zone", "ztwo", "zzero", "zplus"]:
-            for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
-                hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
-                plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
-                plt.close()
-        for field in ["zone", "ztwo", "whole"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
-            plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
-            plt.close()
-        for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
-            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
-            plt.close()
-            for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
-                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
-                plt.close()
+    plot_all_quantities(polar, system_dict, cwd, inclusion)
 
 
 if __name__ == "__main__":

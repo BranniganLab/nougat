@@ -424,6 +424,55 @@ def read_log():
     return system_dict
 
 
+def plot_all_quantities(polar, system_dict, cwd, inclusion):
+    """
+    Plot all heatmaps for height, curvature, thickness, density, and order.
+
+    Parameters
+    ----------
+    polar : bool
+        Whether or not to use polar coordinates instead of cartesian.
+    system_dict : dict
+        Dictionary containing list of species, bin sizes, and normalization \
+            constants.
+    cwd : Pathlib Path object
+        Path to current working directory.
+    inclusion : False or list
+        If no inclusion, False. Else, contains list of coordinates to be plotted. \
+        This feature not fully implemented.
+
+    Returns
+    -------
+    None.
+
+    """
+    # prep heatmap plot dimensions
+    hmap_dims = bin_prep(system_dict['bin_info'], polar)
+
+    for species in system_dict['species']:
+        for field in ["zone", "ztwo", "zzero", "zplus"]:
+            for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
+                hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
+                plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
+                plt.close()
+        for field in ["zone", "ztwo", "whole"]:
+            hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
+            plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
+            plt.close()
+        for field in ["zone", "ztwo"]:
+            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
+            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
+            plt.close()
+            for tail in range(system_dict['ntails'][species]):
+                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
+                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
+                plt.close()
+
+
 def plot_maker(dims, data, protein, quant, polar):
     """
     Create and save 2D heatmaps.
