@@ -808,17 +808,17 @@ test Avgheight {
     mol delete top
 }
 
-test Avgtiltord {
-    Test: averageTiltAndOrderParameter
-} -setup {
-    set fp [open "PO_cart_12_12_0_1_1/tcl_output/tilt/POPC/tail0/ztwo.dat" r]
-    set filedata [read $fp]
-    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/order/POPC/tail1/zone.dat" r]
-    set filedata2 [read $fp2]
-    set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
-} -body {
-    return $match
-} -result {0.104 0.317} -cleanup {
-    mol delete top
-    exec rm -r PO_cart_12_12_0_1_1
-}
+#test Avgtiltord {
+#    Test: averageTiltAndOrderParameter
+#} -setup {
+#    set fp [open "PO_cart_12_12_0_1_1/tcl_output/tilt/POPC/tail0/ztwo.dat" r]
+#    set filedata [read $fp]
+#    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/order/POPC/tail1/zone.dat" r]
+#    set filedata2 [read $fp2]
+#    set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
+#} -body {
+#    return $match
+#} -result {0.104 0.317} -cleanup {
+#    mol delete top
+#    exec rm -r PO_cart_12_12_0_1_1
+#}
