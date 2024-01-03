@@ -24,7 +24,7 @@ def run_nougat(polar, inclusion_drawn):
     polar : boolean
         True for polar coordinate system; False for cartesian
     inclusion_drawn : boolean
-        This feature currently isn't implemented, but would be how you acccount
+        This feature currently isn't implemented, but would be how you \
         include an inclusion in your graphics
 
     Returns
