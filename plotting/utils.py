@@ -7,6 +7,7 @@ Created on Mon Jul 17 10:54:23 2023.
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
+from pathlib import Path
 
 
 def strip_blank_lines(file):
@@ -81,6 +82,31 @@ def find_first_val(in_list):
         else:
             return value
     return np.nan
+
+
+def create_outfile_directories(cwd):
+    """
+    Create the preliminary directory hierarchy for nougat.py outputs.
+
+    Parameters
+    ----------
+    cwd  :  Path object
+        the path to the current working directory.
+
+    Returns
+    -------
+    None.
+
+    """
+    for filetype in ["trajectory", "average"]:
+        for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
+            if quantity == "curvature":
+                for curv in ["mean", "gaussian", "normal_vectors"]:
+                    dirname = cwd.joinpath(filetype, quantity, curv)
+                    dirname.mkdir(parents=True, exist_ok=True)
+            else:
+                dirname = cwd.joinpath(filetype, quantity)
+                dirname.mkdir(parents=True, exist_ok=True)
 
 
 def parse_dat_file(path, bin_info):

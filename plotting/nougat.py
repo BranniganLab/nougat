@@ -32,17 +32,10 @@ def run_nougat(polar, inclusion_drawn):
     None.
 
     """
-    # make necessary folders
     cwd = Path.cwd()
-    for filetype in ["trajectory", "average"]:
-        for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
-            if quantity == "curvature":
-                for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = cwd.joinpath(filetype, quantity, curv)
-                    dirname.mkdir(parents=True, exist_ok=True)
-            else:
-                dirname = cwd.joinpath(filetype, quantity)
-                dirname.mkdir(parents=True, exist_ok=True)
+
+    # make necessary folders
+    create_outfile_directories(cwd)
 
     # define inclusion if present
     if inclusion_drawn is True:
@@ -56,24 +49,33 @@ def run_nougat(polar, inclusion_drawn):
     # prep heatmap plot dimensions
     hmap_dims = bin_prep(system_dict['bin_info'], polar)
 
-    # analyze height
+    # read in height files and calculate surface heights
+    # parse_height returns system_dict bc it adds nframes to the dictionary
     system_dict = parse_height(system_dict, polar, cwd)
 
     calculate_thickness(polar, cwd)
     calculate_curvature(polar, system_dict, cwd)
 
     save_areas(system_dict["bin_info"], 0, polar)
+
+    # $$$$$$$$$$ UNTESTED FEATURES IN DEVELOPMENT BELOW $$$$$$$$$$$
+
     calculate_density(polar, system_dict, cwd)
 
-    # calculate_order(polar, system_dict, cwd)
+    calculate_order(polar, system_dict, cwd)
 
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
+    if polar:
+        coordsys = "polar"
+    else:
+        coordsys = "cart"
 
-"""
-    for species in system_dict['headnames'].keys():
+    print(system_dict)
+
+    for species in system_dict['species']:
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
                 print(sys_name, field, coordsys, quantity)
@@ -92,7 +94,7 @@ def run_nougat(polar, inclusion_drawn):
                 hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
                 fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
                 plt.savefig('pdf/' + sys_name + "_" + field + "_" + coordsys + "tail" + str(tail) + "_avgorder.pdf")
-"""
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
