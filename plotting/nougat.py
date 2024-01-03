@@ -73,26 +73,28 @@ def run_nougat(polar, inclusion_drawn):
     else:
         coordsys = "cart"
 
-    print(system_dict)
-
     for species in system_dict['species']:
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
                 hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
                 fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
                 plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
+                plt.close()
         for field in ["zone", "ztwo", "whole"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
             plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
+            plt.close()
         for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
             plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
+            plt.close()
             for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + species + ".tail" + str(tail) + "." + field + "." + coordsys + ".avgOrder.dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgorder", coordsys)
-                plt.savefig('pdf/' + sys_name + "_" + field + "_" + coordsys + "tail" + str(tail) + "_avgorder.pdf")
+                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
+                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
+                plt.close()
 
 
 if __name__ == "__main__":
