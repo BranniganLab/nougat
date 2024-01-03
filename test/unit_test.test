@@ -612,22 +612,18 @@ test Mixmemjoiningnames {
 mol delete top
 }
 
-test checkheightdensityfilescreated {
+test checkheightfilescreated {
     Test: createOutfiles
 } -setup {
-    set outfiles [createOutfiles height_density "POPC DTPC" "I DONT MATTER" "t1"]
+    set outfiles [createOutfiles height "POPC DTPC" "I DONT MATTER" "t1"]
     foreach channel [file channels "file*"] {
         close $channel
     }
     set heightfiles [ glob -nocomplain t1/tcl_output/height/* ]
     set filelength [llength $heightfiles]
-    foreach folder "POPC DTPC combined" {
-        set densityfiles [ glob -nocomplain t1/tcl_output/density/$folder/* ]
-        set filelength [expr $filelength + [llength $densityfiles]]
-    }
 } -body {
     return $filelength
-} -result 12 -cleanup {
+} -result 3 -cleanup {
     exec rm -r t1
 }
 
