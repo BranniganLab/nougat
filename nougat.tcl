@@ -203,8 +203,11 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# Now that all information has been binned, print it to files
             dict for {key val} [dict get $outfiles $selex] {
+                if {[string match "counts*" $key]} {
+                    continue
+                }
                 printFrame [dict get $bindims N1] $outfiles $key [dict get $bindims d1] [dict get $config_dict min] [dict get $bindims N2] $polar $selex
-
+                
                 ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
             } 
