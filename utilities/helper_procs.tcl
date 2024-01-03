@@ -1169,7 +1169,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
     return $outfiles
 }
 
-# averageHeightAndDensity (Previously: height_density_averaging)
+# averageHeight (Previously: height_density_averaging)
 #
 #       uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
@@ -1184,7 +1184,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 #       Returns dictionary with average height, density and counts 
 #       of lipids for a specific bin 
 
-proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
+proc averageHeight {residueDictonary outfiles lipidList zValsList} {
     dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
@@ -1192,17 +1192,14 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
             set species [lindex $lipidList $indx]
             if {$leaf == 1} {
                 set field_key "z1z2"
-                set dens_key "density_up_${species}"
                 set height_key "heights_up"
                 set counts_key "counts_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
-                set dens_key "density_down_${species}"
                 set height_key "heights_down"
                 set counts_key "counts_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
-                set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
                 set counts_key "counts_zzero"
             } else {
@@ -1216,17 +1213,10 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
                 set newsum [expr {$oldavg * $oldcount + [lindex $zValsList $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $counts_key bin $correct_bin $newcount
-                if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
-                    set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
-                    dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]
-                } else {
-                    dict set outfiles $field_key $dens_key bin $correct_bin 1.0
-                }       
+                dict set outfiles $field_key $counts_key bin $correct_bin $newcount   
             } else {
                 dict set outfiles $field_key $height_key bin $correct_bin [lindex $zValsList $indx]
                 dict set outfiles $field_key $counts_key bin $correct_bin 1.0
-                dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
         }
     }

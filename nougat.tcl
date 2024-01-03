@@ -194,7 +194,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height"} {
-                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
+                set outfiles [averageHeight $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [fitVecsToSel [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set orders [calculateOrderParameters [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
