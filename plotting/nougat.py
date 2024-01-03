@@ -77,11 +77,10 @@ def run_nougat(polar, inclusion_drawn):
 
     for species in system_dict['species']:
         for field in ["zone", "ztwo", "zzero", "zplus"]:
-            for quantity in ['avgheight', 'avgKcurvature', 'avgcurvature']:
-                print(sys_name, field, coordsys, quantity)
-                hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + "." + quantity + ".dat", delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, coordsys)
-                save_figure(sys_name, field, coordsys, quantity)
+            for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
+                hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
+                plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
         for field in ["zone", "ztwo", "whole"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)

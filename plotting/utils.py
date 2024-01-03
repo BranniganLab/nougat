@@ -452,7 +452,7 @@ def plot_maker(dims, data, protein, quant, polar):
         Vmin = 0
         Vmax = 2
     else:
-        Vmin, Vmax = "auto"
+        Vmin, Vmax = "auto", "auto"
 
     fig = plt.figure()
     if polar:
