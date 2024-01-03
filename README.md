@@ -1,6 +1,6 @@
 # nougat: A Toolkit For Analysis of Membrane Disruption by Proteins and Other Inclusions
 
-Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. While some packages do exist for the analysis of lipid binding, we are not aware of any that offer a holistic view of protein-membrane interactions. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein: membrane thickness, membrane curvature, lipid density, and lipid tilt.
+Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein.
 
 #### Terminology note:
 - z1: outer leaflet surface
@@ -22,8 +22,7 @@ numpy
 matplotlib
 warnings
 argparse
-glob
-os
+pathlib
 ```
 
 ### Github Dependencies:
@@ -38,8 +37,6 @@ github.com/jhenin/vecexpr
 nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average quantity per bin for each measure of interest per frame. nougat.py will read in those .dat files, extract curvature and thickness information from the heights, generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. It will also generate a pdb file allowing the user to explore the average membrane surfaces in 3D in VMD. 
 
 ## How To Use Nougat:
-### Before You Start:
-Gromacs coarse-grain trajectories must be made whole using trjconv's `-pbc whole` command if you want your order parameters to make sense
 
 ### Make Edits and Check Your Work
 - Open nougat_config.txt in the text editor of your choice and make edits:
@@ -53,7 +50,7 @@ Edit all of the indicated fields to match your system
 - Source nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
-cell_prep [path to nougat_config.txt] 1
+cell_prep [path to nougat_config.txt] 1     # the 1 runs a leaflet sorting algorithm on all frames
 ```
 - After completion, visually inspect your trajectory in VMD for the following:
 ```
@@ -89,6 +86,6 @@ python3 [path-to]/nougat/plotting/nougat.py [-p for polar]
 ```
 
 ### Explore your results!
-All results are available as heatmaps saved as 700 DPI pdf files. To change the scale, adjust the max and min values in nougat_plot_config.txt.
+All results are available as heatmaps saved as pdf files.
 
 You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
