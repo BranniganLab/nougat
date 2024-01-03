@@ -8,7 +8,7 @@ source ../utilities/helper_procs.tcl
 source ../nougat.tcl
 load ../utilities/vecexpr.so
 
- test tailtiltA {
+test tailtiltA {
     Test: fitVecsToSel
 } -setup {
    mol new ../testing_materials/lipid_membrane/singlelipid.gro
@@ -303,7 +303,7 @@ test polar {
     return $coord
 } -result "polar" -cleanup {}
 
-test cartesien {
+test cartesian {
     Test: readPolar
 } -setup {
    set coord [readPolar 0]
@@ -612,49 +612,23 @@ test Mixmemjoiningnames {
 mol delete top
 }
 
-test checkallfilescreated {
+test checkheightdensityfilescreated {
     Test: createOutfiles
 } -setup {
-   mol new ../testing_materials/lipid_membrane/insane2.gro
-   set config_dict [cell_prep "nougat_config.txt" 1] 
-   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t1"]
-   set myfiles [ glob -nocomplain t1/tcl_output/PO.* ]
-   set filelength [llength $myfiles]
+    set outfiles [createOutfiles height_density "POPC DTPC" "I DONT MATTER" "t1"]
+    foreach channel [file channels "file*"] {
+        close $channel
+    }
+    set heightfiles [ glob -nocomplain t1/tcl_output/height/* ]
+    set filelength [llength $heightfiles]
+    foreach folder "POPC DTPC combined" {
+        set densityfiles [ glob -nocomplain t1/tcl_output/density/$folder/* ]
+        set filelength [expr $filelength + [llength $densityfiles]]
+    }
 } -body {
     return $filelength
-} -result 9 -cleanup {
-mol delete top
-exec rm -r t1
-}
-
-test checkfilename1 {
-    Test: createOutfiles
-} -setup {
-   mol new ../testing_materials/lipid_membrane/insane2.gro
-   set config_dict [cell_prep "nougat_config.txt" 1] 
-   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 1] "t2"]
-   set myfiles [ glob -nocomplain t2/tcl_output/PO.* ]
-   set match [string match -nocase *polar* [lindex $myfiles 0]]
-} -body {
-    return $match
-} -result 1 -cleanup {
-mol delete top
-exec rm -r t2
-}
-
-test checkfilename2 {
-    Test: createOutfiles
-} -setup {
-   mol new ../testing_materials/lipid_membrane/insane2.gro
-   set config_dict [cell_prep "nougat_config.txt" 1] 
-   set outfiles [createOutfiles PO "height_density" [concatenateNames [dict get $config_dict headnames]] [dict get $config_dict species] [dict get $config_dict acyl_names] [readPolar 0] "t3"]
-   set myfiles [ glob -nocomplain t3/tcl_output/PO.* ]
-   set match [string match -nocase *polar* [lindex $myfiles 0]]
-} -body {
-    return $match
-} -result 0 -cleanup {
-mol delete top
-exec rm -r t3
+} -result 12 -cleanup {
+    exec rm -r t1
 }
 
 test GNPprepcarttest {
@@ -728,8 +702,8 @@ test createatomselects {
     Test: createAtomSelections
 } -setup {
     mol new ../testing_materials/lipid_membrane/insane2.gro
-    set selly [createAtomSelections "height_density" $config_dict]
     set config_dict [cell_prep "nougat_config.txt" 1]
+    set selly [createAtomSelections "height_density" $config_dict]
     set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
     set lipnum [llength [$sel get resid]]
     set cselnum [llength [[dict get $selly z1z2] get resid]]
@@ -807,7 +781,7 @@ test dummydictionary {
 } -body {
     return [dict keys $resd]
 } -result {0,0,0} -cleanup {
-mol delete top
+    mol delete top
 }
 
 test Normalizationdensitytest {
@@ -818,39 +792,39 @@ test Normalizationdensitytest {
     set L2 [molinfo top get b]
     set area [expr $L1*$L2]
 } -body {
-    return [format "%.10s" [lindex [outputDensityNormInfo 0 0 1 {POPC} "PO" {C1A C1B} 0 $area "PO"] 0]]
-} -result "POPC:34.50" -cleanup {
-mol delete top
+    return [format "%.10s" [outputDensityNormInfo {POPC} $area]]
+} -result "POPC:5.751" -cleanup {
+    mol delete top
 }
 
 test Avgheightdensity {
-    Test: averageTiltAndOrderParameter
+    Test: averageHeightAndDensity
 } -setup {
-   mol new ../testing_materials/GNP_trajectory/em.gro
-   mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
-   start_nougat PO nougat_config.txt 12 12 0 1 1 0
-   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.height.dat" r]
-   set filedata [read $fp]
-   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.zone.C1A.C1B.cart.totdensity.dat" r]
-   set filedata2 [read $fp2]
-   set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    start_nougat PO nougat_config.txt 12 12 0 1 1 0
+    set fp [open "PO_cart_12_12_0_1_1/tcl_output/height/zone.dat" r]
+    set filedata [read $fp]
+    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/density/POPC/zone.dat" r]
+    set filedata2 [read $fp2]
+    set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
 } -body {
     return $match
 } -result {12.49 5.00} -cleanup {
-mol delete top
+    mol delete top
 }
 
 test Avgtiltord {
     Test: averageTiltAndOrderParameter
 } -setup {
-   set fp [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail0.ztwo.cart.tilt.dat" r]
-   set filedata [read $fp]
-   set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/PO.POPC.tail1.zone.cart.order.dat" r]
-   set filedata2 [read $fp2]
-   set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
+    set fp [open "PO_cart_12_12_0_1_1/tcl_output/tilt/POPC/tail0/ztwo.dat" r]
+    set filedata [read $fp]
+    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/order/POPC/tail1/zone.dat" r]
+    set filedata2 [read $fp2]
+    set match [list [format "%.3f" [lindex $filedata 2 0]] [format "%.3f" [lindex $filedata2 2 0]]]
 } -body {
     return $match
 } -result {0.104 0.317} -cleanup {
-mol delete top
-exec rm -r PO_cart_12_12_0_1_1
+    mol delete top
+    exec rm -r PO_cart_12_12_0_1_1
 }

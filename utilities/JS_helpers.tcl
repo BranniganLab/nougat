@@ -219,21 +219,25 @@ proc track_asymmetry_over_traj {sys_name} {
     close $outfile
 }
 
-proc measure_APL_over_traj {sys_name lipids} {
-    set outfile [open "${sys_name}.APL.traj" w]
+proc measure_area_APL_over_traj {sys_name lipids} {
+    set outfile [open "${sys_name}.area.traj" w]
     set nframes [molinfo top get numframes]
     set sel [atomselect top "resname $lipids"]
     set num_lipids_per_leaf [expr [count_lipids $sel] / 2.0]
     for {set i 0} {$i < $nframes} {incr i} {
+        set z [molinfo top get c frame $i]
         set area [expr [molinfo top get a frame $i]*[molinfo top get b frame $i]]
         set apl [expr $area / $num_lipids_per_leaf]
-        puts $outfile "$i    $area    $apl"
+        puts $outfile "$i    $area    $apl    $z"
     }
     close $outfile
 }
 
 
-proc Delete_Random_Lipids {seltext upper_final lower_final} {
+
+
+
+proc Select_Random_Lipids {seltext upper_final lower_final} {
     set final_list []
     for {set i 1} {$i <= 2} {incr i} {
         set sel [atomselect top "${seltext} and user ${i}"]
@@ -256,5 +260,13 @@ proc Delete_Random_Lipids {seltext upper_final lower_final} {
         }
         lappend final_list $dellist
     }
-    return $final_list
+    return [join $final_list]
+}
+
+
+proc Delete_Random_Lipids {seltext upper_final lower_final outfile} {
+    set list_to_delete [Select_Random_Lipids $seltext $upper_final $lower_final]
+    set outputSelection [atomselect top "not ($seltext and resid ${list_to_delete})"]
+    $outputSelection set beta 0
+    $outputSelection writepdb $outfile 
 }

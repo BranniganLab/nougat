@@ -3,317 +3,294 @@ import numpy as np
 from utils import *
 
 
-def init_curvature_data(height, polar, system_dict):
-    N1_bins = system_dict['bin_info']['N1']
-    N2_bins = system_dict['bin_info']['N2']
-    Nframes = system_dict['bin_info']['nframes']
+def calculate_curvature(polar, system_dict, cwd):
+    """
+    Calculate mean and Gaussian curvature, as well as normal vectors for each \
+        surface.
 
-    # create arrays for storing curvature data
-    if polar is True:
-        curvature_inputs = np.zeros((N1_bins, N2_bins + 2, Nframes))
-        curvature_outputs = np.zeros((N1_bins, N2_bins + 2, Nframes))
-        kgauss_outputs = np.zeros((N1_bins, N2_bins + 2, Nframes))
-        normal_vector_outputs = np.zeros((N1_bins, 3 * (N2_bins + 2), Nframes))
-    elif polar is False:
-        curvature_inputs = np.zeros((N1_bins + 2, N2_bins + 2, Nframes))
-        curvature_outputs = np.zeros((N1_bins + 2, N2_bins + 2, Nframes))
-        kgauss_outputs = np.zeros((N1_bins + 2, N2_bins + 2, Nframes))
-        normal_vector_outputs = np.zeros((N1_bins + 2, 3 * (N2_bins + 2), Nframes))
+    Parameters
+    ----------
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+    system_dict : dict
+        Dictionary containing key 'bin_info' that has bin dimensions.
+    cwd : PathLib Path object
+        Path to current working directory.
 
-    if polar is True:
-        # wrap the inputs in the theta direction for calculating curvature
-        curvature_inputs[:, 1:(N2_bins + 1), :] = height
-        curvature_inputs[:, 0, :] = curvature_inputs[:, N2_bins, :]
-        curvature_inputs[:, (N2_bins + 1), :] = curvature_inputs[:, 1, :]
-    elif polar is False:
-        # if cartesian, wrap in both directions
-        curvature_inputs[1:(N1_bins + 1), 1:(N2_bins + 1), :] = height
-        curvature_inputs[:, 0, :] = curvature_inputs[:, N2_bins, :]
-        curvature_inputs[:, (N2_bins + 1), :] = curvature_inputs[:, 1, :]
-        curvature_inputs[0, :, :] = curvature_inputs[N1_bins, :, :]
-        curvature_inputs[(N1_bins + 1), :, :] = curvature_inputs[1, :, :]
-        # and fill in the corners
-        curvature_inputs[0, 0, :] = curvature_inputs[N1_bins, N2_bins, :]
-        curvature_inputs[N1_bins + 1, N2_bins + 1, :] = curvature_inputs[1, 1, :]
-        curvature_inputs[0, N2_bins + 1, :] = curvature_inputs[N1_bins, 1, :]
-        curvature_inputs[N1_bins + 1, 0, :] = curvature_inputs[1, N2_bins, :]
+    Returns
+    -------
+    None.
 
-    return curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs
+    """
+    for field in ["zone", "ztwo", "zzero", "zplus"]:
+        field_height = np.load(cwd.joinpath("trajectory", "height", field + ".npy"))
 
+        wrapped_height = make_pbc(field_height, polar, system_dict)
 
-def calculate_curvature(sys_name, bead, coordsys, inclusion, polar, dims, field_list, scale_dict, system_dict):
-    N1_bins = system_dict['bin_info']['N1']
-    N2_bins = system_dict['bin_info']['N2']
-    dim1vals, dim2vals = dims
-
-    leaflist = field_list.copy()
-    leaflist.append("zplus")
-
-    for field in leaflist:
-        field_height = np.load('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.height.npy')
-
-        curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs = init_curvature_data(field_height, polar, system_dict)
-
-        # if a bin is empty, you can't (nicely) measure the curvature of its neighbors
-        nan_test, knan_test = empty_neighbor_test(curvature_inputs)
-
-        # measure the laplacian and gaussian curvatures
-        if polar is True:
-            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
-            # curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_polar(dims, curvature_inputs)
-        elif polar is False:
-            curvature_outputs, kgauss_outputs, normal_vector_outputs = measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict)
-
-        # unwrap along dim2 direction
-        meancurvature = curvature_outputs[:, 1:N2_bins + 1, :]
-        kcurvature = kgauss_outputs[:, 1:N2_bins + 1, :]
-        normal_vectors = normal_vector_outputs[:, 3:3 * (N2_bins + 1), :]
-
-        # if cartesian, unwrap along dim1 direction too
-        if polar is False:
-            meancurvature = meancurvature[1:N1_bins + 1, :, :]
-            kcurvature = kcurvature[1:N1_bins + 1, :, :]
-            normal_vectors = normal_vectors[1:N1_bins + 1, :, :]
+        diffs = take_finite_differences(wrapped_height, system_dict)
+        r_vector = calculate_r(system_dict['bin_info'], polar)
+        H = measure_mean_curvature(diffs, r_vector, polar)
+        K = measure_gaussian_curvature(diffs, r_vector, polar)
+        Nvecs = measure_normal_vectors(diffs, system_dict['bin_info'], r_vector, polar)
 
         # take the average curvatures over all frames
-        avgcurvature = calc_avg_over_time(meancurvature)
-        avgkcurvature = calc_avg_over_time(kcurvature)
-
-        # make plots!
-        plot_maker(dim1vals, dim2vals, avgkcurvature, sys_name, field, scale_dict["gauss_curv_max"], scale_dict["gauss_curv_min"], inclusion, "gausscurvature", bead, coordsys, scale_dict)
-        plot_maker(dim1vals, dim2vals, avgcurvature, sys_name, field, scale_dict["mean_curv_max"], scale_dict["mean_curv_min"], inclusion, "curvature", bead, coordsys, scale_dict)
+        avgH = calc_avg_over_time(H)
+        avgK = calc_avg_over_time(K)
 
         # save as files for debugging / analysis
-        np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgcurvature.dat', avgcurvature, delimiter=',', fmt='%10.5f')
-        np.savetxt('dat/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgKcurvature.dat', avgkcurvature, delimiter=',', fmt='%10.5f')
-        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.meancurvature.npy', meancurvature)
-        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.gausscurvature.npy', kcurvature)
-        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature.npy', avgcurvature)
-        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature.npy', avgkcurvature)
-        np.save('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.normal_vectors.npy', normal_vectors)
-        if polar is True:
-            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avgmeancurvature')
-            avg_over_theta('npy/' + sys_name + '.' + field + '.' + bead + '.' + coordsys + '.avggausscurvature')
+        np.savetxt(cwd.joinpath("average", "curvature", "mean", field + ".dat"), avgH, delimiter=',', fmt='%10.5f')
+        np.savetxt(cwd.joinpath("average", "curvature", "gaussian", field + ".dat"), avgK, delimiter=',', fmt='%10.5f')
+        np.save(cwd.joinpath("trajectory", "curvature", "mean", field + ".npy"), H)
+        np.save(cwd.joinpath("trajectory", "curvature", "gaussian", field + ".npy"), K)
+        np.save(cwd.joinpath("average", "curvature", "mean", field + ".npy"), avgH)
+        np.save(cwd.joinpath("average", "curvature", "gaussian", field + ".npy"), avgK)
+        np.save(cwd.joinpath("trajectory", "curvature", "normal_vectors", field + ".npy"), Nvecs)
+        if polar:
+            avg_over_theta(cwd.joinpath("average", "curvature", "mean", field))
+            avg_over_theta(cwd.joinpath("average", "curvature", "gaussian", field))
 
-        print(sys_name + ' ' + bead + ' ' + field + " curvatures done!")
+        print(field + " curvatures done!")
 
 
-def measure_curvature_cart(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
+def make_pbc(height, polar, system_dict):
+    """
+    Implement periodic boundary conditions by wrapping the height values.
+
+    Parameters
+    ----------
+    height : numpy ndarray
+        3D matrix containing height values.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+    system_dict : dict
+        Dictionary containing bin information in key 'bin_info'.
+
+    Returns
+    -------
+    wrapped_inputs : numpy ndarray
+        Expanded height matrices that allow for calculation of curvature with \
+            PBCs.
+
+    """
+    N1_bins = system_dict['bin_info']['N1']
+    N2_bins = system_dict['bin_info']['N2']
+    Nframes = np.shape(height)[0]
+
+    # create arrays for storing curvature data
+    wrapped_inputs = np.zeros((Nframes, N1_bins + 2, N2_bins + 2))
+
+    wrapped_inputs[:, 1:(N1_bins + 1), 1:(N2_bins + 1)] = height
+
+    # wrap in column directions
+    wrapped_inputs[:, :, 0] = wrapped_inputs[:, :, N2_bins]
+    wrapped_inputs[:, :, (N2_bins + 1)] = wrapped_inputs[:, :, 1]
+
+    if polar:
+        # set top and bottom row to nan
+        wrapped_inputs[:, 0, :] = np.nan
+        wrapped_inputs[:, N1_bins + 1, :] = np.nan
+    else:
+        # if cartesian, wrap in both directions
+        wrapped_inputs[:, 0, :] = wrapped_inputs[:, N1_bins, :]
+        wrapped_inputs[:, (N1_bins + 1), :] = wrapped_inputs[:, 1, :]
+        # and fill in the corners
+        wrapped_inputs[:, 0, 0] = wrapped_inputs[:, N1_bins, N2_bins]
+        wrapped_inputs[:, N1_bins + 1, N2_bins + 1] = wrapped_inputs[:, 1, 1]
+        wrapped_inputs[:, 0, N2_bins + 1] = wrapped_inputs[:, N1_bins, 1]
+        wrapped_inputs[:, N1_bins + 1, 0] = wrapped_inputs[:, 1, N2_bins]
+
+    return wrapped_inputs
+
+
+def calculate_r(bin_info, polar):
+    """
+    Calculate the r value for each bin, measuring at the center of the bin.
+
+    Parameters
+    ----------
+    bin_info : dict
+        Dictionary containing bin numbers and sizes.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+
+    Returns
+    -------
+    r : numpy ndarray
+        A column vector listing all the r values for a given system.
+
+    """
+    if polar:
+        dr = bin_info['d1']
+        Nr = bin_info['N1']
+
+        # calculate the r values for each bin
+        r = np.linspace(dr / 2, (dr / 2) + ((Nr - 1) * dr), Nr)
+
+        # turn row vector into column vector for correct multiplication later
+        r = r[:, None]
+    else:
+        r = np.nan
+
+    return r
+
+
+def take_finite_differences(heights, system_dict):
+    """
+    Take 1st and 2nd order finite differences of height field.
+
+    Parameters
+    ----------
+    heights : numpy ndarray
+        height field h(t,a,b) where a/b can be x/y or r/theta, depending on \
+            the coordinate system used. t is frames in the trajectory.
+    system_dict : dict
+        dictionary with key 'bin_info' that holds number and size of bins in \
+            each direction.
+
+    Returns
+    -------
+    h_1 : numpy ndarray
+        first derivative along dimension 1 (x/r).
+    h_2 : numpy ndarray
+        first derivative along dimension 2 (y/theta).
+    h_11 : numpy ndarray
+        second derivative along dimension 1 (x/r).
+    h_22 : numpy ndarray
+        second derivative along dimension 2 (y/theta).
+    h_12 : numpy ndarray
+        second order cross term along dimensions 1 and 2.
+
+    """
     N1_bins = system_dict['bin_info']['N1']
     d1 = system_dict['bin_info']['d1']
     N2_bins = system_dict['bin_info']['N2']
     d2 = system_dict['bin_info']['d2']
-    Nframes = system_dict['bin_info']['nframes']
 
-    # mean curvature: Hxx + Hyy
-    # gaussian curvature: HxxHyy - Hxy^2
+    # Construct shifted matrices
+    shift_row_up = heights[:, 0:N1_bins, 1:N2_bins + 1]
+    shift_row_down = heights[:, 2:N1_bins + 2, 1:N2_bins + 1]
+    shift_col_left = heights[:, 1:N1_bins + 1, 0:N2_bins]
+    shift_col_right = heights[:, 1:N1_bins + 1, 2:N2_bins + 2]
+    no_shift = heights[:, 1:N1_bins + 1, 1:N2_bins + 1]
+    shift_up_left = heights[:, 0:N1_bins, 0:N2_bins]
+    shift_down_right = heights[:, 2:N1_bins + 2, 2:N2_bins + 2]
 
-    for frm in range(Nframes):
-        for row in range(N1_bins + 2):
-            for col in range(N2_bins + 2):
-                if knan_test[row, col, frm] == False:
+    # Combine shifted matrices to get 1st and 2nd derivatives
+    h_1 = (shift_row_down - shift_row_up) / (2 * d1)
+    h_11 = (shift_row_up + shift_row_down - 2 * no_shift) / d1**2
+    h_2 = (shift_col_right - shift_col_left) / (2 * d2)
+    h_22 = (shift_col_left + shift_col_right - 2 * no_shift) / d2**2
+    h_12 = (shift_up_left + shift_down_right + 2 * no_shift - shift_col_left - shift_col_right - shift_row_up - shift_row_down) / (2 * d1 * d2)
 
-                    del2x = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2x = del2x / (d1**2)
-
-                    del2y = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2y = del2y / (d2**2)
-
-                    delxy = (curvature_inputs[row + 1, col + 1, frm] - curvature_inputs[row + 1, col, frm] - curvature_inputs[row, col + 1, frm] + 2 * curvature_inputs[row, col, frm] - curvature_inputs[row - 1, col, frm] - curvature_inputs[row, col - 1, frm] + curvature_inputs[row - 1, col - 1, frm])
-                    delxy = delxy / (2 * d1 * d2)
-
-                    # delxy = curvature_inputs[row+1,col+1,frm] - curvature_inputs[row+1,col-1,frm] - curvature_inputs[row-1,col+1,frm] + curvature_inputs[row-1,col-1,frm]
-                    # delxy = delxy / (4*d1*d2)
-
-                    delx = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
-
-                    dely = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
-
-                    normalization_factor = np.sqrt(1 + delx**2 + dely**2)
-                    norm_vec_x = -1 * delx / normalization_factor
-                    norm_vec_y = -1 * dely / normalization_factor
-                    norm_vec_z = 1 / normalization_factor
-
-                    curvature_outputs[row, col, frm] = (del2x + del2y) / 2.0
-                    kgauss_outputs[row, col, frm] = del2x * del2y - delxy**2
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
-
-                elif nan_test[row, col, frm] == False:
-                    del2x = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2x = del2x / d1**2
-
-                    del2y = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2y = del2y / d2**2
-
-                    delx = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
-
-                    dely = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
-
-                    normalization_factor = np.sqrt(1 + delx**2 + dely**2)
-                    norm_vec_x = -1 * delx / normalization_factor
-                    norm_vec_y = -1 * dely / normalization_factor
-                    norm_vec_z = 1 / normalization_factor
-
-                    curvature_outputs[row, col, frm] = (del2x + del2y) / 2.0
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
-
-                else:
-
-                    curvature_outputs[row, col, frm] = np.nan
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 1, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 2, frm] = np.nan
-
-    return curvature_outputs, kgauss_outputs, normal_vector_outputs
+    return [h_1, h_2, h_11, h_22, h_12]
 
 
-def measure_curvature_polar(curvature_inputs, curvature_outputs, kgauss_outputs, normal_vector_outputs, nan_test, knan_test, system_dict):
-    N1_bins = system_dict['bin_info']['N1']
-    d1 = system_dict['bin_info']['d1']
-    N2_bins = system_dict['bin_info']['N2']
-    d2 = system_dict['bin_info']['d2']
-    Nframes = system_dict['bin_info']['nframes']
+def measure_mean_curvature(finite_differences, r, polar):
+    """
+    Measure mean curvature H of a membrane field.
 
-    # mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
-    # gaussian curvature: 1/r(h_r*h_rr) + 2/r**3(h_rtheta*h_theta) - 1/r**4(h_theta**2) - 1/r**2(h_rtheta**2 - h_rr*h_thetatheta)
+    Parameters
+    ----------
+    finite_differences : list
+        List containing the finite differences generated by take_finite_differences.
+    r : numpy ndarray
+        A column vector listing all the r values for a given system.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
-    for frm in range(Nframes):
-        for row in range(N1_bins):
-            for col in range(N2_bins + 2):
-                if knan_test[row, col, frm] == False:
+    Returns
+    -------
+    H : numpy ndarray
+        Mean curvature H of the field being measured.
 
-                    # calculate d2h/dr2
-                    del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2r = del2r / d1**2
+    """
+    h_1, _, h_11, h_22, _ = finite_differences
 
-                    # calculate dh/dr
-                    delr = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
+    if polar:
+        # mean curvature: 1/2 * [h_rr + 1/r(h_r) + 1/r**2(h_thetatheta)]
+        H = (h_11 + r**(-1) * h_1 + r**(-2) * h_22) / 2.0
 
-                    # calculate d2h/drdtheta
-                    delrdeltheta = (curvature_inputs[row + 1, col + 1, frm] - curvature_inputs[row + 1, col, frm] - curvature_inputs[row, col + 1, frm] + 2 * curvature_inputs[row, col, frm] - curvature_inputs[row - 1, col, frm] - curvature_inputs[row, col - 1, frm] + curvature_inputs[row - 1, col - 1, frm])
-                    delrdeltheta = delrdeltheta / (2 * d1 * d2)
+    else:
+        # mean curvature: (Hxx + Hyy)/2
+        H = (h_11 + h_22) / 2.0
 
-                    # calculate dh/dtheta
-                    deltheta = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
-
-                    # calculate d2h/dtheta2
-                    del2theta = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2theta = del2theta / d2**2
-
-                    # calculate coefficients
-                    r = (row * d1) + (d1 / 2)
-                    c1 = 1 / r
-                    c2 = 1 / r**2
-                    c3 = 1 / r**3
-                    c4 = 1 / r**4
-                    theta = ((col - 1) * d2) + (d2 / 2)  # col-1 because this is wrapped in theta direction
-
-                    # calculate normal vector x,y components
-                    normalization_factor = np.sqrt(1 + c2 * deltheta**2 + delr**2)
-                    norm_vec_x = (c1 * np.sin(theta) * deltheta) - (np.cos(theta) * delr) / normalization_factor
-                    norm_vec_y = (-1 * c1 * np.cos(theta) * deltheta) - (np.sin(theta) * delr) / normalization_factor
-                    norm_vec_z = 1 / normalization_factor
-
-                    # calculate polar laplacian and gaussian curvature
-                    curvature_outputs[row, col, frm] = (del2r + c1 * delr + c2 * del2theta) / 2.0
-                    kgauss_outputs[row, col, frm] = c1 * delr * del2r + 2 * c3 * delrdeltheta * deltheta - c4 * deltheta**2 - c2 * (delrdeltheta**2 - del2r * del2theta)
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
-
-                elif nan_test[row, col, frm] == False:
-
-                    # calculate d2h/dr2
-                    del2r = curvature_inputs[row - 1, col, frm] + curvature_inputs[row + 1, col, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2r = del2r / d1**2
-
-                    # calculate dh/dr
-                    delr = (curvature_inputs[row + 1, col, frm] - curvature_inputs[row - 1, col, frm]) / (2 * d1)
-
-                    # calculate dh/dtheta
-                    deltheta = (curvature_inputs[row, col + 1, frm] - curvature_inputs[row, col - 1, frm]) / (2 * d2)
-
-                    # calculate d2h/dtheta2
-                    del2theta = curvature_inputs[row, col - 1, frm] + curvature_inputs[row, col + 1, frm] - 2 * curvature_inputs[row, col, frm]
-                    del2theta = del2theta / d2**2
-
-                    # calculate coefficients
-                    r = (row * d1) + (d1 / 2)
-                    c1 = 1 / r
-                    c2 = 1 / r**2
-                    theta = ((col - 1) * d2) + (d2 / 2)  # col-1 because this is wrapped in theta direction
-
-                    # calculate normal vector x,y components
-                    normalization_factor = np.sqrt(1 + c2 * deltheta**2 + delr**2)
-                    norm_vec_x = (c1 * np.sin(theta) * deltheta) - (np.cos(theta) * delr) / normalization_factor
-                    norm_vec_y = (-1 * c1 * np.cos(theta) * deltheta) - (np.sin(theta) * delr) / normalization_factor
-                    norm_vec_z = 1 / normalization_factor
-
-                    curvature_outputs[row, col, frm] = (del2r + c1 * delr + c2 * del2theta) / 2.0
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = norm_vec_x
-                    normal_vector_outputs[row, col * 3 + 1, frm] = norm_vec_y
-                    normal_vector_outputs[row, col * 3 + 2, frm] = norm_vec_z
-
-                else:
-                    curvature_outputs[row, col, frm] = np.nan
-                    kgauss_outputs[row, col, frm] = np.nan
-                    normal_vector_outputs[row, col * 3, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 1, frm] = np.nan
-                    normal_vector_outputs[row, col * 3 + 2, frm] = np.nan
-
-    return curvature_outputs, kgauss_outputs, normal_vector_outputs
+    return H
 
 
-def empty_neighbor_test(curvature_inputs):
-    data = np.isnan(curvature_inputs)
-    nan_test = np.array(data, copy=True)
-    nan_test2 = np.array(data, copy=True)
-    knan_test = np.array(data, copy=True)
+def measure_gaussian_curvature(finite_differences, r, polar):
+    """
+    Measure Gaussian curvature K of a membrane field.
 
-    shape = np.shape(data)
-    dim1 = shape[0]
-    dim2 = shape[1]
-    dim3 = shape[2]
+    Parameters
+    ----------
+    finite_differences : list
+        List containing the finite differences generated by take_finite_differences.
+    r : numpy ndarray
+        A column vector listing all the r values for a given system.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
 
-    for frm in range(dim3):
-        for row in range(1, dim1 - 1):
-            for col in range(1, dim2 - 1):
-                if nan_test2[row - 1, col, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row, col - 1, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row, col + 1, frm] == True:
-                    nan_test[row, col, frm] = True
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col + 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col + 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row + 1, col - 1, frm] == True:
-                    knan_test[row, col, frm] = True
-                elif nan_test2[row - 1, col - 1, frm] == True:
-                    knan_test[row, col, frm] = True
+    Returns
+    -------
+    K : numpy ndarray
+        Gaussian curvature K of the field being measured.
 
-    nan_test[0, :, :] = True
-    nan_test[dim1 - 1, :, :] = True
-    nan_test[:, 0, :] = True
-    nan_test[:, dim2 - 1, :] = True
+    """
+    h_1, h_2, h_11, h_22, h_12 = finite_differences
 
-    knan_test[0, :, :] = True
-    knan_test[dim1 - 1, :, :] = True
-    knan_test[:, 0, :] = True
-    knan_test[:, dim2 - 1, :] = True
+    if polar:
+        # Gaussian curvature: 1/r(h_r*h_rr) + 2/r^3(h_rtheta*h_theta) - 1/r^4(h_theta^2) - 1/r^2(h_rtheta^2 - h_rr*h_thetatheta)
+        K = r**(-1) * (h_1 * h_11) + 2 * r**(-3) * (h_12 * h_2) - r**(-4) * h_2**2 - r**(-2) * (h_12**2 - h_11 * h_22)
 
-    return nan_test, knan_test
+    else:
+        # mean curvature: HxxHyy - Hxy^2
+        K = h_22 * h_11 - h_12**2
+
+    return K
+
+
+def measure_normal_vectors(finite_differences, bin_info, r, polar):
+    """
+    Measure Gaussian curvature K of a membrane field.
+
+    Parameters
+    ----------
+    finite_differences : list
+        List containing the finite differences generated by take_finite_differences.
+    bin_info : dict
+        Dictionary containing bin numbers and sizes for each dimension.
+    r : numpy ndarray
+        A column vector listing all the r values for a given system.
+    polar : bool
+        Whether to use polar coordinates or cartesian.
+
+    Returns
+    -------
+    Nvecs : numpy ndarray
+        Normal vectors of the field being measured.
+
+    """
+    h_1, h_2, _, _, _ = finite_differences
+    N2 = bin_info['N2']
+    d2 = bin_info['d2']
+
+    if polar:
+        # Determine theta value for each column
+        theta = np.linspace(d2 / 2, d2 / 2 + d2 * (N2 - 1), N2)
+
+        # normal vector: [(((1/r)*sin(theta)*h_theta) - (cos(theta)*h_r))/N, (((-1/r)*cos(theta)*h_theta) - (sin(theta)*h_r))/N, 1/N]
+        # N = normalization constant = sqrt(r^(-2) * h_theta^2 + h_r^2 + 1)
+        N = np.sqrt(r**(-2) * h_2**2 + h_1**2 + 1)
+        Nx = (r**(-1) * np.sin(theta) * h_2 - np.cos(theta) * h_1) * N**(-1)
+        Ny = (-1 * r**(-1) * np.cos(theta) * h_2 - np.sin(theta) * h_1) * N**(-1)
+        Nz = N**(-1)
+
+    else:
+        # normal vector: [-h_r/N, -h_y/N, 1/N]
+        # N = normalization constant = sqrt(h_x^2 + h_y^2 + 1)
+        N = np.sqrt(h_2**2 + h_1**2 + 1)
+        Nx = -1 * h_2 * N**(-1)
+        Ny = -1 * h_1 * N**(-1)
+        Nz = N**(-1)
+
+    return [Nx, Ny, Nz]

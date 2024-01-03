@@ -184,7 +184,7 @@ def sum_over_H2(systems, system_names, groupname, nougvals, mol):
     plt.show()
 
 
-def make_2d_series_over_time(path, quantity, coordsys, sys_name):
+def make_2d_series_over_time(path, quantity, polar, sys_name):
     """
     Make movie file of heatmap over trajectory.
 
@@ -194,8 +194,8 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name):
         the path the to nougat outputs directory you want.
     quantity : string
         the name of the measurement.
-    coordsys : string
-        "polar" or "cart".
+    polar : bool
+        Whether or not to use polar coordinates.
     sys_name : string
         the name you gave nougat.py when it made your files.
 
@@ -208,10 +208,15 @@ def make_2d_series_over_time(path, quantity, coordsys, sys_name):
     if cwd != path:
         os.chdir(path)
 
+    if polar:
+        coordsys = "polar"
+    else:
+        coordsys = "cart"
+
     # load the correct 2d data
     traj_data = np.load(path + "/npy/" + sys_name + "." + quantity + ".npy")
     nframes = np.shape(traj_data)[2]
-    dims = bin_prep(sys_name, "C1A.C1B", coordsys, 'OFF')
+    dims = bin_prep(sys_name, "C1A.C1B", polar, 'OFF')
     dim1vals = dims[5]
     dim2vals = dims[6]
 
@@ -341,7 +346,7 @@ def plot_together(mols, paths, nougvals, xlim):
             plt.close()
 
 
-def make_paper_writing_group_plot(saturation):
+def make_paper_writing_group_plot(comparison):
     """
     Make plot for paper writing group.
 
@@ -356,26 +361,49 @@ def make_paper_writing_group_plot(saturation):
 
     """
     fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, sharex=True, figsize=(7, 7))
-    if saturation == "sat":
-        sat_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
+    if comparison == "sat":
+        sys_list = ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]
         nougat_values = "_polar_5_10_100_-1_1/npy/"
-    elif saturation == "unsat":
-        sat_list = ["lgDY", "lgDO", "lgDG"]
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+    elif comparison == "unsat":
+        sys_list = ["lgDY", "lgDO", "lgDG"]
         nougat_values = "_polar_10_10_100_150_1/npy/"
-    path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
-    for lipid in sat_list:
-        if lipid == "lgDY":
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+    elif comparison == "stiffness":
+        sys_list = ["100kjmol", "1000kjmol", "5000", "lgPO_15"]
+        nougat_values = "_polar_10_10_0_-1_1/npy/"
+        path = "/home/js2746/5x29_stiffness/"
+    elif comparison == "elastic":
+        sys_list = ["COMtiltspin", "new_gmx_pos"]
+        nougat_values = "_polar_10_10_0_-1_2/npy/"
+        path = "/home/js2746/Bending/PC/whole_mols/5x29/"
+    for system in sys_list:
+        if system == "lgDY":
             dirname = "lgDY_15us"
             sysname = "lgDY_15us"
-        elif lipid == "lgDO":
+        elif system == "lgDO":
             dirname = "lgDO_30us"
             sysname = "lgDO_30us"
-        elif lipid == "lgDG":
+        elif system == "lgDG":
             dirname = "lgDG_15us"
             sysname = "lgDG_15"
+        elif system == "lgPO_15" and comparison == "stiffness":
+            dirname = "lgPO_50us"
+            sysname = "lgPO_15"
+            nougat_values = "_polar_10_10_100_150_1/npy/"
+            path = "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/"
+        elif system in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
+            dirname = system + "_2us"
+            sysname = system
+        elif system == "100kjmol":
+            dirname = "100"
+            sysname = system
+        elif system == "1000kjmol":
+            dirname = "1000"
+            sysname = system
         else:
-            dirname = lipid + "_2us"
-            sysname = lipid
+            dirname = system
+            sysname = system
         fname = path + dirname + "/" + sysname + nougat_values + sysname + "."
         zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
         zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
@@ -418,11 +446,11 @@ def make_paper_writing_group_plot(saturation):
         ztwo = ztwo[i:] / 10
         zonestd = zonestd[i:] / 10
         ztwostd = ztwostd[i:] / 10
-        ax1.plot(x_vals, zone, color=colordict[lipid], label=mismatch_dict[lipid])
-        ax1.plot(x_vals, ztwo, color=colordict[lipid], linestyle="dashed")
-        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[lipid])
-        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[lipid], linestyle="dashed")
-        ax1.set_ylabel(r'$\langle \tilde z \rangle \; (\mathrm{nm})$', fontsize=10)
+        ax1.plot(x_vals, zone, color=colordict[system], label=stiffness_dict[system])
+        ax1.plot(x_vals, ztwo, color=colordict[system], linestyle="dashed")
+        ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[system])
+        ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[system], linestyle="dashed")
+        ax1.set_ylabel(r'$\langle \Delta z \rangle \; (\mathrm{nm})$', fontsize=10)
         ax1.tick_params(axis='both', which='major', labelsize=7)
         ax1.tick_params(axis='both', which='minor', labelsize=7)
         ax1.yaxis.set_major_formatter('{x:5.3f}')
@@ -432,8 +460,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde t plot
         tilde_t = tilde_t[i:]
         tilde_tstd = tilde_tstd[i:]
-        ax2.plot(x_vals, tilde_t, color=colordict[lipid])
-        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[lipid])
+        ax2.plot(x_vals, tilde_t, color=colordict[system])
+        ax2.fill_between(x_vals, (tilde_t - tilde_tstd), (tilde_t + tilde_tstd), alpha=a, color=colordict[system])
         ax2.set_ylabel(legend_dict['avg_tilde_total_t'], fontsize=10)
         ax2.axhline(1, color="gray", linestyle="--")
         ax2.tick_params(axis='both', which='major', labelsize=7)
@@ -445,8 +473,8 @@ def make_paper_writing_group_plot(saturation):
         # eps/t0 plot
         epst0 = epst0[i:]
         epst0std = epst0std[i:]
-        ax3.plot(x_vals, epst0, color=colordict[lipid])
-        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[lipid])
+        ax3.plot(x_vals, epst0, color=colordict[system])
+        ax3.fill_between(x_vals, (epst0 - epst0std), (epst0 + epst0std), alpha=a, color=colordict[system])
         ax3.set_ylabel(legend_dict['avg_epsilon_over_t0'], fontsize=10)
         ax3.tick_params(axis='both', which='major', labelsize=7)
         ax3.tick_params(axis='both', which='minor', labelsize=7)
@@ -458,8 +486,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde epsilon squared plot
         tilde_eps2 = tilde_eps2[i:]
         tilde_eps2std = tilde_eps2std[i:]
-        ax4.plot(x_vals, tilde_eps2, color=colordict[lipid])
-        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[lipid])
+        ax4.plot(x_vals, tilde_eps2, color=colordict[system])
+        ax4.fill_between(x_vals, (tilde_eps2 - tilde_eps2std), (tilde_eps2 + tilde_eps2std), alpha=a, color=colordict[system])
         ax4.set_ylabel(legend_dict['avg_rms_tilde_epsilon2'], fontsize=10)
         ax4.axhline(1, color="gray", linestyle="--")
         ax4.tick_params(axis='both', which='major', labelsize=7)
@@ -471,8 +499,8 @@ def make_paper_writing_group_plot(saturation):
         # tilde Hplus squared plot
         tilde_Hplus2 = tilde_Hplus2[i:]
         tilde_Hplus2std = tilde_Hplus2std[i:]
-        ax5.plot(x_vals, tilde_Hplus2, color=colordict[lipid])
-        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[lipid])
+        ax5.plot(x_vals, tilde_Hplus2, color=colordict[system])
+        ax5.fill_between(x_vals, (tilde_Hplus2 - tilde_Hplus2std), (tilde_Hplus2 + tilde_Hplus2std), alpha=a, color=colordict[system])
         ax5.set_ylabel(legend_dict['avg_rms_tilde_H_plus2'], fontsize=10)
         ax5.axhline(1, color="gray", linestyle="--")
         ax5.tick_params(axis='both', which='major', labelsize=7)
@@ -485,8 +513,8 @@ def make_paper_writing_group_plot(saturation):
         # correlation between epsilon and Hplus plot
         corr_Hplus_eps = corr_Hplus_eps[i:]
         corr_Hplus_epsstd = corr_Hplus_epsstd[i:]
-        ax6.plot(x_vals, corr_Hplus_eps, color=colordict[lipid])
-        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[lipid])
+        ax6.plot(x_vals, corr_Hplus_eps, color=colordict[system])
+        ax6.fill_between(x_vals, (corr_Hplus_eps - corr_Hplus_epsstd), (corr_Hplus_eps + corr_Hplus_epsstd), alpha=a, color=colordict[system])
         # ax6.set_ylim(-.25, 0)
         ax6.axhline(0, color="gray", linestyle="--")
         ax6.set_ylabel(legend_dict['corr_eps_Hplus'], fontsize=10)
@@ -496,13 +524,13 @@ def make_paper_writing_group_plot(saturation):
         ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
         """
         # epsilon times Hplus plot
-        epsHplus = epsHplus[i:]
-        epsHplusstd = epsHplusstd[i:]
-        ax6.plot(x_vals, epsHplus, color=colordict[lipid])
-        ax6.fill_between(x_vals, (epsHplus - epsHplusstd), (epsHplus + epsHplusstd), alpha=a, color=colordict[lipid])
+        epsHplus = -1 * epsHplus[i:]
+        epsHplusstd = -1 * epsHplusstd[i:]
+        ax6.plot(x_vals, epsHplus, color=colordict[system])
+        ax6.fill_between(x_vals, (epsHplus - epsHplusstd), (epsHplus + epsHplusstd), alpha=a, color=colordict[system])
         # ax6.set_ylim(-.25, 0)
         ax6.axhline(0, color="gray", linestyle="--")
-        ax6.set_ylabel(legend_dict['avg_epsilon_H'], fontsize=10)
+        ax6.set_ylabel(legend_dict['neg_avg_epsilon_H'], fontsize=10)
         ax6.tick_params(axis='both', which='major', labelsize=7)
         ax6.tick_params(axis='both', which='minor', labelsize=7)
         ax6.yaxis.set_major_formatter('{x:<5.3f}')
@@ -514,10 +542,11 @@ def make_paper_writing_group_plot(saturation):
 
     lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
+    # lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Restraint type')
 
     fig.tight_layout()
-    plt.savefig("/home/js2746/Desktop/comparisonfig_" + saturation + ".pdf", bbox_inches='tight', dpi=700)
+    plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight', dpi=700)
     # plt.show()
     plt.clf()
     plt.close()
@@ -710,22 +739,108 @@ def compare_APLs(names, paths):
     """
 
     fig, ax = plt.subplots()
-    for name, path in zip(names, paths):
-        APL_traj = np.loadtxt(path + name + ".APL.traj")
-        X = APL_traj[:, 0]
-        if name in ["COMtiltspin", "new_gmx"]:
-            X = X / 10.
+    for name in names:
+        APL_traj = np.loadtxt(path + "/" + name + ".area.traj")
+        X = APL_traj[:, 0] / 100
+        Y = APL_traj[:, 2] / 100
+        ax.plot(X, Y)
+    ax.legend(["position restraints", "position restraints + higher APL", "elastic network"])
+    fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
+    fig.supylabel(r'$\mathrm{Area~per~lipid} \;(\mathrm{nm}^2)$')
+    plt.savefig(path + "/comparison.APL_traj.pdf", dpi=700)
+    plt.clf()
+    plt.close()
+
+
+def compare_P(names, path):
+    """
+    Create plot of pressure tensor components for several different systems
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with $name.xvg inside.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    for name in names:
+        fig, ax = plt.subplots()
+        P_traj = np.loadtxt(path + "/" + name + ".xvg")
+        X = P_traj[:, 0] / 1000000
+        X = X[1:]
+        PXX = P_traj[:, 1]
+        PXX = PXX[1:]
+        PYY = P_traj[:, 2]
+        PYY = PYY[1:]
+        PZZ = P_traj[:, 3]
+        PZZ = PZZ[1:]
+        if name == "elastic_cp":
+            ax.set_title("Elastic Network")
+        elif name == "APL0.595_cp":
+            ax.set_title("Position Restraints - Original")
         else:
-            X = X / 2.
-        area = APL_traj[:, 1]
-        area = area / 100.0
-        ax.plot(X, area, color=APL_color_dict[name])
-        # ax.plot(X, rollingavg(area, 20), color=APL_color_dict[name])
-    # ax.legend(names)
-    ax.legend(["elastic network, immobilized protein, 5000kJ/mol", "absolute position restraint", "elastic network, mobile protein, 100kJ/mol", "elastic network, mobile protein, 250kJ/mol", "elastic network, mobile protein, 500kJ/mol", "elastic network, mobile protein, 1000kJ/mol", "elastic network, mobile protein, 5000kJ/mol"])
-    fig.supxlabel(r'$t \;(\mathrm{ns})$')
-    fig.supylabel(r'$\mathrm{Area} \;(\mathrm{nm}^2)$')
-    plt.savefig(path + "comparison.area.pdf", dpi=700)
+            ax.set_title("Position Restraints - Higher APL")
+        ax.plot(X, rollingavg(PXX, 2000), color="red")
+        ax.plot(X, rollingavg(PYY, 2000), color="blue")
+        ax.plot(X, rollingavg(PZZ, 2000), color="green")
+        ax.plot(X, rollingavg((PZZ - 0.5 * (PXX + PYY)), 2000), color="purple")
+        ax.legend(["PXX", "PYY", "PZZ", "Gamma"])
+        fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
+        fig.supylabel(r'$\mathrm{Pressure} \;(\mathrm{bar})$')
+        plt.savefig(path + "/" + name + "_comparison.P_traj.pdf", dpi=700)
+        plt.clf()
+        plt.close()
+
+
+def plot_P_v_A(names, path):
+    """
+    Create scatter plot of pressure (Y) versus box area (X) for several different systems
+
+    Parameters
+    ----------
+    names : list
+        list of system names you want to compare.
+    path : string
+        path to folder containing subdirectories of $names with $name.xvg inside.
+
+    Returns
+    -------
+    None.
+
+    """
+    fig, ax = plt.subplots()
+    for name in names:
+        P_traj = np.loadtxt(path + "/" + name + ".xvg")
+        A_traj = np.loadtxt(path + "/" + name[:-3] + ".area.traj")
+        P_reduced = np.zeros((np.shape(A_traj)[0], 4))
+        for row in range(np.shape(P_traj)[0]):
+            if P_traj[row, 0] % 10000 == 0:
+                P_reduced[int(P_traj[row, 0] / 10000), :] = P_traj[row, :]
+
+        A_traj[:, 1] = A_traj[:, 1] / 100
+        if name == "APL0.67_cp":
+            A_traj[:, 1] = A_traj[:, 1] / 2397
+        else:
+            A_traj[:, 1] = A_traj[:, 1] / 2690
+        PXX = P_reduced[:, 1]
+        PYY = P_reduced[:, 2]
+        PZZ = P_reduced[:, 3]
+        GAMMA = PZZ - 0.5 * (PXX + PYY)
+        GAMMA = GAMMA[20:]
+        A_traj = A_traj[20:, 1]
+        GAMMA = np.mean(GAMMA)
+        A_traj = np.mean(A_traj)
+        ax.scatter(A_traj, GAMMA, label=name[:-3])
+    fig.legend()
+    fig.supxlabel(r'$\mathrm{Area~per~lipid} \;(\mathrm{nm}^2)$')
+    fig.supylabel(r'$\mathrm{Surface~Tension} \;(\mathrm{?})$')
+    plt.savefig(path + "/scatter.A_P_traj.pdf")
     plt.clf()
     plt.close()
 
@@ -796,7 +911,13 @@ colordict = {
     "lgDO": "green",
     "lgPO": "green",
     "lgDP": "green",
-    "lgDG": "blue"
+    "lgDG": "blue",
+    "100kjmol": "red",
+    "1000kjmol": "blue",
+    "5000": "purple",
+    "lgPO_15": "green",
+    "COMtiltspin": "red",
+    "new_gmx_pos": "blue"
 }
 max_scale_dict = {
     "avg_epsilon_over_t0": .1,
@@ -848,6 +969,15 @@ mismatch_dict = {
     "lgDG": "-64%"
 }
 
+stiffness_dict = {
+    "100kjmol": "100 kJ/mol",
+    "1000kjmol": "1000 kJ/mol",
+    "5000": "5000 kJ/mol",
+    "lgPO_15": "position restraints",
+    "COMtiltspin": "elastic network",
+    "new_gmx_pos": "position restraints"
+}
+
 legend_dict = {
     "avg_epsilon_over_t0": r'$\langle \epsilon / t_0 \rangle$',
     "avg_abs_epsilon": r'$\langle | \epsilon | \rangle\; (\mathrm{\dot A})$',
@@ -872,6 +1002,7 @@ legend_dict = {
     "avg_H_minus": r'$\langle H^- \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_H_minus2": r'$\langle \left ( H^- \right )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_epsilon_H": r'$\langle  \epsilon H^+  \rangle$',
+    "neg_avg_epsilon_H": r'$-\langle  \epsilon H^+  \rangle$',
     "avg_z_minus": r'$\langle z^- \rangle\; (\mathrm{\dot A})$',
     "avg_z_minus2": r'$\langle \left ( z^- \right )^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_z_minus_H_minus": r'$\langle z^- H^- \rangle$',
@@ -907,11 +1038,13 @@ if __name__ == "__main__":
     # run_eps_corr_scatter(mol)
     # plot_avg_H2_over_time("lgPO", "/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/lgPO_cart_10_10_0_-1_1/npy/", "cart")
     # make_2d_series_over_time("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO/lgPO_polar_5_10_0_-1_1", "zone.C1A.C1B.polar.thickness", "polar", "lgPO")
-    # plot_APL("/home/jesse/research/COMtiltspin/", 'COMtiltspin')
-    compare_APLs(["COMtiltspin", "new_gmx", "100", "250", "500", "1000", "5000"], area_paths)
-    # compare_APLs(["COMtiltspin", "new_gmx", "100", "250", "500", "1000", "5000"], area_paths)
-    # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], ["/home/js2746/KC_project/"])
+    # plot_APL("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_42us/", 'lgPO')
+    # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
+    # compare_APLs(["APL0.595", "APL0.67", "elastic"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
+    # compare_P(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
+    plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
     # make_paper_writing_group_plot("unsat")
     # make_paper_writing_group_plot("sat")
+    # make_paper_writing_group_plot("elastic")

@@ -5,89 +5,76 @@ Created on Mon Jul 17 10:54:23 2023.
 """
 
 import argparse
-import os
+from pathlib import Path
+import matplotlib.pyplot as plt
+import numpy as np
 from height import *
-from thickness import *
 from curvature import *
-from density import *
+from quantity_analysis import *
 from tilt import *
-from order import *
 from utils import *
 
 
-def run_nougat(sys_name, polar, inclusion_drawn, config_dict):
+def run_nougat(polar, inclusion_drawn):
     """
     Run nougat's averaging and image processing routines.
 
     Parameters
     ----------
-    sys_name : string
-        The name assigned to the nougat.tcl run
     polar : boolean
         True for polar coordinate system; False for cartesian
     inclusion_drawn : boolean
-        This feature currently isn't implemented, but would be how you acccount
+        This feature currently isn't implemented, but would be how you \
         include an inclusion in your graphics
-    config_dict : dict
-        Dictionary containing useful information about the system
 
     Returns
     -------
     None.
 
     """
-    cwd = os.getcwd()
+    cwd = Path.cwd()
 
-    for filetype in ["npy", "dat", "pdf"]:
-        dirname = os.path.join(cwd, filetype)
-        try:
-            os.mkdir(dirname)
-        except OSError:
-            continue
+    # make necessary folders
+    create_outfile_directories(cwd)
 
+    # define inclusion if present
     if inclusion_drawn is True:
         inclusion = add_inclusion(name, field_list)  # this proc doesn't exist yet!
     else:
         inclusion = False
 
-    if polar is True:
-        coordsys = 'polar'
-    elif polar is False:
-        coordsys = 'cart'
-
-    field_list = ["zone", "ztwo", "zzero"]
-
     # figure out all the important info about the system you'll need
-    system_dict = read_log(sys_name, coordsys)
-    save_areas(system_dict['bin_info']['N1'], system_dict['bin_info']['d1'], system_dict['bin_info']['N2'], system_dict['bin_info']['d2'], 0, coordsys, sys_name)
+    system_dict = read_log()
 
-    # prep heatmap plots
-    hmap_dims = bin_prep(system_dict['bin_info'], coordsys)
+    # read in height files and calculate surface heights
+    # parse_height returns system_dict bc it adds nframes to the dictionary
+    system_dict = parse_height(system_dict, polar, cwd)
 
-    # analyze height
-    system_dict = analyze_height(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, field_list, config_dict)
+    calculate_thickness(polar, cwd)
 
-    for bead in system_dict['headnames'].values():
-        calculate_thickness(sys_name, bead, coordsys, inclusion, polar, hmap_dims, config_dict)
-        calculate_curvature(sys_name, bead, coordsys, inclusion, polar, hmap_dims, field_list, config_dict, system_dict)
+    calculate_curvature(polar, system_dict, cwd)
 
-    calculate_density(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
-    calculate_order(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, polar, hmap_dims, config_dict)
+    # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
 
-    calc_elastic_terms(sys_name, ".", coordsys, config_dict, system_dict['bin_info'])
+    save_areas(system_dict["bin_info"], 0, polar)
+
+    calculate_density(polar, system_dict, cwd)
+
+    calculate_order(polar, system_dict, cwd)
+
+    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
+
+    # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
+
+    plot_all_quantities(polar, system_dict, cwd, inclusion)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
-    parser.add_argument("sys_name", help="what system did you name this?")
-    parser.add_argument("config", help="what config file should nougat use?")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
-    parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
+    # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
     args = parser.parse_args()
 
-    config_dict = read_config(args.config)
-
-    run_nougat(args.sys_name, args.polar, args.inclusion, config_dict)
+    run_nougat(args.polar, False)
 
     print("Thank you for using nougat!")
