@@ -56,11 +56,11 @@ def run_nougat(polar, inclusion_drawn):
 
     # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
 
-    save_areas(system_dict["bin_info"], 0, polar)
+    # save_areas(system_dict["bin_info"], 0, polar)
 
-    calculate_density(polar, system_dict, cwd)
+    # calculate_density(polar, system_dict, cwd)
 
-    calculate_order(polar, system_dict, cwd)
+    # calculate_order(polar, system_dict, cwd)
 
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
