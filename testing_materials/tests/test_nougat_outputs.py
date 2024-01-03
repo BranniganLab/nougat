@@ -310,6 +310,17 @@ def test_whether_flat(cwd, coordsys):
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
+def test_whether_flat_gaussian(cwd, coordsys):
+    if coordsys == "cart":
+        settings = "_5_5_0_-1_1"
+    else:
+        settings = "_3_12_0_-1_1"
+    Kone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "zone.npy"))
+    Ktwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "ztwo.npy"))
+    Kplus = Kone + Ktwo / 2.0
+    avgKplus = np.nanmean(Kplus)
+    assert avgKplus <= 0.000000000001 and avgKplus >= -0.000000000001
+
 # Still needed: order, tilt
 
 # Test if time-averages match
