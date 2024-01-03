@@ -38,7 +38,8 @@ nougat.tcl will analyze your trajectory in VMD and output .dat files that contai
 - leaflet/bilayer thickness
 - mean curvature
 - gaussian curvature 
-It will then generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. A pdb file will also be created, allowing the user to explore the average membrane surfaces in 3D in VMD. 
+
+nougat.py will then generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. A pdb file will also be created, allowing the user to explore the average membrane surfaces in 3D in VMD. 
 
 ## How To Use Nougat:
 
