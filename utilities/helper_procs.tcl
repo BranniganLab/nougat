@@ -553,13 +553,13 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 proc createOutfiles {quantity species tailList folderName} {
     file mkdir "${folderName}/tcl_output"
     
-    if {$quantity eq "height_density"} {
+    if {$quantity eq "height"} {
         set height "${folderName}/tcl_output/height"
         file mkdir $height
         dict set outfiles z1z2 heights_up fname [open "${height}/zone.dat" w]
         dict set outfiles z1z2 heights_down fname [open "${height}/ztwo.dat" w]
         dict set outfiles z0 heights_zzero fname [open "${height}/zzero.dat" w]
-
+    } elseif {$quantity eq "density"} {
         set density "${folderName}/tcl_output/density"
         file mkdir $density
         file mkdir "${density}/combined"
