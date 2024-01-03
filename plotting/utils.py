@@ -98,7 +98,7 @@ def create_outfile_directories(cwd):
     None.
 
     """
-    for filetype in ["trajectory", "average"]:
+    for filetype in ["trajectory", "average", "figures"]:
         for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
             if quantity == "curvature":
                 for curv in ["mean", "gaussian", "normal_vectors"]:

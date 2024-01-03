@@ -116,7 +116,7 @@ def calculate_order(polar, system_dict, cwd):
             for leaflet in ["zone", "ztwo"]:
 
                 # make species- and tail-specific folders for outputs
-                for folder in ["trajectory", "average"]:
+                for folder in ["trajectory", "average", "figures"]:
                     dirname = cwd.joinpath(folder, "order", species, "tail" + str(tail))
                     dirname.mkdir(parents=True, exist_ok=True)
 

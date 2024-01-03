@@ -83,9 +83,9 @@ def run_nougat(polar, inclusion_drawn):
                 fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, quantity, coordsys)
                 save_figure(sys_name, field, coordsys, quantity)
         for field in ["zone", "ztwo", "whole"]:
-            hmap_data = np.genfromtxt("./dat/" + sys_name + "." + field + "." + coordsys + ".avgthickness.dat", delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, sys_name, field, config_dict, inclusion, "avgthickness", coordsys)
-            save_figure(sys_name, field, coordsys, "avg_thickness")
+            hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
+            plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
         for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
