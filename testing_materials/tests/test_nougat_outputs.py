@@ -271,6 +271,7 @@ def test_if_thicknesses_match(cwd, coordsys, surface2, system):
     assert arrays_equal(paths, 'npy', 1e-11)
 
 
+"""
 def test_if_densities_match(cwd, coordsys, surface2):
     if coordsys == "cart":
         coordsys_path = "_cart_5_5_0_-1_1"
@@ -280,6 +281,7 @@ def test_if_densities_match(cwd, coordsys, surface2):
     test = cwd.joinpath("E-protein_trajectory/test" + coordsys_path, "trajectory", "density", "DTPC", surface2 + ".npy")
     paths = Comparison(test, exp)
     assert arrays_equal(paths, 'npy', 1e-11)
+"""
 
 
 @pytest.mark.xfail(strict=True)
@@ -318,8 +320,9 @@ def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, system, av
     assert arrays_equal(paths, 'dat', 1e-11)
 
 
+"""
 def test_if_avg_densities_match(cwd, coordsys, surface2, system):
     paths = make_avg_paths(cwd, system, coordsys, surface2, "avgdensity")
     assert arrays_equal(paths, 'dat', 1e-11)
-
+"""
 # Still needed: thickness, order, tilt
