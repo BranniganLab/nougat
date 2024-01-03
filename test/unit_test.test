@@ -699,7 +699,7 @@ test createatomselects {
 } -setup {
     mol new ../testing_materials/lipid_membrane/insane2.gro
     set config_dict [cell_prep "nougat_config.txt" 1]
-    set selly [createAtomSelections "height_density" $config_dict]
+    set selly [createAtomSelections "height" $config_dict]
     set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
     set lipnum [llength [$sel get resid]]
     set cselnum [llength [[dict get $selly z1z2] get resid]]
