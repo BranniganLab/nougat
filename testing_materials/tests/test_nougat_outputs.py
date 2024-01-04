@@ -266,10 +266,10 @@ def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, 
         paths = make_py_paths(cwd, system, coordsys, surface4, quantity, "dat")
         assert arrays_equal(paths, 'dat', 1e-11)
     else:
-        assert True
+        return
 
+# Still needed: thickness, order, tilt, normal_vectors
 
-# Still needed: thickness, order, tilt
 
 # BELOW: old density tests that need to be re-implemented
 """
