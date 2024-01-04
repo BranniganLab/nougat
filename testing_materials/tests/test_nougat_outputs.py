@@ -167,7 +167,7 @@ def arrays_equal(paths, filetype, tolerance):
 
     Parameters
     ----------
-    paths: named tuple
+    paths: Comparison named tuple
         Named tuple of two path objects.
     filetype: string
         The filetype of f1 and f2
