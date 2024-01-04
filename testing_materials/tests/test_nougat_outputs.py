@@ -69,18 +69,9 @@ def system(request):
     return request.param
 
 
-@pytest.fixture(scope='function', params=["curvature", "height", "Kcurvature"])
-def avg_quantities(request):
-    """
-    Supply the average quantities being compared to the test function requesting it.
-
-    """
-    return request.param
-
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-def make_npy_paths(wd, system, coord, surf, quant):
+def make_py_paths(wd, system, coord, surf, quant, file_format):
     """
     Concatenate strings together to make the path to the correct test files.
 
@@ -96,6 +87,8 @@ def make_npy_paths(wd, system, coord, surf, quant):
         The membrane surface in question (z1, z2, z0, or z+)
     quant: string
         The quantity being measured(height, thickness, curvature, etc.)
+    file_format: string
+        "dat" or "npy"
 
     Returns
     -------
@@ -105,6 +98,10 @@ def make_npy_paths(wd, system, coord, surf, quant):
         Path to the saved 'correct' data npy file.
 
     """
+    if file_format == "npy":
+        file_type = "trajectory"
+    elif file_format == "dat":
+        file_type = "average"
     if coord == "cart":
         coordsys_path = "_cart_5_5_0_-1_1"
     elif coord == "polar":
@@ -113,67 +110,18 @@ def make_npy_paths(wd, system, coord, surf, quant):
         directory = "E-protein_trajectory"
     elif system == "flat":
         directory = "flat_surface_test"
-    if (quant == "meancurvature") or (quant == "curvature"):
-        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", "mean", surf + ".npy")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "mean", surf + ".npy")
-    elif (quant == "gausscurvature") or (quant == "Kcurvature"):
-        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", "gaussian", surf + ".npy")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", "gaussian", surf + ".npy")
+    if (quant == "meancurvature"):
+        expected = wd.joinpath(directory, system + coordsys_path, file_type, "curvature", "mean", surf + "." + file_format)
+        test_input = wd.joinpath(directory, "test" + coordsys_path, file_type, "curvature", "mean", surf + "." + file_format)
+    elif (quant == "gausscurvature"):
+        expected = wd.joinpath(directory, system + coordsys_path, file_type, "curvature", "gaussian", surf + "." + file_format)
+        test_input = wd.joinpath(directory, "test" + coordsys_path, file_type, "curvature", "gaussian", surf + "." + file_format)
     elif quant == "normal_vectors":
-        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", "curvature", quant, surf + ".npy")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", "curvature", quant, surf + ".npy")
+        expected = wd.joinpath(directory, system + coordsys_path, file_type, "curvature", quant, surf + "." + file_format)
+        test_input = wd.joinpath(directory, "test" + coordsys_path, file_type, "curvature", quant, surf + "." + file_format)
     elif (quant == "height") or (quant == "thickness"):
-        expected = wd.joinpath(directory, system + coordsys_path, "trajectory", quant, surf + ".npy")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "trajectory", quant, surf + ".npy")
-    return Comparison(test_input, expected)
-
-
-def make_avg_paths(wd, system, coord, surf, quant):
-    """
-    Concatenate strings together to make the path to the correct test files.
-
-    Parameters
-    ----------
-    wd: string
-        Path to current working directory.
-    system: string
-        Which test system the test pertains to.
-    coord: string
-        Coordinate system; 'cart' or 'polar'
-    surf: sring
-        The membrane surface in question (z1, z2, z0, or z +)
-    quant: string
-        The quantity being measured(height, thickness, curvature, etc.)
-
-    Returns
-    -------
-    test_input: string
-        Path to the test data npy file.
-    expected: string
-        Path to the saved 'correct' data npy file.
-
-    """
-    if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1"
-    elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1"
-    if system == "E-protein":
-        directory = "E-protein_trajectory"
-    elif system == "flat":
-        directory = "flat_surface_test"
-    if quant != "avgdensity":
-        if quant == "curvature":
-            expected = wd.joinpath(directory, system + coordsys_path, "average", quant, "mean", surf + ".dat")
-            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, "mean", surf + ".dat")
-        elif quant == "Kcurvature":
-            expected = wd.joinpath(directory, system + coordsys_path, "average", "curvature", "gaussian", surf + ".dat")
-            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "curvature", "gaussian", surf + ".dat")
-        elif (quant == "height") or (quant == "thickness"):
-            expected = wd.joinpath(directory, system + coordsys_path, "average", quant, surf + ".dat")
-            test_input = wd.joinpath(directory, "test" + coordsys_path, "average", quant, surf + ".dat")
-    elif quant == "avgdensity":
-        expected = wd.joinpath(directory, system + coordsys_path, "average", "density", "DTPC", surf + ".dat")
-        test_input = wd.joinpath(directory, "test" + coordsys_path, "average", "density", "DTPC", surf + ".dat")
+        expected = wd.joinpath(directory, system + coordsys_path, file_type, quant, surf + "." + file_format)
+        test_input = wd.joinpath(directory, "test" + coordsys_path, file_type, quant, surf + "." + file_format)
     return Comparison(test_input, expected)
 
 
@@ -262,12 +210,12 @@ def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
 # Test if npy outputs match
 
 def test_if_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, system):
-    paths = make_npy_paths(cwd, system, coordsys, surface4, quantity)
+    paths = make_py_paths(cwd, system, coordsys, surface4, quantity, "npy")
     assert arrays_equal(paths, 'npy', 1e-11)
 
 
 def test_if_thicknesses_match(cwd, coordsys, surface2, system):
-    paths = make_npy_paths(cwd, system, coordsys, surface2, "thickness")
+    paths = make_py_paths(cwd, system, coordsys, surface2, "thickness", "npy")
     assert arrays_equal(paths, 'npy', 1e-11)
 
 
@@ -286,15 +234,15 @@ def test_if_densities_match(cwd, coordsys, surface2):
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflets_are_distinct(cwd, coordsys, quantity, system):
-    zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", quantity)
-    ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", quantity)
+    zone_test, _ = make_py_paths(cwd, system, coordsys, "zone", quantity, "npy")
+    ztwo_test, _ = make_py_paths(cwd, system, coordsys, "ztwo", quantity, "npy")
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
 @pytest.mark.xfail(strict=True)
 def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
-    zone_test, _ = make_npy_paths(cwd, system, coordsys, "zone", "thickness")
-    ztwo_test, _ = make_npy_paths(cwd, system, coordsys, "ztwo", "thickness")
+    zone_test, _ = make_py_paths(cwd, system, coordsys, "zone", "thickness", "npy")
+    ztwo_test, _ = make_py_paths(cwd, system, coordsys, "ztwo", "thickness", "npy")
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
@@ -326,9 +274,12 @@ def test_whether_flat_gaussian(cwd, coordsys):
 # Test if time-averages match
 
 
-def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, system, avg_quantities):
-    paths = make_avg_paths(cwd, system, coordsys, surface4, avg_quantities)
-    assert arrays_equal(paths, 'dat', 1e-11)
+def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, system):
+    if quantity != "normal_vectors":
+        paths = make_py_paths(cwd, system, coordsys, surface4, quantity, "dat")
+        assert arrays_equal(paths, 'dat', 1e-11)
+    else:
+        assert True
 
 
 """
