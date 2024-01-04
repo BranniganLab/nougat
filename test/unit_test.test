@@ -612,22 +612,18 @@ test Mixmemjoiningnames {
 mol delete top
 }
 
-test checkheightdensityfilescreated {
+test checkheightfilescreated {
     Test: createOutfiles
 } -setup {
-    set outfiles [createOutfiles height_density "POPC DTPC" "I DONT MATTER" "t1"]
+    set outfiles [createOutfiles height "POPC DTPC" "I DONT MATTER" "t1"]
     foreach channel [file channels "file*"] {
         close $channel
     }
     set heightfiles [ glob -nocomplain t1/tcl_output/height/* ]
     set filelength [llength $heightfiles]
-    foreach folder "POPC DTPC combined" {
-        set densityfiles [ glob -nocomplain t1/tcl_output/density/$folder/* ]
-        set filelength [expr $filelength + [llength $densityfiles]]
-    }
 } -body {
     return $filelength
-} -result 12 -cleanup {
+} -result 3 -cleanup {
     exec rm -r t1
 }
 
@@ -703,7 +699,7 @@ test createatomselects {
 } -setup {
     mol new ../testing_materials/lipid_membrane/insane2.gro
     set config_dict [cell_prep "nougat_config.txt" 1]
-    set selly [createAtomSelections "height_density" $config_dict]
+    set selly [createAtomSelections "height" $config_dict]
     set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
     set lipnum [llength [$sel get resid]]
     set cselnum [llength [[dict get $selly z1z2] get resid]]
@@ -797,22 +793,23 @@ test Normalizationdensitytest {
     mol delete top
 }
 
-test Avgheightdensity {
-    Test: averageHeightAndDensity
+test Avgheight {
+    Test: averageHeight
 } -setup {
     mol new ../testing_materials/GNP_trajectory/em.gro
     mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
     start_nougat PO nougat_config.txt 12 12 0 1 1 0
     set fp [open "PO_cart_12_12_0_1_1/tcl_output/height/zone.dat" r]
     set filedata [read $fp]
-    set fp2 [open "PO_cart_12_12_0_1_1/tcl_output/density/POPC/zone.dat" r]
-    set filedata2 [read $fp2]
-    set match [list [format "%.2f" [lindex $filedata 2 0]] [format "%.2f" [lindex $filedata2 2 0]]]
+    set match [format "%.2f" [lindex $filedata 2 0]]
 } -body {
     return $match
-} -result {12.49 5.00} -cleanup {
+} -result 12.49 -cleanup {
     mol delete top
 }
+
+
+# THESE TESTS WILL FAIL INTENTIONALLY: THESE FEATURES HAVE NOT BEEN FULLY IMPLEMENTED
 
 test Avgtiltord {
     Test: averageTiltAndOrderParameter
@@ -827,4 +824,19 @@ test Avgtiltord {
 } -result {0.104 0.317} -cleanup {
     mol delete top
     exec rm -r PO_cart_12_12_0_1_1
+}
+
+test Avgdensity {
+    Test: averageDensity
+} -setup {
+    mol new ../testing_materials/GNP_trajectory/em.gro
+    mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
+    start_nougat PO nougat_config.txt 12 12 0 1 1 0
+    set fp [open "PO_cart_12_12_0_1_1/tcl_output/density/POPC/zone.dat" r]
+    set filedata [read $fp]
+    set match [format "%.2f" [lindex $filedata 2 0]]
+} -body {
+    return $match
+} -result 12.49 -cleanup {
+    mol delete top
 }

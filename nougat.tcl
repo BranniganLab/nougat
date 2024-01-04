@@ -135,8 +135,8 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
     
-    run_nougat $system $config_dict $bindims $polar "height_density" $foldername
-    run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
+    run_nougat $system $config_dict $bindims $polar "height" $foldername
+    #run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
 }
 
@@ -193,8 +193,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             set res_dict [createResidueDictionaries [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
 
             ;# Make necessary calculations (if any), then bin and average them
-            if {$quantity_of_interest eq "height_density"} {
-                set outfiles [averageHeightAndDensity $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
+            if {$quantity_of_interest eq "height"} {
+                set outfiles [averageHeight $res_dict $outfiles [dict get $sel_info lipid_list] [dict get $sel_info zvals_list]]
             } elseif {$quantity_of_interest eq "tilt_order"} {
                 set tilts [fitVecsToSel [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
                 set orders [calculateOrderParameters [dict keys $selections] [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $sel_info zvals_list]]
@@ -203,8 +203,11 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# Now that all information has been binned, print it to files
             dict for {key val} [dict get $outfiles $selex] {
+                if {[string match "counts*" $key]} {
+                    continue
+                }
                 printFrame [dict get $bindims N1] $outfiles $key [dict get $bindims d1] [dict get $config_dict min] [dict get $bindims N2] $polar $selex
-
+                
                 ;# cleanup before next step
                 set outfiles [dict unset outfiles $selex $key bin]
             } 
@@ -216,7 +219,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
     }
 
     ;# output log info that nougat.py can read later 
-    if {$quantity_of_interest eq "height_density"} {
+    if {$quantity_of_interest eq "height"} {
         outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] [dict get $config_dict acyl_names] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
         
         ;# this will only work if your TMD helices are set to occupancy 1

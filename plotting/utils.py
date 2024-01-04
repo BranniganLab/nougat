@@ -461,6 +461,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
             plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
             plt.close()
+        """
         for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
             fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
@@ -471,6 +472,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
                 fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
                 plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
                 plt.close()
+        """
 
 
 def plot_maker(dims, data, protein, quant, polar):

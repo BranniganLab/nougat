@@ -359,7 +359,6 @@ proc printValue {file value endLine} {
 #       - min needs to be implemented 
 
 proc printFrame {N1 outfiles key d1 min N2 polar selex} {
-
     set file [dict get $outfiles $selex $key fname]
 
     ;# starts new line in outfile with bin values
@@ -553,13 +552,13 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
 proc createOutfiles {quantity species tailList folderName} {
     file mkdir "${folderName}/tcl_output"
     
-    if {$quantity eq "height_density"} {
+    if {$quantity eq "height"} {
         set height "${folderName}/tcl_output/height"
         file mkdir $height
         dict set outfiles z1z2 heights_up fname [open "${height}/zone.dat" w]
         dict set outfiles z1z2 heights_down fname [open "${height}/ztwo.dat" w]
         dict set outfiles z0 heights_zzero fname [open "${height}/zzero.dat" w]
-
+    } elseif {$quantity eq "density"} {
         set density "${folderName}/tcl_output/density"
         file mkdir $density
         file mkdir "${density}/combined"
@@ -1169,7 +1168,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
     return $outfiles
 }
 
-# averageHeightAndDensity (Previously: height_density_averaging)
+# averageHeight (Previously: height_density_averaging)
 #
 #       uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
 #
@@ -1184,7 +1183,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 #       Returns dictionary with average height, density and counts 
 #       of lipids for a specific bin 
 
-proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
+proc averageHeight {residueDictonary outfiles lipidList zValsList} {
     dict for {bin indices} $residueDictonary {
         set leaf [string range $bin end end]
         set correct_bin [string range $bin 0 [expr {[string length $bin] - 3}]]
@@ -1192,17 +1191,14 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
             set species [lindex $lipidList $indx]
             if {$leaf == 1} {
                 set field_key "z1z2"
-                set dens_key "density_up_${species}"
                 set height_key "heights_up"
                 set counts_key "counts_up"
             } elseif {$leaf == 2} {
                 set field_key "z1z2"
-                set dens_key "density_down_${species}"
                 set height_key "heights_down"
                 set counts_key "counts_down"
             } elseif {$leaf == 3} {
                 set field_key "z0"
-                set dens_key "density_zzero_${species}"
                 set height_key "heights_zzero"
                 set counts_key "counts_zzero"
             } else {
@@ -1216,17 +1212,10 @@ proc averageHeightAndDensity {residueDictonary outfiles lipidList zValsList} {
                 set newsum [expr {$oldavg * $oldcount + [lindex $zValsList $indx]}]
                 set newavg [expr $newsum/$newcount]
                 dict set outfiles $field_key $height_key bin $correct_bin $newavg
-                dict set outfiles $field_key $counts_key bin $correct_bin $newcount
-                if {[dict exists $outfiles $field_key $dens_key bin $correct_bin]} {
-                    set olddens [dict get $outfiles $field_key $dens_key bin $correct_bin]
-                    dict set outfiles $field_key $dens_key bin $correct_bin [expr $olddens+1.0]
-                } else {
-                    dict set outfiles $field_key $dens_key bin $correct_bin 1.0
-                }       
+                dict set outfiles $field_key $counts_key bin $correct_bin $newcount   
             } else {
                 dict set outfiles $field_key $height_key bin $correct_bin [lindex $zValsList $indx]
                 dict set outfiles $field_key $counts_key bin $correct_bin 1.0
-                dict set outfiles $field_key $dens_key bin $correct_bin 1.0
             }
         }
     }
@@ -1327,7 +1316,7 @@ proc readPolar {polar} {
 #       creates dictionaries of atomselections  
 #       
 # Arguments:
-#       quantity            {str}       quanities being evaluated, either height_density or tilt_order       
+#       quantity            {str}       quanities being evaluated, either height or tilt_order       
 #       configDictionary    {dict}      dictionary of values created from the config file 
 #
 # Results:
@@ -1340,10 +1329,9 @@ proc readPolar {polar} {
 
 proc createAtomSelections {quantity configDictionary} {
     ;#atomselections setup as dict
-    if {$quantity eq "height_density"} {
+    if {$quantity eq "height"} {
         dict set selections z1z2 [atomselect top "resname [dict get $configDictionary species] and name [dict get $configDictionary full_tails]"]
         dict set selections z0 [atomselect top "resname [dict get $configDictionary species] and ((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1))"]
-
     } elseif {$quantity eq "tilt_order"} {
         set lists [sortTailLength [dict get $configDictionary species] [dict get $configDictionary acyl_names]]
         set sellist [lindex $lists 0]
