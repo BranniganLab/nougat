@@ -256,7 +256,7 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
         ;# how many tails are in this lipid species?
         set numTails [llength $endNames]
 
-        set startSel [atomselect top "resname $lipidType and (name PO4 ROH)" frame $frm]
+        set startSel [atomselect top "resname $lipidType and name PO4" frame $frm]
         set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
         set startZ [$startSel get z]
         set endZ [$endSel get z]
