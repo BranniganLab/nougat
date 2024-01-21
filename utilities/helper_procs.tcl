@@ -123,7 +123,7 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       delimiter  {str}   string to be input between items in inputList
 #
 # Results:
-#       Returns a list of elements with the specified delimiter between "NULL" will 
+#       Returns a list of elements with the specified delimiter between. "NULL" will 
 #       result in no delimiter with a single space separating elements."or" will 
 #       also enclose list items in parentheses for use as atomselection text.
 #
@@ -132,6 +132,9 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       {1 $ 2 $ 3 $ 4 $ 5}
 
 proc concatenateList {inputList delimiter} {
+    if {[llength $inputList] == 1} {
+        return [list $inputList]
+    }
     if {$delimiter eq "or"} {
         set output "([lindex $inputList 0])"
     } else {
@@ -148,6 +151,8 @@ proc concatenateList {inputList delimiter} {
             set output "${output} $delimiter [lindex $inputList $i]"
         }
     }
+
+    
     return $output
 }
 
@@ -251,7 +256,7 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
         ;# how many tails are in this lipid species?
         set numTails [llength $endNames]
 
-        set startSel [atomselect top "resname $lipidType and name PO4" frame $frm]
+        set startSel [atomselect top "resname $lipidType and (name PO4 ROH)" frame $frm]
         set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
         set startZ [$startSel get z]
         set endZ [$endSel get z]
@@ -359,6 +364,7 @@ proc printValue {file value endLine} {
 #       - min needs to be implemented 
 
 proc printFrame {N1 outfiles key d1 min N2 polar selex} {
+
     set file [dict get $outfiles $selex $key fname]
 
     ;# starts new line in outfile with bin values
@@ -435,6 +441,7 @@ proc analyzeTails { species } {
             }
         }
     }
+    
 
     return [list $taillist $findHeadsAndTails $full_tails]
 }
@@ -1349,26 +1356,64 @@ proc createAtomSelections {quantity configDictionary} {
     return $selections
 }
 
+
+
+# Align --
+#
+#       Alignment based off vmd alignment 
+#       
+# Arguments:
+#       align_seltext       {str}       Selection text for aligning    
+#	tilt_flag	    {bool}	Rotational fit around z axis only
+# 					used to prevent spin/swivel motion of a membrane protein,
+# 					without changing membrane orientation (no tilt)
+#					Values: 1 (align all axes), 0 (don't align tilt)
+#					Default: 1 (align all)
+#	M_PI		    {float}	The value of pi.
+#	molid		    {string} 	The molid to align. Defuault: top
+# Results:
+#       
+#       The original trajector
+#       
+# Necessary Revisions/Problems:
+#	Why doesn't it know what M_PI is unless we pass it as an argument?
+#      
+# Based on a script by Jérôme Hénin <jerome.henin@cnrs.fr>
+
+proc Align { align_seltext {tilt_flag 1} {M_PI 3.14159265358979323846} {molid top}} {
+    puts "Align start"
+    set nframes [molinfo $molid get numframes]
+    set system [atomselect $molid "all"]
+    set ref [atomselect $molid $align_seltext frame 0]
+    set align_by [atomselect $molid "index [$ref list]"]
+    for {set the_frame 1} {$the_frame < $nframes} {incr the_frame} {
+        $align_by frame $the_frame
+        $system frame $the_frame
+        set TM [measure fit $align_by $ref]
+        if {$tilt_flag==0} {
+		    # Sine and cosine of z rotation are in first column of 4x4 matrix
+		    set m00 [lindex $TM 0 0]
+		    set m01 [lindex $TM 0 1]
+		    # Negative sign to reverse rotation
+		    # Use atan2 for safety
+		    set alpha [expr {-180.0 / $M_PI * atan2($m01, $m00)}]
+		    set TM [transaxis z $alpha deg]
+        }
+        $system move $TM
+	    
+    }
+    $ref delete
+    $system delete
+    $align_by delete
+    puts "Align end"
+}
+
+
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
 
-;# Alignment based off vmd alignment
-proc Align { stuff } {
-    puts "Align start"
-    set nframes [molinfo top get numframes]
-    set ref [atomselect top $stuff frame 0]
-    for {set frames 1} {$frames < $nframes} {incr frames} {
-        set com [atomselect top $stuff frame $frames]
-        set TM [measure fit $com $ref]
-        $com delete
-        set move_sel [atomselect top "all" frame $frames]
-        $move_sel move $TM
-        $move_sel delete
-    }
-    $ref delete
-    puts "Align end"
-}
+
 
 
 proc separate_chains {molid cutoff} {
