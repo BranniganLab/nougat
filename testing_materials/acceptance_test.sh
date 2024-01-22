@@ -6,7 +6,7 @@ rm -f nougpy.log
 rm -f pytest.log 
 rm -f tcl_unit_test.log 
 
-# Run tcl unit tests and divert output to file AND to terminal (tee)
+# Run tcl unit tests and divert output to file
 cd ../test/ 
 echo "Starting TCL unit testing"
 vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
