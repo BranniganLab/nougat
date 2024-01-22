@@ -435,7 +435,6 @@ proc analyzeTails { species } {
             }
         }
     }
-    
     return [list $taillist $findHeadsAndTails $full_tails]
 }
 
