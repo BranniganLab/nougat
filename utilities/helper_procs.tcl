@@ -359,7 +359,6 @@ proc printValue {file value endLine} {
 #       - min needs to be implemented 
 
 proc printFrame {N1 outfiles key d1 min N2 polar selex} {
-
     set file [dict get $outfiles $selex $key fname]
 
     ;# starts new line in outfile with bin values
@@ -437,7 +436,6 @@ proc analyzeTails { species } {
         }
     }
     
-
     return [list $taillist $findHeadsAndTails $full_tails]
 }
 
