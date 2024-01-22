@@ -132,9 +132,6 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
 #       {1 $ 2 $ 3 $ 4 $ 5}
 
 proc concatenateList {inputList delimiter} {
-    if {[llength $inputList] == 1} {
-        return [list $inputList]
-    }
     if {$delimiter eq "or"} {
         set output "([lindex $inputList 0])"
     } else {
