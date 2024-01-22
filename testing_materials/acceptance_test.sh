@@ -11,7 +11,6 @@ cd ../test/
 echo "Starting TCL unit testing"
 vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
 cd ../testing_materials/
-echo "TCL unit testing finished"
 
 # Check to make sure VMD didn't error
 if grep "couldn't load file" tcl_unit_test.log
@@ -26,8 +25,6 @@ then
         	"No, Exit" ) exit;;
     	esac
 	done
-else
-	echo "TCL unit testing passed :)"
 fi
 
 # Check to make sure tests all passed
