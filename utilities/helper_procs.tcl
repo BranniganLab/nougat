@@ -1380,8 +1380,9 @@ proc createAtomSelections {quantity configDictionary} {
 #      
 # Based on a script by Jérôme Hénin <jerome.henin@cnrs.fr>
 
-proc Align { align_seltext {tilt_flag 1} {M_PI 3.14159265358979323846} {molid top}} {
+proc Align { align_seltext {tilt_flag 1} {molid top}} {
     puts "Align start"
+    global M_PI
     set nframes [molinfo $molid get numframes]
     set system [atomselect $molid "all"]
     set ref [atomselect $molid $align_seltext frame 0]
