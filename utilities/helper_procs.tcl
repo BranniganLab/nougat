@@ -148,8 +148,6 @@ proc concatenateList {inputList delimiter} {
             set output "${output} $delimiter [lindex $inputList $i]"
         }
     }
-
-    
     return $output
 }
 
