@@ -52,7 +52,7 @@ vmd -dispdev none -e ./run_nougat_test.tcl
 bash ./run_nougat_py_test.sh 2>&1 | tee -a nougpy.log
 
 # Run acceptance tests on resulting files
-python3 -m pytest test/ 2>&1 | tee -a pytest.log
+python3 -m pytest tests/ 2>&1 | tee -a pytest.log
 
 # Sound the all clear
 echo "Acceptance testing finished"
