@@ -14,7 +14,7 @@ vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.l
 cd ../testing_materials/
 
 # Check to make sure VMD didn't error
-if [[grep "invalid command" tcl_unit_test.log || grep "bad option" tcl_unit_test.log || grep "couldn't load file" tcl_unit_test.log]]
+if grep -E 'invalid \command|bad \option|nt \load \file' tcl_unit_test.log
 then
 	echo "Something went wrong in VMD :("
 	echo "Your unit tests likely did not run."
