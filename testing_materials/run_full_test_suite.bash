@@ -44,8 +44,8 @@ else
 	echo "TCL unit testing passed :)"
 fi
 
-echo "Starting pytest unit testing"
 # Run python unit tests and divert output to file and terminal.
+echo "Starting pytest unit testing"
 python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
 
 # Check to make sure tests all passed
@@ -64,8 +64,8 @@ else
 	echo "Pytest unit testing passed :)"
 fi
 
-echo "Starting acceptance testing"
 # Run nougat.tcl and nougat.py on test systems
+echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl
 bash ./run_nougat_py_test.sh 2>&1 | tee -a nougpy.log
 
