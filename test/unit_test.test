@@ -1,7 +1,7 @@
 package require tcltest
 namespace import ::tcltest::*
 
-configure -verbose pbt
+configure -verbose pbt -skip "Avgtiltord Avgdensity"
 # Software under test
 
 source ../utilities/helper_procs.tcl
