@@ -2,12 +2,13 @@
 
 # Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
-rm -f nougpy.log 
-rm -f pytest.log 
-rm -f tcl_unit_test.log 
+rm -f nougpy.log
+rm -f pyunittest.log
+rm -f pytest.log
+rm -f tcl_unit_test.log
 
 # Run tcl unit tests and divert output to file
-cd ../test/ 
+cd ../test/
 echo "Starting TCL unit testing"
 vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
 cd ../testing_materials/
