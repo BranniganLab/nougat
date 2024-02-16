@@ -44,7 +44,7 @@ else
 fi
 
 # Run python unit tests and divert output to file and terminal.
-
+python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
 # Check to make sure tests all passed
 
 # Run nougat.tcl and nougat.py on test systems
