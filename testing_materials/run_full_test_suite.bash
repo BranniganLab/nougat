@@ -2,12 +2,13 @@
 
 # Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
-rm -f nougpy.log 
-rm -f pytest.log 
-rm -f tcl_unit_test.log 
+rm -f nougpy.log
+rm -f pyunittest.log
+rm -f pytest.log
+rm -f tcl_unit_test.log
 
 # Run tcl unit tests and divert output to file
-cd ../test/ 
+cd ../test/
 echo "Starting TCL unit testing"
 vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
 cd ../testing_materials/
@@ -44,10 +45,27 @@ else
 fi
 
 # Run python unit tests and divert output to file and terminal.
+echo "Starting pytest unit testing"
+python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
 
 # Check to make sure tests all passed
+if grep -q FAILED pyunittest.log
+then
+	echo "pytest unit testing failed :("
+	echo "Do you want to continue with acceptance testing anyway?"
+	echo "(Choose the number that corresponds to your choice)"
+	select yn in "Yes, Continue" "No, Exit"; do
+    	case $yn in
+        	"Yes, Continue" ) break;;
+        	"No, Exit" ) exit;;
+    	esac
+	done
+else
+	echo "Pytest unit testing passed :)"
+fi
 
 # Run nougat.tcl and nougat.py on test systems
+echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl
 bash ./run_nougat_py_test.sh 2>&1 | tee -a nougpy.log
 

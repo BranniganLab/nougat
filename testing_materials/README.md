@@ -21,6 +21,7 @@ warnings
 argparse
 pathlib
 pytest
+shutil
 ```
 
 ### Github Dependencies:
@@ -32,4 +33,4 @@ github.com/jhenin/vecexpr
 
 
 ## What will it do?
-The test suite will run unit tests on nougat.tcl and then run nougat on a few tests systems. It will then check to make sure that the results from the test systems match saved reference data.
+The test suite will run unit tests on nougat.tcl, unit tests on nougat.py, and then nougat on a few tests systems. It will then check to make sure that the results from the test systems match saved reference data.
