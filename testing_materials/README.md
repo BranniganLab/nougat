@@ -21,6 +21,7 @@ warnings
 argparse
 pathlib
 pytest
+shutil
 ```
 
 ### Github Dependencies:
