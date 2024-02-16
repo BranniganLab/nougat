@@ -14,7 +14,7 @@ vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.l
 cd ../testing_materials/
 
 # Check to make sure VMD didn't error
-if grep "couldn't load file" tcl_unit_test.log
+if [[grep "invalid command" tcl_unit_test.log || grep "bad option" tcl_unit_test.log || grep "couldn't load file" tcl_unit_test.log]]
 then
 	echo "Something went wrong in VMD :("
 	echo "Your unit tests likely did not run."
@@ -30,22 +30,6 @@ fi
 
 # Check to make sure tests all passed
 if grep FAILED tcl_unit_test.log
-then
-	echo "TCL unit testing failed :("
-	echo "Do you want to continue with acceptance testing anyway?"
-	echo "(Choose the number that corresponds to your choice)"
-	select yn in "Yes, Continue" "No, Exit"; do
-    	case $yn in
-        	"Yes, Continue" ) break;;
-        	"No, Exit" ) exit;;
-    	esac
-	done
-else
-	echo "TCL unit testing passed :)"
-fi
-
-# Check to make sure tests all passed
-if grep "invalid command" tcl_unit_test.log
 then
 	echo "TCL unit testing failed :("
 	echo "Do you want to continue with acceptance testing anyway?"
