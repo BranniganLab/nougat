@@ -85,7 +85,7 @@ proc cell_prep {config_path leaf_check} {
         set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
             puts "leaflet check frame $i"
-            assignLeaflet $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter] $use_vecexpr
+            assignLeaflet $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
         }
     }
 
