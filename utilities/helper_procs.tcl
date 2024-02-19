@@ -1528,9 +1528,9 @@ proc Protein_Position {name hnames chainNames folderName} {
     }
 }
 
-proc Center_System {wrap_sel inclusion_sel} {
+proc run_qwrap {wrap_sel inclusion_sel} {
     puts "${wrap_sel}"
-    puts "Center_System now running"
+    puts "Qwrap now running"
 
     setBetaValues $inclusion_sel
     qunwrap compound beta
@@ -1539,7 +1539,7 @@ proc Center_System {wrap_sel inclusion_sel} {
     }
     qwrap compound beta center $wrap_sel
 
-    puts "Center_System finished!"
+    puts "run_qwrap finished!"
 }
 
 ;# removes lipids from analysis (by setting user to 4)
