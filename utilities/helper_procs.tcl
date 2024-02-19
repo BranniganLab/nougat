@@ -234,7 +234,7 @@ proc rotateSystem {axis degree start stop} {
 #       - Needs to be revised to just take the 'top' bead in a lipid
 #       rather than hard-code PO4
 
-proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
+proc assignLeaflet {frm species findHeadsAndTails window poreSort use_vecexpr} {
     set starts [lindex $findHeadsAndTails 0]
     set ends [lindex $findHeadsAndTails 1]
 
@@ -263,7 +263,13 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
         for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
-            set avgEndHeight [vecexpr [lrange $endZ $j [expr $j+$numTails-1]] mean]
+            if {$use_vecexpr == "yes"} {
+                set avgEndHeight [vecexpr [lrange $endZ $j [expr $j+$numTails-1]] mean]
+            } else {
+                set sum [vecadd [lrange $endZ $j [expr $j+$numTails-1]]]
+                set avgEndHeight [expr $sum / [expr $numTails * 1.0]]
+            }
+            
 
             ;# subtract $avgendheight from the PO4 bead's height
             set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
