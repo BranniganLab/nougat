@@ -32,8 +32,14 @@ proc cell_prep {config_path leaf_check} {
 
     source [dict get $config_dict utilities_path]/helper_procs.tcl 
     source [dict get $config_dict utilities_path]/JS_helpers.tcl
-    load [dict get $config_dict qwrap_path]/qwrap.so
-    load [dict get $config_dict vecexpr_path]/vecexpr.so
+    
+    if {[dict get $config_dict use_qwrap] == "yes"} {
+        load [dict get $config_dict qwrap_path]/qwrap.so
+    }
+    
+    if {[dict get $config_dict use_vecexpr] == "yes"} {
+        load [dict get $config_dict vecexpr_path]/vecexpr.so
+    }
 
     ;# figure out which lipids are in the system
 

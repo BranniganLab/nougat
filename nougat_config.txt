@@ -3,7 +3,8 @@ qwrap_path = /home/js2746/PolarHeightBinning/utilities
 vecexpr_path = /home/js2746/PolarHeightBinning/utilities
 utilities_path = /home/js2746/PolarHeightBinning/utilities
 
-
+use_qwrap = no
+use_vecexpr = no
 
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
