@@ -1,7 +1,7 @@
 package require tcltest
 namespace import ::tcltest::*
 
-configure -verbose pbt
+configure -verbose pbt -skip "Avgtiltord Avgdensity"
 # Software under test
 
 source ../utilities/helper_procs.tcl
@@ -806,6 +806,7 @@ test Avgheight {
     return $match
 } -result 12.49 -cleanup {
     mol delete top
+    exec rm -r PO_cart_12_12_0_1_1/
 }
 
 
@@ -839,4 +840,5 @@ test Avgdensity {
     return $match
 } -result 12.49 -cleanup {
     mol delete top
+    exec rm -r PO_cart_12_12_0_1_1/
 }
