@@ -520,7 +520,7 @@ proc vecSqrt {inputList} {
 proc vecAtan2 {Xlist Ylist} {
     set outputList []
     foreach x $Xlist y $Ylist {
-        lappend outputList [expr {atan2($y $x)}]
+        lappend outputList [expr {atan2($y,$x)}]
     }
     return $outputList
 }
