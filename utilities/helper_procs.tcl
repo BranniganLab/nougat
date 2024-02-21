@@ -539,17 +539,27 @@ proc vecAtan2 {Xlist Ylist} {
 # Results:
 #       returns two lists of bins in the x or y direction
 
-proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
+proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr} {
     
     if {$polar == 1} {
         ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
         set r_vals2 [vecadd [vecmul $xVals $xVals] [vecmul $yVals $yVals]]
-        set r_vals [vecexpr $r_vals2 sqrt]
-        
-        ;#calculate theta: use atan2 to get values for al x,y pairs
-        set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
+
+        if {$use_vecexpr == "yes"} {
+            set r_vals [vecexpr $r_vals2 sqrt]
+
+            ;#calculate theta: use atan2 to get values for al x,y pairs
+            set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
+        } else {
+            set r_vals [vecSqrt $r_vals2]
+
+            ;#calculate theta: use atan2 to get values for al x,y pairs
+            global M_PI
+            set theta_vals [vecscale [vecAtan2 $yVals $xVals] [expr 180/$M_PI]]
+        }
+
 
         ;#atan2 gives values from -180 to 180; shifting to 0 to 360
         for {set i 0} {$i<[llength $theta_vals]} {incr i} {
