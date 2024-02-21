@@ -483,7 +483,7 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecexpr [vecexpr $xVals sq] [vecexpr $yVals sq] add] sqrt]
+        set r_vals [vecexpr [vecadd [vecexpr $xVals sq] [vecexpr $yVals sq]] sqrt]
         
         ;#turn into bin numbers rather than r values
         set dim1_bins [vecexpr [vecexpr $r_vals $binWidth1 div] floor]
@@ -1150,8 +1150,8 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
                 set newordersum [expr {$oldorder * $oldcount + [lindex [lindex $orders 0] $indx]}]
                 set neworder [expr $newordersum/$newcount]
                 set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
-                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex $tilts $indx] add]
-                set newtilt [vecexpr $newtiltsum $newcount div]
+                set newtiltsum [vecadd [vecscale $oldtilt $oldcount] [lindex $tilts $indx]]
+                set newtilt [vecscale $newtiltsum [expr 1.0/$newcount]]
                 dict set outfiles $selex $order_key bin $correct_bin $neworder
                 dict set counts $selex $order_key bin $correct_bin $newcount
                 dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
