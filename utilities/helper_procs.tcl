@@ -490,10 +490,6 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set r_vals2 [vecadd [vecmul $xVals $xVals] [vecmul $yVals $yVals]]
         set r_vals [vecexpr $r_vals2 sqrt]
         
-        ;#turn into bin numbers rather than r values
-        set dim1_bins_float [vecscale $r_vals [expr 1.0/$binWidth1]]
-        set dim1_bins [vecexpr $dim1_bins_float floor]
-        
         ;#calculate theta: use atan2 to get values for al x,y pairs
         set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
 
@@ -503,6 +499,10 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
                 set theta_vals [lreplace $theta_vals $i $i [expr [lindex $theta_vals $i]+360]]
             }
         }
+
+        ;#turn into bin numbers rather than r values
+        set dim1_bins_float [vecscale $r_vals [expr 1.0/$binWidth1]]
+        set dim1_bins [vecexpr $dim1_bins_float floor]
 
         ;#turn into bin numbers rather than theta values
         set dim2_bins_float [vecscale $theta_vals [expr 1.0/$thetaDeg]]
