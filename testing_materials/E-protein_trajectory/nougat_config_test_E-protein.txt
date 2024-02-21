@@ -4,7 +4,7 @@ vecexpr_path = ../../utilities
 utilities_path = ../../utilities
 
 use_qwrap = yes
-use_vecexpr = yes
+use_vecexpr = no
 
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
