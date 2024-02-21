@@ -579,6 +579,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr}
         } else {
             set dim1_bins [vecFloor $dim1_bins_float]        
             set dim2_bins [vecFloor $dim2_bins_float]
+            set dim1_bins [vecscale $dim1_bins 1.0]
+            set dim2_bins [vecscale $dim2_bins 1.0]
         }
 
         
@@ -618,7 +620,9 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr}
             set dim2_bins [vecexpr $dim2_bins_float floor]
         } else {
             set dim1_bins [vecFloor $dim1_bins_float]
+            set dim1_bins [vecscale $dim1_bins 1.0]
             set dim2_bins [vecFloor $dim2_bins_float]
+            set dim2_bins [vecscale $dim2_bins 1.0]
         }
     }
 
