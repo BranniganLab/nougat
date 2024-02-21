@@ -487,10 +487,12 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecadd [vecexpr $xVals sq] [vecexpr $yVals sq]] sqrt]
+        set r_vals2 [vecadd [vecmul $xVals $xVals] [vecmul $yVals $yVals]]
+        set r_vals [vecexpr $r_vals2 sqrt]
         
         ;#turn into bin numbers rather than r values
-        set dim1_bins [vecexpr [vecexpr $r_vals $binWidth1 div] floor]
+        set dim1_bins_float [vecscale $r_vals [expr 1.0/$binWidth1]]
+        set dim1_bins [vecexpr $dim1_bins_float floor]
         
         ;#calculate theta: use atan2 to get values for al x,y pairs
         set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
@@ -503,7 +505,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         }
 
         ;#turn into bin numbers rather than theta values
-        set dim2_bins [vecexpr [vecexpr $theta_vals $thetaDeg div] floor]
+        set dim2_bins_float [vecscale $theta_vals [expr 1.0/$thetaDeg]]
+        set dim2_bins [vecexpr $dim2_bins_float floor]
         
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
@@ -513,8 +516,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set ylen [molinfo top get b frame $frm]
         set xmin [expr -$xlen/2.0]
         set ymin [expr -$ylen/2.0]
-        set xVals [vecexpr $xVals $xmin sub]
-        set yVals [vecexpr $yVals $ymin sub]
+        set xVals [vecaddScalar $xVals [expr -1.0*$xmin]]
+        set yVals [vecaddScalar $yVals [expr -1.0*$ymin]]
 
         ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
         ;# and should be put back for binning purposes (but not for order params purposes!)
