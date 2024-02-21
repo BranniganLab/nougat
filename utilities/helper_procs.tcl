@@ -74,7 +74,7 @@ proc calculateLsqNormFactor { length } {
         lappend I $k
     }
 
-    set lsqNormFactor [vecexpr $I $d sub]
+    set lsqNormFactor [vecsub $I $d]
 
     return $lsqNormFactor
 }
@@ -108,7 +108,7 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
         # Sum over the vector. stack=1scalar
         # Append to $fit_values
-        lappend fitValues [vecexpr [vecexpr $coords $lsqNormFactor mult] sum]
+        lappend fitValues [vecsum [vecexpr $coords $lsqNormFactor mult]]
     }
     return $fitValues
 }
@@ -509,8 +509,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set ylen [molinfo top get b frame $frm]
         set xmin [expr -$xlen/2.0]
         set ymin [expr -$ylen/2.0]
-        set xVals [vecexpr $xVals $xmin sub]
-        set yVals [vecexpr $yVals $ymin sub]
+        set xVals [vecsub $xVals $xmin]
+        set yVals [vecsub $yVals $ymin]
 
         ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
         ;# and should be put back for binning purposes (but not for order params purposes!)
