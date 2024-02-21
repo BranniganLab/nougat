@@ -769,7 +769,7 @@ proc getSelInfo {sel refHeight} {
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
     if {$refHeight ne "NULL"} {
-        dict set sel_info zvals_list [vecexpr [$sel get z] $refHeight sub]
+        dict set sel_info zvals_list [vecsub [$sel get z] $refHeight]
     } else {
         dict set sel_info zvals_list [$sel get z]
     }   
@@ -781,7 +781,7 @@ proc getSelInfo {sel refHeight} {
     ;# E.G. POPC will have 0 or 1 (it has two tails)
     ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
     set tail_list [$sel get user3]
-    dict set sel_info tail_list [vecexpr $tail_list 1 sub]
+    dict set sel_info tail_list [vecsub $tail_list 1]
 
     return $sel_info
 }
