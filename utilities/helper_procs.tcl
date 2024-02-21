@@ -1494,17 +1494,17 @@ proc Protein_Position {name hnames chainNames folderName} {
 
     set zone_sel [atomselect top "(name $hnames and user 1) and within 6 of name BB"]
     set zone_zvals [$zone_sel get z]
-    set zone_Ht [vecexpr $zone_zvals mean]
+    set zone_Ht [vecmean $zone_zvals]
     $zone_sel delete
 
     set ztwo_sel [atomselect top "(name $hnames and user 2) and within 6 of name BB"]
     set ztwo_zvals [$ztwo_sel get z]
-    set ztwo_Ht [vecexpr $ztwo_zvals mean]
+    set ztwo_Ht [vecmean $ztwo_zvals]
     $ztwo_sel delete
 
     set zmid_sel [atomselect top "((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)) and within 6 of name BB"]
     set zmid_zvals [$zmid_sel get z]
-    set zmid_Ht [vecexpr $zmid_zvals mean]
+    set zmid_Ht [vecmean $zmid_zvals]
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
