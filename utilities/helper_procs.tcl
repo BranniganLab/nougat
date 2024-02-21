@@ -914,10 +914,10 @@ proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
             lappend d2list [expr $L2/$N2*1.0]
         }
     }
-    set avgarea [vecexpr $arealist mean]
+    set avgarea [vecmean $arealist]
     if {$coordSystem == "cart"} {
-        set avgd1 [vecexpr $d1list mean]
-        set avgd2 [vecexpr $d2list mean]
+        set avgd1 [vecmean $d1list]
+        set avgd2 [vecmean $d2list]
     } elseif {$coordSystem == "polar"} {
         set avgd1 $d1 
         set avgd2 $d2
