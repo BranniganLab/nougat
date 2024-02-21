@@ -735,7 +735,7 @@ proc calculateReferenceHeight {configDict frm} {
         set ref_bead [atomselect top [dict get $configDict reference_point] frame $frm]
         set ref_height [$ref_bead get z]
         $ref_bead delete
-        set ref_height [vecexpr $ref_height mean]
+        set ref_height [vecmean $ref_height]
     } else {
         set ref_height "NULL"
     }
