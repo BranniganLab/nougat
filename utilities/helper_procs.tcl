@@ -557,7 +557,7 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr}
 
             ;#calculate theta: use atan2 to get values for al x,y pairs
             global M_PI
-            set theta_vals [vecscale [vecAtan2 $yVals $xVals] [expr 180/$M_PI]]
+            set theta_vals [vecscale [vecAtan2 $xVals $yVals] [expr 180/$M_PI]]
         }
 
 
