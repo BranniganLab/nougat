@@ -191,7 +191,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
-            set bins [assignBins [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar $frm]
+            set bins [assignBins [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar $frm [dict get $config_dict use_vecexpr]]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 
