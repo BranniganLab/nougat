@@ -1088,7 +1088,7 @@ proc calculateOrderParameters {length xValues yValues zValues} {
         if {[expr $i%$length] == 0} {
             ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
             ;# already and now you need to average them
-            set avg [vecexpr $temp_list mean]
+            set avg [vecmean $temp_list]
             set order [expr {$avg * 1.5 - 0.5}]
             lappend order_list [lrepeat $length $order]
             set temp_list []
