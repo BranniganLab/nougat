@@ -568,13 +568,19 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr}
             }
         }
 
-        ;#turn into bin numbers rather than r values
+        ;#turn into bin numbers (floats)
         set dim1_bins_float [vecscale $r_vals [expr 1.0/$binWidth1]]
-        set dim1_bins [vecexpr $dim1_bins_float floor]
-
-        ;#turn into bin numbers rather than theta values
         set dim2_bins_float [vecscale $theta_vals [expr 1.0/$thetaDeg]]
-        set dim2_bins [vecexpr $dim2_bins_float floor]
+
+        # floor all the floats to actually get bin numbers
+        if {$use_vecexpr == "yes"} {
+            set dim1_bins [vecexpr $dim1_bins_float floor]        
+            set dim2_bins [vecexpr $dim2_bins_float floor]
+        } else {
+            set dim1_bins [vecFloor $dim1_bins_float]        
+            set dim2_bins [vecFloor $dim2_bins_float]
+        }
+
         
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
@@ -602,11 +608,18 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr}
             }
         }
 
-        ;# turn into bin numbers rather than x,y values
+        ;# turn into bin numbers (floats)
         set dim1_bins_float [vecscale $xVals [expr 1.0/$binWidth1]]
-        set dim1_bins [vecexpr $dim1_bins_float floor]
         set dim2_bins_float [vecscale $yVals [expr 1.0/$binWidth2]]
-        set dim2_bins [vecexpr $dim2_bins_float floor]
+
+        ;# floor all floats to actually get bin numbers
+        if {$use_vecexpr == "yes"} {
+            set dim1_bins [vecexpr $dim1_bins_float floor]
+            set dim2_bins [vecexpr $dim2_bins_float floor]
+        } else {
+            set dim1_bins [vecFloor $dim1_bins_float]
+            set dim2_bins [vecFloor $dim2_bins_float]
+        }
     }
 
     return [list $dim1_bins $dim2_bins]
