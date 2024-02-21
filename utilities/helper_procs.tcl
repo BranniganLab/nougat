@@ -1167,6 +1167,28 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
     return $outfiles
 }
 
+
+# vecaddScalar
+#
+#       adds a scalar to every item in list
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#       scalar                  {float}     the scalar you wish to add to each item of inputList
+#
+# Results:
+#
+#       Returns list that has been transformed by the scalar value provided.
+
+proc vecaddScalar {inputList scalar} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr $item + $scalar]
+    }
+    return $outputList
+}
+
+
 # averageHeight (Previously: height_density_averaging)
 #
 #       uses residueDictionary entries to compute bin averages, then assigns them to the correct outfile
