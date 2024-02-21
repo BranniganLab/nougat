@@ -535,8 +535,10 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         }
 
         ;# turn into bin numbers rather than x,y values
-        set dim1_bins [vecexpr [vecexpr $xVals $binWidth1 div] floor]
-        set dim2_bins [vecexpr [vecexpr $yVals $binWidth2 div] floor]
+        set dim1_bins_float [vecscale $xVals [expr 1.0/$binWidth1]]
+        set dim1_bins [vecexpr $dim1_bins_float floor]
+        set dim2_bins_float [vecscale $yVals [expr 1.0/$binWidth2]]
+        set dim2_bins [vecexpr $dim2_bins_float floor]
     }
 
     return [list $dim1_bins $dim2_bins]
