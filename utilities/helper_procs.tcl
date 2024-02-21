@@ -108,7 +108,11 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
         # Sum over the vector. stack=1scalar
         # Append to $fit_values
-        lappend fitValues [vecsum [vecexpr $coords $lsqNormFactor mult]]
+        if {[llength $lsqNormFactor] == 1} {
+                lappend fitValues [vecsum [vecscale $coords $lsqNormFactor]]
+            } else {
+                lappend fitValues [vecsum [vecmul $coords $lsqNormFactor]]
+            }
     }
     return $fitValues
 }
