@@ -467,6 +467,64 @@ proc numberTails { species tailList } {
     }
 }
 
+
+# vecFloor
+#       Turns a list of floats into a list of ints, flooring all values in the process.
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#
+# Results:
+#
+#       Returns a list of (floored) ints.
+
+proc vecFloor {inputList} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr {int($item)}]
+    }
+    return $outputList
+}
+
+
+# vecSqrt
+#       Takes square root of every item in list. Homemade (slower) alt. to vecexpr.
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#
+# Results:
+#
+#       Returns a list of square roots.
+
+proc vecSqrt {inputList} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr {sqrt($item)}]
+    }
+    return $outputList
+}
+
+
+# vecAtan2
+#       Takes arctan2 of every item in list. Homemade (slower) alt. to vecexpr.
+#
+# Arguments:
+#       Xlist               {list}      a list of X coordinates
+#       Ylist               {list}      a list of Y coordinates
+#
+# Results:
+#
+#       Returns a list of arctan2s.
+
+proc vecAtan2 {Xlist Ylist} {
+    set outputList []
+    foreach x $Xlist y $Ylist {
+        lappend outputList [expr {atan2($y $x)}]
+    }
+    return $outputList
+}
+
 # assignBins (Previously: bin_assigner)--
 #       makes a list of bins based on x, y values and the coordinate system
 # Arguments:
