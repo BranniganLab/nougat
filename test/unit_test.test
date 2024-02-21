@@ -540,6 +540,20 @@ test POPCbins_novecexpr_cart {
    mol delete top
 }
 
+test single_lipid_bin_novecexpr_polar {
+    Test: assignBins
+} -setup {
+    mol new ../testing_materials/lipid_membrane/singlelipid.gro
+    set sel [atomselect top all]
+    set xval [$sel get x]
+    set yval [$sel get y]
+    set fieldvals [lsort -unique [lindex [assignBins $xval $yval 10 10 12 1 0 no] 1]]
+} -body {
+    return $fieldvals
+} - result {6.0} -cleanup {
+    mol delete top
+}
+
 test POPCbins_novecexpr_polar {
     Test: assignBins
 } -setup {
