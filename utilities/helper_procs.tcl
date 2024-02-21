@@ -74,7 +74,7 @@ proc calculateLsqNormFactor { length } {
         lappend I $k
     }
 
-    set lsqNormFactor [vecsub $I $d]
+    set lsqNormFactor [vecaddScalar $I [expr -1.0*$d]]
 
     return $lsqNormFactor
 }
@@ -509,8 +509,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set ylen [molinfo top get b frame $frm]
         set xmin [expr -$xlen/2.0]
         set ymin [expr -$ylen/2.0]
-        set xVals [vecsub $xVals $xmin]
-        set yVals [vecsub $yVals $ymin]
+        set xVals [vecexpr $xVals $xmin sub]
+        set yVals [vecexpr $yVals $ymin sub]
 
         ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
         ;# and should be put back for binning purposes (but not for order params purposes!)
@@ -769,7 +769,7 @@ proc getSelInfo {sel refHeight} {
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
     if {$refHeight ne "NULL"} {
-        dict set sel_info zvals_list [vecsub [$sel get z] $refHeight]
+        dict set sel_info zvals_list [vecaddScalar [$sel get z] [expr -1.0*$refHeight]]
     } else {
         dict set sel_info zvals_list [$sel get z]
     }   
@@ -781,7 +781,7 @@ proc getSelInfo {sel refHeight} {
     ;# E.G. POPC will have 0 or 1 (it has two tails)
     ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
     set tail_list [$sel get user3]
-    dict set sel_info tail_list [vecsub $tail_list 1]
+    dict set sel_info tail_list [vecaddScalar $tail_list -1]
 
     return $sel_info
 }
@@ -1170,7 +1170,7 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
 
 # vecaddScalar
 #
-#       adds a scalar to every item in list
+#       Adds a scalar to every item in list. Homemade (slower) alternative to vecexpr.
 #
 # Arguments:
 #       inputList               {list}      a list of numbers
