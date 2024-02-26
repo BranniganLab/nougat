@@ -25,8 +25,8 @@ argparse
 pathlib
 ```
 
-### Github Dependencies:
-This script utilizes Dr Jerome Henin's **vecexpr** package to drastically improve the efficiency of binning and allow for the measurement of multiple membrane quantities across a trajectory. It also makes use of his **qwrap** protocol to speed up initial setup. Please visit the repos below and follow the installation instructions.
+### Optional Dependencies:
+This script can utilize Dr Jerome Henin's **vecexpr** package to improve the efficiency of binning. It can also make use of his **qwrap** protocol to speed up initial setup. Please visit the repos below and follow the installation instructions if you wish to enable these features.
 ```
 github.com/jhenin/qwrap
 github.com/jhenin/vecexpr
@@ -46,7 +46,7 @@ nougat.py will then generate averages across the trajectory, and output its find
 ### Make Edits and Check Your Work
 - Open nougat_config.txt in the text editor of your choice and make edits:
 ```
-Add the correct paths to the directories where your qwrap.so and vecexpr.so files are stored 
+Add the correct paths
 Edit all of the indicated fields to match your system
 ```
 - Open VMD and load your structure and trajectory files. 

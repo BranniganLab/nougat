@@ -32,8 +32,14 @@ proc cell_prep {config_path leaf_check} {
 
     source [dict get $config_dict utilities_path]/helper_procs.tcl 
     source [dict get $config_dict utilities_path]/JS_helpers.tcl
-    load [dict get $config_dict qwrap_path]/qwrap.so
-    load [dict get $config_dict vecexpr_path]/vecexpr.so
+    
+    if {[dict get $config_dict use_qwrap] == "yes"} {
+        load [dict get $config_dict qwrap_path]/qwrap.so
+    }
+    
+    if {[dict get $config_dict use_vecexpr] == "yes"} {
+        load [dict get $config_dict vecexpr_path]/vecexpr.so
+    }
 
     ;# figure out which lipids are in the system
 
@@ -58,7 +64,9 @@ proc cell_prep {config_path leaf_check} {
     }
 
     ;# center, wrap, and align the system
-    Center_System [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
+    if {[dict get $config_dict use_qwrap] == "yes"} {
+        run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
+    }
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }
@@ -183,7 +191,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
-            set bins [assignBins [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar $frm]
+            set bins [assignBins [dict get $sel_info xvals_list] [dict get $sel_info yvals_list] [dict get $bindims d1] [dict get $bindims d2] [dict get $bindims dthetadeg] $polar $frm [dict get $config_dict use_vecexpr]]
             set dim1_bins_list [lindex $bins 0]
             set dim2_bins_list [lindex $bins 1]
 

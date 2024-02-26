@@ -6,6 +6,7 @@ rm -f nougpy.log
 rm -f pyunittest.log
 rm -f pytest.log
 rm -f tcl_unit_test.log
+rm -f nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
 cd ../test/
@@ -66,7 +67,7 @@ fi
 
 # Run nougat.tcl and nougat.py on test systems
 echo "Starting acceptance testing"
-vmd -dispdev none -e ./run_nougat_test.tcl
+vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
 bash ./run_nougat_py_test.sh 2>&1 | tee -a nougpy.log
 
 # Run acceptance tests on resulting files

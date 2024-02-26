@@ -74,7 +74,7 @@ proc calculateLsqNormFactor { length } {
         lappend I $k
     }
 
-    set lsqNormFactor [vecexpr $I $d sub]
+    set lsqNormFactor [vecaddScalar $I [expr -1.0*$d]]
 
     return $lsqNormFactor
 }
@@ -108,7 +108,11 @@ proc fitTailVectors {tailLength listOfTailCoords lsqNormFactor} {
         # Multiply x_i and the differences (i-(N-1)/2). stack=1vec
         # Sum over the vector. stack=1scalar
         # Append to $fit_values
-        lappend fitValues [vecexpr [vecexpr $coords $lsqNormFactor mult] sum]
+        if {[llength $lsqNormFactor] == 1} {
+                lappend fitValues [vecsum [vecscale $coords $lsqNormFactor]]
+            } else {
+                lappend fitValues [vecsum [vecmul $coords $lsqNormFactor]]
+            }
     }
     return $fitValues
 }
@@ -263,7 +267,7 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
         for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
-            set avgEndHeight [vecexpr [lrange $endZ $j [expr $j+$numTails-1]] mean]
+            set avgEndHeight [vecmean [lrange $endZ $j [expr $j+$numTails-1]]] 
 
             ;# subtract $avgendheight from the PO4 bead's height
             set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
@@ -463,6 +467,64 @@ proc numberTails { species tailList } {
     }
 }
 
+
+# vecFloor
+#       Turns a list of floats into a list of ints, flooring all values in the process.
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#
+# Results:
+#
+#       Returns a list of (floored) ints.
+
+proc vecFloor {inputList} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr {int($item)}]
+    }
+    return $outputList
+}
+
+
+# vecSqrt
+#       Takes square root of every item in list. Homemade (slower) alt. to vecexpr.
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#
+# Results:
+#
+#       Returns a list of square roots.
+
+proc vecSqrt {inputList} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr {sqrt($item)}]
+    }
+    return $outputList
+}
+
+
+# vecAtan2
+#       Takes arctan2 of every item in list. Homemade (slower) alt. to vecexpr.
+#
+# Arguments:
+#       Xlist               {list}      a list of X coordinates
+#       Ylist               {list}      a list of Y coordinates
+#
+# Results:
+#
+#       Returns a list of arctan2s.
+
+proc vecAtan2 {Xlist Ylist} {
+    set outputList []
+    foreach x $Xlist y $Ylist {
+        lappend outputList [expr {atan2($y,$x)}]
+    }
+    return $outputList
+}
+
 # assignBins (Previously: bin_assigner)--
 #       makes a list of bins based on x, y values and the coordinate system
 # Arguments:
@@ -477,19 +539,27 @@ proc numberTails { species tailList } {
 # Results:
 #       returns two lists of bins in the x or y direction
 
-proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
+proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm use_vecexpr} {
     
     if {$polar == 1} {
         ;# use polar (r,theta) bins
 
         ;#calculate r: distance from origin for all x,y pairs
-        set r_vals [vecexpr [vecexpr [vecexpr $xVals sq] [vecexpr $yVals sq] add] sqrt]
-        
-        ;#turn into bin numbers rather than r values
-        set dim1_bins [vecexpr [vecexpr $r_vals $binWidth1 div] floor]
-        
-        ;#calculate theta: use atan2 to get values for al x,y pairs
-        set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
+        set r_vals2 [vecadd [vecmul $xVals $xVals] [vecmul $yVals $yVals]]
+
+        if {$use_vecexpr == "yes"} {
+            set r_vals [vecexpr $r_vals2 sqrt]
+
+            ;#calculate theta: use atan2 to get values for al x,y pairs
+            set theta_vals [vecexpr $yVals $xVals atan2 pi div 180 mult]
+        } else {
+            set r_vals [vecSqrt $r_vals2]
+
+            ;#calculate theta: use atan2 to get values for al x,y pairs
+            global M_PI
+            set theta_vals [vecscale [vecAtan2 $xVals $yVals] [expr 180/$M_PI]]
+        }
+
 
         ;#atan2 gives values from -180 to 180; shifting to 0 to 360
         for {set i 0} {$i<[llength $theta_vals]} {incr i} {
@@ -498,8 +568,21 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
             }
         }
 
-        ;#turn into bin numbers rather than theta values
-        set dim2_bins [vecexpr [vecexpr $theta_vals $thetaDeg div] floor]
+        ;#turn into bin numbers (floats)
+        set dim1_bins_float [vecscale $r_vals [expr 1.0/$binWidth1]]
+        set dim2_bins_float [vecscale $theta_vals [expr 1.0/$thetaDeg]]
+
+        # floor all the floats to actually get bin numbers
+        if {$use_vecexpr == "yes"} {
+            set dim1_bins [vecexpr $dim1_bins_float floor]        
+            set dim2_bins [vecexpr $dim2_bins_float floor]
+        } else {
+            set dim1_bins [vecFloor $dim1_bins_float]        
+            set dim2_bins [vecFloor $dim2_bins_float]
+            set dim1_bins [vecscale $dim1_bins 1.0]
+            set dim2_bins [vecscale $dim2_bins 1.0]
+        }
+
         
     } elseif {$polar == 0} {
         ;# use cartesian (x,y) bins
@@ -509,8 +592,8 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
         set ylen [molinfo top get b frame $frm]
         set xmin [expr -$xlen/2.0]
         set ymin [expr -$ylen/2.0]
-        set xVals [vecexpr $xVals $xmin sub]
-        set yVals [vecexpr $yVals $ymin sub]
+        set xVals [vecaddScalar $xVals [expr -1.0*$xmin]]
+        set yVals [vecaddScalar $yVals [expr -1.0*$ymin]]
 
         ;# any negative values or values exceeding unitcell len are lipids that flipped across PBC
         ;# and should be put back for binning purposes (but not for order params purposes!)
@@ -527,9 +610,20 @@ proc assignBins {xVals yVals binWidth1 binWidth2 thetaDeg polar frm} {
             }
         }
 
-        ;# turn into bin numbers rather than x,y values
-        set dim1_bins [vecexpr [vecexpr $xVals $binWidth1 div] floor]
-        set dim2_bins [vecexpr [vecexpr $yVals $binWidth2 div] floor]
+        ;# turn into bin numbers (floats)
+        set dim1_bins_float [vecscale $xVals [expr 1.0/$binWidth1]]
+        set dim2_bins_float [vecscale $yVals [expr 1.0/$binWidth2]]
+
+        ;# floor all floats to actually get bin numbers
+        if {$use_vecexpr == "yes"} {
+            set dim1_bins [vecexpr $dim1_bins_float floor]
+            set dim2_bins [vecexpr $dim2_bins_float floor]
+        } else {
+            set dim1_bins [vecFloor $dim1_bins_float]
+            set dim1_bins [vecscale $dim1_bins 1.0]
+            set dim2_bins [vecFloor $dim2_bins_float]
+            set dim2_bins [vecscale $dim2_bins 1.0]
+        }
     }
 
     return [list $dim1_bins $dim2_bins]
@@ -735,7 +829,7 @@ proc calculateReferenceHeight {configDict frm} {
         set ref_bead [atomselect top [dict get $configDict reference_point] frame $frm]
         set ref_height [$ref_bead get z]
         $ref_bead delete
-        set ref_height [vecexpr $ref_height mean]
+        set ref_height [vecmean $ref_height]
     } else {
         set ref_height "NULL"
     }
@@ -769,7 +863,7 @@ proc getSelInfo {sel refHeight} {
 
     ;# the z vals are subtracted by a reference height provided in cell_prep 
     if {$refHeight ne "NULL"} {
-        dict set sel_info zvals_list [vecexpr [$sel get z] $refHeight sub]
+        dict set sel_info zvals_list [vecaddScalar [$sel get z] [expr -1.0*$refHeight]]
     } else {
         dict set sel_info zvals_list [$sel get z]
     }   
@@ -781,7 +875,7 @@ proc getSelInfo {sel refHeight} {
     ;# E.G. POPC will have 0 or 1 (it has two tails)
     ;# E.G. OANT will have 0, 1, 2, 3, 4, or 5 (it has 6 tails)
     set tail_list [$sel get user3]
-    dict set sel_info tail_list [vecexpr $tail_list 1 sub]
+    dict set sel_info tail_list [vecaddScalar $tail_list -1]
 
     return $sel_info
 }
@@ -914,10 +1008,10 @@ proc calc_bin_info {start end step N1 N2 coordSystem d1 d2} {
             lappend d2list [expr $L2/$N2*1.0]
         }
     }
-    set avgarea [vecexpr $arealist mean]
+    set avgarea [vecmean $arealist]
     if {$coordSystem == "cart"} {
-        set avgd1 [vecexpr $d1list mean]
-        set avgd2 [vecexpr $d2list mean]
+        set avgd1 [vecmean $d1list]
+        set avgd2 [vecmean $d2list]
     } elseif {$coordSystem == "polar"} {
         set avgd1 $d1 
         set avgd2 $d2
@@ -1088,7 +1182,7 @@ proc calculateOrderParameters {length xValues yValues zValues} {
         if {[expr $i%$length] == 0} {
             ;# when this is TRUE, you've gotten cos2theta for each of the bonds in your tail
             ;# already and now you need to average them
-            set avg [vecexpr $temp_list mean]
+            set avg [vecmean $temp_list]
             set order [expr {$avg * 1.5 - 0.5}]
             lappend order_list [lrepeat $length $order]
             set temp_list []
@@ -1150,8 +1244,8 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
                 set newordersum [expr {$oldorder * $oldcount + [lindex [lindex $orders 0] $indx]}]
                 set neworder [expr $newordersum/$newcount]
                 set oldtilt [dict get $outfiles $selex $tilt_key bin $correct_bin]
-                set newtiltsum [vecexpr [vecexpr $oldtilt $oldcount mult] [lindex $tilts $indx] add]
-                set newtilt [vecexpr $newtiltsum $newcount div]
+                set newtiltsum [vecadd [vecscale $oldtilt $oldcount] [lindex $tilts $indx]]
+                set newtilt [vecscale $newtiltsum [expr 1.0/$newcount]]
                 dict set outfiles $selex $order_key bin $correct_bin $neworder
                 dict set counts $selex $order_key bin $correct_bin $newcount
                 dict set outfiles $selex $tilt_key bin $correct_bin $newtilt
@@ -1166,6 +1260,28 @@ proc averageTiltAndOrderParameter {residueDictionary outfiles lipidList tilts or
     dict unset counts placeholder
     return $outfiles
 }
+
+
+# vecaddScalar
+#
+#       Adds a scalar to every item in list. Homemade (slower) alternative to vecexpr.
+#
+# Arguments:
+#       inputList               {list}      a list of numbers
+#       scalar                  {float}     the scalar you wish to add to each item of inputList
+#
+# Results:
+#
+#       Returns list that has been transformed by the scalar value provided.
+
+proc vecaddScalar {inputList scalar} {
+    set outputList []
+    foreach item $inputList {
+        lappend outputList [expr $item + $scalar]
+    }
+    return $outputList
+}
+
 
 # averageHeight (Previously: height_density_averaging)
 #
@@ -1494,17 +1610,17 @@ proc Protein_Position {name hnames chainNames folderName} {
 
     set zone_sel [atomselect top "(name $hnames and user 1) and within 6 of name BB"]
     set zone_zvals [$zone_sel get z]
-    set zone_Ht [vecexpr $zone_zvals mean]
+    set zone_Ht [vecmean $zone_zvals]
     $zone_sel delete
 
     set ztwo_sel [atomselect top "(name $hnames and user 2) and within 6 of name BB"]
     set ztwo_zvals [$ztwo_sel get z]
-    set ztwo_Ht [vecexpr $ztwo_zvals mean]
+    set ztwo_Ht [vecmean $ztwo_zvals]
     $ztwo_sel delete
 
     set zmid_sel [atomselect top "((user 1 and within 6 of user 2) or (user 2 and within 6 of user 1)) and within 6 of name BB"]
     set zmid_zvals [$zmid_sel get z]
-    set zmid_Ht [vecexpr $zmid_zvals mean]
+    set zmid_Ht [vecmean $zmid_zvals]
     $zmid_sel delete
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
@@ -1528,9 +1644,9 @@ proc Protein_Position {name hnames chainNames folderName} {
     }
 }
 
-proc Center_System {wrap_sel inclusion_sel} {
+proc run_qwrap {wrap_sel inclusion_sel} {
     puts "${wrap_sel}"
-    puts "Center_System now running"
+    puts "Qwrap now running"
 
     setBetaValues $inclusion_sel
     qunwrap compound beta
@@ -1539,7 +1655,7 @@ proc Center_System {wrap_sel inclusion_sel} {
     }
     qwrap compound beta center $wrap_sel
 
-    puts "Center_System finished!"
+    puts "run_qwrap finished!"
 }
 
 ;# removes lipids from analysis (by setting user to 4)
