@@ -3,7 +3,8 @@ qwrap_path = ../utilities
 vecexpr_path = ../utilities
 utilities_path = ../utilities
 
-
+use_qwrap = yes
+use_vecexpr = yes
 
 # provide atomselection-style text that defines what is in your inclusion 
 # if no inclusion, change to NULL 
