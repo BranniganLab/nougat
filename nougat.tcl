@@ -63,10 +63,23 @@ proc cell_prep {config_path leaf_check} {
         dict set config_dict $key [subst [dict get $config_dict $key]]
     }
 
+    set end [molinfo top get numframes]
+
     ;# center, wrap, and align the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
         run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
+    } else {
+        pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
+        set sel [atomselect top all]
+        for {set i 0} {$i<$end} {incr i} {
+            $sel frame $i
+            $sel update
+            set center [measure center $sel]
+            $sel moveby "-[lindex $center 0] -[lindex $center 1] 0"
+        }
+        $sel delete
     }
+
     if {[dict exists $config_dict align_sel]} {
         Align [dict get $config_dict align_sel]
     }
@@ -82,7 +95,6 @@ proc cell_prep {config_path leaf_check} {
     ;# sets user to 3 if the lipid is too horizontal to determine leaflet
     ;# sets user to 4 if you have pore_sorter turned on
     if {$leaf_check == 1} {
-        set end [molinfo top get numframes]
         for {set i 0} {$i < $end} {incr i} {
             puts "leaflet check frame $i"
             assignLeaflet $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
