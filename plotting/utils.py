@@ -98,8 +98,10 @@ def create_outfile_directories(cwd):
     None.
 
     """
+    #quantities = ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]
+    quantities = ["height", "curvature", "thickness"]
     for filetype in ["trajectory", "average", "figures"]:
-        for quantity in ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]:
+        for quantity in quantities:
             if quantity == "curvature":
                 for curv in ["mean", "gaussian", "normal_vectors"]:
                     dirname = cwd.joinpath(filetype, quantity, curv)
