@@ -233,8 +233,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             } 
 
             ;# cleanup before next step
-            dict remove res_dict
-            dict remove sel_info
+            dict remove $res_dict [dict keys $res_dict]
+            dict remove $sel_info [dict keys $sel_info]
         }
     }
 
