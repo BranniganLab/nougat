@@ -75,7 +75,7 @@ proc cell_prep {config_path leaf_check} {
             $sel frame $i
             $sel update
             set center [measure center $sel]
-            $sel moveby "-[lindex $center 0] -[lindex $center 1] 0"
+            $sel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] 0"
         }
         $sel delete
     }
