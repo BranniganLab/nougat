@@ -15,6 +15,30 @@ from tilt import *
 from utils import *
 
 
+class field(membrane):
+    def __init__(self, grid_dims, path, read_from_file, name=None):
+        if read_from_file:
+            self.field_data = parse_tcl_output(path, name)
+        elif type(read_from_file).__module__ == np.__name__:
+            self.field_data = read_from_file
+        else:
+            raise ValueError("read_from_file must either be a numpy ndarray or True")
+
+
+class field_set(membrane):
+    def __init__(self, grid_dims, path, read_from_file):
+        self.outer = field(grid_dims, path, read_from_file, "zone")
+        self.inner = field(grid_dims, path, read_from_file, "ztwo")
+        self.plus = field(grid_dims, path, outer+inner)
+        self.minus = field(grid_dims, path, outer-inner)
+
+
+class membrane:
+    def __init__(self, list_of_fields):
+        for f in list_of_fields:
+            
+
+
 def run_nougat(polar, inclusion_drawn):
     """
     Run nougat's averaging and image processing routines.
