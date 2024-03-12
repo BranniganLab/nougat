@@ -15,22 +15,27 @@ from tilt import *
 from utils import *
 
 
+class Vector_field(Field):
+    pass
+
 class Field(Membrane):
-    """A field contains x y and z.
+    """A field contains a measurement of some type over the course of an MD\
+    trajectory. This could be the height of the outer leaflet, the mean curvature\
+    of the bilayer midplane, etc...
 
     Attributes
     ----------
     polar  :  bool
         A switch for using cylindrical versus Cartesian coordinates.
     field_data  :  ndarray
-        A two- or three-dimensional array containing data. Could be height\
-        values, curvature values, etc. If three-dimensional, assume zero-th\
-        dimension to be time (frames in trajectory).
+        A three-dimensional array containing data. Could be height values,\
+        curvature values, etc. Assume zero-th dimension to be time (frames\
+        in trajectory), 1st and 2nd dims to be x/r and y/theta bins. Individual\
+        cells can contain int or float.
     grid_dims  :  tuple
         The shape of the field_data ndarray.
     avg  :  ndarray
-        If this Field is a trajectory, then avg is the the 2D ndarray that\
-        represents the average over time.
+        The 2D ndarray that represents the average over time.
     avg_over_theta : ndarray
         If polar coordinates were used, this is the 1D ndarray that represents\
         the average over time in each radial bin.
@@ -63,27 +68,36 @@ class Field(Membrane):
             self.field_data, self.grid_dims = parse_tcl_output(path, quantity, leaflet)
         elif isinstance(path, np.ndarray):
             self.field_data = path
-            self.grid_dims = np.shape(self.field_data)
+            self.grid_dims = np.shape(path)
         else:
             raise ValueError("path must either be a numpy ndarray or a path")
 
-        assert len(self.grid_dims) >= 2
+        assert len(self.grid_dims) == 3
+        if self.polar is False:
+            # remove this if you ever allow for rectangular boxes in Cart. coords.
+            assert self.grid_dims[0] == self.grid_dims[1]
 
         # calculate averages if appropriate
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            if len(self.grid_dims) == 3:
-                self.avg = np.nanmean(self.field_data, axis=0)
-                if self.polar:
-                    self.avg_over_theta = np.nanmean(self.avg, axis=0)
-            elif (len(self.grid_dims) == 2) and self.polar:
-                self.avg_over_theta = np.nanmean(self.field_data, axis=0)
+            self.avg = np.nanmean(self.field_data, axis=0)
+            if self.polar:
+                self.avg_over_theta = np.nanmean(self.avg, axis=0)
+
+    # BASIC MATH MAGIC METHODS BELOW #
 
     def __add__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, Field):
             return self.field_data + other.field_data
         elif isinstance(other, (np.ndarray, int, float)):
+            return self.field_data + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, (np.ndarray, int, float)):
             return self.field_data + other
         else:
             return NotImplemented
@@ -97,8 +111,8 @@ class Field(Membrane):
         else:
             return NotImplemented
 
-    def __mul__(self,other):
-        """Use numpy to multiply things."""
+    def __mul__(self, other):
+        """Use numpy to multiply things together."""
         if isinstance(other, Field):
             return self.field_data * other.field_data
         elif isinstance(other, (np.ndarray, int, float)):
@@ -106,7 +120,14 @@ class Field(Membrane):
         else:
             return NotImplemented
 
-    def __div__(self,other):
+    def __rmul__(self, other):
+        """Use numpy to multiply things together."""
+        if isinstance(other, (np.ndarray, int, float)):
+            return self.field_data * other
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
         """Use numpy to divide things."""
         if isinstance(other, Field):
             return self.field_data / other.field_data
@@ -122,13 +143,18 @@ class Field(Membrane):
 
 class Field_set(Membrane):
     def __init__(self, path, polar, quantity):
-        if quantity is "height":
-            self.outer = field(path, polar, quantity, "zone")
-            self.inner = field(path, polar, quantity, "ztwo")
-            self.plus = field(self.outer+self.inner, polar)
-            self.minus = field(self.outer-self.inner, polar)
-        elif quantity is "curvature":
-            
+        if quantity == "height":
+            self.outer = Field(path, polar, quantity, "zone")
+            self.inner = Field(path, polar, quantity, "ztwo")
+            self.plus = Field(self.outer + self.inner, polar)
+            self.minus = Field(self.outer - self.inner, polar)
+        elif quantity == "curvature":
+            pass
+
+    def __iter__(self):
+        """Iterate through the four Fields in a Field_set."""
+        for f in [self.outer, self.inner, self.plus, self.minus]:
+            yield f
 
 
 class Membrane:
