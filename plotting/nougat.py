@@ -32,8 +32,8 @@ class Field(Membrane):
         If this Field is a trajectory, then avg is the the 2D ndarray that\
         represents the average over time.
     avg_over_theta : ndarray
-        If polar coordinates were used, this is the 2D ndarray that represents\
-        the average in each radial bin.
+        If polar coordinates were used, this is the 1D ndarray that represents\
+        the average over time in each radial bin.
     """
 
     def __init__(self, path, polar, quantity=None, leaflet=None):
@@ -94,6 +94,24 @@ class Field(Membrane):
             return self.field_data - other.field_data
         elif isinstance(other, (np.ndarray, int, float)):
             return self.field_data - other
+        else:
+            return NotImplemented
+
+    def __mul__(self,other):
+        """Use numpy to multiply things."""
+        if isinstance(other, Field):
+            return self.field_data * other.field_data
+        elif isinstance(other, (np.ndarray, int, float)):
+            return self.field_data * other
+        else:
+            return NotImplemented
+
+    def __div__(self,other):
+        """Use numpy to divide things."""
+        if isinstance(other, Field):
+            return self.field_data / other.field_data
+        elif isinstance(other, (np.ndarray, int, float)):
+            return self.field_data / other
         else:
             return NotImplemented
 
