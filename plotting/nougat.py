@@ -15,28 +15,111 @@ from tilt import *
 from utils import *
 
 
-class field(membrane):
-    def __init__(self, grid_dims, path, read_from_file, name=None):
-        if read_from_file:
-            self.field_data = parse_tcl_output(path, name)
-        elif type(read_from_file).__module__ == np.__name__:
-            self.field_data = read_from_file
+class Field(Membrane):
+    """A field contains x y and z.
+
+    Attributes
+    ----------
+    polar  :  bool
+        A switch for using cylindrical versus Cartesian coordinates.
+    field_data  :  ndarray
+        A two- or three-dimensional array containing data. Could be height\
+        values, curvature values, etc. If three-dimensional, assume zero-th\
+        dimension to be time (frames in trajectory).
+    grid_dims  :  tuple
+        The shape of the field_data ndarray.
+    avg  :  ndarray
+        If this Field is a trajectory, then avg is the the 2D ndarray that\
+        represents the average over time.
+    avg_over_theta : ndarray
+        If polar coordinates were used, this is the 2D ndarray that represents\
+        the average in each radial bin.
+    """
+
+    def __init__(self, path, polar, quantity=None, leaflet=None):
+        """
+        Construct a Field object.
+
+        Parameters
+        ----------
+        path  :  Path, str, or ndarray
+            Either contains a path to TCL output data that needs to be parsed,\
+            or contains a numpy ndarray that should just be saved into the\
+            Field's field_data attribute.
+        polar  :  bool
+            If true, use cylindrical coordinates. Otherwise, use Cartesian.
+        quantity  :  str
+            If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
+        leaflet  :  str
+            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo', or 'zzero'.
+
+        """
+        self.polar = polar
+
+        # read in the data
+        if isinstance(path, (Path, str)):
+            assert quantity is not None
+            assert leaflet is not None
+            self.field_data, self.grid_dims = parse_tcl_output(path, quantity, leaflet)
+        elif isinstance(path, np.ndarray):
+            self.field_data = path
+            self.grid_dims = np.shape(self.field_data)
         else:
-            raise ValueError("read_from_file must either be a numpy ndarray or True")
+            raise ValueError("path must either be a numpy ndarray or a path")
+
+        assert len(self.grid_dims) >= 2
+
+        # calculate averages if appropriate
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            if len(self.grid_dims) == 3:
+                self.avg = np.nanmean(self.field_data, axis=0)
+                if self.polar:
+                    self.avg_over_theta = np.nanmean(self.avg, axis=0)
+            elif (len(self.grid_dims) == 2) and self.polar:
+                self.avg_over_theta = np.nanmean(self.field_data, axis=0)
+
+    def __add__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, Field):
+            return self.field_data + other.field_data
+        elif isinstance(other, (np.ndarray, int, float)):
+            return self.field_data + other
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, Field):
+            return self.field_data - other.field_data
+        elif isinstance(other, (np.ndarray, int, float)):
+            return self.field_data - other
+        else:
+            return NotImplemented
+
+    def __pow__(self, exponent):
+        """Use numpy's power() on the array stored in this Field."""
+        return np.power(self.field_data, exponent)
 
 
-class field_set(membrane):
-    def __init__(self, grid_dims, path, read_from_file):
-        self.outer = field(grid_dims, path, read_from_file, "zone")
-        self.inner = field(grid_dims, path, read_from_file, "ztwo")
-        self.plus = field(grid_dims, path, outer+inner)
-        self.minus = field(grid_dims, path, outer-inner)
-
-
-class membrane:
-    def __init__(self, list_of_fields):
-        for f in list_of_fields:
+class Field_set(Membrane):
+    def __init__(self, path, polar, quantity):
+        if quantity is "height":
+            self.outer = field(path, polar, quantity, "zone")
+            self.inner = field(path, polar, quantity, "ztwo")
+            self.plus = field(self.outer+self.inner, polar)
+            self.minus = field(self.outer-self.inner, polar)
+        elif quantity is "curvature":
             
+
+
+class Membrane:
+    def __init__(self, path, polar, list_of_options):
+        if "height" in list_of_options:
+            self.height = Field_set(path, polar, "height")
+            self.zzero = Field(path, polar, "height", "zzero")
+            if "curvature" in list_of_options:
+                mean_curvature = Field_set()
 
 
 def run_nougat(polar, inclusion_drawn):
