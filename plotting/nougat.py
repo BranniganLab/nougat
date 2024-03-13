@@ -67,7 +67,16 @@ class Membrane:
         self.composition = composition
         self.t0 = t0
 
-    def create_Field_set(self, outer, inner):
+    def __iter__(self):
+        """Iterate through active_list."""
+        for item in self.active_list:
+            if isinstance(item, Field):
+                yield item
+            elif isinstance(item, Field_set):
+                for field in item:
+                    yield field
+
+    def create_Field_set(self, outer, inner, name):
         """
         Create a Field_set object by supplying the inner and outer leaflet\
         Fields. These will be incorporated into a Field_set that then calculates\
@@ -86,13 +95,13 @@ class Membrane:
             The new Field_set object you just created.
 
         """
-        new_Field_set = Field_set(self.polar, outer, inner)
-        self.active_list.pop(outer)
-        self.active_list.pop(inner)
+        new_Field_set = Field_set(self.polar, outer, inner, name)
+        self.active_list.remove(outer)
+        self.active_list.remove(inner)
         self.active_list.append(new_Field_set)
         return new_Field_set
 
-    def create_Field(self, path, polar, quantity=None, leaflet=None):
+    def create_Field(self, path, name, quantity=None, leaflet=None):
         """
         Create a Field object. Use this method before attempting to create a\
         Field_set.
@@ -103,8 +112,6 @@ class Membrane:
             Either contains a path to TCL output data that needs to be parsed,\
             or contains a numpy ndarray that should just be saved into the\
             Field's field_data attribute.
-        polar  :  bool
-            If true, use cylindrical coordinates. Otherwise, use Cartesian.
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
         leaflet  :  str
@@ -116,7 +123,7 @@ class Membrane:
             The new Field object you just created.
 
         """
-        new_Field = Field(path, polar, quantity, leaflet)
+        new_Field = Field(path, self.polar, name, quantity, leaflet)
         self.active_list.append(new_Field)
         return new_Field
 
@@ -148,7 +155,7 @@ class Field:
         the average over time in each radial bin.
     """
 
-    def __init__(self, path, polar, quantity=None, leaflet=None):
+    def __init__(self, path, polar, name, quantity=None, leaflet=None):
         """
         Construct a Field object.
 
@@ -160,6 +167,8 @@ class Field:
             Field's field_data attribute.
         polar  :  bool
             If true, use cylindrical coordinates. Otherwise, use Cartesian.
+        name  :  str
+            The name of this Field
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
         leaflet  :  str
@@ -167,6 +176,7 @@ class Field:
 
         """
         self.polar = polar
+        self.name = name
 
         # read in the data
         if isinstance(path, (Path, str)):
@@ -194,6 +204,10 @@ class Field:
     def __iter__(self):
         """Return self so that Membrane.active_list can be looped easily."""
         return self
+
+    def __str__(self):
+        """Say your name, rather than your address."""
+        return self.name
 
     # BASIC MATH MAGIC METHODS BELOW #
 
@@ -253,16 +267,21 @@ class Field:
 
 
 class Field_set:
-    def __init__(self, polar, outer, inner):
+    def __init__(self, polar, outer, inner, name):
         self.outer = outer
         self.inner = inner
-        self.plus = Field((outer + inner) / 2., polar)
-        self.minus = Field((outer - inner) / 2., polar)
+        self.name = name
+        self.plus = Field((outer + inner) / 2., polar, self.name + "_plus")
+        self.minus = Field((outer - inner) / 2., polar, self.name + "_minus")
 
     def __iter__(self):
         """Iterate through the four Fields in a Field_set."""
         for f in [self.outer, self.inner, self.plus, self.minus]:
             yield f
+
+    def __str__(self):
+        """Say your name, rather than your address."""
+        return self.name
 
 
 class Vector_field(Field):
@@ -338,3 +357,11 @@ if __name__ == "__main__":
 '''
 
 m = Membrane(True, None, "100% POPC", 3.5)
+test1 = np.ones((10, 5, 5))
+test2 = test1 * 2
+outer = m.create_Field(test2, "z_one")
+inner = m.create_Field(test1, "z_two")
+height = m.create_Field_set(outer, inner, "z")
+for f in m:
+    print(f)
+print(m.active_list)
