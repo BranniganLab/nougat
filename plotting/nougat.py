@@ -8,6 +8,7 @@ import argparse
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 from height import *
 from curvature import *
 from quantity_analysis import *
@@ -15,12 +16,117 @@ from tilt import *
 from utils import *
 
 
-class Vector_field(Field):
-    pass
+class Membrane:
+    """
+    The basic class for nougat. A membrane is comprised of multiple Fields and\
+    Field_sets. Each field contains a 3D numpy ndarray that corresponds to some\
+    measurement of interest (E.G. the height of the outer leaflet, or the mean\
+    curvature of the bilayer midplane) over the course of an MD trajectory.
+
+    Attributes
+    ----------
+    active_list  :  list
+        The list of all Fields and Field_sets that have been computed. This\
+        list is updated any time Fields are turned into Field_sets so that\
+        there is no duplication.
+    todo_list  :  list
+        The list of quantities that the user has selected for analysis.
+    composition  :  str
+        The composition of the membrane.
+    t0  :  float
+        The equilibrium thickness of the membrane.
+
+    List of all default Fields and Field_sets
+    ----------
+    height  :  Field_set
+        The height (in z) of the outer and inner leaflets, as well as the\
+        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
+        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
+        relative to some reference point on a protein or could be the absolute\
+        height of the membrane in VMD.
+    zzero  :  Field
+        The height (in z) of the interface between the outer and inner leaflet.\
+        "Z zero" is commonly thought to be equal to the bilayer midplane but\
+        this is not always the case, especially around inclusions.
+    """
+
+    def __init__(self, polar, todo_list, composition=None, t0=None):
+        """
+        Create a Membrane object.
+
+        Parameters
+        ----------
+        polar  :  bool
+            A switch for using cylindrical versus Cartesian coordinates.
+        todo_list  :  list
+            The list of quantities that the user has selected for analysis.
+        """
+        self.active_list = []
+        self.polar = polar
+        self.todo_list = todo_list
+        self.composition = composition
+        self.t0 = t0
+
+    def create_Field_set(self, outer, inner):
+        """
+        Create a Field_set object by supplying the inner and outer leaflet\
+        Fields. These will be incorporated into a Field_set that then calculates\
+        the symmetric "plus" and anti-symmetric "minus" fields, respectively.
+
+        Parameters
+        ----------
+        outer : Field
+            The Field object that corresponds to the outer leaflet quantity.
+        inner : Field
+            The Field object that corresponds to the inner leaflet quantity.
+
+        Returns
+        -------
+        new_Field_set  :  Field_set
+            The new Field_set object you just created.
+
+        """
+        new_Field_set = Field_set(self.polar, outer, inner)
+        self.active_list.pop(outer)
+        self.active_list.pop(inner)
+        self.active_list.append(new_Field_set)
+        return new_Field_set
+
+    def create_Field(self, path, polar, quantity=None, leaflet=None):
+        """
+        Create a Field object. Use this method before attempting to create a\
+        Field_set.
+
+        Parameters
+        ----------
+        path  :  Path, str, or ndarray
+            Either contains a path to TCL output data that needs to be parsed,\
+            or contains a numpy ndarray that should just be saved into the\
+            Field's field_data attribute.
+        polar  :  bool
+            If true, use cylindrical coordinates. Otherwise, use Cartesian.
+        quantity  :  str
+            If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
+        leaflet  :  str
+            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo', or 'zzero'.
+
+        Returns
+        -------
+        new_Field  :  Field
+            The new Field object you just created.
+
+        """
+        new_Field = Field(path, polar, quantity, leaflet)
+        self.active_list.append(new_Field)
+        return new_Field
+
+    def create_Vector_field(self):
+        """Not implemented yet."""
+        return NotImplemented
 
 
-class Field(Membrane):
-    """A field contains a measurement of some type over the course of an MD\
+class Field:
+    """A field contains a measurement of some surface over the course of an MD\
     trajectory. This could be the height of the outer leaflet, the mean curvature\
     of the bilayer midplane, etc...
 
@@ -64,8 +170,8 @@ class Field(Membrane):
 
         # read in the data
         if isinstance(path, (Path, str)):
-            assert quantity is not None
-            assert leaflet is not None
+            assert quantity is not None, "quantity is required in order to use a path"
+            assert leaflet is not None, "leaflet name is required in order to use a path"
             self.field_data, self.grid_dims = parse_tcl_output(path, quantity, leaflet)
         elif isinstance(path, np.ndarray):
             self.field_data = path
@@ -73,10 +179,10 @@ class Field(Membrane):
         else:
             raise ValueError("path must either be a numpy ndarray or a path")
 
-        assert len(self.grid_dims) == 3
+        assert len(self.grid_dims) == 3, "This Field should contain a 3D array"
         if self.polar is False:
             # remove this if you ever allow for rectangular boxes in Cart. coords.
-            assert self.grid_dims[0] == self.grid_dims[1]
+            assert self.grid_dims[0] == self.grid_dims[1], "Your box is not square"
 
         # calculate averages if appropriate
         with warnings.catch_warnings():
@@ -84,6 +190,10 @@ class Field(Membrane):
             self.avg = np.nanmean(self.field_data, axis=0)
             if self.polar:
                 self.avg_over_theta = np.nanmean(self.avg, axis=0)
+
+    def __iter__(self):
+        """Return self so that Membrane.active_list can be looped easily."""
+        return self
 
     # BASIC MATH MAGIC METHODS BELOW #
 
@@ -142,15 +252,12 @@ class Field(Membrane):
         return np.power(self.field_data, exponent)
 
 
-class Field_set(Membrane):
-    def __init__(self, path, polar, quantity):
-        if quantity == "height":
-            self.outer = Field(path, polar, quantity, "zone")
-            self.inner = Field(path, polar, quantity, "ztwo")
-            self.plus = Field(self.outer + self.inner, polar)
-            self.minus = Field(self.outer - self.inner, polar)
-        elif quantity == "curvature":
-            pass
+class Field_set:
+    def __init__(self, polar, outer, inner):
+        self.outer = outer
+        self.inner = inner
+        self.plus = Field((outer + inner) / 2., polar)
+        self.minus = Field((outer - inner) / 2., polar)
 
     def __iter__(self):
         """Iterate through the four Fields in a Field_set."""
@@ -158,58 +265,23 @@ class Field_set(Membrane):
             yield f
 
 
-class Membrane:
-    """
-    The basic class for nougat. A membrane is comprised of multiple Fields and\
-    Field_sets. Each field contains a 3D numpy ndarray that corresponds to some\
-    measurement of interest (E.G. the height of the outer leaflet, or the mean\
-    curvature of the bilayer midplane) over the course of an MD trajectory.
-
-    Parameters
-    ----------
-    path  :  ndarray, Path, or str
-        Either a pathlib Path object or a string corresponding to the location\
-        of the nougat.tcl outputs. Alternatively, a 3D numpy ndarray can be\
-        provided.
-    polar  :  bool
-        A switch for using cylindrical versus Cartesian coordinates.
-    list_of_options  :  list
-        A feature that will absolutely be replaced.
-
-    Attributes
-    ----------
-    height  :  Field_set
-        The height (in z) of the outer and inner leaflets, as well as the\
-        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
-        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
-        relative to some reference point on a protein or could be the absolute\
-        height of the membrane in VMD.
-    zzero  :  Field
-        The height (in z) of the interface between the outer and inner leaflet.\
-        "Z zero" is commonly thought to be equal to the bilayer midplane but\
-        this is not always the case, especially around inclusions.
-    """
-
-    def __init__(self, path, polar, list_of_options):
-        if "height" in list_of_options:
-            self.height = Field_set(path, polar, "height")
-            self.zzero = Field(path, polar, "height", "zzero")
-            if "curvature" in list_of_options:
-                H = Field_set()
-                K = Field_set()
-                surface_normal = Field_set()
+class Vector_field(Field):
+    """Not implemented yet."""
+    pass
 
 
+'''
 def run_nougat(polar, inclusion_drawn):
     """
-    Run nougat's averaging and image processing routines.
+Run nougat's averaging and image processing routines.
 
-    Parameters
-    ----------
-    polar : boolean
-        True for polar coordinate system; False for cartesian
-    inclusion_drawn : boolean
-        This feature currently isn't implemented, but would be how you \
+ Parameters
+  ----------
+   polar: boolean
+     True for polar coordinate system
+      False for cartesian
+    inclusion_drawn: boolean
+    This feature currently isn't implemented, but would be how you \
         include an inclusion in your graphics
 
     Returns
@@ -263,3 +335,6 @@ if __name__ == "__main__":
     run_nougat(args.polar, False)
 
     print("Thank you for using nougat!")
+'''
+
+m = Membrane(True, None, "100% POPC", 3.5)
