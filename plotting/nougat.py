@@ -18,6 +18,7 @@ from utils import *
 class Vector_field(Field):
     pass
 
+
 class Field(Membrane):
     """A field contains a measurement of some type over the course of an MD\
     trajectory. This could be the height of the outer leaflet, the mean curvature\
@@ -158,12 +159,45 @@ class Field_set(Membrane):
 
 
 class Membrane:
+    """
+    The basic class for nougat. A membrane is comprised of multiple Fields and\
+    Field_sets. Each field contains a 3D numpy ndarray that corresponds to some\
+    measurement of interest (E.G. the height of the outer leaflet, or the mean\
+    curvature of the bilayer midplane) over the course of an MD trajectory.
+
+    Parameters
+    ----------
+    path  :  ndarray, Path, or str
+        Either a pathlib Path object or a string corresponding to the location\
+        of the nougat.tcl outputs. Alternatively, a 3D numpy ndarray can be\
+        provided.
+    polar  :  bool
+        A switch for using cylindrical versus Cartesian coordinates.
+    list_of_options  :  list
+        A feature that will absolutely be replaced.
+
+    Attributes
+    ----------
+    height  :  Field_set
+        The height (in z) of the outer and inner leaflets, as well as the\
+        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
+        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
+        relative to some reference point on a protein or could be the absolute\
+        height of the membrane in VMD.
+    zzero  :  Field
+        The height (in z) of the interface between the outer and inner leaflet.\
+        "Z zero" is commonly thought to be equal to the bilayer midplane but\
+        this is not always the case, especially around inclusions.
+    """
+
     def __init__(self, path, polar, list_of_options):
         if "height" in list_of_options:
             self.height = Field_set(path, polar, "height")
             self.zzero = Field(path, polar, "height", "zzero")
             if "curvature" in list_of_options:
-                mean_curvature = Field_set()
+                H = Field_set()
+                K = Field_set()
+                surface_normal = Field_set()
 
 
 def run_nougat(polar, inclusion_drawn):
