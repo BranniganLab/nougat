@@ -31,6 +31,12 @@ class Membrane:
         there is no duplication.
     todo_list  :  list
         The list of quantities that the user has selected for analysis.
+    grid_dims  :  dict
+        A dictionary that contains information about the grid dimensions used.\
+        N1 is the number of bins in the first dimension (x/r) and d1 is the\
+        distance between bin centers. N2 and d2 are similar, but along the\
+        second dimension (y/theta). Nframes is the number of frames in the\
+        trajectory.
     composition  :  str
         The composition of the membrane.
     t0  :  float
@@ -48,6 +54,11 @@ class Membrane:
         The height (in z) of the interface between the outer and inner leaflet.\
         "Z zero" is commonly thought to be equal to the bilayer midplane but\
         this is not always the case, especially around inclusions.
+    thickness  :  Field_set
+        The thickness of the outer and inner leaflets, as well as the symmetric\
+        and anti-symmetric variables "t plus" and "t minus." T plus is the\
+        average leaflet thickness and t minus is the leaflet thickness asymmetry.
+    
     """
 
     def __init__(self, polar, todo_list, composition=None, t0=None):
@@ -66,6 +77,13 @@ class Membrane:
         self.todo_list = todo_list
         self.composition = composition
         self.t0 = t0
+        self.grid_dims = {
+            "N1":None,
+            "N2":None,
+            "Nframes":None,
+            "d1":None,
+            "d2":None
+        }
 
     def __iter__(self):
         """Iterate through active_list."""
@@ -123,7 +141,7 @@ class Membrane:
             The new Field object you just created.
 
         """
-        new_Field = Field(path, self.polar, name, quantity, leaflet)
+        new_Field = Field(path, name, self, quantity, leaflet)
         self.active_list.append(new_Field)
         return new_Field
 
@@ -139,23 +157,23 @@ class Field:
 
     Attributes
     ----------
-    polar  :  bool
-        A switch for using cylindrical versus Cartesian coordinates.
     field_data  :  ndarray
         A three-dimensional array containing data. Could be height values,\
         curvature values, etc. Assume zero-th dimension to be time (frames\
         in trajectory), 1st and 2nd dims to be x/r and y/theta bins. Individual\
         cells can contain int or float.
-    grid_dims  :  tuple
-        The shape of the field_data ndarray.
+    grid_dims  :  dict
+        The number of bins and delta in each dimension of the field_data ndarray.
     avg  :  ndarray
         The 2D ndarray that represents the average over time.
     avg_over_theta : ndarray
         If polar coordinates were used, this is the 1D ndarray that represents\
         the average over time in each radial bin.
+    parent  :  Membrane
+        The Membrane object to which this field belongs.
     """
 
-    def __init__(self, path, polar, name, quantity=None, leaflet=None):
+    def __init__(self, path, name, parent, quantity=None, leaflet=None):
         """
         Construct a Field object.
 
@@ -165,34 +183,39 @@ class Field:
             Either contains a path to TCL output data that needs to be parsed,\
             or contains a numpy ndarray that should just be saved into the\
             Field's field_data attribute.
-        polar  :  bool
-            If true, use cylindrical coordinates. Otherwise, use Cartesian.
         name  :  str
             The name of this Field
+        parent  :  Membrane
+            The Membrane object that his Field belongs to.
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
         leaflet  :  str
             If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo', or 'zzero'.
 
         """
-        self.polar = polar
+        self.parent = parent
         self.name = name
 
         # read in the data
         if isinstance(path, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.field_data, self.grid_dims = parse_tcl_output(path, quantity, leaflet)
+            self.field_data = self.parse_tcl_output(self, path, quantity, leaflet)
         elif isinstance(path, np.ndarray):
             self.field_data = path
-            self.grid_dims = np.shape(path)
+            if self.parent.grid_dims["N1"] is not None:
+                err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+                assert self.parent.grid_dims["N1"] == np.shape(path)[1], err_msg
+                assert self.parent.grid_dims["N2"] == np.shape(path)[2], err_msg
+                assert self.parent.grid_dims["Nframes"] == np.shape(path)[0], err_msg
+            else:
+                self.parent.grid_dims["N1"] = np.shape(path)[1]
+                self.parent.grid_dims["N2"] = np.shape(path)[2]
+                self.parent.grid_dims["Nframes"] = np.shape(path)[0]
         else:
             raise ValueError("path must either be a numpy ndarray or a path")
 
-        assert len(self.grid_dims) == 3, "This Field should contain a 3D array"
-        if self.polar is False:
-            # remove this if you ever allow for rectangular boxes in Cart. coords.
-            assert self.grid_dims[0] == self.grid_dims[1], "Your box is not square"
+        assert len(np.shape(self.field_data)) == 3, "This Field should contain a 3D array"
 
         # calculate averages if appropriate
         with warnings.catch_warnings():
@@ -208,6 +231,73 @@ class Field:
     def __str__(self):
         """Say your name, rather than your address."""
         return self.name
+    
+    def parse_tcl_output(self, path, quantity, leaflet):
+        """
+        Read in the tcl output data, update the parent Membrane's grid_dims,\
+        and generate the field_data array.
+
+        Parameters
+        ----------
+        path : Path or str
+            The path to the nougat.tcl results folder.
+        quantity : str
+            A valid nougat.tcl output quantity, E.G. "height", "order", etc.
+        leaflet : str
+            A valid nougat.tcl leaflet name, I.E. "zone", "ztwo", or "zzero".
+
+        Returns
+        -------
+        field_data : ndarray
+            A 3D array containing nougat.tcl output data. The zero-th dimension\
+            is time (frames), the first dimension is x or r, and the second\
+            dimension is y or theta.
+        """
+        # import traj values
+        input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
+        unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
+        
+        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+        
+        # determine grid_dims along second dimension
+        N2 = np.shape(unrolled_data)[1] - 2
+        d2 = (2*np.pi) / N2
+        if self.parent.grid_dims["N2"] is not None:
+            assert self.parent.grid_dims["N2"] == N2, err_msg
+            assert self.parent.grid_dims["d2"] == d2, err_msg
+        else:
+            self.parent.grid_dims["N2"] = N2
+            self.parent.grid_dims["d2"] = d2
+        
+        # determine grid_dims along first dimension
+        d1 = unrolled_data[0,1] - unrolled_data[0,0]
+        match_value = unrolled_data[0,0]
+        index = np.where(unrolled_data[1:,0] == match_value)
+        if index.length != 0:
+            N1 = index[0,0]
+        else:
+            N1 = np.shape(unrolled_data[0])
+        assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
+        if self.parent.grid_dims["N1"] is not None:
+            assert self.parent.grid_dims["N1"] == N1, err_msg
+            assert self.parent.grid_dims["d1"] == d1, err_msg
+        else:
+            self.parent.grid_dims["N1"] = N1
+            self.parent.grid_dims["d1"] = d1
+
+        # determine Nframes
+        Nframes = int(np.shape(unrolled_data)[0] / N1)
+        if self.parent.grid_dims["Nframes"] is not None:
+            assert self.parent.grid_dims["Nframes"] == Nframes, err_msg
+        else:
+            self.parent.grid_dims["Nframes"] = Nframes
+
+        # create a new array that has each frame in a different array level
+        field_data = np.zeros((Nframes, N1, N2))
+        for frm in range(Nframes):
+            field_data[frm, :, :] = unrolled_data[frm * N1: (frm + 1) * N1, 2:]
+        
+        return field_data
 
     # BASIC MATH MAGIC METHODS BELOW #
 
@@ -289,19 +379,18 @@ class Vector_field(Field):
     pass
 
 
-'''
-def run_nougat(polar, inclusion_drawn):
+
+def run_nougat(polar, quantities):
     """
 Run nougat's averaging and image processing routines.
 
- Parameters
-  ----------
-   polar: boolean
-     True for polar coordinate system
-      False for cartesian
-    inclusion_drawn: boolean
-    This feature currently isn't implemented, but would be how you \
-        include an inclusion in your graphics
+Parameters
+----------
+    polar: boolean
+        True for cylindrical coordinate system, False for Cartesian.
+    quantities: str
+        A string that specifies which quantities to carry out analysis on. If\
+        None, assume all quantities should be analyzed.
 
     Returns
     -------
@@ -309,7 +398,15 @@ Run nougat's averaging and image processing routines.
 
     """
     cwd = Path.cwd()
+    todo_list = make_todo_list(quantities)
+    
+    m = Membrane(polar, todo_list)
+    if "height" in m.todo_list:
+        outer = m.create_Field(cwd, "z_one", "height", "zone")
+        inner = m.create_Field(cwd, "z_two", "height", "ztwo")
+        height = m.create_Field_set(outer, inner, "z")
 
+'''
     # make necessary folders
     create_outfile_directories(cwd)
 
@@ -343,25 +440,15 @@ Run nougat's averaging and image processing routines.
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
     plot_all_quantities(polar, system_dict, cwd, inclusion)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Produce plots based on output from nougat.tcl")
-    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl in polar coordinates")
-    # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
-    args = parser.parse_args()
-
-    run_nougat(args.polar, False)
-
-    print("Thank you for using nougat!")
 '''
 
-m = Membrane(True, None, "100% POPC", 3.5)
-test1 = np.ones((10, 5, 5))
-test2 = test1 * 2
-outer = m.create_Field(test2, "z_one")
-inner = m.create_Field(test1, "z_two")
-height = m.create_Field_set(outer, inner, "z")
-for f in m:
-    print(f)
-print(m.active_list)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
+    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
+    parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
+    # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
+    args = parser.parse_args()
+    
+    run_nougat(args.polar, args.quantities)
+
+    print("Thank you for using nougat!")
