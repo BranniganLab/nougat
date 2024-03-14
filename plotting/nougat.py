@@ -175,14 +175,14 @@ class Membrane:
         Returns
         -------
         corr  :  Field
-            The correlation.
+            The correlation between fields 1 and 2.
 
         """
         
         together = calc_avg_over_time(field1*field2)
         apart = field1.avg * field2.avg
         corr = together.avg - apart
-        return create_Field(corr, self)
+        return self.create_Field(corr, self)
 
 
 class Field:
