@@ -58,7 +58,15 @@ class Membrane:
         The thickness of the outer and inner leaflets, as well as the symmetric\
         and anti-symmetric variables "t plus" and "t minus." T plus is the\
         average leaflet thickness and t minus is the leaflet thickness asymmetry.
-    
+    epsilon  :  Field
+        An alternative measurement of leaflet thickness asymmetry, defined in\
+        [Watson & Brown, PRL, 2012].
+    mean_curvature  :  Field_set
+        The mean curvature (H) of the membrane outer and inner leaflets, as well as\
+        the symmetric/anti-symmetric variables "H plus" and "H minus".
+    gaussian_curvature  :  Field_set
+        The Gaussian curvature (K) of the membrane outer and inner leaflets, as well\
+        as the symmetric/anti-symmetric variables "K plus" and "K minus".
     """
 
     def __init__(self, polar, todo_list, composition=None, t0=None):
@@ -106,6 +114,8 @@ class Membrane:
             The Field object that corresponds to the outer leaflet quantity.
         inner : Field
             The Field object that corresponds to the inner leaflet quantity.
+        name  :  str
+            The name you want to give this Field_set.
 
         Returns
         -------
@@ -130,6 +140,8 @@ class Membrane:
             Either contains a path to TCL output data that needs to be parsed,\
             or contains a numpy ndarray that should just be saved into the\
             Field's field_data attribute.
+        name  :  str
+            The name you want to give this Field.
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
         leaflet  :  str
@@ -148,6 +160,29 @@ class Membrane:
     def create_Vector_field(self):
         """Not implemented yet."""
         return NotImplemented
+    
+    def measure_correlation(self, field1, field2):
+        """
+        Measure the correlation between two fields.
+
+        Parameters
+        ----------
+        field1 : Field
+            One of the two Fields.
+        field2 : Field
+            The other field.
+
+        Returns
+        -------
+        corr  :  Field
+            The correlation.
+
+        """
+        
+        together = calc_avg_over_time(field1*field2)
+        apart = field1.avg * field2.avg
+        corr = together.avg - apart
+        return create_Field(corr, self)
 
 
 class Field:
@@ -158,12 +193,10 @@ class Field:
     Attributes
     ----------
     field_data  :  ndarray
-        A three-dimensional array containing data. Could be height values,\
+        A two- or three-dimensional array containing data. Could be height values,\
         curvature values, etc. Assume zero-th dimension to be time (frames\
         in trajectory), 1st and 2nd dims to be x/r and y/theta bins. Individual\
         cells can contain int or float.
-    grid_dims  :  dict
-        The number of bins and delta in each dimension of the field_data ndarray.
     avg  :  ndarray
         The 2D ndarray that represents the average over time.
     avg_over_theta : ndarray
@@ -203,15 +236,25 @@ class Field:
             self.field_data = self.parse_tcl_output(path, quantity, leaflet)
         elif isinstance(path, np.ndarray):
             self.field_data = path
-            if self.parent.grid_dims["N1"] is not None:
-                err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-                assert self.parent.grid_dims["N1"] == np.shape(path)[1], err_msg
-                assert self.parent.grid_dims["N2"] == np.shape(path)[2], err_msg
-                assert self.parent.grid_dims["Nframes"] == np.shape(path)[0], err_msg
+            if len(np.shape(self.field_data)) == 2:
+                if self.parent.grid_dims["N1"] is not None:
+                    err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+                    assert self.parent.grid_dims["N1"] == np.shape(path)[0], err_msg
+                    assert self.parent.grid_dims["N2"] == np.shape(path)[1], err_msg
+                else:
+                    self.parent.grid_dims["N1"] = np.shape(path)[0]
+                    self.parent.grid_dims["N2"] = np.shape(path)[1]
+            elif len(np.shape(self.field_data)) == 3:
+                if self.parent.grid_dims["N1"] is not None:
+                    err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+                    assert self.parent.grid_dims["N1"] == np.shape(path)[1], err_msg
+                    assert self.parent.grid_dims["N2"] == np.shape(path)[2], err_msg
+                else:
+                    self.parent.grid_dims["N1"] = np.shape(path)[1]
+                    self.parent.grid_dims["N2"] = np.shape(path)[2]
+                    self.parent.grid_dims["Nframes"] = np.shape(path)[0]
             else:
-                self.parent.grid_dims["N1"] = np.shape(path)[1]
-                self.parent.grid_dims["N2"] = np.shape(path)[2]
-                self.parent.grid_dims["Nframes"] = np.shape(path)[0]
+                raise Exception("Field must contain a 2- or 3D array.")
         else:
             raise ValueError("path must either be a numpy ndarray or a path")
 
