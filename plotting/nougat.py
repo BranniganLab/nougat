@@ -163,19 +163,19 @@ class Membrane:
     
     def measure_correlation(self, field1, field2):
         """
-        Measure the correlation between two fields.
+        Measure the correlation between two Fields.
 
         Parameters
         ----------
         field1 : Field
             One of the two Fields.
         field2 : Field
-            The other field.
+            The other Field.
 
         Returns
         -------
         corr  :  Field
-            The correlation between fields 1 and 2.
+            The correlation between Fields 1 and 2.
         """
         together = calc_avg_over_time(field1*field2)
         apart = field1.avg * field2.avg
