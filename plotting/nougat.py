@@ -198,9 +198,7 @@ class Membrane:
         -------
         Field
             The rms or enrichment (if eq2 used) values for the Field.
-
         """
-        
         squared = field**2
         if eq2 is not None:
             squared = squared/eq2
