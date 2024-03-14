@@ -224,9 +224,11 @@ class Field:
                 self.avg = np.nanmean(self.field_data, axis=0)
                 if self.parent.polar:
                     self.avg_over_theta = np.nanmean(self.avg, axis=1)
-            else:
+            elif self.parent.grid_dims["Nframes"] == 1:
                 if self.parent.polar:
                     self.avg_over_theta = np.nanmean(self.field_data, axis=1)
+            else:
+                raise Exception("You have created a Field with no data in it somehow")
 
     def __iter__(self):
         """Return self so that Membrane.active_list can be looped easily."""
