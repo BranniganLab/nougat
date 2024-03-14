@@ -220,9 +220,13 @@ class Field:
         # calculate averages if appropriate
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            self.avg = np.nanmean(self.field_data, axis=0)
-            if self.parent.polar:
-                self.avg_over_theta = np.nanmean(self.avg, axis=0)
+            if self.parent.grid_dims["Nframes"] > 1:
+                self.avg = np.nanmean(self.field_data, axis=0)
+                if self.parent.polar:
+                    self.avg_over_theta = np.nanmean(self.avg, axis=1)
+            else:
+                if self.parent.polar:
+                    self.avg_over_theta = np.nanmean(self.field_data, axis=1)
 
     def __iter__(self):
         """Return self so that Membrane.active_list can be looped easily."""
@@ -271,11 +275,15 @@ class Field:
         
         # determine grid_dims along first dimension
         d1 = unrolled_data[0,1] - unrolled_data[0,0]
+        """nougat.tcl's output is structured such that the starting value of\
+        x or r will be repeated each time there is a new frame. Look for the\
+        first repeat and you will know how many x/r bins there are"""
         match_value = unrolled_data[0,0]
         index = np.where(unrolled_data[1:,0] == match_value)
         if index[0].size != 0:
             N1 = index[0][0]+1
         else:
+            # this would happen if there was only one frame in the trajectory
             N1 = np.shape(unrolled_data[0])
         assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
         if self.parent.grid_dims["N1"] is not None:
@@ -300,6 +308,8 @@ class Field:
         return field_data
 
     # BASIC MATH MAGIC METHODS BELOW #
+    # These make it so that you can do math on the field object, rather than\
+    # having to specify the object's .field_data attribute every time.
 
     def __add__(self, other):
         """Use numpy to add things together."""
