@@ -113,7 +113,7 @@ class Membrane:
             The new Field_set object you just created.
 
         """
-        new_Field_set = Field_set(self.polar, outer, inner, name)
+        new_Field_set = Field_set(outer, inner, name, self)
         self.active_list.remove(outer)
         self.active_list.remove(inner)
         self.active_list.append(new_Field_set)
@@ -200,7 +200,7 @@ class Field:
         if isinstance(path, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.field_data = self.parse_tcl_output(self, path, quantity, leaflet)
+            self.field_data = self.parse_tcl_output(path, quantity, leaflet)
         elif isinstance(path, np.ndarray):
             self.field_data = path
             if self.parent.grid_dims["N1"] is not None:
@@ -221,7 +221,7 @@ class Field:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             self.avg = np.nanmean(self.field_data, axis=0)
-            if self.polar:
+            if self.parent.polar:
                 self.avg_over_theta = np.nanmean(self.avg, axis=0)
 
     def __iter__(self):
@@ -273,8 +273,8 @@ class Field:
         d1 = unrolled_data[0,1] - unrolled_data[0,0]
         match_value = unrolled_data[0,0]
         index = np.where(unrolled_data[1:,0] == match_value)
-        if index.length != 0:
-            N1 = index[0,0]
+        if index[0].size != 0:
+            N1 = index[0][0]+1
         else:
             N1 = np.shape(unrolled_data[0])
         assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
@@ -357,12 +357,13 @@ class Field:
 
 
 class Field_set:
-    def __init__(self, polar, outer, inner, name):
+    def __init__(self, outer, inner, name, parent):
         self.outer = outer
         self.inner = inner
         self.name = name
-        self.plus = Field((outer + inner) / 2., polar, self.name + "_plus")
-        self.minus = Field((outer - inner) / 2., polar, self.name + "_minus")
+        self.parent = parent
+        self.plus = Field((outer + inner) / 2., self.name + "_plus", self.parent)
+        self.minus = Field((outer - inner) / 2., self.name + "_minus", self.parent)
 
     def __iter__(self):
         """Iterate through the four Fields in a Field_set."""
