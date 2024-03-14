@@ -181,6 +181,35 @@ class Membrane:
         apart = field1.avg * field2.avg
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
+    
+    def measure_rms_of_field(self, field, eq2=None):
+        """
+        Measure the root-mean-squared value of some Field. Optionally, supply\
+        a squared equilibrium value in order to generate a fold-enrichment score.
+
+        Parameters
+        ----------
+        field : Field
+            The Field you want analyzed.
+        eq2 : float, optional
+            The squared equilibrium value of the Field. The default is None.
+
+        Returns
+        -------
+        Field
+            The rms or enrichment (if eq2 used) values for the Field.
+
+        """
+        
+        squared = field**2
+        if eq2 is not None:
+            squared = squared/eq2
+        mean_squared = calc_avg_over_time(squared)
+        rms = np.sqrt(mean_squared)
+        if eq2 is not None:
+            return self.create_Field(rms, "rmsTilde_" + field.name)
+        else:
+            return self.create_Field(rms, "rms_" + field.name)
 
 
 class Field:
@@ -457,6 +486,7 @@ Parameters
     if "height" in m.todo_list:
         outer = m.create_Field(cwd, "z_one", "height", "zone")
         inner = m.create_Field(cwd, "z_two", "height", "ztwo")
+        zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(outer, inner, "z")
 
 '''
