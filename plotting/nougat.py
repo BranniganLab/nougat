@@ -53,6 +53,10 @@ class Membrane:
             A switch for using cylindrical versus Cartesian coordinates.
         todo_list  :  list
             The list of quantities that the user has selected for analysis.
+        composition  :  str
+            The composition of the membrane.
+        t0  :  float
+            The equilibrium thickness of the membrane.
         """
         self.active_list = []
         self.polar = polar
@@ -60,11 +64,11 @@ class Membrane:
         self.composition = composition
         self.t0 = t0
         self.grid_dims = {
-            "N1":None,
-            "N2":None,
-            "Nframes":None,
-            "d1":None,
-            "d2":None
+            "N1": None,
+            "N2": None,
+            "Nframes": None,
+            "d1": None,
+            "d2": None
         }
 
     def __iter__(self):
@@ -134,7 +138,7 @@ class Membrane:
     def create_Vector_field(self):
         """Not implemented yet."""
         return NotImplemented
-    
+
     def measure_correlation(self, field1, field2):
         """
         Measure the correlation between two Fields.
@@ -151,11 +155,11 @@ class Membrane:
         corr  :  Field
             The correlation between Fields 1 and 2.
         """
-        together = calc_avg_over_time(field1*field2)
+        together = calc_avg_over_time(field1 * field2)
         apart = field1.avg * field2.avg
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
-    
+
     def measure_rms_of_field(self, field, eq2=None):
         """
         Measure the root-mean-squared value of some Field. Optionally, supply\
@@ -175,7 +179,7 @@ class Membrane:
         """
         squared = field**2
         if eq2 is not None:
-            squared = squared/eq2
+            squared = squared / eq2
         mean_squared = calc_avg_over_time(squared)
         rms = np.sqrt(mean_squared)
         if eq2 is not None:
@@ -278,11 +282,11 @@ class Field:
     def __str__(self):
         """Say your name, rather than your address."""
         return self.name
-    
+
     def __repr__(self):
         """Say your name, rather than your address."""
         return self.name
-    
+
     def parse_tcl_output(self, path, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
@@ -307,28 +311,28 @@ class Field:
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
-        
+
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-        
+
         # determine grid_dims along second dimension
         N2 = np.shape(unrolled_data)[1] - 2
-        d2 = (2*np.pi) / N2
+        d2 = (2 * np.pi) / N2
         if self.parent.grid_dims["N2"] is not None:
             assert self.parent.grid_dims["N2"] == N2, err_msg
             assert self.parent.grid_dims["d2"] == d2, err_msg
         else:
             self.parent.grid_dims["N2"] = N2
             self.parent.grid_dims["d2"] = d2
-        
+
         # determine grid_dims along first dimension
-        d1 = unrolled_data[0,1] - unrolled_data[0,0]
+        d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
         """nougat.tcl's output is structured such that the starting value of\
         x or r will be repeated each time there is a new frame. Look for the\
         first repeat and you will know how many x/r bins there are"""
-        match_value = unrolled_data[0,0]
-        index = np.where(unrolled_data[1:,0] == match_value)
+        match_value = unrolled_data[0, 0]
+        index = np.where(unrolled_data[1:, 0] == match_value)
         if index[0].size != 0:
-            N1 = index[0][0]+1
+            N1 = index[0][0] + 1
         else:
             # this would happen if there was only one frame in the trajectory
             N1 = np.shape(unrolled_data[0])
@@ -351,7 +355,7 @@ class Field:
         field_data = np.zeros((Nframes, N1, N2))
         for frm in range(Nframes):
             field_data[frm, :, :] = unrolled_data[frm * N1: (frm + 1) * N1, 2:]
-        
+
         return field_data
 
     # BASIC MATH MAGIC METHODS BELOW #
@@ -434,7 +438,7 @@ class Field_set:
     parent  :  Membrane
         The Membrane object to which the Fields belong.
     """
-    
+
     def __init__(self, outer, inner, name, parent):
         """
         Construct a Field_set.
@@ -478,9 +482,8 @@ class Field_set:
 
 class Vector_field(Field):
     """Not implemented yet."""
-    
-    pass
 
+    pass
 
 
 def run_nougat(polar, quantities):
@@ -535,18 +538,17 @@ def run_nougat(polar, quantities):
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(ztwo, zone, "z")
     if "thickness" in m.todo_list:
-        tone = m.create_Field(zone-zzero, "t_one")
-        ttwo = m.create_Field(zzero-ztwo, "t_two")
+        tone = m.create_Field(zone - zzero, "t_one")
+        ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    print(thickness.minus.field_data[0,0,0])
+    print(thickness.minus.field_data[0, 0, 0])
     print(tone.field_data)
     print(m.active_list)
     print(m)
     for f in m:
         print(f)
-
-'''
+    '''
     # make necessary folders
     create_outfile_directories(cwd)
 
@@ -580,7 +582,8 @@ def run_nougat(polar, quantities):
     # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
 
     plot_all_quantities(polar, system_dict, cwd, inclusion)
-'''
+    '''
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
@@ -588,7 +591,7 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
     args = parser.parse_args()
-    
+
     run_nougat(args.polar, args.quantities)
 
     print("Thank you for using nougat!")
