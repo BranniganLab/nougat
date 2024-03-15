@@ -41,32 +41,6 @@ class Membrane:
         The composition of the membrane.
     t0  :  float
         The equilibrium thickness of the membrane.
-
-    List of all default Fields and Field_sets
-    ----------
-    height  :  Field_set
-        The height (in z) of the outer and inner leaflets, as well as the\
-        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
-        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
-        relative to some reference point on a protein or could be the absolute\
-        height of the membrane in VMD.
-    zzero  :  Field
-        The height (in z) of the interface between the outer and inner leaflet.\
-        "Z zero" is commonly thought to be equal to the bilayer midplane but\
-        this is not always the case, especially around inclusions.
-    thickness  :  Field_set
-        The thickness of the outer and inner leaflets, as well as the symmetric\
-        and anti-symmetric variables "t plus" and "t minus." T plus is the\
-        average leaflet thickness and t minus is the leaflet thickness asymmetry.
-    epsilon  :  Field
-        An alternative measurement of leaflet thickness asymmetry, defined in\
-        [Watson & Brown, PRL, 2012].
-    mean_curvature  :  Field_set
-        The mean curvature (H) of the membrane outer and inner leaflets, as well as\
-        the symmetric/anti-symmetric variables "H plus" and "H minus".
-    gaussian_curvature  :  Field_set
-        The Gaussian curvature (K) of the membrane outer and inner leaflets, as well\
-        as the symmetric/anti-symmetric variables "K plus" and "K minus".
     """
 
     def __init__(self, polar, todo_list, composition=None, t0=None):
@@ -125,9 +99,7 @@ class Membrane:
         """
         new_Field_set = Field_set(outer, inner, name, self)
         self.active_list.remove(outer)
-        del outer
         self.active_list.remove(inner)
-        del inner
         self.active_list.append(new_Field_set)
         return new_Field_set
 
@@ -442,7 +414,47 @@ class Field:
 
 
 class Field_set:
+    """A Field_set contains four Fields: the outer and inner leaflets, plus the\
+    symmetric and anti-symmetric variables <Field>_plus and <Field>_minus. This\
+    object serves as a constructor for the _plus and _minus variables.
+
+    Attributes
+    ----------
+    outer  :  Field
+        The outer leaflet Field.
+    inner  :  Field
+        The inner leaflet Field.
+    plus  :  Field
+        Outer leaflet + inner leaflet, divided by 2.
+    minus  :  Field
+        Outer leaflet - inner leaflet, divided by 2.
+    name  :  str
+        The name of this Field set, and the prefix that will be given to the\
+        _plus and _minus fields.
+    parent  :  Membrane
+        The Membrane object to which the Fields belong.
+    """
+    
     def __init__(self, outer, inner, name, parent):
+        """
+        Construct a Field_set.
+
+        Parameters
+        ----------
+        outer  :  Field
+            The outer leaflet Field.
+        inner  :  Field
+            The inner leaflet Field.
+        name  :  str
+            The name of this Field set, and the prefix that will be given to the\
+            _plus and _minus fields.
+        parent  :  Membrane
+            The Membrane object to which the Fields belong.
+
+        Returns
+        -------
+        None.
+        """
         self.outer = outer
         self.inner = inner
         self.name = name
@@ -466,16 +478,17 @@ class Field_set:
 
 class Vector_field(Field):
     """Not implemented yet."""
+    
     pass
 
 
 
 def run_nougat(polar, quantities):
     """
-Run nougat's averaging and image processing routines.
+    Run nougat's averaging and image processing routines.
 
-Parameters
-----------
+    Parameters
+    ----------
     polar: boolean
         True for cylindrical coordinate system, False for Cartesian.
     quantities: str
@@ -486,10 +499,35 @@ Parameters
     -------
     None.
 
+    List of all default Fields and Field_sets
+    ----------
+    height  :  Field_set
+        The height (in z) of the outer and inner leaflets, as well as the\
+        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
+        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
+        relative to some reference point on a protein or could be the absolute\
+        height of the membrane in VMD.
+    zzero  :  Field
+        The height (in z) of the interface between the outer and inner leaflet.\
+        "Z zero" is commonly thought to be equal to the bilayer midplane but\
+        this is not always the case, especially around inclusions.
+    thickness  :  Field_set
+        The thickness of the outer and inner leaflets, as well as the symmetric\
+        and anti-symmetric variables "t plus" and "t minus." T plus is the\
+        average leaflet thickness and t minus is the leaflet thickness asymmetry.
+    epsilon  :  Field
+        An alternative measurement of leaflet thickness asymmetry, defined in\
+        [Watson & Brown, PRL, 2012].
+    mean_curvature  :  Field_set
+        The mean curvature (H) of the membrane outer and inner leaflets, as well as\
+        the symmetric/anti-symmetric variables "H plus" and "H minus".
+    gaussian_curvature  :  Field_set
+        The Gaussian curvature (K) of the membrane outer and inner leaflets, as well\
+        as the symmetric/anti-symmetric variables "K plus" and "K minus".
     """
-    cwd = Path.cwd()
+    cwd = Path.cwd()  # TO-DO: change this so that path is supplied by user!
     todo_list = make_todo_list(quantities)
-    
+
     m = Membrane(polar, todo_list)
     if "height" in m.todo_list:
         zone = m.create_Field(cwd, "z_one", "height", "zone")
@@ -500,12 +538,14 @@ Parameters
         tone = m.create_Field(zone-zzero, "t_one")
         ttwo = m.create_Field(zzero-ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
+
     print(thickness.minus.field_data[0,0,0])
-    print(tone)
+    print(tone.field_data)
     print(m.active_list)
     print(m)
     for f in m:
         print(f)
+
 '''
     # make necessary folders
     create_outfile_directories(cwd)
