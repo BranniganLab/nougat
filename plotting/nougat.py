@@ -125,7 +125,9 @@ class Membrane:
         """
         new_Field_set = Field_set(outer, inner, name, self)
         self.active_list.remove(outer)
+        del outer
         self.active_list.remove(inner)
+        del inner
         self.active_list.append(new_Field_set)
         return new_Field_set
 
@@ -305,6 +307,10 @@ class Field:
         """Say your name, rather than your address."""
         return self.name
     
+    def __repr__(self):
+        """Say your name, rather than your address."""
+        return self.name
+    
     def parse_tcl_output(self, path, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
@@ -453,6 +459,10 @@ class Field_set:
         """Say your name, rather than your address."""
         return self.name
 
+    def __repr__(self):
+        """Say your name, rather than your address."""
+        return self.name
+
 
 class Vector_field(Field):
     """Not implemented yet."""
@@ -482,11 +492,20 @@ Parameters
     
     m = Membrane(polar, todo_list)
     if "height" in m.todo_list:
-        outer = m.create_Field(cwd, "z_one", "height", "zone")
-        inner = m.create_Field(cwd, "z_two", "height", "ztwo")
+        zone = m.create_Field(cwd, "z_one", "height", "zone")
+        ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
-        height = m.create_Field_set(outer, inner, "z")
-
+        height = m.create_Field_set(ztwo, zone, "z")
+    if "thickness" in m.todo_list:
+        tone = m.create_Field(zone-zzero, "t_one")
+        ttwo = m.create_Field(zzero-ztwo, "t_two")
+        thickness = m.create_Field_set(tone, ttwo, "t")
+    print(thickness.minus.field_data[0,0,0])
+    print(tone)
+    print(m.active_list)
+    print(m)
+    for f in m:
+        print(f)
 '''
     # make necessary folders
     create_outfile_directories(cwd)
