@@ -826,10 +826,9 @@ proc polarAreaWarning {d1 N1 min d2} {
   
 proc calculateReferenceHeight {configDict frm} {
     if {[dict get $configDict reference_point] ne "NULL"} {
-        set ref_bead [atomselect top [dict get $configDict reference_point] frame $frm]
-        set ref_height [$ref_bead get z]
-        $ref_bead delete
-        set ref_height [vecmean $ref_height]
+        set ref_sel [atomselect top [dict get $configDict reference_point] frame $frm]
+        set ref_height [lindex [measure center $ref_sel] 2]
+        $ref_sel delete
     } else {
         set ref_height "NULL"
     }
