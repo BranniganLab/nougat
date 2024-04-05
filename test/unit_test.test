@@ -742,7 +742,7 @@ test createatomselects {
     Test: createAtomSelections
 } -setup {
     mol new ../testing_materials/lipid_membrane/insane2.gro
-    set config_dict [cell_prep "nougat_config.txt" 1]
+    set config_dict [cell_prep "../test/nougat_config.txt" 1]
     set selly [createAtomSelections "height" $config_dict]
     set sel [atomselect top "resname POPC and not name NC3 PO4 GL1 GL2"]
     set lipnum [llength [$sel get resid]]
@@ -774,7 +774,7 @@ test NullRefHeight {
     Test: calculateReferenceHeight
 } -setup {
 } -body {
-    return [calculateReferenceHeight [read_config_file nougat_config.txt] 0]
+    return [calculateReferenceHeight [read_config_file ../test/nougat_config.txt] 0]
 } -result "NULL" -cleanup {}
 
 test fullRefHeight {
@@ -783,7 +783,7 @@ test fullRefHeight {
     mol new ../testing_materials/GNP_trajectory/em.gro
     mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
 } -body {
-    return [format "%.2f" [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]]
+    return [format "%.2f" [calculateReferenceHeight [read_config_file ../test/nougat_config2.txt] 0]]
 } -result 60.10 -cleanup {
 }
 
@@ -791,7 +791,7 @@ test checkingselectinfo {
     Test: getSelInfo
 } -setup {
     set sel [atomselect top "index 0"]
-    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set height [calculateReferenceHeight [read_config_file ../test/nougat_config2.txt] 0]
     set sel_info [getSelInfo $sel $height]
 } -body {
     return [format "%.2f" [lindex [dict get $sel_info xvals_list] 0]]
@@ -801,10 +801,10 @@ test checkingselectinfo {
 test checkingselectinfo2 {
     Test: getSelInfo
 } -setup {
-    cell_prep nougat_config2.txt 0
+    cell_prep ../test/nougat_config2.txt 0
     set seltext [format {name "C.*" and name ".*B" ".*A"}]
     set sel [atomselect top $seltext]
-    set height [calculateReferenceHeight [read_config_file nougat_config2.txt] 0]
+    set height [calculateReferenceHeight [read_config_file ../test/nougat_config2.txt] 0]
     set sel_info [getSelInfo $sel $height]
 } -body {
     return [format "%.2f" [lindex [dict get $sel_info tail_list] 0]]
@@ -842,7 +842,7 @@ test Avgheight {
 } -setup {
     mol new ../testing_materials/GNP_trajectory/em.gro
     mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
-    start_nougat PO nougat_config.txt 12 12 0 1 1 0
+    start_nougat PO ../test/nougat_config.txt 12 12 0 1 1 0
     set fp [open "PO_cart_12_12_0_1_1/tcl_output/height/zone.dat" r]
     set filedata [read $fp]
     set match [format "%.2f" [lindex $filedata 2 0]]
@@ -876,7 +876,7 @@ test Avgdensity {
 } -setup {
     mol new ../testing_materials/GNP_trajectory/em.gro
     mol addfile ../testing_materials/GNP_trajectory/test.xtc waitfor all
-    start_nougat PO nougat_config.txt 12 12 0 1 1 0
+    start_nougat PO ../test/nougat_config.txt 12 12 0 1 1 0
     set fp [open "PO_cart_12_12_0_1_1/tcl_output/density/POPC/zone.dat" r]
     set filedata [read $fp]
     set match [format "%.2f" [lindex $filedata 2 0]]
