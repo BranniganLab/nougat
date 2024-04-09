@@ -81,7 +81,7 @@ proc cell_prep {config_path leaf_check} {
     }
 
     # align the system, removing xy rotation
-    if {[dict get $config_dict align_sel] != "NULL"} {
+    if {[dict exists $config_dict align_sel] && [dict get $config_dict align_sel] != "NULL"} {
         Align [dict get $config_dict align_sel] 0
     }
 
