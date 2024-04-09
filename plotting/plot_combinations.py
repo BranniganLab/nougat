@@ -8,7 +8,7 @@ from itertools import product
 from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+from pathlib import Path
 from utils import *
 
 
@@ -210,29 +210,30 @@ def normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, specie
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
-    elif species_name in ["lgDY", "lgDO", "lgDG"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
-    elif species_name in ["100kjmol", "1000kjmol", "5000", "lgPO", "COMtiltspin", "new_gmx_pos"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1"
+    empty_sims_path = empty_sys_dict[species_name]
+    if species_name in ["100kjmol", "1000kjmol", "5000", "COMtiltspin", "new_gmx_pos"]:
         species_name = "lgPO"
-    else:
-        print("You need to specify where the empty system is")
-        raise Exception
+    elif species_name in ["DTPC", "DLPC", "DYPC", "DPPC", "DOPC", "DBPC", "DGPC", "DXPC"]:
+        old_name = "lg" + species_name[:2]
     if "_rms_" in quantity:
         rms = True
     else:
         rms = False
     exp_quantity = quantity.split("tilde_")[1]
-    exp_value = np.load(path + "/npy/" + sysname + "." + exp_quantity + ".npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, True, exp_quantity)
+    if "H_plus" in exp_quantity:
+        exp_value = np.load(path.joinpath("trajectory", "curvature", "mean", "Hplus2.npy"))
+    else:
+        if exp_quantity == "total_t":
+            exp_value = np.load(path.joinpath("trajectory", "thickness", "whole.npy"))
+        else:
+            exp_value = np.load(path.joinpath("trajectory", "thickness", "epsilon2.npy"))
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, old_name, True, exp_quantity)
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
     if rms is True:
         normed_values = np.sqrt(normed_values)
-    np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
-    avg_over_theta(path + "/npy/" + sysname + "." + quantity)
-    return np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
+    np.save(path.joinpath("average", "misc", quantity + ".npy"), normed_values)
+    avg_over_theta(path.joinpath("average", "misc", quantity))
+    return np.load(path.joinpath("average", "misc", quantity + ".avg_over_theta.npy"))
 
 
 def calc_eps_t0(path, quantity, sysname, species_name):
@@ -254,22 +255,17 @@ def calc_eps_t0(path, quantity, sysname, species_name):
         The values corresponding to the y axis on the figure you are plotting.
 
     """
-    if species_name in ["lgDT", "lgDL", "lgDP", "lgDB", "lgDX"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_5_10_0_-1_1"
-    elif species_name in ["lgDY", "lgDO", "lgDG"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/" + species_name + "/" + species_name + "_polar_10_10_100_-1_1"
-    elif species_name in ["100kjmol", "1000kjmol", "5000", "lgPO", "COMtiltspin", "new_gmx_pos"]:
-        empty_sims_path = "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1"
+    empty_sims_path = empty_sys_dict[species_name]
+    if species_name in ["100kjmol", "1000kjmol", "5000", "COMtiltspin", "new_gmx_pos"]:
         species_name = "lgPO"
-    else:
-        print("You need to specify where the empty system is")
-        raise Exception
-    exp_value = np.load(path + "/npy/" + sysname + ".epsilon.npy")
-    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, species_name, True, "total_t") / 2.0
+    elif species_name in ["DTPC", "DLPC", "DYPC", "DPPC", "DOPC", "DBPC", "DGPC", "DXPC"]:
+        old_name = "lg" + species_name[:2]
+    exp_value = np.load(path.joinpath("trajectory", "thickness", "epsilon.npy"))
+    bulk_avg = measure_quant_in_empty_sys(empty_sims_path, old_name, True, "total_t") / 2.0
     normed_values = calc_avg_over_time(exp_value / bulk_avg)
-    np.save(path + "/npy/" + sysname + "." + quantity + ".npy", normed_values)
-    avg_over_theta(path + "/npy/" + sysname + "." + quantity)
-    return np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
+    np.save(path.joinpath("average", "misc", quantity + ".npy"), normed_values)
+    avg_over_theta(path.joinpath("average", "misc", quantity))
+    return np.load(path.joinpath("average", "misc", quantity + ".avg_over_theta.npy"))
 
 
 def plot_combination(paths, name, quantity, stds, rmin):
@@ -294,6 +290,7 @@ def plot_combination(paths, name, quantity, stds, rmin):
     None.
 
     """
+    print(quantity)
     fig, axs = plt.subplots(layout="constrained")
     fig.supxlabel(r'$r \;(\mathrm{nm})$')
     fig.supylabel(y_label_dict[quantity])
@@ -306,17 +303,19 @@ def plot_combination(paths, name, quantity, stds, rmin):
         else:
             species_name = sysname
 
+        path = Path(path)
+
         if quantity in ["avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2", "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]:
             y_vals = normalize_by_same_quantity_in_empty_membrane(path, quantity, sysname, species_name)
         elif quantity == "avg_epsilon_over_t0":
             y_vals = calc_eps_t0(path, quantity, sysname, species_name)
         else:
-            y_vals = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.npy")
+            y_vals = np.load(path.joinpath("average", "misc", quantity + ".avg_over_theta.npy"))
 
         # figure out what the x axis values should be
-        tcl_output = np.genfromtxt(path + '/tcl_output/' + sysname + '.zone.C1A.C1B.polar.height.dat',
+        tcl_output = np.genfromtxt(path.joinpath("tcl_output", "height", "zone.dat"),
                                    missing_values='nan', filling_values=np.nan)
-        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, True)
         xmin = dr / 2
         xmax = Nr * dr - xmin
         x_vals = np.linspace(xmin, xmax, Nr) / 10
@@ -334,16 +333,16 @@ def plot_combination(paths, name, quantity, stds, rmin):
         if "tilde" in quantity:
             axs.axhline(1, color="gray", linestyle="")
         if stds is True:
-            std_data = np.load(path + "/npy/" + sysname + "." + quantity + ".avg_over_theta.std.npy")
+            std_data = np.load(path.joinpath("average", "misc", quantity + ".avg_over_theta.std.npy"))
             std_data = std_data[i:] / np.sqrt(10)
             axs.fill_between(x_vals, (y_vals - std_data), (y_vals + std_data), alpha=.4, color=color_dict[species_name])
         axs.set_xlim(0, xmax / 10)
         if quantity + "_min" in scale_dict:
             axs.set_ylim(scale_dict[quantity + "_min"], scale_dict[quantity + "_max"])
     if stds is True:
-        plt.savefig(name + "_" + quantity + "_with_stdv.pdf", dpi=700)
+        plt.savefig(path.joinpath("figures", "misc", quantity + "_with_stdvs.pdf"))
     else:
-        plt.savefig(name + "_" + quantity + ".pdf", dpi=700)
+        plt.savefig(path.joinpath("figures", "misc", quantity + ".pdf"))
     plt.clf()
     plt.close()
 
@@ -388,6 +387,31 @@ scale_dict = {
     "avg_K_plus_max": .0001,
     "avg_tilde_epsilon2_min": 0,
     "avg_tilde_epsilon2_max": 18
+}
+
+empty_sys_dict = {
+    "lgDT": "/home/js2746/Bending/PC/whole_mols/empty/lgDT/lgDT_polar_5_10_0_-1_1",
+    "lgDL": "/home/js2746/Bending/PC/whole_mols/empty/lgDL/lgDL_polar_5_10_0_-1_1",
+    "lgDY": "/home/js2746/Bending/PC/whole_mols/empty/lgDY/lgDY_polar_10_10_100_-1_1",
+    "lgDP": "/home/js2746/Bending/PC/whole_mols/empty/lgDP/lgDP_polar_5_10_0_-1_1",
+    "lgDO": "/home/js2746/Bending/PC/whole_mols/empty/lgDO/lgDO_polar_10_10_100_-1_1",
+    "lgDB": "/home/js2746/Bending/PC/whole_mols/empty/lgDB/lgDB_polar_5_10_0_-1_1",
+    "lgDG": "/home/js2746/Bending/PC/whole_mols/empty/lgDG/lgDG_polar_10_10_100_-1_1",
+    "lgDX": "/home/js2746/Bending/PC/whole_mols/empty/lgDX/lgDX_polar_5_10_0_-1_1",
+    "DTPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDT/lgDT_polar_5_10_0_-1_1",
+    "DYPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDY/lgDY_polar_10_10_100_-1_1",
+    "DLPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDL/lgDL_polar_5_10_0_-1_1",
+    "DPPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDP/lgDP_polar_5_10_0_-1_1",
+    "DOPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDO/lgDO_polar_10_10_100_-1_1",
+    "DBPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDB/lgDB_polar_5_10_0_-1_1",
+    "DGPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDG/lgDG_polar_10_10_100_-1_1",
+    "DXPC": "/home/js2746/Bending/PC/whole_mols/empty/lgDX/lgDX_polar_5_10_0_-1_1",
+    "lgPO": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1",
+    "100kjmol": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1",
+    "1000kjmol": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1",
+    "5000": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1",
+    "COMtiltspin": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1",
+    "new_gmx_pos": "/home/js2746/Bending/PC/whole_mols/empty/lgPO/lgPO_polar_10_10_100_200_1"
 }
 
 color_dict = {
@@ -446,22 +470,20 @@ if __name__ == "__main__":
     quant_list1 = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                    "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                    "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                   "avg_H_minus2", "avg_epsilon_H", "avg_total_t", "avg_epsilon_over_t0",
+                   "avg_H_minus2", "avg_epsilon_H", "avg_epsilon_over_t0",
                    "avg_tilde_total_t", "avg_tilde_epsilon2", "avg_tilde_H_plus2",
                    "avg_rms_tilde_epsilon2", "avg_rms_tilde_H_plus2"]
     # prep_config(["Lipid Tail Length", "Saturation"], [["2", "3", "4", "5", "6"], ["Saturated", "Mono-unsaturated"]])
     # prep_config(["bond_strength"], [["100", "1000", "5000"]])
     # prep_config(["restraint_type"], [["Elastic network", "Position restraints"]])
 
-    config_dict = read_config('/home/js2746/comp_config.txt', ["restraint_type"])
-    cwd = os.getcwd()
+    config_dict = read_config('/home/js2746/PolarHeightBinning/plotting/comp_config.txt', ["Lipid Tail Length", "Saturation"])
+    cwd = Path.cwd()
     try:
-        os.mkdir("avg_over_theta_comparisons")
+        cwd.mkdir("avg_over_theta_comparisons")
     except:
         pass
-    os.chdir("avg_over_theta_comparisons")
     for combination in generate_combinations(config_dict):
         for quantity in quant_list1:
             plot_combination(combination[0], combination[1], quantity, True, 0)
             plot_combination(combination[0], combination[1], quantity, False, 0)
-    os.chdir(cwd)

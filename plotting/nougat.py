@@ -579,7 +579,7 @@ def run_nougat(polar, quantities):
 
     # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
-    # calc_elastic_terms(".", coordsys, config_dict, system_dict['bin_info'])
+    calc_elastic_terms(cwd, polar, system_dict['bin_info'])
 
     plot_all_quantities(polar, system_dict, cwd, inclusion)
     '''

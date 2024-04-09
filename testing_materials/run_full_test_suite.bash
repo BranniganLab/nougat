@@ -9,10 +9,8 @@ rm -f tcl_unit_test.log
 rm -f nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
-cd ../test/
 echo "Starting TCL unit testing"
-vmd -dispdev none -e ./run_unit_tests.tcl > ../testing_materials/tcl_unit_test.log
-cd ../testing_materials/
+vmd -dispdev none -eofexit < ../test/unit_test.test > ./tcl_unit_test.log
 
 # Check to make sure VMD didn't error
 if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' tcl_unit_test.log
