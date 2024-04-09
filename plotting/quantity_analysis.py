@@ -137,22 +137,18 @@ def calculate_order(polar, system_dict, cwd):
 
 
 # still need to convert to pathlib, remove coordsys!
-def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
+def calc_elastic_terms(path, polar, bin_info):
     """
     Calculate all the additional terms that appear in a hamiltonian or are \
         generally of interest.
 
     Parameters
     ----------
-    system : string
-        the same name you gave nougat.tcl and nougat.py
     path : string
         should point to the folder housing your nougat outputs for the given \
             system
-    coordsys : string
-        "polar" or "cart"
-    scale_dict : dict
-        contains scale bounds from the nougat config file
+    polar : bool
+        if True, use polar (cylindrical) coordinates
 
     Returns
     -------
@@ -160,14 +156,14 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
 
     """
     # load height and curvature data
-    z_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.height.npy')
-    z_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.height.npy')
-    z_0 = np.load(path + '/npy/' + system + '.zzero.' + coordsys + '.height.npy')
-    z_plus = np.load(path + '/npy/' + system + '.zplus.' + coordsys + '.height.npy')
-    H_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.meancurvature.npy')
-    H_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.meancurvature.npy')
-    K_1 = np.load(path + '/npy/' + system + '.zone.' + coordsys + '.gausscurvature.npy')
-    K_2 = np.load(path + '/npy/' + system + '.ztwo.' + coordsys + '.gausscurvature.npy')
+    z_1 = np.load(path.joinpath("trajectory", "height", "zone.npy"))
+    z_2 = np.load(path.joinpath("trajectory", "height", "ztwo.npy"))
+    z_0 = np.load(path.joinpath("trajectory", "height", "zzero.npy"))
+    z_plus = np.load(path.joinpath("trajectory", "height", "zplus.npy"))
+    H_1 = np.load(path.joinpath("trajectory", "curvature", "mean", "zone.npy"))
+    H_2 = np.load(path.joinpath("trajectory", "curvature", "mean", "ztwo.npy"))
+    K_1 = np.load(path.joinpath("trajectory", "curvature", "gaussian", "zone.npy"))
+    K_2 = np.load(path.joinpath("trajectory", "curvature", "gaussian", "ztwo.npy"))
 
     # measure terms of interest
     # removed z_minus terms until we have a better way of computing t0
@@ -180,14 +176,12 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
     H_minus = (H_1 - H_2) / 2
     H_minus2 = H_minus**2
     epsilon_H = epsilon * H_plus
-    total_t = z_1 - z_2
 
     # save useful trajectories
-    np.save(path + '/npy/' + system + '.epsilon.npy', epsilon)
-    np.save(path + '/npy/' + system + '.H_plus.npy', H_plus)
-    np.save(path + '/npy/' + system + '.epsilon2.npy', epsilon2)
-    np.save(path + '/npy/' + system + '.H_plus2.npy', H_plus2)
-    np.save(path + '/npy/' + system + '.total_t.npy', total_t)
+    np.save(path.joinpath("trajectory", "thickness", "epsilon.npy"), epsilon)
+    np.save(path.joinpath("trajectory", "curvature", "mean", "Hplus.npy"), H_plus)
+    np.save(path.joinpath("trajectory", "thickness", "epsilon2.npy"), epsilon2)
+    np.save(path.joinpath("trajectory", "curvature", "mean", "Hplus2.npy"), H_plus2)
 
     # calculate averages
     avg_epsilon = calc_avg_over_time(epsilon)
@@ -197,7 +191,6 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
     avg_H_minus = calc_avg_over_time(H_minus)
     avg_H_minus2 = calc_avg_over_time(H_minus2)
     avg_epsilon_H = calc_avg_over_time(epsilon_H)
-    avg_total_t = calc_avg_over_time(total_t)
     avg_K_plus = calc_avg_over_time(K_plus)
     avg_K_minus = calc_avg_over_time(K_minus)
 
@@ -207,20 +200,19 @@ def calc_elastic_terms(system, path, coordsys, scale_dict, bin_info):
     corr_eps_Kplus = calc_avg_over_time(epsilon * K_plus) - (avg_epsilon * avg_K_plus)
 
     # get proper plot dimensions
-    dims = bin_prep(bin_info, coordsys)
+    dims = bin_prep(bin_info, polar)
     dim1vals, dim2vals = dims
 
     # make pretty pictures and save data
     data_list = [avg_K_plus, avg_K_minus, corr_eps_Kplus, corr_mag_eps_Hplus,
                  corr_eps_Hplus, avg_epsilon, avg_epsilon2, avg_H_plus,
-                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H,
-                 avg_total_t]
+                 avg_H_plus2, avg_H_minus, avg_H_minus2, avg_epsilon_H]
     name_list = ["avg_K_plus", "avg_K_minus", "corr_eps_Kplus",
                  "corr_mag_eps_Hplus", "corr_eps_Hplus", "avg_epsilon",
                  "avg_epsilon2", "avg_H_plus", "avg_H_plus2", "avg_H_minus",
-                 "avg_H_minus2", "avg_epsilon_H", "avg_total_t"]
+                 "avg_H_minus2", "avg_epsilon_H"]
     for data, name in zip(data_list, name_list):
         # plot_maker(dim1vals, dim2vals, data, system, 'comb', .1, -.1, False, name, False, coordsys, scale_dict)
-        np.save(path + '/npy/' + system + '.' + name + '.npy', data)
-        if coordsys == "polar":
-            avg_over_theta(path + '/npy/' + system + '.' + name)
+        np.save(path.joinpath("average", "misc", name + '.npy'), data)
+        if polar:
+            avg_over_theta(path.joinpath("average", "misc", name))

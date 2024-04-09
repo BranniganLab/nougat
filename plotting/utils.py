@@ -99,7 +99,7 @@ def create_outfile_directories(cwd):
 
     """
     #quantities = ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]
-    quantities = ["height", "curvature", "thickness"]
+    quantities = ["height", "curvature", "thickness", "misc"]
     for filetype in ["trajectory", "average", "figures"]:
         for quantity in quantities:
             if quantity == "curvature":
@@ -504,6 +504,9 @@ def plot_maker(dims, data, protein, quant, polar):
     if quant == "density":
         Vmin = 0
         Vmax = 2
+    elif quant == "height":
+        Vmin = -60
+        Vmax = 60
     else:
         Vmin, Vmax = "auto", "auto"
 
