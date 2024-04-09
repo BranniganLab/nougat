@@ -67,11 +67,7 @@ proc cell_prep {config_path leaf_check} {
 
     ;# center, wrap, and align the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
-        if {[dict exists $config_dict align_sel]} {
-            run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel] [dict get $config_dict align_sel]
-        } else {
-            run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel] "NULL"
-        }
+        run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
     } else {
         pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
         set sel [atomselect top all]

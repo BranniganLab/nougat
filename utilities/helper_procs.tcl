@@ -1643,7 +1643,7 @@ proc Protein_Position {name hnames chainNames folderName} {
     }
 }
 
-proc run_qwrap {wrap_sel inclusion_sel align_sel} {
+proc run_qwrap {wrap_sel inclusion_sel} {
     puts "${wrap_sel}"
     puts "Qwrap now running"
 
