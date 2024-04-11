@@ -25,11 +25,11 @@ class Membrane:
 
     Attributes
     ----------
-    active_list  :  list
+    active  :  list
         The list of all Fields and Field_sets that have been computed. This\
         list is updated any time Fields are turned into Field_sets so that\
         there is no duplication.
-    todo_list  :  list
+    to_analyze  :  list
         The list of quantities that the user has selected for analysis.
     grid_dims  :  dict
         A dictionary that contains information about the grid dimensions used.\
@@ -43,7 +43,7 @@ class Membrane:
         The equilibrium thickness of the membrane.
     """
 
-    def __init__(self, polar, todo_list, composition=None, t0=None):
+    def __init__(self, polar, to_analyze, composition=None, t0=None):
         """
         Create a Membrane object.
 
@@ -51,16 +51,16 @@ class Membrane:
         ----------
         polar  :  bool
             A switch for using cylindrical versus Cartesian coordinates.
-        todo_list  :  list
+        to_analyze  :  list
             The list of quantities that the user has selected for analysis.
         composition  :  str
             The composition of the membrane.
         t0  :  float
             The equilibrium thickness of the membrane.
         """
-        self.active_list = []
+        self.active = []
         self.polar = polar
-        self.todo_list = todo_list
+        self.to_analyze = to_analyze
         self.composition = composition
         self.t0 = t0
         self.grid_dims = {
@@ -73,7 +73,7 @@ class Membrane:
 
     def __iter__(self):
         """Iterate through active_list."""
-        for item in self.active_list:
+        for item in self.active:
             if isinstance(item, Field):
                 yield item
             elif isinstance(item, Field_set):
@@ -102,9 +102,9 @@ class Membrane:
 
         """
         new_Field_set = Field_set(outer, inner, name, self)
-        self.active_list.remove(outer)
-        self.active_list.remove(inner)
-        self.active_list.append(new_Field_set)
+        self.active.remove(outer)
+        self.active.remove(inner)
+        self.active.append(new_Field_set)
         return new_Field_set
 
     def create_Field(self, path, name, quantity=None, leaflet=None):
@@ -117,7 +117,7 @@ class Membrane:
         path  :  Path, str, or ndarray
             Either contains a path to TCL output data that needs to be parsed,\
             or contains a numpy ndarray that should just be saved into the\
-            Field's field_data attribute.
+            Field's traj attribute.
         name  :  str
             The name you want to give this Field.
         quantity  :  str
@@ -132,12 +132,8 @@ class Membrane:
 
         """
         new_Field = Field(path, name, self, quantity, leaflet)
-        self.active_list.append(new_Field)
+        self.active.append(new_Field)
         return new_Field
-
-    def create_Vector_field(self):
-        """Not implemented yet."""
-        return NotImplemented
 
     def measure_correlation(self, field1, field2):
         """
@@ -195,85 +191,67 @@ class Field:
 
     Attributes
     ----------
-    field_data  :  ndarray
-        A two- or three-dimensional array containing data. Could be height values,\
-        curvature values, etc. Assume zero-th dimension to be time (frames\
-        in trajectory), 1st and 2nd dims to be x/r and y/theta bins. Individual\
-        cells can contain int or float.
-    avg  :  ndarray
-        The 2D ndarray that represents the average over time.
-    avg_over_theta : ndarray
-        If polar coordinates were used, this is the 1D ndarray that represents\
-        the average over time in each radial bin.
+    traj  :  Trajectory
+        A 1D array containing Frame data from an MD trajectory. Could be \
+        height values, curvature values, etc.
     parent  :  Membrane
         The Membrane object to which this field belongs.
     """
 
-    def __init__(self, path, name, parent, quantity=None, leaflet=None):
+    def __init__(self, data, name, parent, quantity=None, leaflet=None):
         """
         Construct a Field object.
 
         Parameters
         ----------
-        path  :  Path, str, or ndarray
+        data  :  Path, str, or ndarray
             Either contains a path to TCL output data that needs to be parsed,\
             or contains a numpy ndarray that should just be saved into the\
-            Field's field_data attribute.
+            Field's Trajectory object.
         name  :  str
             The name of this Field
         parent  :  Membrane
             The Membrane object that his Field belongs to.
         quantity  :  str
-            If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
+            If used, must contain a valid nougat quantity I.E. 'height',\
+            'order', etc.
         leaflet  :  str
-            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo', or 'zzero'.
+            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo',\
+            or 'zzero'.
 
         """
         self.parent = parent
         self.name = name
 
+        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+
         # read in the data
-        if isinstance(path, (Path, str)):
+        if isinstance(data, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.field_data = self.parse_tcl_output(path, quantity, leaflet)
-        elif isinstance(path, np.ndarray):
-            self.field_data = path
-            if len(np.shape(self.field_data)) == 2:
+            self.traj = Trajectory(self, self._parse_tcl_output(data, quantity, leaflet))
+        elif isinstance(data, np.ndarray):
+            self.traj = Trajectory(self, data)
+            if len(np.shape(data)) == 2:
                 if self.parent.grid_dims["N1"] is not None:
-                    err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-                    assert self.parent.grid_dims["N1"] == np.shape(path)[0], err_msg
-                    assert self.parent.grid_dims["N2"] == np.shape(path)[1], err_msg
+                    assert self.parent.grid_dims["N1"] == np.shape(data)[0], err_msg
+                    assert self.parent.grid_dims["N2"] == np.shape(data)[1], err_msg
                 else:
-                    self.parent.grid_dims["N1"] = np.shape(path)[0]
-                    self.parent.grid_dims["N2"] = np.shape(path)[1]
-            elif len(np.shape(self.field_data)) == 3:
+                    self.parent.grid_dims["N1"] = np.shape(data)[0]
+                    self.parent.grid_dims["N2"] = np.shape(data)[1]
+            elif len(np.shape(data)) == 3:
                 if self.parent.grid_dims["N1"] is not None:
-                    err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-                    assert self.parent.grid_dims["N1"] == np.shape(path)[1], err_msg
-                    assert self.parent.grid_dims["N2"] == np.shape(path)[2], err_msg
+                    assert self.parent.grid_dims["N1"] == np.shape(data)[1], err_msg
+                    assert self.parent.grid_dims["N2"] == np.shape(data)[2], err_msg
                 else:
-                    self.parent.grid_dims["N1"] = np.shape(path)[1]
-                    self.parent.grid_dims["N2"] = np.shape(path)[2]
-                    self.parent.grid_dims["Nframes"] = np.shape(path)[0]
+                    self.parent.grid_dims["N1"] = np.shape(data)[1]
+                    self.parent.grid_dims["N2"] = np.shape(data)[2]
+                    self.parent.grid_dims["Nframes"] = np.shape(data)[0]
             else:
-                raise Exception("Field must contain a 2- or 3D array.")
+                raise Exception("Field Trajectory must contain a 2- or 3D array.")
         else:
-            raise ValueError("path must either be a numpy ndarray or a path")
+            raise ValueError("data must either be a numpy ndarray or a path")
 
-        assert len(np.shape(self.field_data)) == 3, "This Field should contain a 3D array"
-
-        # calculate averages if appropriate
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            if self.parent.grid_dims["Nframes"] > 1:
-                self.avg = np.nanmean(self.field_data, axis=0)
-            elif self.parent.grid_dims["Nframes"] == 1:
-                self.avg = self.field_data
-            else:
-                raise Exception("You have created a Field with no data in it somehow")
-            if self.parent.polar:
-                self.avg_over_theta = np.nanmean(self.avg, axis=1)
 
     def __iter__(self):
         """Return self so that Membrane.active_list can be looped easily."""
@@ -287,10 +265,10 @@ class Field:
         """Say your name, rather than your address."""
         return self.name
 
-    def parse_tcl_output(self, path, quantity, leaflet):
+    def _parse_tcl_output(self, path, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
-        and generate the field_data array.
+        and generate the traj array.
 
         Parameters
         ----------
@@ -303,10 +281,8 @@ class Field:
 
         Returns
         -------
-        field_data : ndarray
-            A 3D array containing nougat.tcl output data. The zero-th dimension\
-            is time (frames), the first dimension is x or r, and the second\
-            dimension is y or theta.
+        ndarray
+            A 2- 3D array containing nougat.tcl output data.
         """
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
@@ -328,7 +304,7 @@ class Field:
         d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
         """nougat.tcl's output is structured such that the starting value of\
         x or r will be repeated each time there is a new frame. Look for the\
-        first repeat and you will know how many x/r bins there are"""
+        first repeat and you will know how many x or r bins there are"""
         match_value = unrolled_data[0, 0]
         index = np.where(unrolled_data[1:, 0] == match_value)
         if index[0].size != 0:
@@ -360,61 +336,61 @@ class Field:
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the field object, rather than\
-    # having to specify the object's .field_data attribute every time.
+    # having to specify the object's .traj attribute every time.
 
     def __add__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, Field):
-            return self.field_data + other.field_data
+            return self.traj + other.traj
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.field_data + other
+            return self.traj + other
         else:
             return NotImplemented
 
     def __radd__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.field_data + other
+            return self.traj + other
         else:
             return NotImplemented
 
     def __sub__(self, other):
         """Use numpy to subtract things."""
         if isinstance(other, Field):
-            return self.field_data - other.field_data
+            return self.traj - other.traj
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.field_data - other
+            return self.traj - other
         else:
             return NotImplemented
 
     def __mul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, Field):
-            return self.field_data * other.field_data
+            return self.traj * other.traj
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.field_data * other
+            return self.traj * other
         else:
             return NotImplemented
 
     def __rmul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.field_data * other
+            return self.traj * other
         else:
             return NotImplemented
 
     def __div__(self, other):
         """Use numpy to divide things."""
         if isinstance(other, Field):
-            return self.field_data / other.field_data
+            return self.traj / other.traj
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.field_data / other
+            return self.traj / other
         else:
             return NotImplemented
 
     def __pow__(self, exponent):
         """Use numpy's power() on the array stored in this Field."""
-        return np.power(self.field_data, exponent)
+        return np.power(self.traj, exponent)
 
 
 class Trajectory:
@@ -430,7 +406,7 @@ class Trajectory:
         order.
     """
 
-    def __init__(self, parent, frames=None):
+    def __init__(self, parent, frames):
         """
         Construct a Trajectory.
 
@@ -438,9 +414,8 @@ class Trajectory:
         ----------
         parent : Field
             The Field to which this Trajectory belongs.
-        frames : np.ndarray, optional
-            1D array of the Frame objects that constitute the trajectory,\
-            in time-order.. The default is None.
+        frames : np.ndarray
+            ...
 
         Returns
         -------
@@ -448,7 +423,9 @@ class Trajectory:
 
         """
         self.parent = parent
-        # figure out whether top-down or bottom-up makes more sense
+        self.frames = np.empty(len(frames), dtype=Frame)
+        for f in range(len(self.frames)):
+            self.frames[f] = Frame(self, f, frames[f])
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
@@ -466,6 +443,21 @@ class Trajectory:
     def __repr__(self):
         """Print out your length and which Field you belong to."""
         pass
+
+
+class Frame:
+    """A Frame is a 2D array of binned data. It can contain either scalars or\
+        vectors in each bin, depending on the type of data in the Field.
+
+    Attributes
+    ----------
+    parent  :  Trajectory
+        The Trajectory to which this Frame belongs
+    index  :  int
+        The Trajectory index at which this frame belongs.
+    bins  :  np.ndarray
+        The 2D array that contains either scalar or vector values.
+    """
 
 
 class Field_set:
@@ -593,8 +585,8 @@ def run_nougat(polar, quantities):
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    print(thickness.minus.field_data[0, 0, 0])
-    print(tone.field_data)
+    print(thickness.minus.traj[0, 0, 0])
+    print(tone.traj)
     print(m.active_list)
     print(m)
     for f in m:
