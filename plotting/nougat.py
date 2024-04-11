@@ -417,6 +417,57 @@ class Field:
         return np.power(self.field_data, exponent)
 
 
+class Trajectory:
+    """
+    A 1D array of Frames.
+
+    Attributes
+    ----------
+    parent  :  Field
+        The Field to which this Trajectory belongs.
+    frames  :  np.ndarray
+        1D array of the Frame objects that constitute the trajectory, in time-\
+        order.
+    """
+
+    def __init__(self, parent, frames=None):
+        """
+        Construct a Trajectory.
+
+        Parameters
+        ----------
+        parent : Field
+            The Field to which this Trajectory belongs.
+        frames : np.ndarray, optional
+            1D array of the Frame objects that constitute the trajectory,\
+            in time-order.. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.parent = parent
+        # figure out whether top-down or bottom-up makes more sense
+
+    def __len__(self):
+        """Trajectory length = number of frames in trajectory."""
+        return np.shape(self.frames)[0]
+
+    def __iter__(self):
+        """Iterate through all the Frames in the Trajectory."""
+        for f in self.frames:
+            yield f
+
+    def __str__(self):
+        """Print out your length and which Field you belong to."""
+        pass
+
+    def __repr__(self):
+        """Print out your length and which Field you belong to."""
+        pass
+
+
 class Field_set:
     """A Field_set contains four Fields: the outer and inner leaflets, plus the\
     symmetric and anti-symmetric variables <Field>_plus and <Field>_minus. This\
