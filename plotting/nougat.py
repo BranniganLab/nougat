@@ -6,14 +6,8 @@ Created on Mon Jul 17 10:54:23 2023.
 
 import argparse
 from pathlib import Path
-import matplotlib.pyplot as plt
 import numpy as np
-import warnings
-from height import *
-from curvature import *
-from quantity_analysis import *
-from tilt import *
-from utils import *
+from utils import calc_avg_over_time, make_todo_list
 
 
 class Membrane:
@@ -251,7 +245,6 @@ class Field:
                 raise Exception("Field Trajectory must contain a 2- or 3D array.")
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
-
 
     def __iter__(self):
         """Return self so that Membrane.active_list can be looped easily."""
@@ -496,7 +489,7 @@ class Frame:
             self.bins = np.empty(np.shape(bins), dtype=Bin)
             for i in range(np.shape(bins)[0]):
                 for j in range(np.shape(bins)[1]):
-                    self.bins[i,j] = Bin(bins[i,j], (i, j))
+                    self.bins[i, j] = Bin(bins[i, j], (i, j))
         elif len(np.shape(bins)) == 3:
             self.scalar = False
             self.bins = np.empty(np.shape(bins)[:, :, 0], dtype=Bin)
