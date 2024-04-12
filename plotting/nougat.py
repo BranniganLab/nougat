@@ -13,9 +13,10 @@ from utils import calc_avg_over_time, make_todo_list
 class Membrane:
     """
     The basic class for nougat. A membrane is comprised of multiple Fields and\
-    Field_sets. Each field contains a 3D numpy ndarray that corresponds to some\
-    measurement of interest (E.G. the height of the outer leaflet, or the mean\
-    curvature of the bilayer midplane) over the course of an MD trajectory.
+    Field_sets. Each field contains a 3D numpy ndarray that corresponds to\
+    some measurement of interest (E.G. the height of the outer leaflet, or the\
+    mean curvature of the bilayer midplane) over the course of an MD\
+    trajectory.
 
     Attributes
     ----------
@@ -77,8 +78,9 @@ class Membrane:
     def create_Field_set(self, outer, inner, name):
         """
         Create a Field_set object by supplying the inner and outer leaflet\
-        Fields. These will be incorporated into a Field_set that then calculates\
-        the symmetric "plus" and anti-symmetric "minus" fields, respectively.
+        Fields. These will be incorporated into a Field_set that then\
+        calculates the symmetric "plus" and anti-symmetric "minus" fields,\
+        respectively.
 
         Parameters
         ----------
@@ -115,9 +117,11 @@ class Membrane:
         name  :  str
             The name you want to give this Field.
         quantity  :  str
-            If used, must contain a valid nougat quantity I.E. 'height', 'order', etc.
+            If used, must contain a valid nougat quantity I.E. 'height',\
+            'order', etc.
         leaflet  :  str
-            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo', or 'zzero'.
+            If used, must contain a valid nougat leaflet I.E. 'zone', 'ztwo',\
+            or 'zzero'.
 
         Returns
         -------
@@ -153,7 +157,8 @@ class Membrane:
     def measure_rms_of_field(self, field, eq2=None):
         """
         Measure the root-mean-squared value of some Field. Optionally, supply\
-        a squared equilibrium value in order to generate a fold-enrichment score.
+        a squared equilibrium value in order to generate a fold-enrichment\
+        score.
 
         Parameters
         ----------
@@ -180,8 +185,8 @@ class Membrane:
 
 class Field:
     """A field contains a measurement of some surface over the course of an MD\
-    trajectory. This could be the height of the outer leaflet, the mean curvature\
-    of the bilayer midplane, etc...
+    trajectory. This could be the height of the outer leaflet, the mean\
+    curvature of the bilayer midplane, etc...
 
     Attributes
     ----------
@@ -417,7 +422,7 @@ class Trajectory:
 
         """
         self.parent = parent
-        assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray."
+        assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray"
         if len(np.shape(frames)) == 2:
             self.frames = np.empty(1, dtype=Frame)
             self.frames[0] = Frame(self, 0, frames)
@@ -560,9 +565,9 @@ class Bin:
 
 
 class Field_set:
-    """A Field_set contains four Fields: the outer and inner leaflets, plus the\
-    symmetric and anti-symmetric variables <Field>_plus and <Field>_minus. This\
-    object serves as a constructor for the _plus and _minus variables.
+    """A Field_set contains four Fields: the outer and inner leaflets, plus\
+    the symmetric and anti-symmetric variables <Field>_plus and <Field>_minus.\
+    This object serves as a constructor for the _plus and _minus variables.
 
     Attributes
     ----------
@@ -592,8 +597,8 @@ class Field_set:
         inner  :  Field
             The inner leaflet Field.
         name  :  str
-            The name of this Field set, and the prefix that will be given to the\
-            _plus and _minus fields.
+            The name of this Field set, and the prefix that will be given to\
+            the _plus and _minus fields.
         parent  :  Membrane
             The Membrane object to which the Fields belong.
 
@@ -642,27 +647,29 @@ def run_nougat(polar, quantities):
     ----------
     height  :  Field_set
         The height (in z) of the outer and inner leaflets, as well as the\
-        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is the\
-        bilayer midplane. Z minus is the bilayer thickness. Heights may be\
+        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is\
+        the bilayer midplane. Z minus is the bilayer thickness. Heights may be\
         relative to some reference point on a protein or could be the absolute\
         height of the membrane in VMD.
     zzero  :  Field
-        The height (in z) of the interface between the outer and inner leaflet.\
-        "Z zero" is commonly thought to be equal to the bilayer midplane but\
-        this is not always the case, especially around inclusions.
+        The height (in z) of the interface between the outer and inner\
+        leaflet. "Z zero" is commonly thought to be equal to the bilayer\
+        midplane but this is not always the case, especially around inclusions.
     thickness  :  Field_set
-        The thickness of the outer and inner leaflets, as well as the symmetric\
-        and anti-symmetric variables "t plus" and "t minus." T plus is the\
-        average leaflet thickness and t minus is the leaflet thickness asymmetry.
+        The thickness of the outer and inner leaflets, as well as the\
+        symmetric and anti-symmetric variables "t plus" and "t minus." T plus\
+        is the average leaflet thickness and t minus is the leaflet thickness\
+        asymmetry.
     epsilon  :  Field
         An alternative measurement of leaflet thickness asymmetry, defined in\
         [Watson & Brown, PRL, 2012].
     mean_curvature  :  Field_set
-        The mean curvature (H) of the membrane outer and inner leaflets, as well as\
-        the symmetric/anti-symmetric variables "H plus" and "H minus".
+        The mean curvature (H) of the membrane outer and inner leaflets, as\
+        well as the symmetric/anti-symmetric variables "H plus" and "H minus".
     gaussian_curvature  :  Field_set
-        The Gaussian curvature (K) of the membrane outer and inner leaflets, as well\
-        as the symmetric/anti-symmetric variables "K plus" and "K minus".
+        The Gaussian curvature (K) of the membrane outer and inner leaflets,\
+        as well as the symmetric/anti-symmetric variables "K plus" and "K\
+        minus".
     """
     cwd = Path.cwd()  # TO-DO: change this so that path is supplied by user!
     todo_list = make_todo_list(quantities)
