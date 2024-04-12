@@ -32,7 +32,7 @@ class Membrane:
     to_analyze  :  list
         The list of quantities that the user has selected for analysis.
     grid_dims  :  dict
-        A dictionary that contains information about the grid dimensions used.\
+        Contains information about the grid dimensions used.\
         N1 is the number of bins in the first dimension (x/r) and d1 is the\
         distance between bin centers. N2 and d2 are similar, but along the\
         second dimension (y/theta). Nframes is the number of frames in the\
@@ -415,7 +415,8 @@ class Trajectory:
         parent : Field
             The Field to which this Trajectory belongs.
         frames : np.ndarray
-            ...
+            Contains data from one or multiple frames in an ndarray. Will be\
+            converted to Frame objects.
 
         Returns
         -------
@@ -423,9 +424,14 @@ class Trajectory:
 
         """
         self.parent = parent
-        self.frames = np.empty(len(frames), dtype=Frame)
-        for f in range(len(self.frames)):
-            self.frames[f] = Frame(self, f, frames[f])
+        assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray."
+        if len(np.shape(frames)) == 2:
+            self.frames = np.empty(1, dtype=Frame)
+            self.frames[0] = Frame(self, 0, frames)
+        elif len(np.shape(frames)) == 3:
+            for f in range(np.shape(frames)[0]):
+                self.frames = np.empty(np.shape(frames[0]), dtype=Frame)
+                self.frames[f] = Frame(self, f, frames[f, :, :])
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
@@ -457,7 +463,107 @@ class Frame:
         The Trajectory index at which this frame belongs.
     bins  :  np.ndarray
         The 2D array that contains either scalar or vector values.
+    scalar  :  bool
+        If True, scalar-valued bins. If False, 3-vector valued.
     """
+
+    def __init__(self, parent, index, bins):
+        """
+        Create a Frame object.
+
+        Parameters
+        ----------
+        parent : Trajectory
+            The Trajectory object to which this Frame belongs.
+        index : int
+            The index value of this frame in its parent Trajectory.
+        bins : ndarray
+            Binned data from one frame of a trajectory. Can contain scalar or \
+            3-vector values.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.parent = parent
+        self.index = index
+        assert isinstance(bins, np.ndarray), "bins must be a numpy ndarray."
+        assert np.shape(bins)[0] == self.parent.parent.parent.grid_dims["N1"]
+        assert np.shape(bins)[1] == self.parent.parent.parent.grid_dims["N2"]
+        if len(np.shape(bins)) == 2:
+            self.scalar = True
+            self.bins = np.empty(np.shape(bins), dtype=Bin)
+            for i in range(np.shape(bins)[0]):
+                for j in range(np.shape(bins)[1]):
+                    self.bins[i,j] = Bin(bins[i,j], (i, j))
+        elif len(np.shape(bins)) == 3:
+            self.scalar = False
+            self.bins = np.empty(np.shape(bins)[:, :, 0], dtype=Bin)
+            for i in range(np.shape(bins)[0]):
+                for j in range(np.shape(bins)[1]):
+                    self.bins[i,j] = Bin(self, bins[i, j, :], (i, j))
+
+    def __iter__(self):
+        """Iterate through all the Bins in the Frame."""
+        for i in range(np.shape(self.bins)[0]):
+            for j in range(np.shape(self.bins)[1]):
+                yield self.bins[i, j]
+
+
+class Bin:
+    """A Bin contains either a 1- or 3-vector in a 1D numpy ndarray.
+
+    Attributes
+    ----------
+    parent  :  Frame
+        The Frame object to which this bin belongs.
+    index  :  tuple
+        The index in the parent Frame (row, column) where this bin is located.
+    scalar  :  bool
+        If True, Bin contains scalar. If False, bin contains 3-vector.
+    value  :  ndarray
+        The scalar or 3-vector value stored in this bin.
+    """
+
+    def __init__(self, parent, value, index):
+        """
+        Create a Bin object.
+
+        Parameters
+        ----------
+        parent : Frame
+            The Frame object to which this bin belongs.
+        value : int, float, list, or ndarray
+            The scalar of 3-vector value to be stored.
+        index : tuple
+            The index in the parent Frame (row, column) where this bin is \
+            located.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.parent = parent
+        self.index = index
+        assert isinstance(value, (int, float, list, np.ndarray))
+        if isinstance(value, (int, float)):
+            self.scalar = True
+            self.value = np.array(value)
+        elif isinstance(value, (list, np.ndarray)):
+            self.scalar = False
+            self.value = np.array(value)
+            assert np.shape(self.value)[0] == 3
+            assert len(np.shape(self.value)) == 1
+
+    def __iter__(self):
+        """Iterate through all the values in the Bin."""
+        if self.scalar:
+            yield self.value
+        else:
+            for i in self.value:
+                yield i
 
 
 class Field_set:
@@ -521,12 +627,6 @@ class Field_set:
     def __repr__(self):
         """Say your name, rather than your address."""
         return self.name
-
-
-class Vector_field(Field):
-    """Not implemented yet."""
-
-    pass
 
 
 def run_nougat(polar, quantities):
