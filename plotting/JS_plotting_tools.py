@@ -415,21 +415,21 @@ def make_paper_writing_group_plot(comparison):
             sysname = system
         fname = path.joinpath(sysname + nougat_values, "average")
         zone = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
-        zonestd = np.load(fname.joinpath("height", "zone.avg_over_theta.std.npy")) / np.sqrt(30)
+        zonestd = np.load(fname.joinpath("height", "zone.avg_over_theta.std.npy"))
         ztwo = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
-        ztwostd = np.load(fname.joinpath("height", "ztwo.avg_over_theta.std.npy")) / np.sqrt(30)
+        ztwostd = np.load(fname.joinpath("height", "ztwo.avg_over_theta.std.npy"))
         tilde_t = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
-        tilde_tstd = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_tstd = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.std.npy"))
         epst0 = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
-        epst0std = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.std.npy")) / np.sqrt(30)
+        epst0std = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.std.npy"))
         tilde_eps2 = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
-        tilde_eps2std = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_eps2std = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.std.npy"))
         tilde_Hplus2 = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
-        tilde_Hplus2std = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_Hplus2std = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.std.npy"))
         corr_Hplus_eps = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
-        corr_Hplus_epsstd = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.std.npy")) / np.sqrt(30)
+        corr_Hplus_epsstd = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.std.npy"))
         epsHplus = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
-        epsHplusstd = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy")) / np.sqrt(30)
+        epsHplusstd = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
 
         # figure out what the x axis values should be
         tcl_output = np.genfromtxt(path.joinpath(sysname + nougat_values, "tcl_output", "height", "zone.dat"),
@@ -552,7 +552,7 @@ def make_paper_writing_group_plot(comparison):
     lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
     # lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
-    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Percent Mismatch')
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Relative Mismatch')
 
     fig.tight_layout()
     plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight')
@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
     # plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    #make_paper_writing_group_plot("unsat_elas")
-    #make_paper_writing_group_plot("sat_elas")
+    make_paper_writing_group_plot("unsat_elas")
+    make_paper_writing_group_plot("sat_elas")
     # make_paper_writing_group_plot("elastic")
-    compare_APLs(["posres", "APL_0.6", "refcoord_scaling_no", "elasticNVT"],["/home/js2746/gromacs_cell_artifact/posres/APL_0.6", "/home/js2746/gromacs_cell_artifact/elastic/NPT/APL_0.6", "/home/js2746/gromacs_cell_artifact/posres/refcoord_scaling/no", "/home/js2746/gromacs_cell_artifact/elastic/NVT/APL_0.6"])
+    # compare_APLs(["posres", "APL_0.6", "refcoord_scaling_no", "elasticNVT"],["/home/js2746/gromacs_cell_artifact/posres/APL_0.6", "/home/js2746/gromacs_cell_artifact/elastic/NPT/APL_0.6", "/home/js2746/gromacs_cell_artifact/posres/refcoord_scaling/no", "/home/js2746/gromacs_cell_artifact/elastic/NVT/APL_0.6"])
