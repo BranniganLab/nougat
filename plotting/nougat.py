@@ -150,7 +150,7 @@ class Membrane:
             The correlation between Fields 1 and 2.
         """
         together = calc_avg_over_time(field1 * field2)
-        apart = field1.avg * field2.avg
+        apart = calc_avg_over_time(field1) * calc_avg_over_time(field2)
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
 
@@ -230,29 +230,22 @@ class Field:
             assert leaflet is not None, "leaflet name is required in order to use a path"
             self.traj = Trajectory(self, self._parse_tcl_output(data, quantity, leaflet))
         elif isinstance(data, np.ndarray):
-            self.traj = Trajectory(self, data)
             if len(np.shape(data)) == 2:
-                if self.parent.grid_dims["N1"] is not None:
-                    assert self.parent.grid_dims["N1"] == np.shape(data)[0], err_msg
-                    assert self.parent.grid_dims["N2"] == np.shape(data)[1], err_msg
-                else:
-                    self.parent.grid_dims["N1"] = np.shape(data)[0]
-                    self.parent.grid_dims["N2"] = np.shape(data)[1]
-            elif len(np.shape(data)) == 3:
-                if self.parent.grid_dims["N1"] is not None:
-                    assert self.parent.grid_dims["N1"] == np.shape(data)[1], err_msg
-                    assert self.parent.grid_dims["N2"] == np.shape(data)[2], err_msg
-                else:
-                    self.parent.grid_dims["N1"] = np.shape(data)[1]
-                    self.parent.grid_dims["N2"] = np.shape(data)[2]
-                    self.parent.grid_dims["Nframes"] = np.shape(data)[0]
+                data = data[None, :, :]
+            assert len(np.shape(data)) == 3, "A trajectory must have 3 dimensions."
+            if self.parent.grid_dims["N1"] is not None:
+                assert self.parent.grid_dims["N1"] == np.shape(data)[1], err_msg
+                assert self.parent.grid_dims["N2"] == np.shape(data)[2], err_msg
             else:
-                raise Exception("Field Trajectory must contain a 2- or 3D array.")
+                self.parent.grid_dims["N1"] = np.shape(data)[1]
+                self.parent.grid_dims["N2"] = np.shape(data)[2]
+                self.parent.grid_dims["Nframes"] = np.shape(data)[0]
+            self.traj = Trajectory(self, data)
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
 
     def __iter__(self):
-        """Return self so that Membrane.active_list can be looped easily."""
+        """Return self so that Membrane.active can be looped easily."""
         return self
 
     def __str__(self):
@@ -427,8 +420,8 @@ class Trajectory:
             self.frames = np.empty(1, dtype=Frame)
             self.frames[0] = Frame(self, 0, frames)
         elif len(np.shape(frames)) == 3:
+            self.frames = np.empty(np.shape(frames[0]), dtype=Frame)
             for f in range(np.shape(frames)[0]):
-                self.frames = np.empty(np.shape(frames[0]), dtype=Frame)
                 self.frames[f] = Frame(self, f, frames[f, :, :])
 
     def __len__(self):
@@ -450,8 +443,7 @@ class Trajectory:
 
 
 class Frame:
-    """A Frame is a 2D array of binned data. It can contain either scalars or\
-        vectors in each bin, depending on the type of data in the Field.
+    """A Frame is a 2D array of binned data.
 
     Attributes
     ----------
@@ -461,8 +453,6 @@ class Frame:
         The Trajectory index at which this frame belongs.
     bins  :  np.ndarray
         The 2D array that contains either scalar or vector values.
-    scalar  :  bool
-        If True, scalar-valued bins. If False, 3-vector valued.
     """
 
     def __init__(self, parent, index, bins):
@@ -489,79 +479,13 @@ class Frame:
         assert isinstance(bins, np.ndarray), "bins must be a numpy ndarray."
         assert np.shape(bins)[0] == self.parent.parent.parent.grid_dims["N1"]
         assert np.shape(bins)[1] == self.parent.parent.parent.grid_dims["N2"]
-        if len(np.shape(bins)) == 2:
-            self.scalar = True
-            self.bins = np.empty(np.shape(bins), dtype=Bin)
-            for i in range(np.shape(bins)[0]):
-                for j in range(np.shape(bins)[1]):
-                    self.bins[i, j] = Bin(bins[i, j], (i, j))
-        elif len(np.shape(bins)) == 3:
-            self.scalar = False
-            self.bins = np.empty(np.shape(bins)[:, :, 0], dtype=Bin)
-            for i in range(np.shape(bins)[0]):
-                for j in range(np.shape(bins)[1]):
-                    self.bins[i,j] = Bin(self, bins[i, j, :], (i, j))
+        self.bins = bins
 
     def __iter__(self):
         """Iterate through all the Bins in the Frame."""
         for i in range(np.shape(self.bins)[0]):
             for j in range(np.shape(self.bins)[1]):
                 yield self.bins[i, j]
-
-
-class Bin:
-    """A Bin contains either a 1- or 3-vector in a 1D numpy ndarray.
-
-    Attributes
-    ----------
-    parent  :  Frame
-        The Frame object to which this bin belongs.
-    index  :  tuple
-        The index in the parent Frame (row, column) where this bin is located.
-    scalar  :  bool
-        If True, Bin contains scalar. If False, bin contains 3-vector.
-    value  :  ndarray
-        The scalar or 3-vector value stored in this bin.
-    """
-
-    def __init__(self, parent, value, index):
-        """
-        Create a Bin object.
-
-        Parameters
-        ----------
-        parent : Frame
-            The Frame object to which this bin belongs.
-        value : int, float, list, or ndarray
-            The scalar of 3-vector value to be stored.
-        index : tuple
-            The index in the parent Frame (row, column) where this bin is \
-            located.
-
-        Returns
-        -------
-        None.
-
-        """
-        self.parent = parent
-        self.index = index
-        assert isinstance(value, (int, float, list, np.ndarray))
-        if isinstance(value, (int, float)):
-            self.scalar = True
-            self.value = np.array(value)
-        elif isinstance(value, (list, np.ndarray)):
-            self.scalar = False
-            self.value = np.array(value)
-            assert np.shape(self.value)[0] == 3
-            assert len(np.shape(self.value)) == 1
-
-    def __iter__(self):
-        """Iterate through all the values in the Bin."""
-        if self.scalar:
-            yield self.value
-        else:
-            for i in self.value:
-                yield i
 
 
 class Field_set:
