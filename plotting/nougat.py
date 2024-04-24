@@ -261,6 +261,10 @@ class Field:
         """Say your name, rather than your address."""
         return self.name
 
+    def __array__(self):
+        """Make the Trajectory accessible to numpy."""
+        return self.traj
+
     def _parse_tcl_output(self, path, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
