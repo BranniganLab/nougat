@@ -472,20 +472,14 @@ class Trajectory:
         """Use numpy to add things together."""
         if isinstance(other, Trajectory):
             return self.frames + other.frames
-        elif isinstance(other, np.ndarray):
-            return self.frames + other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.frames + other
         else:
             return NotImplemented
 
     def __radd__(self, other):
         """Use numpy to add things together."""
-        if isinstance(other, np.ndarray):
-            return self.frames + other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        if isinstance(other, (np.ndarray, int, float)):
             return self.frames + other
         else:
             return NotImplemented
@@ -494,10 +488,7 @@ class Trajectory:
         """Use numpy to subtract things."""
         if isinstance(other, Trajectory):
             return self.frames - other.frames
-        elif isinstance(other, np.ndarray):
-            return self.frames - other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.frames - other
         else:
             return NotImplemented
@@ -506,10 +497,7 @@ class Trajectory:
         """Use numpy to subtract things."""
         if isinstance(other, Trajectory):
             return other.frames - self.frames
-        elif isinstance(other, np.ndarray):
-            return other - self.frames
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return other - self.frames
         else:
             return NotImplemented
@@ -518,20 +506,14 @@ class Trajectory:
         """Use numpy to multiply things together."""
         if isinstance(other, Trajectory):
             return self.frames * other.frames
-        elif isinstance(other, np.ndarray):
-            return self.frames * other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.frames * other
         else:
             return NotImplemented
 
     def __rmul__(self, other):
         """Use numpy to multiply things together."""
-        if isinstance(other, np.ndarray):
-            return self.frames * other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        if isinstance(other, (np.ndarray, int, float)):
             return self.frames * other
         else:
             return NotImplemented
@@ -540,10 +522,7 @@ class Trajectory:
         """Use numpy to divide things."""
         if isinstance(other, Trajectory):
             return self.frames / other.frames
-        elif isinstance(other, np.ndarray):
-            return self.frames / other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.frames, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.frames / other
         else:
             return NotImplemented
@@ -622,20 +601,14 @@ class Frame:
         """Use numpy to add things together."""
         if isinstance(other, Frame):
             return self.bins + other.bins
-        elif isinstance(other, np.ndarray):
-            return self.bins + other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.bins + other
         else:
             return NotImplemented
 
     def __radd__(self, other):
         """Use numpy to add things together."""
-        if isinstance(other, np.ndarray):
-            return self.bins + other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        if isinstance(other, (np.ndarray, int, float)):
             return self.bins + other
         else:
             return NotImplemented
@@ -644,10 +617,7 @@ class Frame:
         """Use numpy to subtract things."""
         if isinstance(other, Frame):
             return self.bins - other.bins
-        elif isinstance(other, np.ndarray):
-            return self.bins - other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.bins - other
         else:
             return NotImplemented
@@ -656,10 +626,7 @@ class Frame:
         """Use numpy to subtract things."""
         if isinstance(other, Frame):
             return other.bins - self.bins
-        elif isinstance(other, np.ndarray):
-            return other - self.bins
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return other - self.bins
         else:
             return NotImplemented
@@ -668,20 +635,14 @@ class Frame:
         """Use numpy to multiply things together."""
         if isinstance(other, Frame):
             return self.bins * other.bins
-        elif isinstance(other, np.ndarray):
-            return self.bins * other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.bins * other
         else:
             return NotImplemented
 
     def __rmul__(self, other):
         """Use numpy to multiply things together."""
-        if isinstance(other, np.ndarray):
-            return self.bins * other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        if isinstance(other, (np.ndarray, int, float)):
             return self.bins * other
         else:
             return NotImplemented
@@ -690,10 +651,7 @@ class Frame:
         """Use numpy to divide things."""
         if isinstance(other, Frame):
             return self.bins / other.bins
-        elif isinstance(other, np.ndarray):
-            return self.bins / other
-        elif isinstance(other, (int, float)):
-            other = np.full_like(self.bins, other)
+        elif isinstance(other, (np.ndarray, int, float)):
             return self.bins / other
         else:
             return NotImplemented
