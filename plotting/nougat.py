@@ -331,7 +331,7 @@ class Field:
         return field_data
 
     # BASIC MATH MAGIC METHODS BELOW #
-    # These make it so that you can do math on the field object, rather than\
+    # These make it so that you can do math on the Field object, rather than\
     # having to specify the object's .traj attribute every time.
 
     def __add__(self, other):
@@ -356,6 +356,13 @@ class Field:
             return self.traj - other.traj
         elif isinstance(other, (np.ndarray, int, float)):
             return self.traj - other
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, (np.ndarray, int, float)):
+            return other - self.traj
         else:
             return NotImplemented
 
@@ -465,8 +472,8 @@ class Trajectory:
             return NotImplemented
 
     # BASIC MATH MAGIC METHODS BELOW #
-    # These make it so that you can do math on the field object, rather than\
-    # having to specify the object's .traj attribute every time.
+    # These make it so that you can do math on the Trajectory object, rather\
+    # than having to specify the object's .frames attribute every time.
 
     def __add__(self, other):
         """Use numpy to add things together."""
@@ -594,8 +601,8 @@ class Frame:
         return self.bins
 
     # BASIC MATH MAGIC METHODS BELOW #
-    # These make it so that you can do math on the field object, rather than\
-    # having to specify the object's .traj attribute every time.
+    # These make it so that you can do math on the frame object, rather than\
+    # having to specify the object's .bins attribute every time.
 
     def __add__(self, other):
         """Use numpy to add things together."""
