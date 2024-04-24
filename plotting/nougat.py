@@ -7,6 +7,7 @@ Created on Mon Jul 17 10:54:23 2023.
 import argparse
 from pathlib import Path
 import numpy as np
+import warnings
 from utils import calc_avg_over_time, make_todo_list
 
 
@@ -150,7 +151,7 @@ class Membrane:
             The correlation between Fields 1 and 2.
         """
         together = calc_avg_over_time(field1 * field2)
-        apart = calc_avg_over_time(field1) * calc_avg_over_time(field2)
+        apart = field1.traj.avg() * field2.traj.avg()
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
 
@@ -230,7 +231,11 @@ class Field:
             assert leaflet is not None, "leaflet name is required in order to use a path"
             self.traj = Trajectory(self, self._parse_tcl_output(data, quantity, leaflet))
         elif isinstance(data, np.ndarray):
+            if len(np.shape(data)) == 1:
+                # this is a Trajectory object
+                data = np.stack(data)
             if len(np.shape(data)) == 2:
+                # this is a single frame
                 data = data[None, :, :]
             assert len(np.shape(data)) == 3, "A trajectory must have 3 dimensions."
             if self.parent.grid_dims["N1"] is not None:
@@ -420,13 +425,17 @@ class Trajectory:
             self.frames = np.empty(1, dtype=Frame)
             self.frames[0] = Frame(self, 0, frames)
         elif len(np.shape(frames)) == 3:
-            self.frames = np.empty(np.shape(frames[0]), dtype=Frame)
+            self.frames = np.empty(np.shape(frames)[0], dtype=Frame)
             for f in range(np.shape(frames)[0]):
                 self.frames[f] = Frame(self, f, frames[f, :, :])
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
         return np.shape(self.frames)[0]
+
+    def __array__(self):
+        """Return the frames to numpy."""
+        return self.frames
 
     def __iter__(self):
         """Iterate through all the Frames in the Trajectory."""
@@ -435,11 +444,113 @@ class Trajectory:
 
     def __str__(self):
         """Print out your length and which Field you belong to."""
-        pass
+        return self.parent.name
 
     def __repr__(self):
         """Print out your length and which Field you belong to."""
-        pass
+        return self.frames
+
+    def avg(self):
+        """Calculate the trajectory average (over time)."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            avg = np.nanmean(self.frames, axis=0)
+            return avg
+
+    def __getitem__(self, item):
+        """Make Trajectory object subscriptable."""
+        if isinstance(item, int):
+            return self.frames[item]
+        else:
+            return NotImplemented
+
+    # BASIC MATH MAGIC METHODS BELOW #
+    # These make it so that you can do math on the field object, rather than\
+    # having to specify the object's .traj attribute every time.
+
+    def __add__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, Trajectory):
+            return self.frames + other.frames
+        elif isinstance(other, np.ndarray):
+            return self.frames + other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, np.ndarray):
+            return self.frames + other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames + other
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, Trajectory):
+            return self.frames - other.frames
+        elif isinstance(other, np.ndarray):
+            return self.frames - other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames - other
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, Trajectory):
+            return other.frames - self.frames
+        elif isinstance(other, np.ndarray):
+            return other - self.frames
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return other - self.frames
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        """Use numpy to multiply things together."""
+        if isinstance(other, Trajectory):
+            return self.frames * other.frames
+        elif isinstance(other, np.ndarray):
+            return self.frames * other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Use numpy to multiply things together."""
+        if isinstance(other, np.ndarray):
+            return self.frames * other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames * other
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
+        """Use numpy to divide things."""
+        if isinstance(other, Trajectory):
+            return self.frames / other.frames
+        elif isinstance(other, np.ndarray):
+            return self.frames / other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.frames, other)
+            return self.frames / other
+        else:
+            return NotImplemented
+
+    def __pow__(self, exponent):
+        """Use numpy's power() on the array stored in this Field."""
+        return np.power(self.frames, exponent)
 
 
 class Frame:
@@ -486,6 +597,110 @@ class Frame:
         for i in range(np.shape(self.bins)[0]):
             for j in range(np.shape(self.bins)[1]):
                 yield self.bins[i, j]
+
+    def __getitem__(self, item):
+        """Make Frame object subscriptable."""
+        if isinstance(item, tuple):
+            assert len(item) == 2
+            return self.bins[item[0], item[1]]
+        else:
+            return NotImplemented
+
+    def __str__(self):
+        """Print out the bins numpy style."""
+        return str(self.bins)
+
+    def __array__(self):
+        """Make the bins accessible to numpy easily."""
+        return self.bins
+
+    # BASIC MATH MAGIC METHODS BELOW #
+    # These make it so that you can do math on the field object, rather than\
+    # having to specify the object's .traj attribute every time.
+
+    def __add__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, Frame):
+            return self.bins + other.bins
+        elif isinstance(other, np.ndarray):
+            return self.bins + other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        """Use numpy to add things together."""
+        if isinstance(other, np.ndarray):
+            return self.bins + other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins + other
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, Frame):
+            return self.bins - other.bins
+        elif isinstance(other, np.ndarray):
+            return self.bins - other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins - other
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        """Use numpy to subtract things."""
+        if isinstance(other, Frame):
+            return other.bins - self.bins
+        elif isinstance(other, np.ndarray):
+            return other - self.bins
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return other - self.bins
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        """Use numpy to multiply things together."""
+        if isinstance(other, Frame):
+            return self.bins * other.bins
+        elif isinstance(other, np.ndarray):
+            return self.bins * other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Use numpy to multiply things together."""
+        if isinstance(other, np.ndarray):
+            return self.bins * other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins * other
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
+        """Use numpy to divide things."""
+        if isinstance(other, Frame):
+            return self.bins / other.bins
+        elif isinstance(other, np.ndarray):
+            return self.bins / other
+        elif isinstance(other, (int, float)):
+            other = np.full_like(self.bins, other)
+            return self.bins / other
+        else:
+            return NotImplemented
+
+    def __pow__(self, exponent):
+        """Use numpy's power() on the array stored in this Field."""
+        return np.power(self.bins, exponent)
 
 
 class Field_set:
@@ -595,26 +810,26 @@ def run_nougat(polar, quantities):
         as well as the symmetric/anti-symmetric variables "K plus" and "K\
         minus".
     """
-    cwd = Path.cwd()  # TO-DO: change this so that path is supplied by user!
+    cwd = Path("/home/js2746/local_deformations/DTPC_polar_10_30_0_-1_1")  # TO-DO: change this so that path is supplied by user!
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar, todo_list)
-    if "height" in m.todo_list:
+    if "height" in m.to_analyze:
         zone = m.create_Field(cwd, "z_one", "height", "zone")
         ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(ztwo, zone, "z")
-    if "thickness" in m.todo_list:
+    if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    print(thickness.minus.traj[0, 0, 0])
-    print(tone.traj)
-    print(m.active_list)
-    print(m)
-    for f in m:
-        print(f)
+    zp = (height.outer.traj + height.inner.traj) / 2
+    #zp = np.full_like(height.outer.traj[0].bins, 1)
+    #print(zp)
+    test = zp - height.plus.traj
+    print(test)
+
     '''
     # make necessary folders
     create_outfile_directories(cwd)
