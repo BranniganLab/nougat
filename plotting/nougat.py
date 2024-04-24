@@ -21,7 +21,7 @@ class Membrane:
 
     Attributes
     ----------
-    active  :  list
+    children  :  list
         The list of all Fields and Field_sets that have been computed. This\
         list is updated any time Fields are turned into Field_sets so that\
         there is no duplication.
@@ -54,7 +54,7 @@ class Membrane:
         t0  :  float
             The equilibrium thickness of the membrane.
         """
-        self.active = []
+        self.children = []
         self.polar = polar
         self.to_analyze = to_analyze
         self.composition = composition
@@ -68,8 +68,8 @@ class Membrane:
         }
 
     def __iter__(self):
-        """Iterate through active_list."""
-        for item in self.active:
+        """Iterate through children."""
+        for item in self.children:
             if isinstance(item, Field):
                 yield item
             elif isinstance(item, Field_set):
@@ -99,9 +99,9 @@ class Membrane:
 
         """
         new_Field_set = Field_set(outer, inner, name, self)
-        self.active.remove(outer)
-        self.active.remove(inner)
-        self.active.append(new_Field_set)
+        self.children.remove(outer)
+        self.children.remove(inner)
+        self.children.append(new_Field_set)
         return new_Field_set
 
     def create_Field(self, path, name, quantity=None, leaflet=None):
@@ -131,7 +131,7 @@ class Membrane:
 
         """
         new_Field = Field(path, name, self, quantity, leaflet)
-        self.active.append(new_Field)
+        self.children.append(new_Field)
         return new_Field
 
     def measure_correlation(self, field1, field2):
@@ -155,7 +155,7 @@ class Membrane:
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
 
-    def measure_rms_of_field(self, field, eq2=None):
+    def measure_rms(self, field, eq2=None):
         """
         Measure the root-mean-squared value of some Field. Optionally, supply\
         a squared equilibrium value in order to generate a fold-enrichment\
@@ -250,7 +250,7 @@ class Field:
             raise ValueError("data must either be a numpy ndarray or a path")
 
     def __iter__(self):
-        """Return self so that Membrane.active can be looped easily."""
+        """Return self so that Membrane.children can be looped easily."""
         return self
 
     def __str__(self):
@@ -454,7 +454,7 @@ class Trajectory:
             yield f
 
     def __str__(self):
-        """Print out all the trajectory values."""
+        """Print out all the Frames in the Trajectory."""
         for frame in self:
             print(frame)
         return ""
