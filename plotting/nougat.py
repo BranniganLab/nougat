@@ -454,11 +454,13 @@ class Trajectory:
             yield f
 
     def __str__(self):
-        """Print out your length and which Field you belong to."""
-        return self.parent.name
+        """Print out all the trajectory values."""
+        for frame in self:
+            print(frame)
+        return ""
 
     def __repr__(self):
-        """Print out your length and which Field you belong to."""
+        """Return the .frames attribute."""
         return self.frames
 
     def avg(self):
@@ -793,11 +795,7 @@ def run_nougat(polar, quantities):
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    zp = (height.outer.traj + height.inner.traj) / 2
-    #zp = np.full_like(height.outer.traj[0].bins, 1)
-    #print(zp)
-    test = zp - height.plus.traj
-    print(test)
+    print(height.outer.traj)
 
     '''
     # make necessary folders
