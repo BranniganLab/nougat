@@ -8,7 +8,8 @@ import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-from utils import calc_avg_over_time, make_todo_list
+import matplotlib.pyplot as plt
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker
 
 
 class Membrane:
@@ -33,6 +34,8 @@ class Membrane:
         distance between bin centers. N2 and d2 are similar, but along the\
         second dimension (y/theta). Nframes is the number of frames in the\
         trajectory.
+    polar  :  bool
+        If True, use cylindrical coordinates.
     composition  :  str
         The composition of the membrane.
     t0  :  float
@@ -133,6 +136,41 @@ class Membrane:
         new_Field = Field(path, name, self, quantity, leaflet)
         self.children.append(new_Field)
         return new_Field
+
+    def plot2d(self, obj):
+        """
+        Plot a two-dimensional heatmap. If Frame supplied, plots Frame values.\
+        If Field or Trajectory supplied, plots average over time.
+
+        Parameters
+        ----------
+        obj : Field, Trajectory, Frame
+            The object whose data you want to plot.
+
+        Returns
+        -------
+        None.
+
+        """
+        if isinstance(obj, Field):
+            data = obj.traj.avg()
+        elif isinstance(obj, Trajectory):
+            data = obj.avg()
+        elif isinstance(obj, Frame):
+            data = obj.bins
+        elif isinstance(obj, np.ndarray):
+            if len(np.shape(obj)) == 3:
+                data = calc_avg_over_time(obj)
+            elif len(np.shape(obj)) == 2:
+                data = obj
+            else:
+                raise Exception("This is not a 2D or 3D array.")
+        else:
+            raise Exception("I don't recognize this dtype")
+
+        hmap_dims = bin_prep(self.grid_dims, self.polar)
+        fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+        plt.show()
 
     def measure_correlation(self, field1, field2):
         """
@@ -795,7 +833,9 @@ def run_nougat(polar, quantities):
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    print(height.outer.traj)
+    m.plot2d(thickness.plus)
+
+    return m
 
     '''
     # make necessary folders
@@ -836,11 +876,12 @@ def run_nougat(polar, quantities):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
+    parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
     parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
     args = parser.parse_args()
 
-    run_nougat(args.polar, args.quantities)
+    m = run_nougat(args.polar, args.quantities)
 
     print("Thank you for using nougat!")
