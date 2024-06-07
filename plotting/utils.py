@@ -539,7 +539,7 @@ def plot_maker(dims, data, protein, quant, polar):
 
     Returns
     -------
-    None.
+    matplotlib figure and axes objects.
 
     """
     dim1vals, dim2vals = dims
