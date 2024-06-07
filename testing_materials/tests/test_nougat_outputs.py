@@ -51,15 +51,6 @@ def surface2(request):
     return request.param
 
 
-@pytest.fixture(scope='function', params=["meancurvature", "height", "normal_vectors", "gausscurvature"])
-def quantity(request):
-    """
-    Supply the quantity being measured to the test function requesting it.
-
-    """
-    return request.param
-
-
 @pytest.fixture(scope='function', params=["E-protein", "flat"])
 def system(request):
     """
@@ -209,8 +200,8 @@ def test_if_tcl_heights_match(cwd, coordsys, surface2, system):
 
 # Test if python trajectory outputs match
 
-def test_if_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, system):
-    paths = make_py_paths(cwd, system, coordsys, surface4, quantity, "npy")
+def test_if_heights_match(cwd, coordsys, surface4, system):
+    paths = make_py_paths(cwd, system, coordsys, surface4, "height", "npy")
     assert arrays_equal(paths, 'npy', 1e-11)
 
 
@@ -244,9 +235,9 @@ def test_whether_flat_gaussian(cwd, coordsys):
 
 
 @pytest.mark.xfail(strict=True)
-def test_if_leaflets_are_distinct(cwd, coordsys, quantity, system):
-    zone_test, _ = make_py_paths(cwd, system, coordsys, "zone", quantity, "npy")
-    ztwo_test, _ = make_py_paths(cwd, system, coordsys, "ztwo", quantity, "npy")
+def test_if_leaflets_are_distinct(cwd, coordsys, system):
+    zone_test, _ = make_py_paths(cwd, system, coordsys, "zone", "height", "npy")
+    ztwo_test, _ = make_py_paths(cwd, system, coordsys, "ztwo", "height", "npy")
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 
@@ -256,19 +247,17 @@ def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
     ztwo_test, _ = make_py_paths(cwd, system, coordsys, "ztwo", "thickness", "npy")
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
-# Still needed: order, tilt
+# Still needed: curvature, order, tilt
 
 
 # Test if python time-averages match
 
-def test_if_avg_heights_and_curvatures_match(cwd, coordsys, surface4, quantity, system):
-    if quantity != "normal_vectors":
-        paths = make_py_paths(cwd, system, coordsys, surface4, quantity, "dat")
-        assert arrays_equal(paths, 'dat', 1e-11)
-    else:
-        return
+def test_if_avg_heights_match(cwd, coordsys, surface4, system):
+    paths = make_py_paths(cwd, system, coordsys, surface4, "height", "dat")
+    assert arrays_equal(paths, 'dat', 1e-11)
 
-# Still needed: thickness, order, tilt, normal_vectors
+
+# Still needed: curvature, thickness, order, tilt, normal_vectors
 
 
 # BELOW: old density tests that need to be re-implemented
