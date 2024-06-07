@@ -205,7 +205,7 @@ HETATM  203 SURF C1  X 203     -65.2   -17.47   -1.139 22.00  6.00      zone
 HETATM  204 SURF C1  X 204     -47.73  -47.73   -3.149 22.00  7.00      zone  
 HETATM  205 SURF C1  X 205     -17.47  -65.2    -3.234 22.00  8.00      zone  
 HETATM  206 SURF C1  X 206      17.47  -65.2    -2.146 22.00  9.00      zone  
-HETATM  207 SURF C1  X 207      47.73  -47.73   -1.282 22.00 10.00      zone  
+HETATM  207 SURF C1  X 207      47.73  -47.73   -1.281 22.00 10.00      zone  
 HETATM  208 SURF C1  X 208      65.2   -17.47   -2.096 22.00 11.00      zone  
 HETATM  209 SURF C1  X   1       3.494  13.04   -5.86   4.00  2.00      ztwo  
 HETATM  210 SURF C1  X   2      -3.494  13.04  -10.62   4.00  3.00      ztwo  
@@ -347,7 +347,7 @@ HETATM  345 SURF C1  X 137      32.88  -32.88  -11.352 15.00 10.00      ztwo
 HETATM  346 SURF C1  X 138      44.916 -12.035 -10.973 15.00 11.00      ztwo  
 HETATM  347 SURF C1  X 139      47.813  12.812 -11.482 16.00  0.00      ztwo  
 HETATM  348 SURF C1  X 140      35.002  35.002 -12.106 16.00  1.00      ztwo  
-HETATM  349 SURF C1  X 141      12.812  47.813 -14.21  16.00  2.00      ztwo  
+HETATM  349 SURF C1  X 141      12.812  47.813 -14.209 16.00  2.00      ztwo  
 HETATM  350 SURF C1  X 142     -12.812  47.813 -15.262 16.00  3.00      ztwo  
 HETATM  351 SURF C1  X 143     -35.002  35.002 -13.718 16.00  4.00      ztwo  
 HETATM  352 SURF C1  X 144     -47.813  12.812 -11.319 16.00  5.00      ztwo  
@@ -673,7 +673,7 @@ HETATM  671 SURF C1  X  20      -5.823  21.733  -7.402  7.00  3.00      zplu
 HETATM  672 SURF C1  X  21     -15.91   15.91   -8.47   7.00  4.00      zplu  
 HETATM  673 SURF C1  X  22     -21.733   5.823  -1.868  7.00  5.00      zplu  
 HETATM  674 SURF C1  X  23     -21.733  -5.823  -4.511  7.00  6.00      zplu  
-HETATM  675 SURF C1  X  24     -15.91  -15.91   -2.677  7.00  7.00      zplu  
+HETATM  675 SURF C1  X  24     -15.91  -15.91   -2.678  7.00  7.00      zplu  
 HETATM  676 SURF C1  X  25      -5.823 -21.733  -3.805  7.00  8.00      zplu  
 HETATM  677 SURF C1  X  26       5.823 -21.733  -2.68   7.00  9.00      zplu  
 HETATM  678 SURF C1  X  27      15.91  -15.91   -2.582  7.00 10.00      zplu  
@@ -844,7 +844,7 @@ HETATM  842 SURF C1  X 191     -62.302 -16.694  -6.773 21.00  6.00      zplu
 HETATM  843 SURF C1  X 192     -45.608 -45.608  -8.062 21.00  7.00      zplu  
 HETATM  844 SURF C1  X 193     -16.694 -62.302  -8.916 21.00  8.00      zplu  
 HETATM  845 SURF C1  X 194      16.694 -62.302  -7.788 21.00  9.00      zplu  
-HETATM  846 SURF C1  X 195      45.608 -45.608  -7.111 21.00 10.00      zplu  
+HETATM  846 SURF C1  X 195      45.608 -45.608  -7.11  21.00 10.00      zplu  
 HETATM  847 SURF C1  X 196      62.302 -16.694  -7.242 21.00 11.00      zplu  
 HETATM  848 SURF C1  X 197      65.2    17.47   -6.936 22.00  0.00      zplu  
 HETATM  849 SURF C1  X 198      47.73   47.73   -7.83  22.00  1.00      zplu  

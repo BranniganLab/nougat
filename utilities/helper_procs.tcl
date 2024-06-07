@@ -826,10 +826,9 @@ proc polarAreaWarning {d1 N1 min d2} {
   
 proc calculateReferenceHeight {configDict frm} {
     if {[dict get $configDict reference_point] ne "NULL"} {
-        set ref_bead [atomselect top [dict get $configDict reference_point] frame $frm]
-        set ref_height [$ref_bead get z]
-        $ref_bead delete
-        set ref_height [vecmean $ref_height]
+        set ref_sel [atomselect top [dict get $configDict reference_point] frame $frm]
+        set ref_height [lindex [measure center $ref_sel] 2]
+        $ref_sel delete
     } else {
         set ref_height "NULL"
     }
@@ -1653,7 +1652,9 @@ proc run_qwrap {wrap_sel inclusion_sel} {
     if {$inclusion_sel ne "NULL"} {
         qwrap compound beta center $inclusion_sel 
     }
-    qwrap compound beta center $wrap_sel
+    if {$inclusion_sel ne $wrap_sel} {
+        qwrap compound beta center $wrap_sel
+    }
 
     puts "run_qwrap finished!"
 }
@@ -1663,20 +1664,12 @@ proc run_qwrap {wrap_sel inclusion_sel} {
 ;# within 5 angstroms of the pore center
 ;# within 30 angstroms of protein BB resid 30 (upper pore-lining residue)
 proc pore_sorter_custom {frm species inc} {
-    
-    ;# define pore center
-    set sel [atomselect top "name BB and resid 30" frame $frm]
-    set com [measure center $sel]
-    set x [lindex $com 0]
-    set y [lindex $com 1]
-    $sel delete
-
     ;# "same resid as" doesn't work and "same residue as" has no meaning in CG trajs,
     ;# so have to do this in two steps
     if {$inc eq "5x29"} {
-        set porebeads [atomselect top "(resname $species and within 12 of (name BB and resid 30)) or (resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25))" frame $frm]
+        set porebeads [atomselect top "(resname $species and within 12 of (name BB and resid 30)) or (resname $species and ((x*x+y*y) <= 25))" frame $frm]
     } elseif {$inc eq "7k3g"} {
-        set porebeads [atomselect top "resname $species and ((x-$x)*(x-$x)+(y-$y)*(y-$y) <= 25)" frame $frm]
+        set porebeads [atomselect top "resname $species and (x*x+y*y <= 25)" frame $frm]
     }
     set badresids [lsort -unique [$porebeads get resid]]
     $porebeads delete

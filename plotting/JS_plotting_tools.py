@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 import os
+from pathlib import Path
 from utils import *
 
 sys_dict = {
@@ -377,6 +378,14 @@ def make_paper_writing_group_plot(comparison):
         sys_list = ["COMtiltspin", "new_gmx_pos"]
         nougat_values = "_polar_10_10_0_-1_2/npy/"
         path = "/home/js2746/Bending/PC/whole_mols/5x29/"
+    elif comparison == "sat_elas":
+        sys_list = ["DTPC", "DLPC", "DPPC", "DBPC", "DXPC"]
+        nougat_values = "_polar_10_30_0_-1_1"
+        path = Path("/home/js2746/local_deformations/")
+    elif comparison == "unsat_elas":
+        sys_list = ["DYPC", "DOPC", "DGPC"]
+        nougat_values = "_polar_10_30_0_-1_1"
+        path = Path("/home/js2746/local_deformations/")
     for system in sys_list:
         if system == "lgDY":
             dirname = "lgDY_15us"
@@ -404,28 +413,28 @@ def make_paper_writing_group_plot(comparison):
         else:
             dirname = system
             sysname = system
-        fname = path + dirname + "/" + sysname + nougat_values + sysname + "."
-        zone = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.npy")
-        zonestd = np.load(fname + "zone.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
-        ztwo = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.npy")
-        ztwostd = np.load(fname + "ztwo.C1A.C1B.polar.avgheight.avg_over_theta.std.npy") / np.sqrt(10)
-        tilde_t = np.load(fname + "avg_tilde_total_t.avg_over_theta.npy")
-        tilde_tstd = np.load(fname + "avg_tilde_total_t.avg_over_theta.std.npy") / np.sqrt(10)
-        epst0 = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.npy")
-        epst0std = np.load(fname + "avg_epsilon_over_t0.avg_over_theta.std.npy") / np.sqrt(10)
-        tilde_eps2 = np.load(fname + "avg_rms_tilde_epsilon2.avg_over_theta.npy")
-        tilde_eps2std = np.load(fname + "avg_rms_tilde_epsilon2.avg_over_theta.std.npy") / np.sqrt(10)
-        tilde_Hplus2 = np.load(fname + "avg_rms_tilde_H_plus2.avg_over_theta.npy")
-        tilde_Hplus2std = np.load(fname + "avg_rms_tilde_H_plus2.avg_over_theta.std.npy") / np.sqrt(10)
-        corr_Hplus_eps = np.load(fname + "corr_eps_Hplus.avg_over_theta.npy")
-        corr_Hplus_epsstd = np.load(fname + "corr_eps_Hplus.avg_over_theta.std.npy") / np.sqrt(10)
-        epsHplus = np.load(fname + "avg_epsilon_H.avg_over_theta.npy")
-        epsHplusstd = np.load(fname + "avg_epsilon_H.avg_over_theta.std.npy") / np.sqrt(10)
+        fname = path.joinpath(sysname + nougat_values, "average")
+        zone = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
+        zonestd = np.load(fname.joinpath("height", "zone.avg_over_theta.std.npy")) / np.sqrt(30)
+        ztwo = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
+        ztwostd = np.load(fname.joinpath("height", "ztwo.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_t = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
+        tilde_tstd = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.std.npy")) / np.sqrt(30)
+        epst0 = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
+        epst0std = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_eps2 = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
+        tilde_eps2std = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.std.npy")) / np.sqrt(30)
+        tilde_Hplus2 = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
+        tilde_Hplus2std = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.std.npy")) / np.sqrt(30)
+        corr_Hplus_eps = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
+        corr_Hplus_epsstd = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.std.npy")) / np.sqrt(30)
+        epsHplus = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
+        epsHplusstd = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy")) / np.sqrt(30)
 
         # figure out what the x axis values should be
-        tcl_output = np.genfromtxt(fname.split("npy/")[0] + "tcl_output/" + sysname + '.zone.C1A.C1B.polar.height.dat',
+        tcl_output = np.genfromtxt(path.joinpath(sysname + nougat_values, "tcl_output", "height", "zone.dat"),
                                    missing_values='nan', filling_values=np.nan)
-        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, "polar")
+        Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, True)
         rmin = 1.25
         xmin = dr / 2
         xmax = Nr * dr - xmin
@@ -446,7 +455,7 @@ def make_paper_writing_group_plot(comparison):
         ztwo = ztwo[i:] / 10
         zonestd = zonestd[i:] / 10
         ztwostd = ztwostd[i:] / 10
-        ax1.plot(x_vals, zone, color=colordict[system], label=stiffness_dict[system])
+        ax1.plot(x_vals, zone, color=colordict[system], label=mismatch_dict[system])
         ax1.plot(x_vals, ztwo, color=colordict[system], linestyle="dashed")
         ax1.fill_between(x_vals, (zone - zonestd), (zone + zonestd), alpha=a, color=colordict[system])
         ax1.fill_between(x_vals, (ztwo - ztwostd), (ztwo + ztwostd), alpha=a, color=colordict[system], linestyle="dashed")
@@ -543,10 +552,10 @@ def make_paper_writing_group_plot(comparison):
     lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
     lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
     # lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title=r'$t_R/t_0$')
-    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Restraint type')
+    lgd = fig.legend(lines, labels, loc="upper center", bbox_to_anchor=(0.5, 1.075), ncol=len(labels), title='Percent Mismatch')
 
     fig.tight_layout()
-    plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight', dpi=700)
+    plt.savefig("/home/js2746/Desktop/comparisonfig_" + comparison + ".pdf", bbox_inches='tight')
     # plt.show()
     plt.clf()
     plt.close()
@@ -738,16 +747,16 @@ def compare_APLs(names, paths):
 
     """
 
-    fig, ax = plt.subplots()
-    for name in names:
+    fig, ax = plt.subplots(layout="constrained",figsize=(4,2))
+    for name, path in zip(names,paths):
         APL_traj = np.loadtxt(path + "/" + name + ".area.traj")
         X = APL_traj[:, 0] / 100
         Y = APL_traj[:, 2] / 100
-        ax.plot(X, Y)
-    ax.legend(["position restraints", "position restraints + higher APL", "elastic network"])
+        ax.plot(X, Y, color=colordict[name])
+    # ax.legend(["position restraints", "position restraints + higher APL", "elastic network"])
     fig.supxlabel(r'$t \;(\mathrm{\mu s})$')
-    fig.supylabel(r'$\mathrm{Area~per~lipid} \;(\mathrm{nm}^2)$')
-    plt.savefig(path + "/comparison.APL_traj.pdf", dpi=700)
+    fig.supylabel(r'$\Sigma \;(\mathrm{nm}^2)$')
+    plt.savefig("/home/js2746/Desktop/comparison.APL_traj.pdf")
     plt.clf()
     plt.close()
 
@@ -903,6 +912,15 @@ colordict = {
     "PO": "green",
     "DP": "green",
     "DG": "blue",
+    "DTPC": "red",
+    "DLPC": "orange",
+    "DXPC": "purple",
+    "DBPC": "blue",
+    "DYPC": "orange",
+    "DOPC": "green",
+    "POPC": "green",
+    "DPPC": "green",
+    "DGPC": "blue",
     "lgDT": "red",
     "lgDL": "orange",
     "lgDX": "purple",
@@ -917,7 +935,11 @@ colordict = {
     "5000": "purple",
     "lgPO_15": "green",
     "COMtiltspin": "red",
-    "new_gmx_pos": "blue"
+    "new_gmx_pos": "blue",
+    "posres": "tab:orange",
+    "APL_0.6": "tab:blue",
+    "elasticNVT": "tab:green",
+    "refcoord_scaling_no": "tab:red"
 }
 max_scale_dict = {
     "avg_epsilon_over_t0": .1,
@@ -966,7 +988,15 @@ mismatch_dict = {
     "lgDX": "-74%",
     "lgDY": "-38%",
     "lgDO": "-54%",
-    "lgDG": "-64%"
+    "lgDG": "-64%",
+    "DTPC": "-6%",
+    "DLPC": "-44%",
+    "DPPC": "-59%",
+    "DBPC": "-68%",
+    "DXPC": "-74%",
+    "DYPC": "-38%",
+    "DOPC": "-54%",
+    "DGPC": "-64%"
 }
 
 stiffness_dict = {
@@ -986,7 +1016,7 @@ legend_dict = {
     "avg_epsilon_H_over_t0": r'$\langle \epsilon H^+ / t_0 \rangle\; (\mathrm{\dot A^{-1}})$',
     "avg_epsilon2": r'$\langle \epsilon^2 \rangle\; (\mathrm{\dot A^2})$',
     "avg_tilde_epsilon2": r'$\langle \tilde \epsilon ^ 2 \rangle$',
-    "avg_rms_tilde_epsilon2": r'$ \sqrt{\langle \tilde \epsilon ^ 2 \rangle}$',
+    "avg_rms_tilde_epsilon2": r'$ \sqrt{\langle \tilde \epsilon^2 \rangle}$',
     "avg_H_plus2": r'$\langle ( H^+ )^2 \rangle\; (\mathrm{\dot A^{-2}})$',
     "avg_tilde_H_plus2": r'$\langle (\tilde H^+)^ 2 \rangle$',
     "avg_rms_tilde_H_plus2": r'$ \sqrt{\langle(\tilde H^+)^2\rangle}$',
@@ -1042,9 +1072,10 @@ if __name__ == "__main__":
     # compare_APLs(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # compare_APLs(["APL0.595", "APL0.67", "elastic"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # compare_P(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
-    plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
+    # plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    # make_paper_writing_group_plot("unsat")
-    # make_paper_writing_group_plot("sat")
+    #make_paper_writing_group_plot("unsat_elas")
+    #make_paper_writing_group_plot("sat_elas")
     # make_paper_writing_group_plot("elastic")
+    compare_APLs(["posres", "APL_0.6", "refcoord_scaling_no", "elasticNVT"],["/home/js2746/gromacs_cell_artifact/posres/APL_0.6", "/home/js2746/gromacs_cell_artifact/elastic/NPT/APL_0.6", "/home/js2746/gromacs_cell_artifact/posres/refcoord_scaling/no", "/home/js2746/gromacs_cell_artifact/elastic/NVT/APL_0.6"])

@@ -67,7 +67,7 @@ proc cell_prep {config_path leaf_check} {
 
     ;# center, wrap, and align the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
-        run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]   
+        run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
     } else {
         pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
         set sel [atomselect top all]
@@ -80,8 +80,9 @@ proc cell_prep {config_path leaf_check} {
         $sel delete
     }
 
-    if {[dict exists $config_dict align_sel]} {
-        Align [dict get $config_dict align_sel]
+    # align the system, removing xy rotation
+    if {[dict exists $config_dict align_sel] && [dict get $config_dict align_sel] != "NULL"} {
+        Align [dict get $config_dict align_sel] 0
     }
 
     ;# custom proc to set my TMD helices to occupancy 1
