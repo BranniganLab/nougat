@@ -44,8 +44,10 @@ def make_todo_list(quantities):
                 todo_list.append("order")
             elif letter == "n":
                 return NotImplemented
+                # todo_list.append("tilt")
             elif letter == "d":
                 return NotImplemented
+                # todo_list.append("density")
             else:
                 raise ValueError("Must specify a valid nougat quantity")
     return todo_list
