@@ -779,7 +779,7 @@ class Field_set:
         return self.name
 
 
-def run_nougat(polar, quantities):
+def run_nougat(path, polar, quantities):
     """
     Run nougat's averaging and image processing routines.
 
@@ -823,7 +823,7 @@ def run_nougat(polar, quantities):
         as well as the symmetric/anti-symmetric variables "K plus" and "K\
         minus".
     """
-    cwd = Path("/home/js2746/local_deformations/DTPC_polar_10_30_0_-1_1")  # TO-DO: change this so that path is supplied by user!
+    cwd = Path(path)
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar, todo_list)
@@ -886,6 +886,6 @@ if __name__ == "__main__":
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
     args = parser.parse_args()
 
-    m = run_nougat(args.polar, args.quantities)
+    m = run_nougat(args.path, args.polar, args.quantities)
 
     print("Thank you for using nougat!")
