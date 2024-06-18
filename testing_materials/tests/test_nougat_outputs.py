@@ -170,19 +170,17 @@ def make_tcl_paths(wd, coords, sys, surf):
     return (ref_path.resolve(), test_path.resolve())
 
 
-def arrays_equal(paths, filetype, tolerance):
+def arrays_equal(f1, f2, tolerance):
     """
     Determine whether two arrays have identical elements.
 
     Parameters
     ----------
-    paths: Comparison named tuple
-        Named tuple of two path objects.
-    filetype: string
-        The filetype of f1 and f2
+    f1 : np.ndarray
+    f2 : np.ndarray
     tolerance: float
-        The amount of tolerance you have for differences between files. Should \
-            be a small number!
+        The amount of tolerance you have for differences between arrays. Should\
+        be a small number!
 
     Returns
     -------
@@ -190,19 +188,42 @@ def arrays_equal(paths, filetype, tolerance):
         Whether or not the two arrays contain identical elements.
 
     """
-    if filetype == "npy":
-        f1 = np.load(paths[0])
-        f2 = np.load(paths[1])
-    elif filetype == "dat":
-        f1 = np.genfromtxt(paths[0], missing_values="nan", filling_values=np.nan)
-        f2 = np.genfromtxt(paths[1], missing_values="nan", filling_values=np.nan)
-
     if tolerance == 0:
         return np.array_equal(f1, f2, equal_nan=True)
     elif tolerance > 0:
         return np.allclose(f1, f2, rtol=0, atol=tolerance, equal_nan=True)
     else:
         raise ValueError("Tolerance must be positive or 0.")
+
+
+def load(path):
+    """
+    Load the contents of a nougat saved output file into memory.
+
+    Parameters
+    ----------
+    path : Path
+        The file path.
+
+    Raises
+    ------
+    Exception
+        If you provide a file that isn't a .dat or .npy then this will raise an\
+        error.
+
+    Returns
+    -------
+    arr : np.ndarray
+        The data contained inside the file.
+
+    """
+    if path.suffix == ".npy":
+        arr = np.load(path)
+    elif path.suffix == ".dat":
+        arr = np.genfromtxt(path, missing_values="nan", filling_values=np.nan)
+    else:
+        raise Exception
+    return arr
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%% TESTS ARE BELOW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -213,8 +234,8 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
     if surface4 == "zplus":
         pytest.skip("nougat.tcl does not measure zplus; skipping zplus test")
     else:
-        paths = make_tcl_paths(cwd, coordsys, system, surface4)
-        assert arrays_equal(paths, 'dat', 1e-11)
+        ref, test = make_tcl_paths(cwd, coordsys, system, surface4)
+        assert arrays_equal(load(ref), load(test), 1e-11)
 
 # Still needed: density, order, tilt tests
 
