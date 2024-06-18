@@ -8,10 +8,6 @@ import pytest
 import numpy as np
 from nougat import *
 from pathlib import Path
-from collections import namedtuple
-
-
-Comparison = namedtuple("Comparison", "test_data ref_data")
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,6 +57,15 @@ def system(request):
     return request.param
 
 
+@pytest.fixture(scope='function', params=["height", "thickness"])
+def quantity(request):
+    """
+    Supply quantity of interest to the test function requesting it.
+
+    """
+    return request.param
+
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 def make_root_path(wd, coords, sys, test=True):
@@ -100,7 +105,7 @@ def make_root_path(wd, coords, sys, test=True):
     return root
 
 
-def make_py_paths(wd, system, coord, surf, quant, file_format):
+def make_py_ref_path(wd, coords, sys, surf, quant, file_format):
     """
     Concatenate strings together to make the path to the correct test files.
 
@@ -108,16 +113,16 @@ def make_py_paths(wd, system, coord, surf, quant, file_format):
     ----------
     wd: string
         Path to current working directory.
-    system: string
+    sys: string
         Which test system the test pertains to.
-    coord: string
+    coords: string
         Coordinate system; 'cart' or 'polar'
     surf: sring
         The membrane surface in question (z1, z2, z0, or z+)
     quant: string
         The quantity being measured(height, thickness, curvature, etc.)
     file_format: string
-        "dat" or "npy"
+        ".dat" or ".npy"
 
     Returns
     -------
@@ -125,20 +130,13 @@ def make_py_paths(wd, system, coord, surf, quant, file_format):
         Path to the stored reference values.
 
     """
-    if file_format == "npy":
+    ref_root = make_root_path(wd, coords, sys, test=False)
+    if file_format == ".npy":
         file_type = "trajectory"
-    elif file_format == "dat":
+    elif file_format == ".dat":
         file_type = "average"
-    if coord == "cart":
-        coordsys_path = "_cart_5_5_0_-1_1"
-    elif coord == "polar":
-        coordsys_path = "_polar_3_12_0_-1_1"
-    if system == "E-protein":
-        directory = "E-protein_trajectory"
-    elif system == "flat":
-        directory = "flat_surface_test"
-    expected = wd.joinpath(directory, system + coordsys_path, file_type, quant, surf + "." + file_format)
-    return expected
+    ref_path = ref_root.joinpath(file_type, quant, surf + file_format)
+    return ref_path
 
 
 def make_tcl_paths(wd, coords, sys, surf):
@@ -198,7 +196,7 @@ def arrays_equal(f1, f2, tolerance):
 
 def load(path):
     """
-    Load the contents of a nougat saved output file into memory.
+    Load the contents of a saved nougat output file into memory.
 
     Parameters
     ----------
@@ -222,7 +220,7 @@ def load(path):
     elif path.suffix == ".dat":
         arr = np.genfromtxt(path, missing_values="nan", filling_values=np.nan)
     else:
-        raise Exception
+        raise Exception("Must provide .npy or .dat file.")
     return arr
 
 
@@ -242,32 +240,22 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 
 # Test if python trajectory outputs match
 
-def test_if_heights_match(cwd, coordsys, surface4, system):
-    testing_path = make_testing_path(cwd, coordsys, system)
-    ref_path = make_py_paths(cwd, system, coordsys, surface4, "height", "npy")
-    
+def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity):
+    test_root_path = make_root_path(cwd, coordsys, system, test=True)
+    ref_path = make_py_ref_path(cwd, system, coordsys, surface4, quantity, ".npy")
+
     if coordsys == "cart":
         polar = False
     elif coordsys == "polar":
         polar = True
-    m = run_nougat(testing_path, polar, "h")
+    m = run_nougat(test_root_path, polar, "ht")
     if surface4 in ["zone", "ztwo", "zzero"]:
         test_array = flatten_obj(getattr(m, surface4).traj)
     elif surface4 == "zplus":
         test_array = flatten_obj(m.height.plus.traj)
-    assert arrays_equal((ref_path, test_array), 'npy', 1e-11)
+    assert arrays_equal(load(ref_path), test_array, 1e-11)
 
-
-def test_if_thicknesses_match(cwd, coordsys, surface2, system):
-    ref_path = make_py_paths(cwd, system, coordsys, surface2, "thickness", "npy")
-    testing_path = make_testing_path(cwd, coordsys, system)
-    if coordsys == "cart":
-        polar = False
-    elif coordsys == "polar":
-        polar = True
-    m = run_nougat(testing_path, polar, "t")
-
-    assert arrays_equal((ref_path, test_array), 'npy', 1e-11)
+# Still needed: curvature, density, order, tilt tests
 
 
 """
@@ -297,16 +285,9 @@ def test_whether_flat_gaussian(cwd, coordsys):
 
 
 @pytest.mark.xfail(strict=True)
-def test_if_leaflets_heights_are_distinct(cwd, coordsys, system):
-    zone_test = make_py_paths(cwd, system, coordsys, "zone", "height", "npy")
-    ztwo_test = make_py_paths(cwd, system, coordsys, "ztwo", "height", "npy")
-    assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
-
-
-@pytest.mark.xfail(strict=True)
-def test_if_leaflet_thicknesses_are_distinct(cwd, coordsys, system):
-    zone_test = make_py_paths(cwd, system, coordsys, "zone", "thickness", "npy")
-    ztwo_test = make_py_paths(cwd, system, coordsys, "ztwo", "thickness", "npy")
+def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity):
+    zone_test = make_py_paths(cwd, system, coordsys, "zone", quantity, "npy")
+    ztwo_test = make_py_paths(cwd, system, coordsys, "ztwo", quantity, "npy")
     assert arrays_equal((zone_test, ztwo_test), 'npy', 0)
 
 # Still needed: curvature, order, tilt
