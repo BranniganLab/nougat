@@ -66,6 +66,17 @@ def quantity(request):
     return request.param
 
 
+@pytest.fixture(scope='session')
+def membrane(cwd, system, coordsys):
+    test_root_path = make_root_path(cwd, coordsys, system, test=True)
+    if coordsys == "cart":
+        polar = False
+    elif coordsys == "polar":
+        polar = True
+    m = run_nougat(test_root_path, polar, "ht")
+    return m
+
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 def make_root_path(wd, coords, sys, test=True):
@@ -241,7 +252,12 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 # Test if python trajectory outputs match
 
 def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity):
-    test_root_path = make_root_path(cwd, coordsys, system, test=True)
+    refdict = {
+        "zone": "outer",
+        "ztwo": "inner",
+        "zplus": "plus"
+    }
+
     ref_path = make_py_ref_path(cwd, system, coordsys, surface4, quantity, ".npy")
 
     if coordsys == "cart":
@@ -249,6 +265,9 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity):
     elif coordsys == "polar":
         polar = True
     m = run_nougat(test_root_path, polar, "ht")
+    field_set = getattr(m, quantity)
+    field_set_surface = refdict[surface4]
+    surface = getattr(field_set, surf)
     if surface4 in ["zone", "ztwo", "zzero"]:
         test_array = flatten_obj(getattr(m, surface4).traj)
     elif surface4 == "zplus":
