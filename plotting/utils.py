@@ -7,7 +7,50 @@ Created on Mon Jul 17 10:54:23 2023.
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-from pathlib import Path
+
+
+def make_todo_list(quantities):
+    """
+    Make the todo_list for the Membrane object.
+
+    Parameters
+    ----------
+    quantities : str
+        A string specifying which quantities should be analyzed by nougat.py.
+
+    Raises
+    ------
+    ValueError
+        The user must specify a valid nougat quantity.
+
+    Returns
+    -------
+    todo_list  :  list
+        A list of nougat Field_sets to be computed.
+
+    """
+    if quantities is None:
+        todo_list = ["height", "curvature", "thickness", "order"]
+    else:
+        todo_list = []
+        for letter in quantities:
+            if letter == "h":
+                todo_list.append("height")
+            elif letter == "c":
+                todo_list.append("curvature")
+            elif letter == "t":
+                todo_list.append("thickness")
+            elif letter == "o":
+                todo_list.append("order")
+            elif letter == "n":
+                return NotImplemented
+                # todo_list.append("tilt")
+            elif letter == "d":
+                return NotImplemented
+                # todo_list.append("density")
+            else:
+                raise ValueError("Must specify a valid nougat quantity")
+    return todo_list
 
 
 def strip_blank_lines(file):
@@ -496,7 +539,7 @@ def plot_maker(dims, data, protein, quant, polar):
 
     Returns
     -------
-    None.
+    matplotlib figure and axes objects.
 
     """
     dim1vals, dim2vals = dims
