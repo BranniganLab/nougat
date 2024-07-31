@@ -346,6 +346,93 @@ def plot_together(mols, paths, nougvals, xlim):
             plt.clf()
             plt.close()
 
+def make_Hplus_comparison_plot(comparison):
+    if comparison == "sat_elas":
+        sys_list = ["DTPC", "DLPC", "DPPC", "DBPC", "DXPC"]
+    elif comparison == "unsat_elas":
+        sys_list = ["DYPC", "DOPC", "DGPC"]
+    nougat_values = "_polar_10_30_0_-1_1"
+    path = Path("/home/js2746/Desktop/")
+    for surf in ["zone", "ztwo", "zplus"]:
+        fig, ax = plt.subplots()
+        for system in sys_list:
+            sysname = system
+            fname = path.joinpath(sysname, "rep1", sysname + nougat_values, "average")
+            if surf != "zplus":
+                s = np.load(fname.joinpath("curvature", "mean", surf + ".avg_over_theta.npy"))
+                for rep in ["rep2", "rep3", "rep4", "rep5"]:
+                    fname = path.joinpath(sysname, rep, sysname + nougat_values, "average")
+                    try:
+                        s = np.vstack((s, np.load(fname.joinpath("curvature", "mean", surf + ".avg_over_theta.npy"))))
+                    except:
+                        test = np.load(fname.joinpath("curvature", "mean", surf + ".avg_over_theta.npy"))
+                        test = np.insert(test, 19, np.nan)
+                        s = np.vstack((s, test))
+                if surf == "zone":
+                    s = -1 * s
+                sstd = np.nanstd(s, axis=0) / np.sqrt(5.)
+                s = np.nanmean(s, axis=0)
+            else:
+                zone = np.load(fname.joinpath("curvature", "mean", "zone.avg_over_theta.npy"))
+                ztwo = np.load(fname.joinpath("curvature", "mean", "ztwo.avg_over_theta.npy"))
+                for rep in ["rep2", "rep3", "rep4", "rep5"]:
+                    fname = path.joinpath(sysname, rep, sysname + nougat_values, "average")
+                    try:
+                        zone = np.vstack((zone, np.load(fname.joinpath("curvature", "mean", "zone.avg_over_theta.npy"))))
+                    except:
+                        test = np.load(fname.joinpath("curvature", "mean", "zone.avg_over_theta.npy"))
+                        test = np.insert(test, 19, np.nan)
+                        zone = np.vstack((zone, test))
+                    try:
+                        ztwo = np.vstack((zone, np.load(fname.joinpath("curvature", "mean", "ztwo.avg_over_theta.npy"))))
+                    except:
+                        test = np.load(fname.joinpath("curvature", "mean", "ztwo.avg_over_theta.npy"))
+                        test = np.insert(test, 19, np.nan)
+                        ztwo = np.vstack((ztwo, test))
+                zone = -1 * zone 
+                zone = np.nanmean(zone, axis=0)
+                ztwo = np.nanmean(ztwo, axis=0)
+                s = zone + ztwo / 2.
+
+            tcl_output = np.genfromtxt(path.joinpath(system, "rep1", system + nougat_values, "tcl_output", "height", "zone.dat"),
+                                       missing_values='nan', filling_values=np.nan)
+            Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, True)
+            if surf != "ztwo":
+                rmin = 3.5
+            else:
+                rmin = 1.25
+            xmin = dr / 2
+            xmax = Nr * dr - xmin
+            x_vals = np.linspace(xmin, xmax, Nr) / 10
+            flag = True
+            i = 0
+            a = .4
+            if rmin > x_vals[i]:
+                while flag is True and i < len(x_vals):
+                    i += 1
+                    if rmin <= x_vals[i]:
+                        flag = False
+            x_vals = x_vals[i:]
+            s = s[i:]
+            sstd = sstd[i:]
+            ax.plot(x_vals, s, color=colordict[system], label=mismatch_dict[system])
+            if surf != "zplus":
+                ax.fill_between(x_vals, (s - sstd), (s + sstd), alpha=a, color=colordict[system])
+        if surf == "zplus":
+            ax.set_ylabel(r'$\langle H^+ \rangle $', fontsize=10)
+        else:
+            ax.set_ylabel(r'$\langle H \rangle $', fontsize=10)
+        ax.tick_params(axis='both', which='major', labelsize=7)
+        ax.tick_params(axis='both', which='minor', labelsize=7)
+        ax.yaxis.set_major_formatter('{x:2.4f}')
+        ax.set_xlim(0, x_vals[-1])
+
+        fig.tight_layout()
+        plt.savefig("/home/js2746/Desktop/comparisonfig_" + surf + comparison + "_H.pdf", bbox_inches='tight')
+        # plt.show()
+        plt.clf()
+        plt.close()
+
 
 def make_paper_writing_group_plot(comparison):
     """
@@ -381,11 +468,11 @@ def make_paper_writing_group_plot(comparison):
     elif comparison == "sat_elas":
         sys_list = ["DTPC", "DLPC", "DPPC", "DBPC", "DXPC"]
         nougat_values = "_polar_10_30_0_-1_1"
-        path = Path("/home/js2746/local_deformations/")
+        path = Path("/home/js2746/Desktop/")
     elif comparison == "unsat_elas":
         sys_list = ["DYPC", "DOPC", "DGPC"]
         nougat_values = "_polar_10_30_0_-1_1"
-        path = Path("/home/js2746/local_deformations/")
+        path = Path("/home/js2746/Desktop/")
     for system in sys_list:
         if system == "lgDY":
             dirname = "lgDY_15us"
@@ -413,26 +500,105 @@ def make_paper_writing_group_plot(comparison):
         else:
             dirname = system
             sysname = system
-        fname = path.joinpath(sysname + nougat_values, "average")
-        zone = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
-        zonestd = np.load(fname.joinpath("height", "zone.avg_over_theta.std.npy")) / np.sqrt(30)
-        ztwo = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
-        ztwostd = np.load(fname.joinpath("height", "ztwo.avg_over_theta.std.npy")) / np.sqrt(30)
-        tilde_t = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
-        tilde_tstd = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.std.npy")) / np.sqrt(30)
-        epst0 = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
-        epst0std = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.std.npy")) / np.sqrt(30)
-        tilde_eps2 = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
-        tilde_eps2std = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.std.npy")) / np.sqrt(30)
-        tilde_Hplus2 = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
-        tilde_Hplus2std = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.std.npy")) / np.sqrt(30)
-        corr_Hplus_eps = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
-        corr_Hplus_epsstd = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.std.npy")) / np.sqrt(30)
-        epsHplus = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
-        epsHplusstd = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy")) / np.sqrt(30)
+            print(system)
+        if comparison == "sat_elas" or comparison == "unsat_elas":
+            fname = path.joinpath(sysname, "rep1", sysname + nougat_values, "average")
+            zone = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
+            ztwo = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
+            tilde_t = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
+            epst0 = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
+            tilde_eps2 = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
+            tilde_Hplus2 = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
+            corr_Hplus_eps = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
+            epsHplus = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
+            for rep in ["rep2", "rep3", "rep4", "rep5"]:
+                print(rep)
+                fname = path.joinpath(sysname, rep, sysname + nougat_values, "average")
+                try:
+                    zone = np.vstack((zone, np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    zone = np.vstack((zone, test))
+                try:
+                    ztwo = np.vstack((ztwo, np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    ztwo = np.vstack((ztwo, test))
+                try:
+                    tilde_t = np.vstack((tilde_t, np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    tilde_t = np.vstack((tilde_t, test))
+                try:
+                    epst0 = np.vstack((epst0, np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    epst0 = np.vstack((epst0, test))
+                try:
+                    tilde_eps2 = np.vstack((tilde_eps2, np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    tilde_eps2 = np.vstack((tilde_eps2, test))
+                try:
+                    tilde_Hplus2 = np.vstack((tilde_Hplus2, np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    tilde_Hplus2 = np.vstack((tilde_Hplus2, test))
+                try:
+                    corr_Hplus_eps = np.vstack((corr_Hplus_eps, np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    corr_Hplus_eps = np.vstack((corr_Hplus_eps, test))
+                try:
+                    epsHplus = np.vstack((epsHplus, np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))))
+                except:
+                    test = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
+                    test = np.insert(test, 19, np.nan)
+                    epsHplus = np.vstack((epsHplus, test))
+            zonestd = np.nanstd(zone, axis=0) / np.sqrt(5.)
+            zone = np.nanmean(zone, axis=0)
+            ztwostd = np.nanstd(ztwo, axis=0) / np.sqrt(5.)
+            ztwo = np.nanmean(ztwo, axis=0)
+            tilde_tstd = np.nanstd(tilde_t, axis=0) / np.sqrt(5.)
+            tilde_t = np.nanmean(tilde_t, axis=0)
+            epst0std = np.nanstd(epst0, axis=0) / np.sqrt(5.)
+            epst0 = np.nanmean(epst0, axis=0)
+            tilde_eps2std = np.nanstd(tilde_eps2, axis=0) / np.sqrt(5.)
+            tilde_eps2 = np.nanmean(tilde_eps2, axis=0)
+            tilde_Hplus2std = np.nanstd(tilde_Hplus2, axis=0) / np.sqrt(5.)
+            tilde_Hplus2 = np.nanmean(tilde_Hplus2, axis=0)
+            corr_Hplus_epsstd = np.nanstd(corr_Hplus_eps, axis=0) / np.sqrt(5.)
+            corr_Hplus_eps = np.nanmean(corr_Hplus_eps, axis=0)
+            epsHplusstd = np.nanstd(epsHplus, axis=0) / np.sqrt(5.)
+            epsHplus = np.nanmean(epsHplus, axis=0)
+        else:
+            fname = path.joinpath(sysname + nougat_values, "average")
+            zone = np.load(fname.joinpath("height", "zone.avg_over_theta.npy"))
+            zonestd = np.load(fname.joinpath("height", "zone.avg_over_theta.std.npy")) / np.sqrt(30)
+            ztwo = np.load(fname.joinpath("height", "ztwo.avg_over_theta.npy"))
+            ztwostd = np.load(fname.joinpath("height", "ztwo.avg_over_theta.std.npy")) / np.sqrt(30)
+            tilde_t = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.npy"))
+            tilde_tstd = np.load(fname.joinpath("misc", "avg_tilde_total_t.avg_over_theta.std.npy")) / np.sqrt(30)
+            epst0 = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.npy"))
+            epst0std = np.load(fname.joinpath("misc", "avg_epsilon_over_t0.avg_over_theta.std.npy")) / np.sqrt(30)
+            tilde_eps2 = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.npy"))
+            tilde_eps2std = np.load(fname.joinpath("misc", "avg_rms_tilde_epsilon2.avg_over_theta.std.npy")) / np.sqrt(30)
+            tilde_Hplus2 = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.npy"))
+            tilde_Hplus2std = np.load(fname.joinpath("misc", "avg_rms_tilde_H_plus2.avg_over_theta.std.npy")) / np.sqrt(30)
+            corr_Hplus_eps = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.npy"))
+            corr_Hplus_epsstd = np.load(fname.joinpath("misc", "corr_eps_Hplus.avg_over_theta.std.npy")) / np.sqrt(30)
+            epsHplus = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy"))
+            epsHplusstd = np.load(fname.joinpath("misc", "avg_epsilon_H.avg_over_theta.npy")) / np.sqrt(30)
 
         # figure out what the x axis values should be
-        tcl_output = np.genfromtxt(path.joinpath(sysname + nougat_values, "tcl_output", "height", "zone.dat"),
+        tcl_output = np.genfromtxt(path.joinpath(system, "rep1", system + nougat_values, "tcl_output", "height", "zone.dat"),
                                    missing_values='nan', filling_values=np.nan)
         Nr, dr, _, _, _, _ = dimensions_analyzer(tcl_output, True)
         rmin = 1.25
@@ -462,8 +628,9 @@ def make_paper_writing_group_plot(comparison):
         ax1.set_ylabel(r'$\langle \Delta z \rangle \; (\mathrm{nm})$', fontsize=10)
         ax1.tick_params(axis='both', which='major', labelsize=7)
         ax1.tick_params(axis='both', which='minor', labelsize=7)
-        ax1.yaxis.set_major_formatter('{x:5.3f}')
+        ax1.yaxis.set_major_formatter('{x:2.2f}')
         ax1.text(0.02, 0.95, "A", transform=ax1.transAxes, fontsize=10, va='top')
+        # ax1.set_ylim(-10., 0.5)
         # ax1.set_ylim(-5, 1.5)
 
         # tilde t plot
@@ -475,7 +642,7 @@ def make_paper_writing_group_plot(comparison):
         ax2.axhline(1, color="gray", linestyle="--")
         ax2.tick_params(axis='both', which='major', labelsize=7)
         ax2.tick_params(axis='both', which='minor', labelsize=7)
-        ax2.yaxis.set_major_formatter('{x:5.3f}')
+        ax2.yaxis.set_major_formatter('{x:2.2f}')
         ax2.text(0.02, 0.95, "B", transform=ax2.transAxes, fontsize=10, va='top')
         # ax2.set_ylim(.8, 1.25)
 
@@ -488,7 +655,7 @@ def make_paper_writing_group_plot(comparison):
         ax3.tick_params(axis='both', which='major', labelsize=7)
         ax3.tick_params(axis='both', which='minor', labelsize=7)
         ax3.axhline(0, color="gray", linestyle="--")
-        ax3.yaxis.set_major_formatter('{x:5.3f}')
+        ax3.yaxis.set_major_formatter('{x:2.2f}')
         ax3.text(0.02, 0.95, "C", transform=ax3.transAxes, fontsize=10, va='top')
         # ax3.set_ylim(-.1, .015)
 
@@ -501,7 +668,7 @@ def make_paper_writing_group_plot(comparison):
         ax4.axhline(1, color="gray", linestyle="--")
         ax4.tick_params(axis='both', which='major', labelsize=7)
         ax4.tick_params(axis='both', which='minor', labelsize=7)
-        ax4.yaxis.set_major_formatter('{x:5.3f}')
+        ax4.yaxis.set_major_formatter('{x:2.2f}')
         ax4.text(0.02, 0.95, "D", transform=ax4.transAxes, fontsize=10, va='top')
         # ax4.set_ylim(0, 18)
 
@@ -514,7 +681,7 @@ def make_paper_writing_group_plot(comparison):
         ax5.axhline(1, color="gray", linestyle="--")
         ax5.tick_params(axis='both', which='major', labelsize=7)
         ax5.tick_params(axis='both', which='minor', labelsize=7)
-        ax5.yaxis.set_major_formatter('{x:5.3f}')
+        ax5.yaxis.set_major_formatter('{x:2.2f}')
         ax5.text(0.02, 0.95, "E", transform=ax5.transAxes, fontsize=10, va='top')
         # ax5.set_ylim(0, 22)
 
@@ -542,7 +709,7 @@ def make_paper_writing_group_plot(comparison):
         ax6.set_ylabel(legend_dict['neg_avg_epsilon_H'], fontsize=10)
         ax6.tick_params(axis='both', which='major', labelsize=7)
         ax6.tick_params(axis='both', which='minor', labelsize=7)
-        ax6.yaxis.set_major_formatter('{x:<5.3f}')
+        ax6.yaxis.set_major_formatter('{x:2.2f}')
         ax6.text(0.02, 0.95, "F", transform=ax6.transAxes, fontsize=10, va='top')
 
     ax1.set_xlim(0, xmax / 10 + 1)
@@ -1075,7 +1242,9 @@ if __name__ == "__main__":
     # plot_P_v_A(["APL0.595_cp", "APL0.67_cp", "elastic_cp"], "/home/js2746/Bending/PC/whole_mols/5x29/APL")
     # plot_APL_v_nL(["512", "1024", "2048", "4096", "8192", "32768"], "/home/js2746/KC_project/")
     # plot_asymm_over_traj("/home/js2746/Bending/PC/whole_mols/5x29/40nmSystems/dm1/lgPO_50us/", 'lgPO_50us')
-    #make_paper_writing_group_plot("unsat_elas")
-    #make_paper_writing_group_plot("sat_elas")
+    # make_paper_writing_group_plot("unsat_elas")
+    # make_paper_writing_group_plot("sat_elas")
     # make_paper_writing_group_plot("elastic")
-    compare_APLs(["posres", "APL_0.6", "refcoord_scaling_no", "elasticNVT"],["/home/js2746/gromacs_cell_artifact/posres/APL_0.6", "/home/js2746/gromacs_cell_artifact/elastic/NPT/APL_0.6", "/home/js2746/gromacs_cell_artifact/posres/refcoord_scaling/no", "/home/js2746/gromacs_cell_artifact/elastic/NVT/APL_0.6"])
+    make_Hplus_comparison_plot("unsat_elas")
+    make_Hplus_comparison_plot("sat_elas")
+    # compare_APLs(["posres", "APL_0.6", "refcoord_scaling_no", "elasticNVT"],["/home/js2746/gromacs_cell_artifact/posres/APL_0.6", "/home/js2746/gromacs_cell_artifact/elastic/NPT/APL_0.6", "/home/js2746/gromacs_cell_artifact/posres/refcoord_scaling/no", "/home/js2746/gromacs_cell_artifact/elastic/NVT/APL_0.6"])
