@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import warnings
 import matplotlib.pyplot as plt
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty
 
 
 class Membrane:
@@ -225,6 +225,26 @@ class Membrane:
         else:
             return self.create_Field(rms, "rms_" + field.name)
 
+    def return_child(self, child_name):
+        """
+        Search the children belonging to this membrane and return the Field or\
+        Field_set whose name matches <child_name>.
+
+        Parameters
+        ----------
+        child_name : str
+            The name of the child Field or Field_set.
+
+        Returns
+        -------
+        Field or Field_set.
+
+        """
+        for child in self.children:
+            if child.name == child_name:
+                return child
+        return "No child with name " + child_name + " found"
+
 
 class Field:
     """A field contains a measurement of some surface over the course of an MD\
@@ -324,7 +344,7 @@ class Field:
         Returns
         -------
         ndarray
-            A 2- 3D array containing nougat.tcl output data.
+            A 3D array containing nougat.tcl output data.
         """
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
@@ -353,7 +373,7 @@ class Field:
             N1 = index[0][0] + 1
         else:
             # this would happen if there was only one frame in the trajectory
-            N1 = np.shape(unrolled_data[0])
+            N1 = np.shape(unrolled_data)[0]
         assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
         if self.parent.grid_dims["N1"] is not None:
             assert self.parent.grid_dims["N1"] == N1, err_msg
@@ -374,7 +394,17 @@ class Field:
         for frm in range(Nframes):
             field_data[frm, :, :] = unrolled_data[frm * N1: (frm + 1) * N1, 2:]
 
+        field_data = mostly_empty(field_data)
         return field_data
+
+    def repack_traj(self):
+        """Turn Trajectory into 3D numpy array."""
+        frames = self.traj.frames
+        frmlist = []
+        for frame in frames:
+            frmlist.append(frame.bins)
+        frmlist = tuple(frmlist)
+        return np.stack(frmlist, axis=0)
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
@@ -831,13 +861,13 @@ def run_nougat(path, polar, quantities):
         zone = m.create_Field(cwd, "z_one", "height", "zone")
         ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
-        height = m.create_Field_set(ztwo, zone, "z")
+        height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
 
-    m.plot2d(thickness.plus)
+    # m.plot2d(thickness.plus)
 
     return m
 
