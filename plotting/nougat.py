@@ -174,7 +174,7 @@ class Membrane:
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
         fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
-        plt.show()
+        return fig, ax
 
     def measure_correlation(self, field1, field2):
         """
@@ -258,6 +258,8 @@ class Field:
         height values, curvature values, etc.
     parent  :  Membrane
         The Membrane object to which this field belongs.
+    name  :  str
+        The name of the Field, as it is listed in its parent's children list.
     """
 
     def __init__(self, data, name, parent, quantity=None, leaflet=None):
