@@ -349,17 +349,38 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
     outer = fld_set.outer.traj2array()
     inner = fld_set.inner.traj2array()
 
-    assert arrays_equal((outer, inner), 'npy', 0)
+    assert arrays_equal(outer, inner, 0)
 
 # Still needed: curvature, order, tilt
 
 
 # Test if python time-averages match
-"""
-def test_if_avg_heights_match(cwd, coordsys, surface4, system):
-    path = make_py_paths(cwd, system, coordsys, surface4, "height", "dat")
-    assert arrays_equal(path, 'dat', 1e-11)
-"""
+
+def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
+    # get reference avg
+    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, "height", ".dat")
+
+    ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
+    print(ref)
+    # calc nougat avg
+    z = membrane.return_child('z')
+
+    if surface4 == "zone":
+        surf = z.outer
+    elif surface4 == "ztwo":
+        surf = z.inner
+    elif surface4 == "zplus":
+        surf = z.plus
+    elif surface4 == "zzero":
+        surf = membrane.return_child("z_zero")
+    else:
+        print("something went wrong")
+
+    test_array = surf.traj.avg()
+    print(test_array)
+
+    assert arrays_equal(ref, test_array, 1e-3)
+
 
 # Still needed: curvature, thickness, order, tilt, normal_vectors
 
