@@ -4,7 +4,7 @@ Created on Fri Jul 21 11:18:40 2023.
 @author: js2746
 """
 
-from nougat import run_nougat
+
 import pytest
 import numpy as np
 from pathlib import Path
@@ -12,6 +12,8 @@ import os
 import sys
 
 sys.path.append(os.path.abspath('../plotting/'))
+
+from nougat import run_nougat
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -340,6 +342,8 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
         fld_set = membrane.children['z']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
+    else:
+        pytest.skip()
     outer = fld_set.outer.traj._traj_to_3darray()
     inner = fld_set.inner.traj._traj_to_3darray()
 
@@ -359,6 +363,8 @@ def test_if_avg_heights_thicknesses_match(cwd, coordsys, surface4, system, quant
             pytest.skip()
         elif surface4 == "zzero":
             pytest.skip()
+    else:
+        pytest.skip()
 
     # get reference avg
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
