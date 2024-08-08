@@ -304,7 +304,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     else:
         print("something went wrong")
 
-    test_array = surf._traj_to_3darray()
+    test_array = surf.traj._traj_to_3darray()
 
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".npy")
     ref = load(ref_path)
@@ -346,8 +346,8 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
         fld_set = membrane.return_child('z')
     elif quantity == "thickness":
         fld_set = membrane.return_child('t')
-    outer = fld_set.outer._traj_to_3darray()
-    inner = fld_set.inner._traj_to_3darray()
+    outer = fld_set.outer.traj._traj_to_3darray()
+    inner = fld_set.inner.traj._traj_to_3darray()
 
     assert arrays_equal(outer, inner, 0)
 
@@ -378,7 +378,8 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
 
     test_array = np.round(surf.traj.avg(), decimals=5)
     print(test_array)
-
+    for frame in surf.traj.frames:
+        print(frame)
     assert arrays_equal(ref, test_array, 1e-11)
 
 
