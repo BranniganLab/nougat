@@ -376,10 +376,10 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     else:
         print("something went wrong")
 
-    test_array = surf.traj.avg()
+    test_array = np.round(surf.traj.avg(), decimals=5)
     print(test_array)
 
-    assert arrays_equal(ref, test_array, 1e-3)
+    assert arrays_equal(ref, test_array, 1e-11)
 
 
 # Still needed: curvature, thickness, order, tilt, normal_vectors
