@@ -60,8 +60,6 @@ then
         	"No, Exit" ) exit;;
     	esac
 	done
-else
-	echo "Pytest unit testing passed :)"
 fi
 
 # Check to make sure tests all passed
