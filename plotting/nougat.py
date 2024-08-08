@@ -398,15 +398,6 @@ class Field:
         field_data = mostly_empty(field_data)
         return field_data
 
-    def _traj_to_3darray(self):
-        """Turn Trajectory into 3D numpy array."""
-        frames = self.traj.frames
-        frmlist = []
-        for frame in frames:
-            frmlist.append(frame.bins)
-        frmlist = tuple(frmlist)
-        return np.stack(frmlist, axis=0)
-
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
     # having to specify the object's .traj attribute every time.
@@ -531,11 +522,21 @@ class Trajectory:
         """Return the .frames attribute."""
         return self.frames
 
+    def _traj_to_3darray(self):
+        """Turn Trajectory into 3D numpy array."""
+        frames = self.frames
+        frmlist = []
+        for frame in frames:
+            frmlist.append(frame.bins)
+        frmlist = tuple(frmlist)
+        return np.stack(frmlist, axis=0)
+
     def avg(self):
         """Calculate the trajectory average (over time)."""
+        data_array = self._traj_to_3darray()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            avg = np.nanmean(self.frames, axis=0)
+            avg = np.nanmean(data_array, axis=0)
             return avg
 
     def __getitem__(self, item):
