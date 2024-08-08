@@ -356,19 +356,27 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
 
 # Test if python time-averages match
 
-def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
+def test_if_avg_heights_thicknesses_match(cwd, coordsys, surface4, system, quantity, membrane):
+    if quantity == "height":
+        fld_set = membrane.children['z']
+    elif quantity == "thickness":
+        fld_set = membrane.children['t']
+        if surface4 == "zplus":
+            pytest.skip()
+        elif surface4 == "zzero":
+            pytest.skip()
+
     # get reference avg
-    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, "height", ".dat")
+    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
     ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
 
     # calc nougat avg
-    z = membrane.children['z']
     if surface4 == "zone":
-        surf = z.outer
+        surf = fld_set.outer
     elif surface4 == "ztwo":
-        surf = z.inner
+        surf = fld_set.inner
     elif surface4 == "zplus":
-        surf = z.plus
+        surf = fld_set.plus
     elif surface4 == "zzero":
         surf = membrane.children["z_zero"]
     else:
@@ -378,7 +386,7 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     assert arrays_equal(ref, test_array, 1e-11)
 
 
-# Still needed: curvature, thickness, order, tilt, normal_vectors
+# Still needed: curvature, order, tilt, normal_vectors
 
 
 # BELOW: old density tests that need to be re-implemented
