@@ -41,15 +41,6 @@ def surface4(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=["zone", "ztwo", "zplus", "zzero", "zminus"])
-def surface5(request):
-    """
-    Supply all five surfaces to the test function requesting it.
-
-    """
-    return request.param
-
-
 @pytest.fixture(scope='module', params=["zone", "ztwo"])
 def surface2(request):
     """
@@ -280,6 +271,8 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
         fld_set = membrane.children['z']
+    elif quantity == "mean_curvature":
+        fld_set = membrane.children['h']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
