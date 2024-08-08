@@ -286,9 +286,9 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 
 def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
-        fld_set = membrane.return_child("z")
+        fld_set = membrane.children['z']
     elif quantity == "thickness":
-        fld_set = membrane.return_child("t")
+        fld_set = membrane.children['t']
         if surface4 == "zplus":
             pytest.skip()
         elif surface4 == "zzero":
@@ -300,7 +300,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     elif surface4 == "zplus":
         surf = fld_set.plus
     elif surface4 == "zzero":
-        surf = membrane.return_child("z_zero")
+        surf = membrane.children["z_zero"]
     else:
         print("something went wrong")
 
@@ -343,9 +343,9 @@ def test_whether_flat_gaussian(cwd, coordsys):
 @pytest.mark.xfail(strict=True)
 def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
     if quantity == "height":
-        fld_set = membrane.return_child('z')
+        fld_set = membrane.children['z']
     elif quantity == "thickness":
-        fld_set = membrane.return_child('t')
+        fld_set = membrane.children['t']
     outer = fld_set.outer.traj._traj_to_3darray()
     inner = fld_set.inner.traj._traj_to_3darray()
 
@@ -363,7 +363,7 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
     print(ref)
     # calc nougat avg
-    z = membrane.return_child('z')
+    z = membrane.children['z']
 
     if surface4 == "zone":
         surf = z.outer
@@ -372,7 +372,7 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     elif surface4 == "zplus":
         surf = z.plus
     elif surface4 == "zzero":
-        surf = membrane.return_child("z_zero")
+        surf = membrane.children["z_zero"]
     else:
         print("something went wrong")
 
