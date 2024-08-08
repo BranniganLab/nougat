@@ -399,7 +399,7 @@ class Field:
         field_data = mostly_empty(field_data)
         return field_data
 
-    def _traj2array(self):
+    def _traj_to_3darray(self):
         """Turn Trajectory into 3D numpy array."""
         frames = self.traj.frames
         frmlist = []
