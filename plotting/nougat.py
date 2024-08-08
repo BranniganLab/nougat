@@ -57,7 +57,7 @@ class Membrane:
         t0  :  float
             The equilibrium thickness of the membrane.
         """
-        self.children = []
+        self.children = {}
         self.polar = polar
         self.to_analyze = to_analyze
         self.composition = composition
@@ -102,9 +102,12 @@ class Membrane:
 
         """
         new_Field_set = Field_set(outer, inner, name, self)
-        self.children.remove(outer)
-        self.children.remove(inner)
-        self.children.append(new_Field_set)
+        for key, value in dict(self.children).items():
+            if value == outer:
+                del self.children[key]
+            if value == inner:
+                del self.children[key]
+        self.children[name] = new_Field_set
         return new_Field_set
 
     def create_Field(self, path, name, quantity=None, leaflet=None):
@@ -134,7 +137,7 @@ class Membrane:
 
         """
         new_Field = Field(path, name, self, quantity, leaflet)
-        self.children.append(new_Field)
+        self.children[name] = new_Field
         return new_Field
 
     def plot2d(self, obj):
@@ -224,26 +227,6 @@ class Membrane:
             return self.create_Field(rms, "rmsTilde_" + field.name)
         else:
             return self.create_Field(rms, "rms_" + field.name)
-
-    def return_child(self, child_name):
-        """
-        Search the children belonging to this membrane and return the Field or\
-        Field_set whose name matches <child_name>.
-
-        Parameters
-        ----------
-        child_name : str
-            The name of the child Field or Field_set.
-
-        Returns
-        -------
-        Field or Field_set.
-
-        """
-        for child in self.children:
-            if child.name == child_name:
-                return child
-        return "No child with name " + child_name + " found"
 
 
 class Field:
