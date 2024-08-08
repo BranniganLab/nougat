@@ -828,9 +828,9 @@ def run_nougat(path, polar, quantities):
 
     m = Membrane(polar, todo_list)
     if "height" in m.to_analyze:
-        zone = m.create_Field(cwd, "z_one", "height", "zone")
-        ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
-        zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
+        zone = m.create_Field(cwd, "z_one")
+        ztwo = m.create_Field(cwd, "z_two")
+        zzero = m.create_Field(cwd, "z_zero")
         height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
