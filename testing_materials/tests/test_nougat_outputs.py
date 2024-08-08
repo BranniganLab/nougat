@@ -4,13 +4,15 @@ Created on Fri Jul 21 11:18:40 2023.
 @author: js2746
 """
 
+from nougat import run_nougat
 import pytest
 import numpy as np
 from pathlib import Path
 import os
 import sys
+
 sys.path.append(os.path.abspath('../plotting/'))
-from nougat import *
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -59,7 +61,7 @@ def system(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=["height", "thickness"])
+@pytest.fixture(scope='module', params=["height", "thickness", "mean_curvature", "gaussian_curvature"])
 def quantity(request):
     """
     Supply quantity of interest to the test function requesting it.
@@ -163,6 +165,10 @@ def make_py_ref_path(wd, coords, sys, surf, quant, file_format):
         file_type = "trajectory"
     elif file_format == ".dat":
         file_type = "average"
+    if quant == 'mean_curvature':
+        quant = "curvature/mean"
+    elif quant == 'gaussian_curvature':
+        quant = "curvature/gaussian"
     ref_path = ref_root.joinpath(file_type, quant, surf + file_format)
     return ref_path
 
@@ -272,7 +278,9 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     if quantity == "height":
         fld_set = membrane.children['z']
     elif quantity == "mean_curvature":
-        fld_set = membrane.children['h']
+        fld_set = membrane.children['H']
+    elif quantity == 'gaussian_curvature':
+        fld_set = membrane.children['K']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
