@@ -10,6 +10,7 @@ import numpy as np
 import warnings
 import matplotlib.pyplot as plt
 from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty
+from curvature import calculate_curvature
 
 
 class Membrane:
@@ -828,14 +829,28 @@ def run_nougat(path, polar, quantities):
 
     m = Membrane(polar, todo_list)
     if "height" in m.to_analyze:
-        zone = m.create_Field(cwd, "z_one")
-        ztwo = m.create_Field(cwd, "z_two")
-        zzero = m.create_Field(cwd, "z_zero")
+        zone = m.create_Field(cwd, "z_one", "height", "zone")
+        ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
+        zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
+    if "curvature" in m.to_analyze:
+        for surface in [zone, ztwo, zzero]:
+            H, K, _ = calculate_curvature(surface, m.polar, m.grid_dims)
+            if surface == zone:
+                hone = m.create_Field(H, "h_one")
+                kone = m.create_Field(K, "k_one")
+            elif surface == ztwo:
+                htwo = m.create_Field(H, "h_two")
+                ktwo = m.create_Field(K, "k_two")
+            elif surface == zzero:
+                hzero = m.create_Field(H, "h_zero")
+                kzero = m.create_Field(K, "k_zero")
+        mean_curv = m.create_Field_set(hone, htwo, "H")
+        gauss_curv = m.create_Field_set(kone, ktwo, "K")
 
     # m.plot2d(thickness.plus)
 
