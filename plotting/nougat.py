@@ -290,7 +290,7 @@ class Field:
         if isinstance(data, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.traj = Trajectory(self, self._parse_tcl_output(data, parent, quantity, leaflet))
+            self.traj = Trajectory(self._parse_tcl_output(data, parent, quantity, leaflet))
         elif isinstance(data, np.ndarray):
             if len(np.shape(data)) == 1:
                 # this is a Trajectory object
@@ -306,7 +306,7 @@ class Field:
                 parent.grid_dims["N1"] = np.shape(data)[1]
                 parent.grid_dims["N2"] = np.shape(data)[2]
                 parent.grid_dims["Nframes"] = np.shape(data)[0]
-            self.traj = Trajectory(self, data)
+            self.traj = Trajectory(data)
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
 
@@ -502,11 +502,11 @@ class Trajectory:
         assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray"
         if len(np.shape(frames)) == 2:
             self.frames = np.empty(1, dtype=Frame)
-            self.frames[0] = Frame(self, 0, frames)
+            self.frames[0] = Frame(0, frames)
         elif len(np.shape(frames)) == 3:
             self.frames = np.empty(np.shape(frames)[0], dtype=Frame)
             for f in range(np.shape(frames)[0]):
-                self.frames[f] = Frame(self, f, frames[f, :, :])
+                self.frames[f] = Frame(f, frames[f, :, :])
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
@@ -755,7 +755,7 @@ class Field_set:
         _plus and _minus fields.
     """
 
-    def __init__(self, outer, inner, name):
+    def __init__(self, outer, inner, name, parent):
         """
         Construct a Field_set.
 
@@ -768,6 +768,8 @@ class Field_set:
         name  :  str
             The name of this Field set, and the prefix that will be given to\
             the _plus and _minus fields.
+        parent  :  Membrane
+            The Membrane object to which this Field_set belongs.
 
         Returns
         -------
@@ -776,8 +778,8 @@ class Field_set:
         self.outer = outer
         self.inner = inner
         self.name = name
-        self.plus = Field((outer + inner) / 2., self.name + "_plus", self.parent)
-        self.minus = Field((outer - inner) / 2., self.name + "_minus", self.parent)
+        self.plus = Field((outer + inner) / 2., self.name + "_plus", parent)
+        self.minus = Field((outer - inner) / 2., self.name + "_minus", parent)
 
     def __iter__(self):
         """Iterate through the four Fields in a Field_set."""
