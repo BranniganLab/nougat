@@ -302,7 +302,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     elif surface4 == "zzero":
         surf = membrane.children["z_zero"]
     else:
-        print("something went wrong")
+        raise Exception("Something went wrong")
 
     test_array = surf.traj._traj_to_3darray()
 
@@ -359,12 +359,10 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
 def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     # get reference avg
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, "height", ".dat")
-
     ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
-    print(ref)
+
     # calc nougat avg
     z = membrane.children['z']
-
     if surface4 == "zone":
         surf = z.outer
     elif surface4 == "ztwo":
@@ -374,12 +372,9 @@ def test_if_avg_heights_match(cwd, coordsys, surface4, system, membrane):
     elif surface4 == "zzero":
         surf = membrane.children["z_zero"]
     else:
-        print("something went wrong")
-
+        raise Exception("Something went wrong")
     test_array = np.round(surf.traj.avg(), decimals=5)
-    print(test_array)
-    for frame in surf.traj.frames:
-        print(frame)
+
     assert arrays_equal(ref, test_array, 1e-11)
 
 
