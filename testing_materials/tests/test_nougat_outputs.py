@@ -304,7 +304,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     else:
         print("something went wrong")
 
-    test_array = surf.traj2array()
+    test_array = surf._traj2array()
 
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".npy")
     ref = load(ref_path)
@@ -346,8 +346,8 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
         fld_set = membrane.return_child('z')
     elif quantity == "thickness":
         fld_set = membrane.return_child('t')
-    outer = fld_set.outer.traj2array()
-    inner = fld_set.inner.traj2array()
+    outer = fld_set.outer._traj2array()
+    inner = fld_set.inner._traj2array()
 
     assert arrays_equal(outer, inner, 0)
 
