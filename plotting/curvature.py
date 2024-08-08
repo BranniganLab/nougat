@@ -251,7 +251,7 @@ def measure_gaussian_curvature(finite_differences, r, polar):
 
 def measure_normal_vectors(finite_differences, bin_info, r, polar):
     """
-    Measure Gaussian curvature K of a membrane field.
+    Measure surface normal vectors of a membrane field.
 
     Parameters
     ----------
