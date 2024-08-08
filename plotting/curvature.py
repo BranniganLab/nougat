@@ -1,55 +1,34 @@
 """Functions relating to calculation of curvature."""
 import numpy as np
-from utils import *
 
 
-def calculate_curvature(polar, system_dict, cwd):
+def calculate_curvature(height_field, polar, system_dict):
     """
     Calculate mean and Gaussian curvature, as well as normal vectors for each \
         surface.
 
     Parameters
     ----------
+    height_field  :  Field
+        The Field object that represents a height surface.
     polar : bool
         Whether to use polar coordinates or cartesian.
     system_dict : dict
         Dictionary containing key 'bin_info' that has bin dimensions.
-    cwd : PathLib Path object
-        Path to current working directory.
 
     Returns
     -------
     None.
 
     """
-    for field in ["zone", "ztwo", "zzero", "zplus"]:
-        field_height = np.load(cwd.joinpath("trajectory", "height", field + ".npy"))
-
-        wrapped_height = make_pbc(field_height, polar, system_dict)
-
-        diffs = take_finite_differences(wrapped_height, system_dict)
-        r_vector = calculate_r(system_dict['bin_info'], polar)
-        H = measure_mean_curvature(diffs, r_vector, polar)
-        K = measure_gaussian_curvature(diffs, r_vector, polar)
-        Nvecs = measure_normal_vectors(diffs, system_dict['bin_info'], r_vector, polar)
-
-        # take the average curvatures over all frames
-        avgH = calc_avg_over_time(H)
-        avgK = calc_avg_over_time(K)
-
-        # save as files for debugging / analysis
-        np.savetxt(cwd.joinpath("average", "curvature", "mean", field + ".dat"), avgH, delimiter=',', fmt='%10.5f')
-        np.savetxt(cwd.joinpath("average", "curvature", "gaussian", field + ".dat"), avgK, delimiter=',', fmt='%10.5f')
-        np.save(cwd.joinpath("trajectory", "curvature", "mean", field + ".npy"), H)
-        np.save(cwd.joinpath("trajectory", "curvature", "gaussian", field + ".npy"), K)
-        np.save(cwd.joinpath("average", "curvature", "mean", field + ".npy"), avgH)
-        np.save(cwd.joinpath("average", "curvature", "gaussian", field + ".npy"), avgK)
-        np.save(cwd.joinpath("trajectory", "curvature", "normal_vectors", field + ".npy"), Nvecs)
-        if polar:
-            avg_over_theta(cwd.joinpath("average", "curvature", "mean", field))
-            avg_over_theta(cwd.joinpath("average", "curvature", "gaussian", field))
-
-        print(field + " curvatures done!")
+    height_array = height_field.traj._traj_to_3darray()
+    wrapped_height = make_pbc(height_array, polar, system_dict)
+    diffs = take_finite_differences(wrapped_height, system_dict)
+    r_vector = calculate_r(system_dict, polar)
+    H = measure_mean_curvature(diffs, r_vector, polar)
+    K = measure_gaussian_curvature(diffs, r_vector, polar)
+    Nvecs = measure_normal_vectors(diffs, system_dict, r_vector, polar)
+    return H, K, Nvecs
 
 
 def make_pbc(height, polar, system_dict):
@@ -72,8 +51,8 @@ def make_pbc(height, polar, system_dict):
             PBCs.
 
     """
-    N1_bins = system_dict['bin_info']['N1']
-    N2_bins = system_dict['bin_info']['N2']
+    N1_bins = system_dict['N1']
+    N2_bins = system_dict['N2']
     Nframes = np.shape(height)[0]
 
     # create arrays for storing curvature data
@@ -161,10 +140,10 @@ def take_finite_differences(heights, system_dict):
         second order cross term along dimensions 1 and 2.
 
     """
-    N1_bins = system_dict['bin_info']['N1']
-    d1 = system_dict['bin_info']['d1']
-    N2_bins = system_dict['bin_info']['N2']
-    d2 = system_dict['bin_info']['d2']
+    N1_bins = system_dict['N1']
+    d1 = system_dict['d1']
+    N2_bins = system_dict['N2']
+    d2 = system_dict['d2']
 
     # Construct shifted matrices
     shift_row_up = heights[:, 0:N1_bins, 1:N2_bins + 1]

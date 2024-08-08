@@ -13,6 +13,7 @@ sys.path.append(os.path.abspath('../plotting/'))
 from nougat import *
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 @pytest.fixture(scope="module")
 def cwd():
     """
@@ -38,6 +39,7 @@ def surface4(request):
 
     """
     return request.param
+
 
 @pytest.fixture(scope='module', params=["zone", "ztwo", "zplus", "zzero", "zminus"])
 def surface5(request):
@@ -97,16 +99,7 @@ def membrane(cwd, coordsys, system):
     elif coordsys == "polar":
         polar = True
     test_root_path = make_root_path(cwd, coordsys, system, test=True)
-    m = Membrane(polar, ["height", "thickness"], composition=system)
-    if "height" in m.to_analyze:
-        zone = m.create_Field(test_root_path, "z_one", "height", "zone")
-        ztwo = m.create_Field(test_root_path, "z_two", "height", "ztwo")
-        zzero = m.create_Field(test_root_path, "z_zero", "height", "zzero")
-        height = m.create_Field_set(zone, ztwo, "z")
-    if "thickness" in m.to_analyze:
-        tone = m.create_Field(zone - zzero, "t_one")
-        ttwo = m.create_Field(zzero - ztwo, "t_two")
-        thickness = m.create_Field_set(tone, ttwo, "t")
+    m = run_nougat(test_root_path, polar, "htc")
     return m
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
