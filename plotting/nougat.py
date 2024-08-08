@@ -256,8 +256,6 @@ class Field:
     traj  :  Trajectory
         A 1D array containing Frame data from an MD trajectory. Could be \
         height values, curvature values, etc.
-    parent  :  Membrane
-        The Membrane object to which this field belongs.
     name  :  str
         The name of the Field, as it is listed in its parent's children list.
     """
@@ -275,7 +273,7 @@ class Field:
         name  :  str
             The name of this Field
         parent  :  Membrane
-            The Membrane object that his Field belongs to.
+            The Membrane object that this field belongs to.
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height',\
             'order', etc.
@@ -284,7 +282,6 @@ class Field:
             or 'zzero'.
 
         """
-        self.parent = parent
         self.name = name
 
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
@@ -293,7 +290,7 @@ class Field:
         if isinstance(data, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.traj = Trajectory(self, self._parse_tcl_output(data, quantity, leaflet))
+            self.traj = Trajectory(self, self._parse_tcl_output(data, parent, quantity, leaflet))
         elif isinstance(data, np.ndarray):
             if len(np.shape(data)) == 1:
                 # this is a Trajectory object
@@ -302,13 +299,13 @@ class Field:
                 # this is a single frame
                 data = data[None, :, :]
             assert len(np.shape(data)) == 3, "A trajectory must have 3 dimensions."
-            if self.parent.grid_dims["N1"] is not None:
-                assert self.parent.grid_dims["N1"] == np.shape(data)[1], err_msg
-                assert self.parent.grid_dims["N2"] == np.shape(data)[2], err_msg
+            if parent.grid_dims["N1"] is not None:
+                assert parent.grid_dims["N1"] == np.shape(data)[1], err_msg
+                assert parent.grid_dims["N2"] == np.shape(data)[2], err_msg
             else:
-                self.parent.grid_dims["N1"] = np.shape(data)[1]
-                self.parent.grid_dims["N2"] = np.shape(data)[2]
-                self.parent.grid_dims["Nframes"] = np.shape(data)[0]
+                parent.grid_dims["N1"] = np.shape(data)[1]
+                parent.grid_dims["N2"] = np.shape(data)[2]
+                parent.grid_dims["Nframes"] = np.shape(data)[0]
             self.traj = Trajectory(self, data)
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
@@ -329,7 +326,7 @@ class Field:
         """Make the Trajectory accessible to numpy."""
         return self.traj
 
-    def _parse_tcl_output(self, path, quantity, leaflet):
+    def _parse_tcl_output(self, path, parent, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
         and generate the traj array.
@@ -338,6 +335,8 @@ class Field:
         ----------
         path : Path or str
             The path to the nougat.tcl results folder.
+        parent  :  Membrane
+            The Membrane object that this field belongs to.
         quantity : str
             A valid nougat.tcl output quantity, E.G. "height", "order", etc.
         leaflet : str
@@ -357,12 +356,12 @@ class Field:
         # determine grid_dims along second dimension
         N2 = np.shape(unrolled_data)[1] - 2
         d2 = (2 * np.pi) / N2
-        if self.parent.grid_dims["N2"] is not None:
-            assert self.parent.grid_dims["N2"] == N2, err_msg
-            assert self.parent.grid_dims["d2"] == d2, err_msg
+        if parent.grid_dims["N2"] is not None:
+            assert parent.grid_dims["N2"] == N2, err_msg
+            assert parent.grid_dims["d2"] == d2, err_msg
         else:
-            self.parent.grid_dims["N2"] = N2
-            self.parent.grid_dims["d2"] = d2
+            parent.grid_dims["N2"] = N2
+            parent.grid_dims["d2"] = d2
 
         # determine grid_dims along first dimension
         d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
@@ -377,19 +376,19 @@ class Field:
             # this would happen if there was only one frame in the trajectory
             N1 = np.shape(unrolled_data)[0]
         assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
-        if self.parent.grid_dims["N1"] is not None:
-            assert self.parent.grid_dims["N1"] == N1, err_msg
-            assert self.parent.grid_dims["d1"] == d1, err_msg
+        if parent.grid_dims["N1"] is not None:
+            assert parent.grid_dims["N1"] == N1, err_msg
+            assert parent.grid_dims["d1"] == d1, err_msg
         else:
-            self.parent.grid_dims["N1"] = N1
-            self.parent.grid_dims["d1"] = d1
+            parent.grid_dims["N1"] = N1
+            parent.grid_dims["d1"] = d1
 
         # determine Nframes
         Nframes = int(np.shape(unrolled_data)[0] / N1)
-        if self.parent.grid_dims["Nframes"] is not None:
-            assert self.parent.grid_dims["Nframes"] == Nframes, err_msg
+        if parent.grid_dims["Nframes"] is not None:
+            assert parent.grid_dims["Nframes"] == Nframes, err_msg
         else:
-            self.parent.grid_dims["Nframes"] = Nframes
+            parent.grid_dims["Nframes"] = Nframes
 
         # create a new array that has each frame in a different array level
         field_data = np.zeros((Nframes, N1, N2))
@@ -480,21 +479,17 @@ class Trajectory:
 
     Attributes
     ----------
-    parent  :  Field
-        The Field to which this Trajectory belongs.
     frames  :  np.ndarray
         1D array of the Frame objects that constitute the trajectory, in time-\
         order.
     """
 
-    def __init__(self, parent, frames):
+    def __init__(self, frames):
         """
         Construct a Trajectory.
 
         Parameters
         ----------
-        parent : Field
-            The Field to which this Trajectory belongs.
         frames : np.ndarray
             Contains data from one or multiple frames in an ndarray. Will be\
             converted to Frame objects.
@@ -504,7 +499,6 @@ class Trajectory:
         None.
 
         """
-        self.parent = parent
         assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray"
         if len(np.shape(frames)) == 2:
             self.frames = np.empty(1, dtype=Frame)
@@ -624,22 +618,18 @@ class Frame:
 
     Attributes
     ----------
-    parent  :  Trajectory
-        The Trajectory to which this Frame belongs
     index  :  int
         The Trajectory index at which this frame belongs.
     bins  :  np.ndarray
         The 2D array that contains either scalar or vector values.
     """
 
-    def __init__(self, parent, index, bins):
+    def __init__(self, index, bins):
         """
         Create a Frame object.
 
         Parameters
         ----------
-        parent : Trajectory
-            The Trajectory object to which this Frame belongs.
         index : int
             The index value of this frame in its parent Trajectory.
         bins : ndarray
@@ -651,11 +641,8 @@ class Frame:
         None.
 
         """
-        self.parent = parent
         self.index = index
         assert isinstance(bins, np.ndarray), "bins must be a numpy ndarray."
-        assert np.shape(bins)[0] == self.parent.parent.parent.grid_dims["N1"]
-        assert np.shape(bins)[1] == self.parent.parent.parent.grid_dims["N2"]
         self.bins = bins
 
     def __iter__(self):
@@ -766,11 +753,9 @@ class Field_set:
     name  :  str
         The name of this Field set, and the prefix that will be given to the\
         _plus and _minus fields.
-    parent  :  Membrane
-        The Membrane object to which the Fields belong.
     """
 
-    def __init__(self, outer, inner, name, parent):
+    def __init__(self, outer, inner, name):
         """
         Construct a Field_set.
 
@@ -783,8 +768,6 @@ class Field_set:
         name  :  str
             The name of this Field set, and the prefix that will be given to\
             the _plus and _minus fields.
-        parent  :  Membrane
-            The Membrane object to which the Fields belong.
 
         Returns
         -------
@@ -793,7 +776,6 @@ class Field_set:
         self.outer = outer
         self.inner = inner
         self.name = name
-        self.parent = parent
         self.plus = Field((outer + inner) / 2., self.name + "_plus", self.parent)
         self.minus = Field((outer - inner) / 2., self.name + "_minus", self.parent)
 
