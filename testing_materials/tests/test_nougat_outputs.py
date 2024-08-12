@@ -279,10 +279,13 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
         fld_set = membrane.children['z']
+        zero = membrane.children['z_zero']
     elif quantity == "mean_curvature":
         fld_set = membrane.children['H']
+        zero = membrane.children['h_zero']
     elif quantity == 'gaussian_curvature':
-        pytest.skip()
+        fld_set = membrane.children['K']
+        zero = membrane.children['k_zero']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
@@ -296,14 +299,13 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     elif surface4 == "zplus":
         surf = fld_set.plus
     elif surface4 == "zzero":
-        surf = membrane.children["z_zero"]
-    else:
-        raise Exception("Something went wrong")
+        surf = zero
 
     test_array = surf.traj._traj_to_3darray()
 
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".npy")
     ref = load(ref_path)
+
     print(ref)
     print(test_array)
     assert arrays_equal(ref, test_array, 1e-11)
@@ -311,7 +313,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
 # Still needed: order, tilt tests
 
 
-def test_whether_flat_mean(cwd, coordsys, membrane):
+def test_whether_flat_mean(cwd, coordsys, system, membrane):
     if system != "flat":
         pytest.skip()
     H = membrane.children['H']

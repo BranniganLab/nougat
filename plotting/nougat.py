@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import warnings
 import matplotlib.pyplot as plt
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
 from curvature import calculate_curvature
 
 
@@ -333,15 +333,17 @@ class Field:
         """
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
+        config_file_path = path.joinpath("tcl_output", "nougat.log")
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
 
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
 
+        """
         # determine grid_dims along first dimension
         d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
-        """nougat.tcl's output is structured such that the starting value of\
+        nougat.tcl's output is structured such that the starting value of\
         x or r will be repeated each time there is a new frame. Look for the\
-        first repeat and you will know how many x or r bins there are"""
+        first repeat and you will know how many x or r bins there are
         match_value = unrolled_data[0, 0]
         index = np.where(unrolled_data[1:, 0] == match_value)
         if index[0].size != 0:
@@ -369,6 +371,12 @@ class Field:
         else:
             parent.grid_dims["N2"] = N2
             parent.grid_dims["d2"] = d2
+        """
+        N1, N2, d1, d2 = read_log(config_file_path)
+        parent.grid_dims['N1'] = N1
+        parent.grid_dims['N2'] = N2
+        parent.grid_dims['d1'] = d1
+        parent.grid_dims['d2'] = d2
 
         # determine Nframes
         Nframes = int(np.shape(unrolled_data)[0] / N1)

@@ -412,13 +412,14 @@ def mostly_empty(data_array):
     return data_array
 
 
-def read_log():
+def read_log(input_path):
     """
     Read log file output by nougat.tcl and save important info for later.
 
     Parameters
     ----------
-    None.
+    input_path  :  Path or str
+        The Path object or string path to your nougat.log file.
 
     Returns
     -------
@@ -431,7 +432,7 @@ def read_log():
     system_dict = {}
 
     # open log file
-    with open("tcl_output/nougat.log", "r+") as log_file:
+    with open(input_path, "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
         system_dict["sysname"] = lines[1]
@@ -466,7 +467,7 @@ def read_log():
         d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
 
-    return system_dict
+    return N1, N2, d1, d2
 
 
 def plot_all_quantities(polar, system_dict, cwd, inclusion):
