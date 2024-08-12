@@ -849,17 +849,19 @@ def run_nougat(path, polar, quantities):
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
     if "curvature" in m.to_analyze:
-        for surface in [zone, ztwo, zzero]:
-            H, K, _ = calculate_curvature(surface, m.polar, m.grid_dims)
-            if surface == zone:
-                hone = m.create_Field(H, "h_one")
-                kone = m.create_Field(K, "k_one")
-            elif surface == ztwo:
-                htwo = m.create_Field(H, "h_two")
-                ktwo = m.create_Field(K, "k_two")
-            elif surface == zzero:
-                hzero = m.create_Field(H, "h_zero")
-                kzero = m.create_Field(K, "k_zero")
+        hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
+        htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
+        hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
+        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
+        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+        hone = m.create_Field(hone, "h_one")
+        kone = m.create_Field(kone, "k_one")
+        htwo = m.create_Field(htwo, "h_two")
+        ktwo = m.create_Field(ktwo, "k_two")
+        hzero = m.create_Field(hzero, "h_zero")
+        kzero = m.create_Field(kzero, "k_zero")
+        kplus = m.create_Field(kplus, "k_plus")
+        kminus = m.create_Field(kminus, "k_minus")
         mean_curv = m.create_Field_set(hone, htwo, "H")
         gauss_curv = m.create_Field_set(kone, ktwo, "K")
 

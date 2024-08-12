@@ -10,10 +10,11 @@ import numpy as np
 from pathlib import Path
 import os
 import sys
-
+np.seterr(divide='ignore', invalid='ignore')
 sys.path.append(os.path.abspath('../plotting/'))
 
 from nougat import run_nougat
+from curvature import calculate_curvature
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -298,6 +299,8 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
         surf = fld_set.inner
     elif surface4 == "zplus":
         surf = fld_set.plus
+        if quantity == "gaussian_curvature":
+            surf = membrane.children['k_plus']
     elif surface4 == "zzero":
         surf = zero
 
@@ -306,8 +309,6 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".npy")
     ref = load(ref_path)
 
-    print(ref)
-    print(test_array)
     assert arrays_equal(ref, test_array, 1e-11)
 
 # Still needed: order, tilt tests
@@ -359,33 +360,37 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
 
 # Test if python time-averages match
 
-def test_if_avg_heights_thicknesses_match(cwd, coordsys, surface4, system, quantity, membrane):
+def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
         fld_set = membrane.children['z']
+        zero = membrane.children['z_zero']
+    elif quantity == "mean_curvature":
+        fld_set = membrane.children['H']
+        zero = membrane.children['h_zero']
+    elif quantity == 'gaussian_curvature':
+        fld_set = membrane.children['K']
+        zero = membrane.children['k_zero']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
             pytest.skip()
         elif surface4 == "zzero":
             pytest.skip()
-    else:
-        pytest.skip()
-
-    # get reference avg
-    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
-    ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
-
-    # calc nougat avg
     if surface4 == "zone":
         surf = fld_set.outer
     elif surface4 == "ztwo":
         surf = fld_set.inner
     elif surface4 == "zplus":
         surf = fld_set.plus
+        if quantity == "gaussian_curvature":
+            surf = membrane.children['k_plus']
     elif surface4 == "zzero":
-        surf = membrane.children["z_zero"]
-    else:
-        raise Exception("Something went wrong")
+        surf = zero
+
+    # get reference avg
+    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
+    ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
+
     test_array = np.round(surf.traj.avg(), decimals=5)
 
     assert arrays_equal(ref, test_array, 1e-11)
