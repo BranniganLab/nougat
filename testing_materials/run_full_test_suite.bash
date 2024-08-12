@@ -83,7 +83,7 @@ echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
 
 # Run acceptance tests on resulting files
-python3 -m pytest -rx tests/ 2>&1 | tee -a pytest.log
+python3 -m pytest tests/ 2>&1 | tee -a pytest.log
 
 # Sound the all clear
 echo "Acceptance testing finished"
