@@ -333,53 +333,28 @@ class Field:
         """
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
-        config_file_path = path.joinpath("tcl_output", "nougat.log")
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
 
-        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+        config_file_path = path.joinpath("tcl_output", "nougat.log")
+        N1, N2, d1, d2 = read_log(config_file_path)
 
-        """
-        # determine grid_dims along first dimension
-        d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
-        nougat.tcl's output is structured such that the starting value of\
-        x or r will be repeated each time there is a new frame. Look for the\
-        first repeat and you will know how many x or r bins there are
-        match_value = unrolled_data[0, 0]
-        index = np.where(unrolled_data[1:, 0] == match_value)
-        if index[0].size != 0:
-            N1 = index[0][0] + 1
-        else:
-            # this would happen if there was only one frame in the trajectory
-            N1 = np.shape(unrolled_data)[0]
-        assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
+        # determine Nframes
+        Nframes = int(np.shape(unrolled_data)[0] / N1)
+
+        # error checks
+        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
         if parent.grid_dims["N1"] is not None:
             assert parent.grid_dims["N1"] == N1, err_msg
             assert parent.grid_dims["d1"] == d1, err_msg
         else:
             parent.grid_dims["N1"] = N1
             parent.grid_dims["d1"] = d1
-
-        # determine grid_dims along second dimension
-        N2 = np.shape(unrolled_data)[1] - 2
-        if parent.polar:
-            d2 = (2 * np.pi) / N2
-        else:
-            d2 = d1
         if parent.grid_dims["N2"] is not None:
             assert parent.grid_dims["N2"] == N2, err_msg
             assert parent.grid_dims["d2"] == d2, err_msg
         else:
             parent.grid_dims["N2"] = N2
             parent.grid_dims["d2"] = d2
-        """
-        N1, N2, d1, d2 = read_log(config_file_path)
-        parent.grid_dims['N1'] = N1
-        parent.grid_dims['N2'] = N2
-        parent.grid_dims['d1'] = d1
-        parent.grid_dims['d2'] = d2
-
-        # determine Nframes
-        Nframes = int(np.shape(unrolled_data)[0] / N1)
         if parent.grid_dims["Nframes"] is not None:
             assert parent.grid_dims["Nframes"] == Nframes, err_msg
         else:
