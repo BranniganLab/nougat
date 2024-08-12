@@ -852,18 +852,25 @@ def run_nougat(path, polar, quantities):
         hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
         htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
         hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
-        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
-        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+
         hone = m.create_Field(hone, "h_one")
         kone = m.create_Field(kone, "k_one")
         htwo = m.create_Field(htwo, "h_two")
         ktwo = m.create_Field(ktwo, "k_two")
-        hzero = m.create_Field(hzero, "h_zero")
-        kzero = m.create_Field(kzero, "k_zero")
-        kplus = m.create_Field(kplus, "k_plus")
-        kminus = m.create_Field(kminus, "k_minus")
+
         mean_curv = m.create_Field_set(hone, htwo, "H")
         gauss_curv = m.create_Field_set(kone, ktwo, "K")
+
+        hzero = m.create_Field(hzero, "h_zero")
+        kzero = m.create_Field(kzero, "k_zero")
+
+        # gaussian curvature of height.plus is not the same as gauss_curv.plus!
+        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
+        kplus = m.create_Field(kplus, "k_plus")
+
+        # gaussian curvature of height.minus is not the same as gauss_curv.minus!
+        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+        kminus = m.create_Field(kminus, "k_minus")
 
     # m.plot2d(thickness.plus)
 

@@ -300,6 +300,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     elif surface4 == "zplus":
         surf = fld_set.plus
         if quantity == "gaussian_curvature":
+            # gaussian curvature of z_plus is not the same as K.plus!
             surf = membrane.children['k_plus']
     elif surface4 == "zzero":
         surf = zero
@@ -383,6 +384,7 @@ def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     elif surface4 == "zplus":
         surf = fld_set.plus
         if quantity == "gaussian_curvature":
+            # gaussian curvature of z_plus is not the same as K.plus!
             surf = membrane.children['k_plus']
     elif surface4 == "zzero":
         surf = zero
