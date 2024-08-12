@@ -13,7 +13,6 @@ import sys
 
 sys.path.append(os.path.abspath('../plotting/'))
 from nougat import run_nougat
-from curvature import calculate_curvature
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
