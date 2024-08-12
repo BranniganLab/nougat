@@ -10,9 +10,8 @@ import numpy as np
 from pathlib import Path
 import os
 import sys
-np.seterr(divide='ignore', invalid='ignore')
-sys.path.append(os.path.abspath('../plotting/'))
 
+sys.path.append(os.path.abspath('../plotting/'))
 from nougat import run_nougat
 from curvature import calculate_curvature
 
