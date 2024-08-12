@@ -311,7 +311,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
 
     assert arrays_equal(ref, test_array, 1e-11)
 
-# Still needed: order, tilt tests
+# Still needed: order, tilt, normal_vectors
 
 
 def test_whether_flat_mean(cwd, coordsys, system, membrane):
@@ -355,7 +355,7 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
 
     assert arrays_equal(outer, inner, 0)
 
-# Still needed: curvature, order, tilt
+# Still needed: order, tilt, normal_vectors
 
 
 # Test if python time-averages match
@@ -396,7 +396,7 @@ def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     assert arrays_equal(ref, test_array, 1e-11)
 
 
-# Still needed: curvature, order, tilt, normal_vectors
+# Still needed: order, tilt, normal_vectors
 
 
 # BELOW: old density tests that need to be re-implemented
