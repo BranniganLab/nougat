@@ -467,7 +467,7 @@ def read_log(input_path):
         d1, d2 = np.float64(lines[bin_start_line + 1].split(' '))
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
 
-    return N1, N2, d1, d2
+    return system_dict
 
 
 def plot_all_quantities(polar, system_dict, cwd, inclusion):

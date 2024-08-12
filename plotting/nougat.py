@@ -336,7 +336,8 @@ class Field:
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
 
         config_file_path = path.joinpath("tcl_output", "nougat.log")
-        N1, N2, d1, d2 = read_log(config_file_path)
+        system_dict = read_log(config_file_path)
+        N1, N2, d1, d2 = system_dict['bin_info'].values()
 
         # determine Nframes
         Nframes = int(np.shape(unrolled_data)[0] / N1)
