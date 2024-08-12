@@ -271,7 +271,7 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
         ref, test = make_tcl_paths(cwd, coordsys, system, surface4)
         assert arrays_equal(load(ref), load(test), 1e-11)
 
-# Still needed: density, order, tilt tests
+# Still needed: order, tilt tests
 
 
 # Test if python trajectory outputs match
@@ -308,33 +308,23 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     print(test_array)
     assert arrays_equal(ref, test_array, 1e-11)
 
-# Still needed: curvature, density, order, tilt tests
+# Still needed: order, tilt tests
 
 
-"""
-def test_whether_flat(cwd, coordsys):
-    if coordsys == "cart":
-        settings = "_5_5_0_-1_1"
-    else:
-        settings = "_3_12_0_-1_1"
-    Hone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "zone.npy"))
-    Htwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "ztwo.npy"))
-    Hplus = Hone + Htwo / 2.0
-    avgHplus = np.nanmean(Hplus)
+def test_whether_flat_mean(cwd, coordsys, membrane):
+    if system != "flat":
+        pytest.skip()
+    H = membrane.children['H']
+    avgHplus = np.nanmean(H.plus.traj.avg())
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
-def test_whether_flat_gaussian(cwd, coordsys):
-    if coordsys == "cart":
-        settings = "_5_5_0_-1_1"
-    else:
-        settings = "_3_12_0_-1_1"
-    Kone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "zone.npy"))
-    Ktwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "ztwo.npy"))
-    Kplus = Kone + Ktwo / 2.0
-    avgKplus = np.nanmean(Kplus)
+def test_whether_flat_gaussian(cwd, coordsys, system, membrane):
+    if system != "flat":
+        pytest.skip()
+    K = membrane.children['K']
+    avgKplus = np.nanmean(K.plus.traj.avg())
     assert avgKplus <= 0.000000000001 and avgKplus >= -0.000000000001
-"""
 
 
 @pytest.mark.xfail(strict=True)
@@ -343,6 +333,18 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
         fld_set = membrane.children['z']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
+    elif quantity == "mean_curvature":
+        if system == "flat":
+            # the leaflets should both be zero, so skip this XFAIL test
+            pytest.skip()
+        else:
+            fld_set = membrane.children['H']
+    elif quantity == "gaussian_curvature":
+        if system == "flat":
+            # the leaflets should both be zero, so skip this XFAIL test
+            pytest.skip()
+        else:
+            fld_set = membrane.children['K']
     else:
         pytest.skip()
     outer = fld_set.outer.traj._traj_to_3darray()
