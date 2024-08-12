@@ -337,16 +337,6 @@ class Field:
 
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
 
-        # determine grid_dims along second dimension
-        N2 = np.shape(unrolled_data)[1] - 2
-        d2 = (2 * np.pi) / N2
-        if parent.grid_dims["N2"] is not None:
-            assert parent.grid_dims["N2"] == N2, err_msg
-            assert parent.grid_dims["d2"] == d2, err_msg
-        else:
-            parent.grid_dims["N2"] = N2
-            parent.grid_dims["d2"] = d2
-
         # determine grid_dims along first dimension
         d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
         """nougat.tcl's output is structured such that the starting value of\
@@ -366,6 +356,19 @@ class Field:
         else:
             parent.grid_dims["N1"] = N1
             parent.grid_dims["d1"] = d1
+
+        # determine grid_dims along second dimension
+        N2 = np.shape(unrolled_data)[1] - 2
+        if parent.polar:
+            d2 = (2 * np.pi) / N2
+        else:
+            d2 = d1
+        if parent.grid_dims["N2"] is not None:
+            assert parent.grid_dims["N2"] == N2, err_msg
+            assert parent.grid_dims["d2"] == d2, err_msg
+        else:
+            parent.grid_dims["N2"] = N2
+            parent.grid_dims["d2"] = d2
 
         # determine Nframes
         Nframes = int(np.shape(unrolled_data)[0] / N1)
