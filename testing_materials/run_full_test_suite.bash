@@ -47,6 +47,21 @@ fi
 echo "Starting pytest unit testing"
 python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
 
+# Check to make sure testing did not fail
+if grep -q "No module named" pyunittest.log
+then
+	echo "pytest unit testing failed :("
+	echo "You need to install pytest before proceeding"
+	echo "Do you want to continue with acceptance testing anyway?"
+	echo "(Choose the number that corresponds to your choice)"
+	select yn in "Yes, Continue" "No, Exit"; do
+    	case $yn in
+        	"Yes, Continue" ) break;;
+        	"No, Exit" ) exit;;
+    	esac
+	done
+fi
+
 # Check to make sure tests all passed
 if grep -q FAILED pyunittest.log
 then

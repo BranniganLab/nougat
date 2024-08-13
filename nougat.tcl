@@ -30,8 +30,7 @@ proc cell_prep {config_path leaf_check} {
 
     set config_dict [read_config_file $config_path]
 
-    source [dict get $config_dict utilities_path]/helper_procs.tcl 
-    source [dict get $config_dict utilities_path]/JS_helpers.tcl
+    source [dict get $config_dict utilities_path]/helper_procs.tcl
     
     if {[dict get $config_dict use_qwrap] == "yes"} {
         load [dict get $config_dict qwrap_path]/qwrap.so

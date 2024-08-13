@@ -9,7 +9,8 @@ from pathlib import Path
 import numpy as np
 import warnings
 import matplotlib.pyplot as plt
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
+from curvature import calculate_curvature
 
 
 class Membrane:
@@ -57,7 +58,7 @@ class Membrane:
         t0  :  float
             The equilibrium thickness of the membrane.
         """
-        self.children = []
+        self.children = {}
         self.polar = polar
         self.to_analyze = to_analyze
         self.composition = composition
@@ -102,9 +103,12 @@ class Membrane:
 
         """
         new_Field_set = Field_set(outer, inner, name, self)
-        self.children.remove(outer)
-        self.children.remove(inner)
-        self.children.append(new_Field_set)
+        for key, value in dict(self.children).items():
+            if value == outer:
+                del self.children[key]
+            if value == inner:
+                del self.children[key]
+        self.children[name] = new_Field_set
         return new_Field_set
 
     def create_Field(self, path, name, quantity=None, leaflet=None):
@@ -134,7 +138,7 @@ class Membrane:
 
         """
         new_Field = Field(path, name, self, quantity, leaflet)
-        self.children.append(new_Field)
+        self.children[name] = new_Field
         return new_Field
 
     def plot2d(self, obj):
@@ -174,7 +178,7 @@ class Membrane:
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
         fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
-        plt.show()
+        return fig, ax
 
     def measure_correlation(self, field1, field2):
         """
@@ -236,8 +240,8 @@ class Field:
     traj  :  Trajectory
         A 1D array containing Frame data from an MD trajectory. Could be \
         height values, curvature values, etc.
-    parent  :  Membrane
-        The Membrane object to which this field belongs.
+    name  :  str
+        The name of the Field, as it is listed in its parent's children list.
     """
 
     def __init__(self, data, name, parent, quantity=None, leaflet=None):
@@ -253,7 +257,7 @@ class Field:
         name  :  str
             The name of this Field
         parent  :  Membrane
-            The Membrane object that his Field belongs to.
+            The Membrane object that this field belongs to.
         quantity  :  str
             If used, must contain a valid nougat quantity I.E. 'height',\
             'order', etc.
@@ -262,7 +266,6 @@ class Field:
             or 'zzero'.
 
         """
-        self.parent = parent
         self.name = name
 
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
@@ -271,7 +274,7 @@ class Field:
         if isinstance(data, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.traj = Trajectory(self, self._parse_tcl_output(data, quantity, leaflet))
+            self.traj = Trajectory(self._parse_tcl_output(data, parent, quantity, leaflet))
         elif isinstance(data, np.ndarray):
             if len(np.shape(data)) == 1:
                 # this is a Trajectory object
@@ -280,14 +283,14 @@ class Field:
                 # this is a single frame
                 data = data[None, :, :]
             assert len(np.shape(data)) == 3, "A trajectory must have 3 dimensions."
-            if self.parent.grid_dims["N1"] is not None:
-                assert self.parent.grid_dims["N1"] == np.shape(data)[1], err_msg
-                assert self.parent.grid_dims["N2"] == np.shape(data)[2], err_msg
+            if parent.grid_dims["N1"] is not None:
+                assert parent.grid_dims["N1"] == np.shape(data)[1], err_msg
+                assert parent.grid_dims["N2"] == np.shape(data)[2], err_msg
             else:
-                self.parent.grid_dims["N1"] = np.shape(data)[1]
-                self.parent.grid_dims["N2"] = np.shape(data)[2]
-                self.parent.grid_dims["Nframes"] = np.shape(data)[0]
-            self.traj = Trajectory(self, data)
+                parent.grid_dims["N1"] = np.shape(data)[1]
+                parent.grid_dims["N2"] = np.shape(data)[2]
+                parent.grid_dims["Nframes"] = np.shape(data)[0]
+            self.traj = Trajectory(data)
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
 
@@ -307,7 +310,7 @@ class Field:
         """Make the Trajectory accessible to numpy."""
         return self.traj
 
-    def _parse_tcl_output(self, path, quantity, leaflet):
+    def _parse_tcl_output(self, path, parent, quantity, leaflet):
         """
         Read in the tcl output data, update the parent Membrane's grid_dims,\
         and generate the traj array.
@@ -316,6 +319,8 @@ class Field:
         ----------
         path : Path or str
             The path to the nougat.tcl results folder.
+        parent  :  Membrane
+            The Membrane object that this field belongs to.
         quantity : str
             A valid nougat.tcl output quantity, E.G. "height", "order", etc.
         leaflet : str
@@ -324,56 +329,44 @@ class Field:
         Returns
         -------
         ndarray
-            A 2- 3D array containing nougat.tcl output data.
+            A 3D array containing nougat.tcl output data.
         """
         # import traj values
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
 
-        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-
-        # determine grid_dims along second dimension
-        N2 = np.shape(unrolled_data)[1] - 2
-        d2 = (2 * np.pi) / N2
-        if self.parent.grid_dims["N2"] is not None:
-            assert self.parent.grid_dims["N2"] == N2, err_msg
-            assert self.parent.grid_dims["d2"] == d2, err_msg
-        else:
-            self.parent.grid_dims["N2"] = N2
-            self.parent.grid_dims["d2"] = d2
-
-        # determine grid_dims along first dimension
-        d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
-        """nougat.tcl's output is structured such that the starting value of\
-        x or r will be repeated each time there is a new frame. Look for the\
-        first repeat and you will know how many x or r bins there are"""
-        match_value = unrolled_data[0, 0]
-        index = np.where(unrolled_data[1:, 0] == match_value)
-        if index[0].size != 0:
-            N1 = index[0][0] + 1
-        else:
-            # this would happen if there was only one frame in the trajectory
-            N1 = np.shape(unrolled_data[0])
-        assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
-        if self.parent.grid_dims["N1"] is not None:
-            assert self.parent.grid_dims["N1"] == N1, err_msg
-            assert self.parent.grid_dims["d1"] == d1, err_msg
-        else:
-            self.parent.grid_dims["N1"] = N1
-            self.parent.grid_dims["d1"] = d1
+        config_file_path = path.joinpath("tcl_output", "nougat.log")
+        system_dict = read_log(config_file_path)
+        N1, N2, d1, d2 = system_dict['bin_info'].values()
 
         # determine Nframes
         Nframes = int(np.shape(unrolled_data)[0] / N1)
-        if self.parent.grid_dims["Nframes"] is not None:
-            assert self.parent.grid_dims["Nframes"] == Nframes, err_msg
+
+        # error checks
+        err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
+        if parent.grid_dims["N1"] is not None:
+            assert parent.grid_dims["N1"] == N1, err_msg
+            assert parent.grid_dims["d1"] == d1, err_msg
         else:
-            self.parent.grid_dims["Nframes"] = Nframes
+            parent.grid_dims["N1"] = N1
+            parent.grid_dims["d1"] = d1
+        if parent.grid_dims["N2"] is not None:
+            assert parent.grid_dims["N2"] == N2, err_msg
+            assert parent.grid_dims["d2"] == d2, err_msg
+        else:
+            parent.grid_dims["N2"] = N2
+            parent.grid_dims["d2"] = d2
+        if parent.grid_dims["Nframes"] is not None:
+            assert parent.grid_dims["Nframes"] == Nframes, err_msg
+        else:
+            parent.grid_dims["Nframes"] = Nframes
 
         # create a new array that has each frame in a different array level
         field_data = np.zeros((Nframes, N1, N2))
         for frm in range(Nframes):
             field_data[frm, :, :] = unrolled_data[frm * N1: (frm + 1) * N1, 2:]
 
+        field_data = mostly_empty(field_data)
         return field_data
 
     # BASIC MATH MAGIC METHODS BELOW #
@@ -448,21 +441,17 @@ class Trajectory:
 
     Attributes
     ----------
-    parent  :  Field
-        The Field to which this Trajectory belongs.
     frames  :  np.ndarray
         1D array of the Frame objects that constitute the trajectory, in time-\
         order.
     """
 
-    def __init__(self, parent, frames):
+    def __init__(self, frames):
         """
         Construct a Trajectory.
 
         Parameters
         ----------
-        parent : Field
-            The Field to which this Trajectory belongs.
         frames : np.ndarray
             Contains data from one or multiple frames in an ndarray. Will be\
             converted to Frame objects.
@@ -472,15 +461,14 @@ class Trajectory:
         None.
 
         """
-        self.parent = parent
         assert isinstance(frames, np.ndarray), "frames must be a numpy ndarray"
         if len(np.shape(frames)) == 2:
             self.frames = np.empty(1, dtype=Frame)
-            self.frames[0] = Frame(self, 0, frames)
+            self.frames[0] = Frame(0, frames)
         elif len(np.shape(frames)) == 3:
             self.frames = np.empty(np.shape(frames)[0], dtype=Frame)
             for f in range(np.shape(frames)[0]):
-                self.frames[f] = Frame(self, f, frames[f, :, :])
+                self.frames[f] = Frame(f, frames[f, :, :])
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
@@ -505,11 +493,21 @@ class Trajectory:
         """Return the .frames attribute."""
         return self.frames
 
+    def _traj_to_3darray(self):
+        """Turn Trajectory into 3D numpy array."""
+        frames = self.frames
+        frmlist = []
+        for frame in frames:
+            frmlist.append(frame.bins)
+        frmlist = tuple(frmlist)
+        return np.stack(frmlist, axis=0)
+
     def avg(self):
         """Calculate the trajectory average (over time)."""
+        data_array = self._traj_to_3darray()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            avg = np.nanmean(self.frames, axis=0)
+            avg = np.nanmean(data_array, axis=0)
             return avg
 
     def __getitem__(self, item):
@@ -592,22 +590,18 @@ class Frame:
 
     Attributes
     ----------
-    parent  :  Trajectory
-        The Trajectory to which this Frame belongs
     index  :  int
         The Trajectory index at which this frame belongs.
     bins  :  np.ndarray
         The 2D array that contains either scalar or vector values.
     """
 
-    def __init__(self, parent, index, bins):
+    def __init__(self, index, bins):
         """
         Create a Frame object.
 
         Parameters
         ----------
-        parent : Trajectory
-            The Trajectory object to which this Frame belongs.
         index : int
             The index value of this frame in its parent Trajectory.
         bins : ndarray
@@ -619,11 +613,8 @@ class Frame:
         None.
 
         """
-        self.parent = parent
         self.index = index
         assert isinstance(bins, np.ndarray), "bins must be a numpy ndarray."
-        assert np.shape(bins)[0] == self.parent.parent.parent.grid_dims["N1"]
-        assert np.shape(bins)[1] == self.parent.parent.parent.grid_dims["N2"]
         self.bins = bins
 
     def __iter__(self):
@@ -734,8 +725,6 @@ class Field_set:
     name  :  str
         The name of this Field set, and the prefix that will be given to the\
         _plus and _minus fields.
-    parent  :  Membrane
-        The Membrane object to which the Fields belong.
     """
 
     def __init__(self, outer, inner, name, parent):
@@ -752,7 +741,7 @@ class Field_set:
             The name of this Field set, and the prefix that will be given to\
             the _plus and _minus fields.
         parent  :  Membrane
-            The Membrane object to which the Fields belong.
+            The Membrane object to which this Field_set belongs.
 
         Returns
         -------
@@ -761,9 +750,8 @@ class Field_set:
         self.outer = outer
         self.inner = inner
         self.name = name
-        self.parent = parent
-        self.plus = Field((outer + inner) / 2., self.name + "_plus", self.parent)
-        self.minus = Field((outer - inner) / 2., self.name + "_minus", self.parent)
+        self.plus = Field((outer + inner) / 2., self.name + "_plus", parent)
+        self.minus = Field((outer - inner) / 2., self.name + "_minus", parent)
 
     def __iter__(self):
         """Iterate through the four Fields in a Field_set."""
@@ -831,13 +819,36 @@ def run_nougat(path, polar, quantities):
         zone = m.create_Field(cwd, "z_one", "height", "zone")
         ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
-        height = m.create_Field_set(ztwo, zone, "z")
+        height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
+    if "curvature" in m.to_analyze:
+        hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
+        htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
+        hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
 
-    m.plot2d(thickness.plus)
+        hone = m.create_Field(hone, "h_one")
+        kone = m.create_Field(kone, "k_one")
+        htwo = m.create_Field(htwo, "h_two")
+        ktwo = m.create_Field(ktwo, "k_two")
+
+        mean_curv = m.create_Field_set(hone, htwo, "H")
+        gauss_curv = m.create_Field_set(kone, ktwo, "K")
+
+        hzero = m.create_Field(hzero, "h_zero")
+        kzero = m.create_Field(kzero, "k_zero")
+
+        # gaussian curvature of height.plus is not the same as gauss_curv.plus!
+        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
+        kplus = m.create_Field(kplus, "k_plus")
+
+        # gaussian curvature of height.minus is not the same as gauss_curv.minus!
+        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+        kminus = m.create_Field(kminus, "k_minus")
+
+    # m.plot2d(thickness.plus)
 
     return m
 
