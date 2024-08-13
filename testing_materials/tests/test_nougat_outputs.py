@@ -4,14 +4,18 @@ Created on Fri Jul 21 11:18:40 2023.
 @author: js2746
 """
 
+
 import pytest
 import numpy as np
 from pathlib import Path
 import os
 import sys
+
 sys.path.append(os.path.abspath('../plotting/'))
-from nougat import *
+from nougat import run_nougat
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 @pytest.fixture(scope="module")
 def cwd():
@@ -39,14 +43,6 @@ def surface4(request):
     """
     return request.param
 
-@pytest.fixture(scope='module', params=["zone", "ztwo", "zplus", "zzero", "zminus"])
-def surface5(request):
-    """
-    Supply all five surfaces to the test function requesting it.
-
-    """
-    return request.param
-
 
 @pytest.fixture(scope='module', params=["zone", "ztwo"])
 def surface2(request):
@@ -66,7 +62,7 @@ def system(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=["height", "thickness"])
+@pytest.fixture(scope='module', params=["height", "thickness", "mean_curvature", "gaussian_curvature"])
 def quantity(request):
     """
     Supply quantity of interest to the test function requesting it.
@@ -97,16 +93,7 @@ def membrane(cwd, coordsys, system):
     elif coordsys == "polar":
         polar = True
     test_root_path = make_root_path(cwd, coordsys, system, test=True)
-    m = Membrane(polar, ["height", "thickness"], composition=system)
-    if "height" in m.to_analyze:
-        zone = m.create_Field(test_root_path, "z_one", "height", "zone")
-        ztwo = m.create_Field(test_root_path, "z_two", "height", "ztwo")
-        zzero = m.create_Field(test_root_path, "z_zero", "height", "zzero")
-        height = m.create_Field_set(zone, ztwo, "z")
-    if "thickness" in m.to_analyze:
-        tone = m.create_Field(zone - zzero, "t_one")
-        ttwo = m.create_Field(zzero - ztwo, "t_two")
-        thickness = m.create_Field_set(tone, ttwo, "t")
+    m = run_nougat(test_root_path, polar, "htc")
     return m
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,6 +166,10 @@ def make_py_ref_path(wd, coords, sys, surf, quant, file_format):
         file_type = "trajectory"
     elif file_format == ".dat":
         file_type = "average"
+    if quant == 'mean_curvature':
+        quant = "curvature/mean"
+    elif quant == 'gaussian_curvature':
+        quant = "curvature/gaussian"
     ref_path = ref_root.joinpath(file_type, quant, surf + file_format)
     return ref_path
 
@@ -279,7 +270,7 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
         ref, test = make_tcl_paths(cwd, coordsys, system, surface4)
         assert arrays_equal(load(ref), load(test), 1e-11)
 
-# Still needed: density, order, tilt tests
+# Still needed: order, tilt tests
 
 
 # Test if python trajectory outputs match
@@ -287,6 +278,13 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
 def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
         fld_set = membrane.children['z']
+        zero = membrane.children['z_zero']
+    elif quantity == "mean_curvature":
+        fld_set = membrane.children['H']
+        zero = membrane.children['h_zero']
+    elif quantity == 'gaussian_curvature':
+        fld_set = membrane.children['K']
+        zero = membrane.children['k_zero']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
@@ -299,10 +297,11 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
         surf = fld_set.inner
     elif surface4 == "zplus":
         surf = fld_set.plus
+        if quantity == "gaussian_curvature":
+            # gaussian curvature of z_plus is not the same as K.plus!
+            surf = membrane.children['k_plus']
     elif surface4 == "zzero":
-        surf = membrane.children["z_zero"]
-    else:
-        raise Exception("Something went wrong")
+        surf = zero
 
     test_array = surf.traj._traj_to_3darray()
 
@@ -311,33 +310,23 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
 
     assert arrays_equal(ref, test_array, 1e-11)
 
-# Still needed: curvature, density, order, tilt tests
+# Still needed: order, tilt, normal_vectors
 
 
-"""
-def test_whether_flat(cwd, coordsys):
-    if coordsys == "cart":
-        settings = "_5_5_0_-1_1"
-    else:
-        settings = "_3_12_0_-1_1"
-    Hone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "zone.npy"))
-    Htwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "mean", "ztwo.npy"))
-    Hplus = Hone + Htwo / 2.0
-    avgHplus = np.nanmean(Hplus)
+def test_whether_flat_mean(cwd, coordsys, system, membrane):
+    if system != "flat":
+        pytest.skip()
+    H = membrane.children['H']
+    avgHplus = np.nanmean(H.plus.traj.avg())
     assert avgHplus <= 0.000000000001 and avgHplus >= -0.000000000001
 
 
-def test_whether_flat_gaussian(cwd, coordsys):
-    if coordsys == "cart":
-        settings = "_5_5_0_-1_1"
-    else:
-        settings = "_3_12_0_-1_1"
-    Kone = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "zone.npy"))
-    Ktwo = np.load(cwd.joinpath("flat_surface_test", "test_" + coordsys + settings, "trajectory", "curvature", "gaussian", "ztwo.npy"))
-    Kplus = Kone + Ktwo / 2.0
-    avgKplus = np.nanmean(Kplus)
+def test_whether_flat_gaussian(cwd, coordsys, system, membrane):
+    if system != "flat":
+        pytest.skip()
+    K = membrane.children['K']
+    avgKplus = np.nanmean(K.plus.traj.avg())
     assert avgKplus <= 0.000000000001 and avgKplus >= -0.000000000001
-"""
 
 
 @pytest.mark.xfail(strict=True)
@@ -346,47 +335,68 @@ def test_if_leaflets_are_distinct(cwd, coordsys, system, quantity, membrane):
         fld_set = membrane.children['z']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
+    elif quantity == "mean_curvature":
+        if system == "flat":
+            # the leaflets should both be zero, so skip this XFAIL test
+            pytest.skip()
+        else:
+            fld_set = membrane.children['H']
+    elif quantity == "gaussian_curvature":
+        if system == "flat":
+            # the leaflets should both be zero, so skip this XFAIL test
+            pytest.skip()
+        else:
+            fld_set = membrane.children['K']
+    else:
+        pytest.skip()
     outer = fld_set.outer.traj._traj_to_3darray()
     inner = fld_set.inner.traj._traj_to_3darray()
 
     assert arrays_equal(outer, inner, 0)
 
-# Still needed: curvature, order, tilt
+# Still needed: order, tilt, normal_vectors
 
 
 # Test if python time-averages match
 
-def test_if_avg_heights_thicknesses_match(cwd, coordsys, surface4, system, quantity, membrane):
+def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     if quantity == "height":
         fld_set = membrane.children['z']
+        zero = membrane.children['z_zero']
+    elif quantity == "mean_curvature":
+        fld_set = membrane.children['H']
+        zero = membrane.children['h_zero']
+    elif quantity == 'gaussian_curvature':
+        fld_set = membrane.children['K']
+        zero = membrane.children['k_zero']
     elif quantity == "thickness":
         fld_set = membrane.children['t']
         if surface4 == "zplus":
             pytest.skip()
         elif surface4 == "zzero":
             pytest.skip()
-
-    # get reference avg
-    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
-    ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
-
-    # calc nougat avg
     if surface4 == "zone":
         surf = fld_set.outer
     elif surface4 == "ztwo":
         surf = fld_set.inner
     elif surface4 == "zplus":
         surf = fld_set.plus
+        if quantity == "gaussian_curvature":
+            # gaussian curvature of z_plus is not the same as K.plus!
+            surf = membrane.children['k_plus']
     elif surface4 == "zzero":
-        surf = membrane.children["z_zero"]
-    else:
-        raise Exception("Something went wrong")
+        surf = zero
+
+    # get reference avg
+    ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".dat")
+    ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
+
     test_array = np.round(surf.traj.avg(), decimals=5)
 
     assert arrays_equal(ref, test_array, 1e-11)
 
 
-# Still needed: curvature, order, tilt, normal_vectors
+# Still needed: order, tilt, normal_vectors
 
 
 # BELOW: old density tests that need to be re-implemented

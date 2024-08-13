@@ -412,13 +412,14 @@ def mostly_empty(data_array):
     return data_array
 
 
-def read_log():
+def read_log(input_path):
     """
     Read log file output by nougat.tcl and save important info for later.
 
     Parameters
     ----------
-    None.
+    input_path  :  Path or str
+        The Path object or string path to your nougat.log file.
 
     Returns
     -------
@@ -431,7 +432,7 @@ def read_log():
     system_dict = {}
 
     # open log file
-    with open("tcl_output/nougat.log", "r+") as log_file:
+    with open(input_path, "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
         system_dict["sysname"] = lines[1]

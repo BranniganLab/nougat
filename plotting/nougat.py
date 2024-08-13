@@ -9,7 +9,8 @@ from pathlib import Path
 import numpy as np
 import warnings
 import matplotlib.pyplot as plt
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
+from curvature import calculate_curvature
 
 
 class Membrane:
@@ -334,40 +335,27 @@ class Field:
         input_file_path = path.joinpath("tcl_output", quantity, leaflet + ".dat")
         unrolled_data = np.genfromtxt(input_file_path, missing_values='nan', filling_values=np.nan)
 
+        config_file_path = path.joinpath("tcl_output", "nougat.log")
+        system_dict = read_log(config_file_path)
+        N1, N2, d1, d2 = system_dict['bin_info'].values()
+
+        # determine Nframes
+        Nframes = int(np.shape(unrolled_data)[0] / N1)
+
+        # error checks
         err_msg = "This ndarray doesn't have the same dimensions as its parent Membrane."
-
-        # determine grid_dims along second dimension
-        N2 = np.shape(unrolled_data)[1] - 2
-        d2 = (2 * np.pi) / N2
-        if parent.grid_dims["N2"] is not None:
-            assert parent.grid_dims["N2"] == N2, err_msg
-            assert parent.grid_dims["d2"] == d2, err_msg
-        else:
-            parent.grid_dims["N2"] = N2
-            parent.grid_dims["d2"] = d2
-
-        # determine grid_dims along first dimension
-        d1 = unrolled_data[0, 1] - unrolled_data[0, 0]
-        """nougat.tcl's output is structured such that the starting value of\
-        x or r will be repeated each time there is a new frame. Look for the\
-        first repeat and you will know how many x or r bins there are"""
-        match_value = unrolled_data[0, 0]
-        index = np.where(unrolled_data[1:, 0] == match_value)
-        if index[0].size != 0:
-            N1 = index[0][0] + 1
-        else:
-            # this would happen if there was only one frame in the trajectory
-            N1 = np.shape(unrolled_data)[0]
-        assert np.shape(unrolled_data)[0] % N1 == 0, "N1 incorrectly calculated, or error in nougat.tcl write-out stage."
         if parent.grid_dims["N1"] is not None:
             assert parent.grid_dims["N1"] == N1, err_msg
             assert parent.grid_dims["d1"] == d1, err_msg
         else:
             parent.grid_dims["N1"] = N1
             parent.grid_dims["d1"] = d1
-
-        # determine Nframes
-        Nframes = int(np.shape(unrolled_data)[0] / N1)
+        if parent.grid_dims["N2"] is not None:
+            assert parent.grid_dims["N2"] == N2, err_msg
+            assert parent.grid_dims["d2"] == d2, err_msg
+        else:
+            parent.grid_dims["N2"] = N2
+            parent.grid_dims["d2"] = d2
         if parent.grid_dims["Nframes"] is not None:
             assert parent.grid_dims["Nframes"] == Nframes, err_msg
         else:
@@ -828,14 +816,37 @@ def run_nougat(path, polar, quantities):
 
     m = Membrane(polar, todo_list)
     if "height" in m.to_analyze:
-        zone = m.create_Field(cwd, "z_one")
-        ztwo = m.create_Field(cwd, "z_two")
-        zzero = m.create_Field(cwd, "z_zero")
+        zone = m.create_Field(cwd, "z_one", "height", "zone")
+        ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
+        zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in m.to_analyze:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
+    if "curvature" in m.to_analyze:
+        hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
+        htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
+        hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
+
+        hone = m.create_Field(hone, "h_one")
+        kone = m.create_Field(kone, "k_one")
+        htwo = m.create_Field(htwo, "h_two")
+        ktwo = m.create_Field(ktwo, "k_two")
+
+        mean_curv = m.create_Field_set(hone, htwo, "H")
+        gauss_curv = m.create_Field_set(kone, ktwo, "K")
+
+        hzero = m.create_Field(hzero, "h_zero")
+        kzero = m.create_Field(kzero, "k_zero")
+
+        # gaussian curvature of height.plus is not the same as gauss_curv.plus!
+        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
+        kplus = m.create_Field(kplus, "k_plus")
+
+        # gaussian curvature of height.minus is not the same as gauss_curv.minus!
+        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+        kminus = m.create_Field(kminus, "k_minus")
 
     # m.plot2d(thickness.plus)
 
