@@ -27,8 +27,6 @@ class Membrane:
         The list of all Fields and Field_sets that have been computed. This\
         list is updated any time Fields are turned into Field_sets so that\
         there is no duplication.
-    to_analyze  :  list
-        The list of quantities that the user has selected for analysis.
     grid_dims  :  dict
         Contains information about the grid dimensions used.\
         N1 is the number of bins in the first dimension (x/r) and d1 is the\
@@ -60,7 +58,6 @@ class Membrane:
         """
         self.children = {}
         self.polar = polar
-        self.to_analyze = to_analyze
         self.composition = composition
         self.t0 = t0
         self.grid_dims = {
