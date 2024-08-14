@@ -27,8 +27,6 @@ class Membrane:
         The list of all Fields and Field_sets that have been computed. This\
         list is updated any time Fields are turned into Field_sets so that\
         there is no duplication.
-    to_analyze  :  list
-        The list of quantities that the user has selected for analysis.
     grid_dims  :  dict
         Contains information about the grid dimensions used.\
         N1 is the number of bins in the first dimension (x/r) and d1 is the\
@@ -43,7 +41,7 @@ class Membrane:
         The equilibrium thickness of the membrane.
     """
 
-    def __init__(self, polar, to_analyze, composition=None, t0=None):
+    def __init__(self, polar, composition=None, t0=None):
         """
         Create a Membrane object.
 
@@ -60,7 +58,6 @@ class Membrane:
         """
         self.children = {}
         self.polar = polar
-        self.to_analyze = to_analyze
         self.composition = composition
         self.t0 = t0
         self.grid_dims = {
@@ -814,17 +811,17 @@ def run_nougat(path, polar, quantities):
     cwd = Path(path)
     todo_list = make_todo_list(quantities)
 
-    m = Membrane(polar, todo_list)
-    if "height" in m.to_analyze:
+    m = Membrane(polar)
+    if "height" in todo_list:
         zone = m.create_Field(cwd, "z_one", "height", "zone")
         ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
         zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
         height = m.create_Field_set(zone, ztwo, "z")
-    if "thickness" in m.to_analyze:
+    if "thickness" in todo_list:
         tone = m.create_Field(zone - zzero, "t_one")
         ttwo = m.create_Field(zzero - ztwo, "t_two")
         thickness = m.create_Field_set(tone, ttwo, "t")
-    if "curvature" in m.to_analyze:
+    if "curvature" in todo_list:
         hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
         htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
         hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
