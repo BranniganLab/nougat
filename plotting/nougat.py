@@ -35,8 +35,9 @@ class Membrane:
         trajectory.
     polar  :  bool
         If True, use cylindrical coordinates.
-    composition  :  str
-        The composition of the membrane.
+    composition  :  dict
+        The composition of the membrane where keys are lipid names and values \
+        are composition percentages.
     t0  :  float
         The equilibrium thickness of the membrane.
     """
