@@ -41,7 +41,7 @@ class Membrane:
         The equilibrium thickness of the membrane.
     """
 
-    def __init__(self, polar, composition=None, t0=None):
+    def __init__(self, polar):
         """
         Create a Membrane object.
 
@@ -49,17 +49,11 @@ class Membrane:
         ----------
         polar  :  bool
             A switch for using cylindrical versus Cartesian coordinates.
-        to_analyze  :  list
-            The list of quantities that the user has selected for analysis.
-        composition  :  str
-            The composition of the membrane.
-        t0  :  float
-            The equilibrium thickness of the membrane.
         """
         self.children = {}
         self.polar = polar
-        self.composition = composition
-        self.t0 = t0
+        self.composition = {}
+        self.t0 = None
         self.grid_dims = {
             "N1": None,
             "N2": None,
