@@ -41,7 +41,7 @@ class Membrane:
         The equilibrium thickness of the membrane.
     """
 
-    def __init__(self, polar, to_analyze, composition=None, t0=None):
+    def __init__(self, polar, composition=None, t0=None):
         """
         Create a Membrane object.
 
@@ -811,7 +811,7 @@ def run_nougat(path, polar, quantities):
     cwd = Path(path)
     todo_list = make_todo_list(quantities)
 
-    m = Membrane(polar, todo_list)
+    m = Membrane(polar)
     if "height" in m.to_analyze:
         zone = m.create_Field(cwd, "z_one", "height", "zone")
         ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
