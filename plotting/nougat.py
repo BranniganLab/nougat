@@ -8,7 +8,7 @@ import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log, create_outfile_directories
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
 from curvature import calculate_curvature
 
 

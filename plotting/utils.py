@@ -7,6 +7,7 @@ Created on Mon Jul 17 10:54:23 2023.
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
+import shutil
 
 
 def make_todo_list(quantities):
@@ -125,33 +126,6 @@ def find_first_val(in_list):
         else:
             return value
     return np.nan
-
-
-def create_outfile_directories(path):
-    """
-    Create the preliminary directory hierarchy for nougat.py outputs.
-
-    Parameters
-    ----------
-    path  :  Path object
-        the path to the desired outfiles directory.
-
-    Returns
-    -------
-    None.
-
-    """
-    #quantities = ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]
-    quantities = ["height", "curvature", "thickness", "misc"]
-    for filetype in ["trajectory", "average", "figures"]:
-        for quantity in quantities:
-            if quantity == "curvature":
-                for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = path.joinpath(filetype, quantity, curv)
-                    dirname.mkdir(parents=True, exist_ok=True)
-            else:
-                dirname = path.joinpath(filetype, quantity)
-                dirname.mkdir(parents=True, exist_ok=True)
 
 
 def parse_dat_file(path, bin_info, quant):
