@@ -7,7 +7,6 @@ Created on Mon Jul 17 10:54:23 2023.
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-import shutil
 
 
 def make_todo_list(quantities):
