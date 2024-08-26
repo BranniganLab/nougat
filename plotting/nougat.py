@@ -220,24 +220,35 @@ class Membrane:
         else:
             return self.create_Field(rms, "rms_" + field.name)
 
-    def dump(self, path, field_list=None):
+    def dump(self, path):
         """
         Print all trajectories and averages to file.
 
         Parameters
         ----------
-        path : Path
+        path : Path or str
             The path to the directory where you want to dump your files.
-        field_list : list of strings, optional
-            List of fields you wish to dump to file. The default is None. If \
-            None, dump all fields to file.
 
         Returns
         -------
         None.
 
         """
-        create_outfile_directories(path)
+        assert self.children.keys()
+        for file_type in ["trajectory", "average"]:
+            dir_name = path.joinpath(file_type)
+            dir_name.mkdir(parents=True, exist_ok=True)
+            for obj in self.children.values():
+                obj_name = obj.name
+                if isinstance(obj, Field_set):
+                    dir_name = dir_name.joinpath(obj_name)
+                    dir_name.mkdir(parents=True, exist_ok=True)
+                    for field in obj:
+                        field.save_to_file(dir_name, file_type)
+                elif isinstance(obj, Field):
+                    obj.save_to_file(dir_name, file_type)
+                else:
+                    raise NotImplemented
         return
 
 
@@ -379,6 +390,27 @@ class Field:
 
         field_data = mostly_empty(field_data)
         return field_data
+
+    def save_to_file(self, path, file_type):
+        """
+        Save the trajectory or average to file.
+
+        Parameters
+        ----------
+        path : Path or str
+            The path to the directory where you would like to save the file.
+        file_type : str
+            "trajectory" or "average".
+
+        Returns
+        -------
+        None.
+
+        """
+        if file_type == "trajectory":
+            np.save(path.joinpath(self.name + ".npy"), self.traj._traj_to_3darray())
+        elif file_type == "average":
+            np.savetxt(path.joinpath(self.name + ".dat"), self.traj.avg())
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
