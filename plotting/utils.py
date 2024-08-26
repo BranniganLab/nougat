@@ -127,33 +127,6 @@ def find_first_val(in_list):
     return np.nan
 
 
-def create_outfile_directories(cwd):
-    """
-    Create the preliminary directory hierarchy for nougat.py outputs.
-
-    Parameters
-    ----------
-    cwd  :  Path object
-        the path to the current working directory.
-
-    Returns
-    -------
-    None.
-
-    """
-    #quantities = ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]
-    quantities = ["height", "curvature", "thickness", "misc"]
-    for filetype in ["trajectory", "average", "figures"]:
-        for quantity in quantities:
-            if quantity == "curvature":
-                for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = cwd.joinpath(filetype, quantity, curv)
-                    dirname.mkdir(parents=True, exist_ok=True)
-            else:
-                dirname = cwd.joinpath(filetype, quantity)
-                dirname.mkdir(parents=True, exist_ok=True)
-
-
 def parse_dat_file(path, bin_info, quant):
     """
     Parse nougat .dat file and turn it into a numpy ndarray.

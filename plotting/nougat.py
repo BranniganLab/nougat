@@ -8,7 +8,6 @@ import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-import matplotlib.pyplot as plt
 from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
 from curvature import calculate_curvature
 
@@ -221,6 +220,37 @@ class Membrane:
         else:
             return self.create_Field(rms, "rms_" + field.name)
 
+    def dump(self, path):
+        """
+        Print all trajectories and averages to file.
+
+        Parameters
+        ----------
+        path : Path or str
+            The path to the directory where you want to dump your files.
+
+        Returns
+        -------
+        None.
+
+        """
+        assert self.children.keys()
+        for file_type in ["trajectory", "average"]:
+            dir_name = path.joinpath(file_type)
+            dir_name.mkdir(parents=True, exist_ok=True)
+            for obj in self.children.values():
+                obj_name = obj.name
+                if isinstance(obj, Field_set):
+                    subdir_name = dir_name.joinpath(obj_name)
+                    subdir_name.mkdir(parents=True, exist_ok=True)
+                    for field in obj:
+                        field.save_to_file(subdir_name, file_type)
+                elif isinstance(obj, Field):
+                    obj.save_to_file(dir_name, file_type)
+                else:
+                    raise Exception(f"{obj_name} is not a Field or a Field_set.")
+        return
+
 
 class Field:
     """A field contains a measurement of some surface over the course of an MD\
@@ -360,6 +390,27 @@ class Field:
 
         field_data = mostly_empty(field_data)
         return field_data
+
+    def save_to_file(self, path, file_type):
+        """
+        Save the trajectory or average to file.
+
+        Parameters
+        ----------
+        path : Path or str
+            The path to the directory where you would like to save the file.
+        file_type : str
+            "trajectory" or "average".
+
+        Returns
+        -------
+        None.
+
+        """
+        if file_type == "trajectory":
+            np.save(path.joinpath(self.name + ".npy"), self.traj._traj_to_3darray())
+        elif file_type == "average":
+            np.savetxt(path.joinpath(self.name + ".dat"), self.traj.avg())
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
@@ -765,9 +816,11 @@ def run_nougat(path, polar, quantities):
 
     Parameters
     ----------
-    polar: boolean
+    path : Path or str
+        The path to your nougat results.
+    polar : boolean
         True for cylindrical coordinate system, False for Cartesian.
-    quantities: str
+    quantities : str
         A string that specifies which quantities to carry out analysis on. If\
         None, assume all quantities should be analyzed.
 
@@ -803,7 +856,13 @@ def run_nougat(path, polar, quantities):
         as well as the symmetric/anti-symmetric variables "K plus" and "K\
         minus".
     """
-    cwd = Path(path)
+    if isinstance(path, str):
+        cwd = Path(path)
+    elif isinstance(cwd, Path):
+        cwd = path
+    else:
+        raise Exception("cwd must be a Path object or a string.")
+
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar)
@@ -845,17 +904,11 @@ def run_nougat(path, polar, quantities):
     return m
 
     '''
-    # make necessary folders
-    create_outfile_directories(cwd)
-
     # define inclusion if present
     if inclusion_drawn is True:
         inclusion = add_inclusion(name, field_list)  # this proc doesn't exist yet!
     else:
         inclusion = False
-
-    # figure out all the important info about the system you'll need
-    system_dict = read_log()
 
     # read in height files and calculate surface heights
     # parse_height returns system_dict bc it adds nframes to the dictionary
@@ -866,14 +919,6 @@ def run_nougat(path, polar, quantities):
     calculate_curvature(polar, system_dict, cwd)
 
     # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
-
-    # save_areas(system_dict["bin_info"], 0, polar)
-
-    # calculate_density(polar, system_dict, cwd)
-
-    # calculate_order(polar, system_dict, cwd)
-
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
     calc_elastic_terms(cwd, polar, system_dict['bin_info'])
 
@@ -886,9 +931,15 @@ if __name__ == "__main__":
     parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
     parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
+    parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
-    args = parser.parse_args()
 
-    m = run_nougat(args.path, args.polar, args.quantities)
+    args = parser.parse_args()
+    path = Path(args.path)
+
+    m = run_nougat(path, args.polar, args.quantities)
+
+    if args.dump:
+        m.dump(path)
 
     print("Thank you for using nougat!")
