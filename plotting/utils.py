@@ -127,14 +127,14 @@ def find_first_val(in_list):
     return np.nan
 
 
-def create_outfile_directories(cwd):
+def create_outfile_directories(path):
     """
     Create the preliminary directory hierarchy for nougat.py outputs.
 
     Parameters
     ----------
-    cwd  :  Path object
-        the path to the current working directory.
+    path  :  Path object
+        the path to the desired outfiles directory.
 
     Returns
     -------
@@ -147,10 +147,10 @@ def create_outfile_directories(cwd):
         for quantity in quantities:
             if quantity == "curvature":
                 for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = cwd.joinpath(filetype, quantity, curv)
+                    dirname = path.joinpath(filetype, quantity, curv)
                     dirname.mkdir(parents=True, exist_ok=True)
             else:
-                dirname = cwd.joinpath(filetype, quantity)
+                dirname = path.joinpath(filetype, quantity)
                 dirname.mkdir(parents=True, exist_ok=True)
 
 
