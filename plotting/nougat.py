@@ -8,8 +8,7 @@ import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-import matplotlib.pyplot as plt
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log, create_outfile_directories
 from curvature import calculate_curvature
 
 
@@ -220,6 +219,26 @@ class Membrane:
             return self.create_Field(rms, "rmsTilde_" + field.name)
         else:
             return self.create_Field(rms, "rms_" + field.name)
+
+    def dump(self, path, field_list=None):
+        """
+        Print all trajectories and averages to file.
+
+        Parameters
+        ----------
+        path : Path
+            The path to the directory where you want to dump your files.
+        field_list : list of strings, optional
+            List of fields you wish to dump to file. The default is None. If \
+            None, dump all fields to file.
+
+        Returns
+        -------
+        None.
+
+        """
+        create_outfile_directories(path)
+        return
 
 
 class Field:
@@ -845,17 +864,11 @@ def run_nougat(path, polar, quantities):
     return m
 
     '''
-    # make necessary folders
-    create_outfile_directories(cwd)
-
     # define inclusion if present
     if inclusion_drawn is True:
         inclusion = add_inclusion(name, field_list)  # this proc doesn't exist yet!
     else:
         inclusion = False
-
-    # figure out all the important info about the system you'll need
-    system_dict = read_log()
 
     # read in height files and calculate surface heights
     # parse_height returns system_dict bc it adds nframes to the dictionary
@@ -866,14 +879,6 @@ def run_nougat(path, polar, quantities):
     calculate_curvature(polar, system_dict, cwd)
 
     # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
-
-    # save_areas(system_dict["bin_info"], 0, polar)
-
-    # calculate_density(polar, system_dict, cwd)
-
-    # calculate_order(polar, system_dict, cwd)
-
-    # calculate_tilt(sys_name, system_dict, coordsys, inclusion, cwd)
 
     calc_elastic_terms(cwd, polar, system_dict['bin_info'])
 
