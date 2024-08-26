@@ -810,13 +810,13 @@ class Field_set:
         return self.name
 
 
-def run_nougat(cwd, polar, quantities):
+def run_nougat(path, polar, quantities):
     """
     Run nougat's averaging and image processing routines.
 
     Parameters
     ----------
-    cwd : Path or str
+    path : Path or str
         The path to your nougat results.
     polar : boolean
         True for cylindrical coordinate system, False for Cartesian.
@@ -856,9 +856,11 @@ def run_nougat(cwd, polar, quantities):
         as well as the symmetric/anti-symmetric variables "K plus" and "K\
         minus".
     """
-    if isinstance(cwd, str):
-        cwd = Path(cwd)
-    elif not isinstance(cwd, Path):
+    if isinstance(path, str):
+        cwd = Path(path)
+    elif isinstance(cwd, Path):
+        cwd = path
+    else:
         raise Exception("cwd must be a Path object or a string.")
 
     todo_list = make_todo_list(quantities)
