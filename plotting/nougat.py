@@ -241,14 +241,14 @@ class Membrane:
             for obj in self.children.values():
                 obj_name = obj.name
                 if isinstance(obj, Field_set):
-                    dir_name = dir_name.joinpath(obj_name)
-                    dir_name.mkdir(parents=True, exist_ok=True)
+                    subdir_name = dir_name.joinpath(obj_name)
+                    subdir_name.mkdir(parents=True, exist_ok=True)
                     for field in obj:
-                        field.save_to_file(dir_name, file_type)
+                        field.save_to_file(subdir_name, file_type)
                 elif isinstance(obj, Field):
                     obj.save_to_file(dir_name, file_type)
                 else:
-                    raise NotImplemented
+                    raise Exception(f"{obj_name} is not a Field or a Field_set.")
         return
 
 
@@ -810,15 +810,17 @@ class Field_set:
         return self.name
 
 
-def run_nougat(path, polar, quantities):
+def run_nougat(cwd, polar, quantities):
     """
     Run nougat's averaging and image processing routines.
 
     Parameters
     ----------
-    polar: boolean
+    cwd : Path or str
+        The path to your nougat results.
+    polar : boolean
         True for cylindrical coordinate system, False for Cartesian.
-    quantities: str
+    quantities : str
         A string that specifies which quantities to carry out analysis on. If\
         None, assume all quantities should be analyzed.
 
@@ -854,7 +856,11 @@ def run_nougat(path, polar, quantities):
         as well as the symmetric/anti-symmetric variables "K plus" and "K\
         minus".
     """
-    cwd = Path(path)
+    if isinstance(cwd, str):
+        cwd = Path(cwd)
+    elif not isinstance(cwd, Path):
+        raise Exception("cwd must be a Path object or a string.")
+
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar)
@@ -923,9 +929,15 @@ if __name__ == "__main__":
     parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
     parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
+    parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
     # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
-    args = parser.parse_args()
 
-    m = run_nougat(args.path, args.polar, args.quantities)
+    args = parser.parse_args()
+    path = Path(args.path)
+
+    m = run_nougat(path, args.polar, args.quantities)
+
+    if args.dump:
+        m.dump(path)
 
     print("Thank you for using nougat!")
