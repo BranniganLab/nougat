@@ -583,6 +583,7 @@ class Trajectory:
         assert self.polar, "Trajectory must be polar in order to average over theta."
         stdev2 = np.square(self.stdev())
         num_samples = np.sum(~np.isnan(stdev2), axis=1)
+        num_samples[num_samples == 0] = np.nan
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             sums_over_theta = np.nansum(stdev2, axis=1)
