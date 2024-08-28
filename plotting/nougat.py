@@ -415,7 +415,7 @@ class Field:
         if file_type == "trajectory":
             np.save(path.joinpath(name + ".npy"), self.traj._traj_to_3darray())
         elif file_type == "average":
-            np.savetxt(path.joinpath(name + ".dat"), self.traj.avg())
+            np.savetxt(path.joinpath(name + ".dat"), np.round(self.traj.avg(), decimals=5), delimiter=",")
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
