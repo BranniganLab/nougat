@@ -582,10 +582,12 @@ class Trajectory:
         """Calculate standard deviation of time averages, averaged over theta."""
         assert self.polar, "Trajectory must be polar in order to average over theta."
         stdev2 = np.square(self.stdev())
+        num_samples = np.sum(~np.isnan(stdev2), axis=1)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             sums_over_theta = np.nansum(stdev2, axis=1)
-            stdev_over_theta = np.sqrt(sums_over_theta)
+            sqrt_over_theta = np.sqrt(sums_over_theta)
+            stdev_over_theta = sqrt_over_theta / num_samples
             return stdev_over_theta
 
     def __getitem__(self, item):
