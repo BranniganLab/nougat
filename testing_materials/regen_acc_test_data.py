@@ -7,32 +7,7 @@ Created on Mon Aug 26 12:16:04 2024
 """
 from nougat import run_nougat
 from pathlib import Path
-
-
-def create_ref_data_directories(path):
-    """
-    Create the preliminary directory hierarchy for nougat.py reference outputs.
-
-    Parameters
-    ----------
-    path  :  Path object
-        the path to the desired outfiles directory.
-
-    Returns
-    -------
-    None.
-
-    """
-    quantities = ["height", "curvature", "thickness"]
-    for filetype in ["trajectory", "average", "figures"]:
-        for quantity in quantities:
-            if quantity == "curvature":
-                for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = path.joinpath(filetype, quantity, curv)
-                    dirname.mkdir(parents=True, exist_ok=True)
-            else:
-                dirname = path.joinpath(filetype, quantity)
-                dirname.mkdir(parents=True, exist_ok=True)
+import argparse
 
 
 def regenerate_ref_data(path, polar):
@@ -68,24 +43,38 @@ def regenerate_ref_data(path, polar):
     gauss_zero = m.children['k_zero']
 
     for filetype in ['trajectory', 'average']:
-        height.outer.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zone")
-        height.inner.save_to_file(path.joinpath(filetype, 'height'), filetype, name="ztwo")
-        height.plus.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zplus")
-        height_zero.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zzero")
+        dirname = path.joinpath(filetype, 'height')
+        dirname.mkdir(parents=True, exist_ok=False)
+        height.outer.save_to_file(dirname, filetype, name="zone")
+        height.inner.save_to_file(dirname, filetype, name="ztwo")
+        height.plus.save_to_file(dirname, filetype, name="zplus")
+        height_zero.save_to_file(dirname, filetype, name="zzero")
 
-        thickness.outer.save_to_file(path.joinpath(filetype, 'thickness'), filetype, name="zone")
-        thickness.inner.save_to_file(path.joinpath(filetype, 'thickness'), filetype, name="ztwo")
+        dirname = path.joinpath(filetype, 'thickness')
+        dirname.mkdir(parents=True, exist_ok=False)
+        thickness.outer.save_to_file(dirname, filetype, name="zone")
+        thickness.inner.save_to_file(dirname, filetype, name="ztwo")
 
-        mean_curv.outer.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zone")
-        mean_curv.inner.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="ztwo")
-        mean_curv.plus.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zplus")
-        mean_zero.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zzero")
+        dirname = path.joinpath(filetype, 'curvature', 'mean')
+        dirname.mkdir(parents=True, exist_ok=False)
+        mean_curv.outer.save_to_file(dirname, filetype, name="zone")
+        mean_curv.inner.save_to_file(dirname, filetype, name="ztwo")
+        mean_curv.plus.save_to_file(dirname, filetype, name="zplus")
+        mean_zero.save_to_file(dirname, filetype, name="zzero")
 
-        gauss_curv.outer.save_to_file(path.joinpath(filetype, 'curvature', 'gaussian'), filetype, name="zone")
-        gauss_curv.inner.save_to_file(path.joinpath(filetype, 'curvature', 'gaussian'), filetype, name="ztwo")
-        gauss_plus.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zplus")
-        gauss_zero.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zzero")
+        dirname = path.joinpath(filetype, 'curvature', 'gaussian')
+        dirname.mkdir(parents=True, exist_ok=False)
+        gauss_curv.outer.save_to_file(dirname, filetype, name="zone")
+        gauss_curv.inner.save_to_file(dirname, filetype, name="ztwo")
+        gauss_plus.save_to_file(dirname, filetype, name="zplus")
+        gauss_zero.save_to_file(dirname, filetype, name="zzero")
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Regenerate reference data files for acceptance testing.")
+    parser.add_argument("path", default=".", help="the path to the directory above your tcl_outputs folder")
+    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
+
+    args = parser.parse_args()
+    path = Path(args.path)
     
