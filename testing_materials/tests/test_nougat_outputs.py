@@ -94,6 +94,7 @@ def membrane(cwd, coordsys, system):
         polar = True
     test_root_path = make_root_path(cwd, coordsys, system, test=True)
     m = run_nougat(test_root_path, polar, "htc")
+    m.dump(test_root_path)
     return m
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -392,7 +393,6 @@ def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
 
     test_array = np.round(surf.traj.avg(), decimals=5)
-
     assert arrays_equal(ref, test_array, 1e-11)
 
 
