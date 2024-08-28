@@ -33,7 +33,7 @@ def regenerate_ref_data(path, polar):
     None.
 
     """
-    m = run_nougat(path, polar)
+    m = run_nougat(path, polar, 'hct')
 
     height = m.children['z']
     height_zero = m.children['z_zero']
