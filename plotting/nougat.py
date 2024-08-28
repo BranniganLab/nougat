@@ -858,7 +858,7 @@ def run_nougat(path, polar, quantities):
     """
     if isinstance(path, str):
         cwd = Path(path)
-    elif isinstance(cwd, Path):
+    elif isinstance(path, Path):
         cwd = path
     else:
         raise Exception("cwd must be a Path object or a string.")
