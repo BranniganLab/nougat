@@ -939,28 +939,6 @@ def run_nougat(path, polar, quantities):
 
     return m
 
-    '''
-    # define inclusion if present
-    if inclusion_drawn is True:
-        inclusion = add_inclusion(name, field_list)  # this proc doesn't exist yet!
-    else:
-        inclusion = False
-
-    # read in height files and calculate surface heights
-    # parse_height returns system_dict bc it adds nframes to the dictionary
-    system_dict = parse_height(system_dict, polar, cwd)
-
-    calculate_thickness(polar, cwd)
-
-    calculate_curvature(polar, system_dict, cwd)
-
-    # $$$$$$$$$$ UNTESTED FEATURES BELOW $$$$$$$$$$$
-
-    calc_elastic_terms(cwd, polar, system_dict['bin_info'])
-
-    plot_all_quantities(polar, system_dict, cwd, inclusion)
-    '''
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
