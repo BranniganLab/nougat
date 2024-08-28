@@ -5,12 +5,11 @@ Created on Mon Aug 26 12:16:04 2024
 
 @author: js2746
 """
-import shutil
 from nougat import run_nougat
-import pathlib
+from pathlib import Path
 
 
-def overwrite_ref_data_directories(path):
+def create_ref_data_directories(path):
     """
     Create the preliminary directory hierarchy for nougat.py reference outputs.
 
@@ -29,11 +28,9 @@ def overwrite_ref_data_directories(path):
         for quantity in quantities:
             if quantity == "curvature":
                 for curv in ["mean", "gaussian", "normal_vectors"]:
-                    shutil.rmtree(path, ignore_errors=True)
                     dirname = path.joinpath(filetype, quantity, curv)
                     dirname.mkdir(parents=True, exist_ok=True)
             else:
-                shutil.rmtree(path, ignore_errors=True)
                 dirname = path.joinpath(filetype, quantity)
                 dirname.mkdir(parents=True, exist_ok=True)
 
@@ -88,3 +85,7 @@ def regenerate_ref_data(path, polar):
         gauss_curv.inner.save_to_file(path.joinpath(filetype, 'curvature', 'gaussian'), filetype, name="ztwo")
         gauss_plus.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zplus")
         gauss_zero.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zzero")
+
+
+if __name__ == '__main__':
+    
