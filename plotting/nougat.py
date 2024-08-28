@@ -859,7 +859,7 @@ def run_nougat(path, polar, quantities):
     if isinstance(path, str):
         path = Path(path)
     elif not isinstance(path, Path):
-        raise Exception("cwd must be a Path object or a string.")
+        raise Exception("path must be a Path object or a string.")
 
     todo_list = make_todo_list(quantities)
 
