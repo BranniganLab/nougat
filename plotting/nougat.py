@@ -587,8 +587,8 @@ class Trajectory:
             warnings.simplefilter("ignore", category=RuntimeWarning)
             sums_over_theta = np.nansum(stdev2, axis=1)
             sqrt_over_theta = np.sqrt(sums_over_theta)
-            stdev_over_theta = sqrt_over_theta / num_samples
-            return stdev_over_theta
+            avg_stdev_over_theta = sqrt_over_theta / num_samples
+            return avg_stdev_over_theta
 
     def __getitem__(self, item):
         """Make Trajectory object subscriptable."""
