@@ -7,6 +7,7 @@ Created on Mon Aug 26 12:16:04 2024
 """
 import shutil
 from nougat import run_nougat
+import pathlib
 
 
 def overwrite_ref_data_directories(path):
@@ -69,4 +70,21 @@ def regenerate_ref_data(path, polar):
     gauss_plus = m.children['k_plus']
     gauss_zero = m.children['k_zero']
 
-    height.outer.print_to_file(path.joinpath('zone'))
+    for filetype in ['trajectory', 'average']:
+        height.outer.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zone")
+        height.inner.save_to_file(path.joinpath(filetype, 'height'), filetype, name="ztwo")
+        height.plus.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zplus")
+        height_zero.save_to_file(path.joinpath(filetype, 'height'), filetype, name="zzero")
+
+        thickness.outer.save_to_file(path.joinpath(filetype, 'thickness'), filetype, name="zone")
+        thickness.inner.save_to_file(path.joinpath(filetype, 'thickness'), filetype, name="ztwo")
+
+        mean_curv.outer.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zone")
+        mean_curv.inner.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="ztwo")
+        mean_curv.plus.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zplus")
+        mean_zero.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zzero")
+
+        gauss_curv.outer.save_to_file(path.joinpath(filetype, 'curvature', 'gaussian'), filetype, name="zone")
+        gauss_curv.inner.save_to_file(path.joinpath(filetype, 'curvature', 'gaussian'), filetype, name="ztwo")
+        gauss_plus.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zplus")
+        gauss_zero.save_to_file(path.joinpath(filetype, 'curvature', 'mean'), filetype, name="zzero")
