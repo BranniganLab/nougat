@@ -8,6 +8,7 @@ Created on Mon Aug 26 12:16:04 2024.
 from nougat import run_nougat
 from pathlib import Path
 import argparse
+from shutil import rmtree
 
 
 def regenerate_ref_data(path, polar):
@@ -74,7 +75,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Regenerate reference data files for acceptance testing.")
     parser.add_argument("path", default=".", help="the path to the directory above your tcl_outputs folder")
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
+    parser.add_argument("-o", "--overwrite", action="store_true", help="add this flag if you want to overwrite existing python outputs")
 
     args = parser.parse_args()
     path = Path(args.path)
+
+    if args.overwrite:
+        rmtree(path.joinpath('trajectory'))
+        rmtree(path.joinpath('average'))
     regenerate_ref_data(path, args.polar)
