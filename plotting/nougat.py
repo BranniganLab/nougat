@@ -862,19 +862,17 @@ def run_nougat(path, polar, quantities):
         minus".
     """
     if isinstance(path, str):
-        cwd = Path(path)
-    elif isinstance(cwd, Path):
-        cwd = path
-    else:
-        raise Exception("cwd must be a Path object or a string.")
+        path = Path(path)
+    elif not isinstance(path, Path):
+        raise Exception("path must be a Path object or a string.")
 
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar)
     if "height" in todo_list:
-        zone = m.create_Field(cwd, "z_one", "height", "zone")
-        ztwo = m.create_Field(cwd, "z_two", "height", "ztwo")
-        zzero = m.create_Field(cwd, "z_zero", "height", "zzero")
+        zone = m.create_Field(path, "z_one", "height", "zone")
+        ztwo = m.create_Field(path, "z_two", "height", "ztwo")
+        zzero = m.create_Field(path, "z_zero", "height", "zzero")
         height = m.create_Field_set(zone, ztwo, "z")
     if "thickness" in todo_list:
         tone = m.create_Field(zone - zzero, "t_one")
