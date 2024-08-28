@@ -935,8 +935,6 @@ def run_nougat(path, polar, quantities):
         _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
         kminus = m.create_Field(kminus, "k_minus")
 
-    # m.plot2d(thickness.plus)
-
     return m
 
 
