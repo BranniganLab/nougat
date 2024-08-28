@@ -391,7 +391,7 @@ class Field:
         field_data = mostly_empty(field_data)
         return field_data
 
-    def save_to_file(self, path, file_type):
+    def save_to_file(self, path, file_type, name=None):
         """
         Save the trajectory or average to file.
 
@@ -401,16 +401,21 @@ class Field:
             The path to the directory where you would like to save the file.
         file_type : str
             "trajectory" or "average".
+        name : str
+            The file name you wish to use, without a suffix. Default is the \
+            name of the field (self.name).
 
         Returns
         -------
         None.
 
         """
+        if name is None:
+            name = self.name
         if file_type == "trajectory":
-            np.save(path.joinpath(self.name + ".npy"), self.traj._traj_to_3darray())
+            np.save(path.joinpath(name + ".npy"), self.traj._traj_to_3darray())
         elif file_type == "average":
-            np.savetxt(path.joinpath(self.name + ".dat"), self.traj.avg())
+            np.savetxt(path.joinpath(name + ".dat"), self.traj.avg())
 
     # BASIC MATH MAGIC METHODS BELOW #
     # These make it so that you can do math on the Field object, rather than\
