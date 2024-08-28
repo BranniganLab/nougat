@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug 26 12:16:04 2024
+Created on Mon Aug 26 12:16:04 2024.
 
 @author: js2746
 """
@@ -77,4 +77,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     path = Path(args.path)
-    
+    regenerate_ref_data(path, args.polar)
