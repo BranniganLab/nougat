@@ -5,10 +5,14 @@ Created on Mon Aug 26 12:16:04 2024.
 
 @author: js2746
 """
-from nougat import run_nougat
 from pathlib import Path
 import argparse
 from shutil import rmtree
+import os
+import sys
+
+sys.path.append(os.path.abspath('../plotting/'))
+from nougat import run_nougat
 
 
 def regenerate_ref_data(path, polar):
