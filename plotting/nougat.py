@@ -177,9 +177,9 @@ class Membrane:
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
         if helix_surface:
-            fig, ax = plot_maker(hmap_dims, data, self.helix_positions[helix_surface], False, self.polar)
+            fig, ax = plot_maker(hmap_dims, data, self.helix_positions[helix_surface], self.polar)
         else:
-            fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+            fig, ax = plot_maker(hmap_dims, data, False, self.polar)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
