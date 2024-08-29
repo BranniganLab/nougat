@@ -296,7 +296,7 @@ class Field:
         if isinstance(data, (Path, str)):
             assert quantity is not None, "quantity is required in order to use a path"
             assert leaflet is not None, "leaflet name is required in order to use a path"
-            self.traj = Trajectory(self._parse_tcl_output(data, parent, quantity, leaflet))
+            self.traj = Trajectory(self._parse_tcl_output(data, parent, quantity, leaflet), parent.polar)
         elif isinstance(data, np.ndarray):
             if len(np.shape(data)) == 1:
                 # this is a Trajectory object
@@ -312,7 +312,7 @@ class Field:
                 parent.grid_dims["N1"] = np.shape(data)[1]
                 parent.grid_dims["N2"] = np.shape(data)[2]
                 parent.grid_dims["Nframes"] = np.shape(data)[0]
-            self.traj = Trajectory(data)
+            self.traj = Trajectory(data, parent.polar)
         else:
             raise ValueError("data must either be a numpy ndarray or a path")
 
@@ -492,9 +492,11 @@ class Trajectory:
     frames  :  np.ndarray
         1D array of the Frame objects that constitute the trajectory, in time-\
         order.
+    polar  :  bool
+        If True, allow averaging over theta dimension.
     """
 
-    def __init__(self, frames):
+    def __init__(self, frames, polar):
         """
         Construct a Trajectory.
 
@@ -503,6 +505,8 @@ class Trajectory:
         frames : np.ndarray
             Contains data from one or multiple frames in an ndarray. Will be\
             converted to Frame objects.
+        polar : bool
+            If True, allow averaging over theta dimension.
 
         Returns
         -------
@@ -557,6 +561,35 @@ class Trajectory:
             warnings.simplefilter("ignore", category=RuntimeWarning)
             avg = np.nanmean(data_array, axis=0)
             return avg
+
+    def stdev(self):
+        """Calculate standard deviation of time average."""
+        data_array = self._traj_to_3darray()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            stdev = np.nanstd(data_array, axis=0)
+            return stdev
+
+    def avg_over_theta(self):
+        """Calculate the average over theta."""
+        assert self.polar, "Trajectory must be polar in order to average over theta."
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            avg_over_theta = np.nanmean(self.avg(), axis=1)
+            return avg_over_theta
+
+    def stdev_over_theta(self):
+        """Calculate standard deviation of time averages, averaged over theta."""
+        assert self.polar, "Trajectory must be polar in order to average over theta."
+        stdev2 = np.square(self.stdev())
+        num_samples = np.sum(~np.isnan(stdev2), axis=1)
+        num_samples[num_samples == 0] = np.nan
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            sums_over_theta = np.nansum(stdev2, axis=1)
+            sqrt_over_theta = np.sqrt(sums_over_theta)
+            avg_stdev_over_theta = sqrt_over_theta / num_samples
+            return avg_stdev_over_theta
 
     def __getitem__(self, item):
         """Make Trajectory object subscriptable."""
