@@ -881,7 +881,7 @@ class Field_set:
         return self.name
 
 
-def run_nougat(path, polar, quantities, inclusion):
+def run_nougat(path, polar, quantities, inclusion=False):
     """
     Run nougat's averaging and image processing routines.
 
