@@ -133,7 +133,7 @@ class Membrane:
         self.children[name] = new_Field
         return new_Field
 
-    def plot2d(self, obj):
+    def plot2d(self, obj, helix_surface=None):
         """
         Plot a two-dimensional heatmap. If Frame supplied, plots Frame values.\
         If Field or Trajectory supplied, plots average over time.
@@ -142,12 +142,19 @@ class Membrane:
         ----------
         obj : Field, Trajectory, Frame
             The object whose data you want to plot.
+        helix_positions : None or str
+            If you would like to plot helix positions and have helix positions\
+            stored in this membrane object, use one of the four surface names \
+            'zone', 'ztwo', 'zplus', or 'zzero'.
 
         Returns
         -------
         None.
 
         """
+        if helix_surface:
+            assert self.helix_positions, "This Membrane does not have helix coordinates saved. Make sure to use Protein_Position in nougat.tcl and add_protein_helices in nougat.py."
+
         if isinstance(obj, Field):
             data = obj.traj.avg()
         elif isinstance(obj, Trajectory):
@@ -169,7 +176,10 @@ class Membrane:
             raise Exception("I don't recognize this dtype")
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
-        fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+        if helix_surface:
+            fig, ax = plot_maker(hmap_dims, data, self.helix_positions[helix_surface], False, self.polar)
+        else:
+            fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
