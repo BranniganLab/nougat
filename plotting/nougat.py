@@ -521,6 +521,7 @@ class Trajectory:
             self.frames = np.empty(np.shape(frames)[0], dtype=Frame)
             for f in range(np.shape(frames)[0]):
                 self.frames[f] = Frame(f, frames[f, :, :])
+        self.polar = polar
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
