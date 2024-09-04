@@ -64,7 +64,7 @@ proc cell_prep {config_path leaf_check} {
 
     set end [molinfo top get numframes]
 
-    ;# wrap the system
+    ;# wrap and center the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
         run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
     } elseif {[dict get $config_dict inclusion_sel] != "NULL"} {
