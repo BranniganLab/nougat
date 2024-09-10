@@ -64,19 +64,14 @@ proc cell_prep {config_path leaf_check} {
 
     set end [molinfo top get numframes]
 
-    ;# center, wrap, and align the system
+    ;# wrap and center the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
         run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
-    } else {
+    } elseif {[dict get $config_dict inclusion_sel] != "NULL"} {
         pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
-        set sel [atomselect top all]
-        for {set i 0} {$i<$end} {incr i} {
-            $sel frame $i
-            $sel update
-            set center [measure center $sel]
-            $sel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] 0"
-        }
-        $sel delete
+        center_system $end
+    } else {
+        center_system $end
     }
 
     # align the system, removing xy rotation
