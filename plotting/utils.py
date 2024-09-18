@@ -472,29 +472,17 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
                 hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
                 plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
                 plt.close()
-        for field in ["zone", "ztwo", "whole"]:
+        for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
             plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
             plt.close()
-        """
-        for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
-            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
-            plt.close()
-            for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
-                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
-                plt.close()
-        """
 
 
-def plot_maker(dims, data, protein, quant, polar):
+def plot_maker(dims, data, protein, polar):
     """
     Create and save 2D heatmaps.
 
@@ -506,8 +494,6 @@ def plot_maker(dims, data, protein, quant, polar):
         the 2d array/matrix of values to be heatmapped
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    quant : str
-        The quantity being plotted.
     polar : bool
         Whether or not to use polar coordinates
 
@@ -517,15 +503,7 @@ def plot_maker(dims, data, protein, quant, polar):
 
     """
     dim1vals, dim2vals = dims
-
-    if quant == "density":
-        Vmin = 0
-        Vmax = 2
-    elif quant == "height":
-        Vmin = -60
-        Vmax = 60
-    else:
-        Vmin, Vmax = "auto", "auto"
+    Vmin, Vmax = "auto", "auto"
 
     fig = plt.figure()
     if polar:
@@ -603,11 +581,6 @@ def draw_protein(protein, polar):
         if polar is False:
             protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
         plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
-
-    # This circle is a custom E protein thing and should be removed
-    # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
-    # if field == "zone":
-    #    ax.add_artist(circle1)
 
 
 def convert_to_cart(rval, thetaval):

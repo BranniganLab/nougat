@@ -1636,7 +1636,7 @@ proc Protein_Position {name hnames chainNames folderName} {
 
     foreach ht [list $zone_Ht $ztwo_Ht $zmid_Ht $zmid_Ht] eqtxt [list "zone" "ztwo" "zzero" "zplus"] {
         puts "$eqtxt"
-        set fout [open "${folderName}/tcl_output/${name}_helcoords_${eqtxt}.dat" w]
+        set fout [open "${folderName}/tcl_output/helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chainNames {
                 set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
