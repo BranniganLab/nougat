@@ -4,10 +4,12 @@ Created on Mon Jul 17 10:54:23 2023.
 @author: js2746
 """
 
+import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-from utils import calc_avg_over_time, bin_prep, plot_maker, mostly_empty, read_log
+from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
+from curvature import calculate_curvature
 
 
 class Membrane:
@@ -130,7 +132,7 @@ class Membrane:
         self.children[name] = new_Field
         return new_Field
 
-    def plot2d(self, obj, ax):
+    def plot2d(self, obj):
         """
         Plot a two-dimensional heatmap. If Frame supplied, plots Frame values.\
         If Field or Trajectory supplied, plots average over time.
@@ -139,12 +141,10 @@ class Membrane:
         ----------
         obj : Field, Trajectory, Frame
             The object whose data you want to plot.
-        ax : Axes object
-            The Axes object you want to plot this on.
 
         Returns
         -------
-        ax
+        None.
 
         """
         if isinstance(obj, Field):
@@ -168,8 +168,8 @@ class Membrane:
             raise Exception("I don't recognize this dtype")
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
-        ax = plot_maker(hmap_dims, data, False, False, self.polar, ax)
-        return ax
+        fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+        return fig, ax
 
     def measure_correlation(self, field1, field2):
         """
@@ -187,7 +187,7 @@ class Membrane:
         corr  :  Field
             The correlation between Fields 1 and 2.
         """
-        together = calc_avg_over_time(field1.traj._traj_to_3darray() * field2.traj._traj_to_3darray())
+        together = calc_avg_over_time(field1 * field2)
         apart = field1.traj.avg() * field2.traj.avg()
         corr = together - apart
         return self.create_Field(corr, "corr_" + field1.name + "_" + field2.name)
@@ -847,3 +847,112 @@ class Field_set:
     def __repr__(self):
         """Say your name, rather than your address."""
         return self.name
+
+
+def run_nougat(path, polar, quantities):
+    """
+    Run nougat's averaging and image processing routines.
+
+    Parameters
+    ----------
+    path : Path or str
+        The path to your nougat results.
+    polar : boolean
+        True for cylindrical coordinate system, False for Cartesian.
+    quantities : str
+        A string that specifies which quantities to carry out analysis on. If\
+        None, assume all quantities should be analyzed.
+
+    Returns
+    -------
+    None.
+
+    List of all default Fields and Field_sets
+    ----------
+    height  :  Field_set
+        The height (in z) of the outer and inner leaflets, as well as the\
+        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is\
+        the bilayer midplane. Z minus is the bilayer thickness. Heights may be\
+        relative to some reference point on a protein or could be the absolute\
+        height of the membrane in VMD.
+    zzero  :  Field
+        The height (in z) of the interface between the outer and inner\
+        leaflet. "Z zero" is commonly thought to be equal to the bilayer\
+        midplane but this is not always the case, especially around inclusions.
+    thickness  :  Field_set
+        The thickness of the outer and inner leaflets, as well as the\
+        symmetric and anti-symmetric variables "t plus" and "t minus." T plus\
+        is the average leaflet thickness and t minus is the leaflet thickness\
+        asymmetry.
+    epsilon  :  Field
+        An alternative measurement of leaflet thickness asymmetry, defined in\
+        [Watson & Brown, PRL, 2012].
+    mean_curvature  :  Field_set
+        The mean curvature (H) of the membrane outer and inner leaflets, as\
+        well as the symmetric/anti-symmetric variables "H plus" and "H minus".
+    gaussian_curvature  :  Field_set
+        The Gaussian curvature (K) of the membrane outer and inner leaflets,\
+        as well as the symmetric/anti-symmetric variables "K plus" and "K\
+        minus".
+    """
+    if isinstance(path, str):
+        path = Path(path)
+    elif not isinstance(path, Path):
+        raise Exception("path must be a Path object or a string.")
+
+    todo_list = make_todo_list(quantities)
+
+    m = Membrane(polar)
+    if "height" in todo_list:
+        zone = m.create_Field(path, "z_one", "height", "zone")
+        ztwo = m.create_Field(path, "z_two", "height", "ztwo")
+        zzero = m.create_Field(path, "z_zero", "height", "zzero")
+        height = m.create_Field_set(zone, ztwo, "z")
+    if "thickness" in todo_list:
+        tone = m.create_Field(zone - zzero, "t_one")
+        ttwo = m.create_Field(zzero - ztwo, "t_two")
+        thickness = m.create_Field_set(tone, ttwo, "t")
+    if "curvature" in todo_list:
+        hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
+        htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
+        hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
+
+        hone = m.create_Field(hone, "h_one")
+        kone = m.create_Field(kone, "k_one")
+        htwo = m.create_Field(htwo, "h_two")
+        ktwo = m.create_Field(ktwo, "k_two")
+
+        mean_curv = m.create_Field_set(hone, htwo, "H")
+        gauss_curv = m.create_Field_set(kone, ktwo, "K")
+
+        hzero = m.create_Field(hzero, "h_zero")
+        kzero = m.create_Field(kzero, "k_zero")
+
+        # gaussian curvature of height.plus is not the same as gauss_curv.plus!
+        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
+        kplus = m.create_Field(kplus, "k_plus")
+
+        # gaussian curvature of height.minus is not the same as gauss_curv.minus!
+        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
+        kminus = m.create_Field(kminus, "k_minus")
+
+    return m
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
+    parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
+    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
+    parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
+    parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
+    # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
+
+    args = parser.parse_args()
+    path = Path(args.path)
+
+    m = run_nougat(path, args.polar, args.quantities)
+
+    if args.dump:
+        m.dump(path)
+
+    print("Thank you for using nougat!")
