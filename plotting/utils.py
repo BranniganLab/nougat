@@ -494,7 +494,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         """
 
 
-def plot_maker(dims, data, protein, quant, polar, ax):
+def plot_maker(dims, data, protein, quant, polar):
     """
     Create and save 2D heatmaps.
 
@@ -510,12 +510,10 @@ def plot_maker(dims, data, protein, quant, polar, ax):
         The quantity being plotted.
     polar : bool
         Whether or not to use polar coordinates
-    ax : Axes
-        The Axes object you wish to plot this on.
 
     Returns
     -------
-    matplotlib Axes object.
+    matplotlib figure and axes objects.
 
     """
     dim1vals, dim2vals = dims
@@ -529,19 +527,20 @@ def plot_maker(dims, data, protein, quant, polar, ax):
     else:
         Vmin, Vmax = "auto", "auto"
 
+    fig = plt.figure()
     if polar:
         ax = plt.subplot(projection="polar")
     else:
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    ax = create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True, ax)
+    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True)
     if protein:
         draw_protein(protein, polar)
-    return ax
+    return fig, ax
 
 
-def create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, colorbar, ax):
+def create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, colorbar):
     """
     Create a 2d heatmap of your data.
 
@@ -581,7 +580,6 @@ def create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, colorbar, ax):
         plt.colorbar(c)
 
     plt.axis('off')
-    return c
 
 
 def draw_protein(protein, polar):
