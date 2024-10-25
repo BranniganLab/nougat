@@ -10,6 +10,7 @@ from pathlib import Path
 import argparse
 import sys
 import os
+import matplotlib.pyplot as plt
 sys.path.append(os.path.abspath('../plotting/'))
 from nougat import Membrane
 from curvature import calculate_curvature
@@ -161,6 +162,10 @@ if __name__ == "__main__":
     path = Path(args.path)
 
     m = run_nougat(path, args.polar, args.quantities)
+
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'))
+
+    plt.show()
 
     if args.dump:
         m.dump(path)
