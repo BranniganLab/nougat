@@ -12,7 +12,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath('../plotting/'))
-from nougat import run_nougat
+from example import run_nougat
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
