@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     fig, ax = m.plot2d(getattr(m.children['z'], 'outer'))
 
-    plt.show()
+    # plt.show()
 
     if args.dump:
         m.dump(path)
