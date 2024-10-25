@@ -142,7 +142,7 @@ class Membrane:
 
         Returns
         -------
-        None.
+        Matplotlib.pyplot Figure and Axes objects.
 
         """
         if isinstance(obj, Field):
