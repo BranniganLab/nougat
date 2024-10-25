@@ -8,6 +8,9 @@ Created on Thu Oct 24 12:12:59 2024
 
 from pathlib import Path
 import argparse
+import sys
+import os
+sys.path.append(os.path.abspath('../plotting/'))
 from nougat import Membrane
 from curvature import calculate_curvature
 
