@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     m = run_nougat(path, args.polar, args.quantities)
 
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'))
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15)
 
     # plt.show()
 
