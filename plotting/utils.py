@@ -450,7 +450,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         """
 
 
-def plot_maker(dims, data, protein, quant, polar):
+def plot_maker(dims, data, protein, polar):
     """
     Create and save 2D heatmaps.
 

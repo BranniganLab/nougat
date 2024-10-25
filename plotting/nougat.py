@@ -166,7 +166,7 @@ class Membrane:
             raise Exception("I don't recognize this dtype")
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
-        fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+        fig, ax = plot_maker(hmap_dims, data, False, self.polar)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
