@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Allow bash aliases (specifically 'vmd')
+shopt -s expand_aliases
+source ~/.bashrc
+
 # Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
 rm -f nougpy.log
@@ -11,6 +15,13 @@ rm -f nougat_test_outputs.log
 # Run tcl unit tests and divert output to file
 echo "Starting TCL unit testing"
 vmd -dispdev none -eofexit < ../test/unit_test.test > ./tcl_unit_test.log
+
+# Check to make sure VMD exists
+if [ ! -s tcl_unit_test.log ]
+then
+	echo "VMD is not recognized or not installed."
+	exit
+fi
 
 # Check to make sure VMD didn't error
 if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' tcl_unit_test.log
