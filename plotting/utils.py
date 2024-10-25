@@ -462,8 +462,6 @@ def plot_maker(dims, data, protein, polar):
         the 2d array/matrix of values to be heatmapped
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    quant : str
-        The quantity being plotted.
     polar : bool
         Whether or not to use polar coordinates
 
@@ -474,14 +472,7 @@ def plot_maker(dims, data, protein, polar):
     """
     dim1vals, dim2vals = dims
 
-    if quant == "density":
-        Vmin = 0
-        Vmax = 2
-    elif quant == "height":
-        Vmin = -60
-        Vmax = 60
-    else:
-        Vmin, Vmax = "auto", "auto"
+    Vmin, Vmax = "auto", "auto"
 
     fig = plt.figure()
     if polar:
