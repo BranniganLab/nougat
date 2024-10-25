@@ -72,7 +72,7 @@ def run_nougat(path, polar, quantities):
 
     Returns
     -------
-    None.
+    Membrane object containing the fields specified in $quantities.
 
     List of all default Fields and Field_sets
     ----------
