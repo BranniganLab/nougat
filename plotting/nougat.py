@@ -153,12 +153,12 @@ class Membrane:
             data = obj.bins
         elif isinstance(obj, np.ndarray):
             if len(np.shape(obj)) == 3:
-                assert np.shape(obj)[1] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[2] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[2] == self.grid_dims["N2"], "unexpected array size"
                 data = calc_avg_over_time(obj)
             elif len(np.shape(obj)) == 2:
-                assert np.shape(obj)[0] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[1] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[0] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N2"], "unexpected array size"
                 data = obj
             else:
                 raise Exception("This is not a 2D or 3D array.")
