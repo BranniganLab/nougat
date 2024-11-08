@@ -1539,7 +1539,7 @@ proc separate_chains {molid cutoff} {
 
     for {set i $indmin} {$i < $indmax} {incr i} {
         set sel1 [atomselect $molid "index $i"]
-        set sel2 [atomselect $molid "residue [expr $i+1]"]
+        set sel2 [atomselect $molid "index [expr $i+1]"]
 
         set loc1 [lindex [$sel1 get {x y z}] 0]
         set loc2 [lindex [$sel2 get {x y z}] 0]
@@ -1554,12 +1554,13 @@ proc separate_chains {molid cutoff} {
         $sel2 delete
     }
 
+    puts "test"
     set chars [list A B C D E]
     set k 0
     lappend list1 $indmax
-
+    puts $list1
     foreach {i j} $list1 {
-        set sel [atomselect $molid "index $i to $j"]
+        set sel [atomselect $molid "same residue as index $i to $j"]
         $sel set chain [lindex $chars $k]
         $sel delete
         set k [expr $k+1]
