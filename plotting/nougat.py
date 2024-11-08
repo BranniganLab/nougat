@@ -187,9 +187,9 @@ class Membrane:
         hmap_dims = bin_prep(self.grid_dims, self.polar)
 
         if helix_surface:
-            fig, ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin, self.helix_locations[helix_surface])
+            fig, ax = plot_maker(hmap_dims, data, self.polar, vmax, vmin, self.helix_locations[helix_surface])
         else:
-            fig, ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin)
+            fig, ax = plot_maker(hmap_dims, data, self.polar, vmax, vmin)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
@@ -290,7 +290,7 @@ class Membrane:
         helix_locations = {}
         for surface in ["zone", "ztwo", "zplus", "zzero"]:
             filename = f"helcoords_{surface}.dat"
-            helix_array = np.genfromtxt(root_path.joinpath("tcl_output", filename), comments='#', skip_footer=1, delimiter=' ')
+            helix_array = np.genfromtxt(root_path.joinpath("tcl_output", filename), comments='#', delimiter=' ')
             helix_locations[surface] = list(helix_array)
         self.helix_locations = helix_locations
 
