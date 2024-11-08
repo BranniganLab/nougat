@@ -10,7 +10,7 @@ import pytest
 import sys
 import os
 import numpy as np
-sys.path.append(os.path.abspath('../../python/'))
+sys.path.append(os.path.abspath('../python/'))
 from nougat import *
 from utils import *
 
