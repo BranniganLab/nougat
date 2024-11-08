@@ -2,11 +2,6 @@
 
 Proteins and other inclusions are known to interact with membrane lipids in numerous ways, including through the differential recruitment of particular lipid species, local realignment of lipid tails, and even inducing comparatively long-range deformations of the membrane surface. Coarse Grain Molecular Dynamics (CG-MD) simulations offer an attractive ‘computational microscope’ through which to observe these phenomena. We introduce nougat, a toolkit for quantitative analysis of several measures of interest local to a membrane protein.
 
-#### Terminology note:
-- z1: outer leaflet surface
-- z2: inner leaflet surface
-- z+: the midplane between z1 and z2
-- z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
 
 ## Prerequisites:
 
@@ -21,30 +16,28 @@ Python3
 numpy
 matplotlib
 warnings
-argparse
 pathlib
 ```
 
 ### Optional Dependencies:
-This script can utilize Dr Jerome Henin's **vecexpr** package to improve the efficiency of binning. It can also make use of his **qwrap** protocol to speed up initial setup. Please visit the repos below and follow the installation instructions if you wish to enable these features.
+This script can utilize Dr Jerome Henin's **vecexpr** package to improve the efficiency of binning. It can also make use of his **qwrap** protocol to speed up initial setup. Please visit the repos below and follow the installation instructions if you wish to enable these features. Alternatively there are pre-compiled binaries included in the _tcl/utilities_ directory that you can try, but they may not work due to varying system architectures.
 ```
 github.com/jhenin/qwrap
 github.com/jhenin/vecexpr
 ```
 
-
 ## What will it do?
-nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average height per bin per frame. nougat.py will read in those .dat files to extract: 
+nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average height per bin per frame. nougat.py will read in those .dat files to extract features such as: 
 - leaflet/bilayer thickness
 - mean curvature
 - gaussian curvature 
 
-nougat.py will then generate averages across the trajectory, and output its findings in .dat, .npy, and .pdf files. A pdb file will also be created, allowing the user to explore the average membrane surfaces in 3D in VMD. 
+nougat.py can then be used to plot, combine, and/or compare those features. 
 
 ## How To Use Nougat:
 
 ### Make Edits and Check Your Work
-- Open nougat_config.txt in the text editor of your choice and make edits:
+- Open examples/nougat_config.txt in the text editor of your choice and make edits:
 ```
 Add the correct paths
 Edit all of the indicated fields to match your system
@@ -52,7 +45,7 @@ Edit all of the indicated fields to match your system
 - Open VMD and load your structure and trajectory files. 
 - (optional) Delete frame 0
 - Open the tkConsole
-- Source nougat.tcl (you may need to specify the path)
+- Source tcl/nougat.tcl (you may need to specify the path)
 - Run the cell_prep proc:
 ```
 cell_prep [path to nougat_config.txt] 1     # the 1 runs a leaflet sorting algorithm on all frames
@@ -83,14 +76,13 @@ An explanation of the options is as follows:
 - polar             0 for cartesian system, 1 for polar system
 ```
 
-###  Run nougat.py
-Navigate to the directory created when you ran nougat.tcl.
+#### Terminology note:
+- z1: outer leaflet surface
+- z2: inner leaflet surface
+- z+: the midplane between z1 and z2
+- z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
 
-```
-python3 [path-to]/nougat/plotting/nougat.py [-p for polar]
-```
+###  Run nougat.py
+An example script _examples/example.py_ has been provided to demonstrate how nougat.py can be used. You can also view the class diagram in the _python_ folder to learn more.
 
 ### Explore your results!
-All results are available as heatmaps saved as pdf files.
-
-You can also load the [system name].avgheight.pdb file into VMD to explore the average surfaces in 3d. 
