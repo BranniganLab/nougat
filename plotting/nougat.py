@@ -130,7 +130,7 @@ class Membrane:
         self.children[name] = new_Field
         return new_Field
 
-    def plot2d(self, obj):
+    def plot2d(self, obj, vmax, vmin):
         """
         Plot a two-dimensional heatmap. If Frame supplied, plots Frame values.\
         If Field or Trajectory supplied, plots average over time.
@@ -139,10 +139,14 @@ class Membrane:
         ----------
         obj : Field, Trajectory, Frame
             The object whose data you want to plot.
+        vmax : float
+            The maximum value to appear in your colorbar.
+        vmin : float
+            The minimum value to appear in your colorbar.
 
         Returns
         -------
-        None.
+        Matplotlib.pyplot Figure and Axes objects.
 
         """
         if isinstance(obj, Field):
@@ -153,12 +157,12 @@ class Membrane:
             data = obj.bins
         elif isinstance(obj, np.ndarray):
             if len(np.shape(obj)) == 3:
-                assert np.shape(obj)[1] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[2] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[2] == self.grid_dims["N2"], "unexpected array size"
                 data = calc_avg_over_time(obj)
             elif len(np.shape(obj)) == 2:
-                assert np.shape(obj)[0] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[1] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[0] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N2"], "unexpected array size"
                 data = obj
             else:
                 raise Exception("This is not a 2D or 3D array.")
@@ -166,7 +170,7 @@ class Membrane:
             raise Exception("I don't recognize this dtype")
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
-        fig, ax = plot_maker(hmap_dims, data, False, False, self.polar)
+        fig, ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin)
         return fig, ax
 
     def measure_correlation(self, field1, field2):

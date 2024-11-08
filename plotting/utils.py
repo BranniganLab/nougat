@@ -450,7 +450,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         """
 
 
-def plot_maker(dims, data, protein, quant, polar):
+def plot_maker(dims, data, protein, polar, vmax, vmin):
     """
     Create and save 2D heatmaps.
 
@@ -462,10 +462,12 @@ def plot_maker(dims, data, protein, quant, polar):
         the 2d array/matrix of values to be heatmapped
     protein : list or False
         if --inclusion turned on, list of helix coordinates; if no protein, False
-    quant : str
-        The quantity being plotted.
     polar : bool
         Whether or not to use polar coordinates
+    vmax : float
+        The maximum value for your colorbar
+    vmin : float
+        The minimum value for your colorbar
 
     Returns
     -------
@@ -474,15 +476,6 @@ def plot_maker(dims, data, protein, quant, polar):
     """
     dim1vals, dim2vals = dims
 
-    if quant == "density":
-        Vmin = 0
-        Vmax = 2
-    elif quant == "height":
-        Vmin = -60
-        Vmax = 60
-    else:
-        Vmin, Vmax = "auto", "auto"
-
     fig = plt.figure()
     if polar:
         ax = plt.subplot(projection="polar")
@@ -490,7 +483,7 @@ def plot_maker(dims, data, protein, quant, polar):
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True)
+    create_heatmap(polar, dim1vals, dim2vals, data, vmax, vmin, True)
     if protein:
         draw_protein(protein, polar)
     return fig, ax
