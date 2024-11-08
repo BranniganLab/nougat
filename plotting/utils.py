@@ -428,29 +428,17 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
                 hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
                 plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
                 plt.close()
-        for field in ["zone", "ztwo", "whole"]:
+        for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
             plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
             plt.close()
-        """
-        for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
-            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
-            plt.close()
-            for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
-                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
-                plt.close()
-        """
 
 
-def plot_maker(dims, data, protein, polar, vmax, vmin):
+def plot_maker(dims, data, protein, polar, vmax, vmin, protein=False):
     """
     Create and save 2D heatmaps.
 
@@ -552,11 +540,6 @@ def draw_protein(protein, polar):
         if polar is False:
             protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
         plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
-
-    # This circle is a custom E protein thing and should be removed
-    # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
-    # if field == "zone":
-    #    ax.add_artist(circle1)
 
 
 def convert_to_cart(rval, thetaval):
