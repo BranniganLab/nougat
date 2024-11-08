@@ -14,7 +14,9 @@ rm -f nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
 echo "Starting TCL unit testing"
-vmd -dispdev none -eofexit < ../test/unit_test.test > ./tcl_unit_test.log
+cd tcltest
+vmd -dispdev none -eofexit < unit_test.test > ../tcl_unit_test.log
+cd ..
 
 # Check to make sure VMD exists
 if [ ! -s tcl_unit_test.log ]
@@ -56,13 +58,13 @@ fi
 
 # Run python unit tests and divert output to file and terminal.
 echo "Starting pytest unit testing"
-python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
+python3 -m pytest tcltest/Unit_Test.py 2>&1 | tee -a pyunittest.log
 
 # Check to make sure testing did not fail
 if grep -q "No module named" pyunittest.log
 then
 	echo "pytest unit testing failed :("
-	echo "You need to install pytest before proceeding"
+	echo "Something is wrong with your imports."
 	echo "Do you want to continue with acceptance testing anyway?"
 	echo "(Choose the number that corresponds to your choice)"
 	select yn in "Yes, Continue" "No, Exit"; do
@@ -94,7 +96,7 @@ echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
 
 # Check to make sure testing did not fail
-if grep -q "can't" nougat_test_outputs.log
+if grep -q -e "can't" -e "couldn't" nougat_test_outputs.log
 then
         echo "VMD didn't run the acceptance testing properly and it failed :("
         echo "Do you want to continue with acceptance testing anyway?"

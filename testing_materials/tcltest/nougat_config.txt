@@ -1,7 +1,7 @@
 
-qwrap_path = ../utilities
-vecexpr_path = ../utilities
-utilities_path = ../utilities
+qwrap_path = ../../tcl/utilities
+vecexpr_path = ../../tcl/utilities
+utilities_path = ../../tcl/utilities
 
 use_qwrap = yes
 use_vecexpr = yes
@@ -10,13 +10,13 @@ use_vecexpr = yes
 # if no inclusion, change to NULL 
 
 #inclusion_sel = name BB SC1 to SC4
-inclusion_sel = resname AU
+inclusion_sel = NULL
 
 # provide atomselection-style text that defines anything that 
 # isn't your inclusion_sel or membrane:
 # E.G. solvent, ions, other molecules that aren't membrane lipids
 
-excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig
+excluded_sel = resname W CHOL ION 'CL-' 'NA+' lig AU
 
 
 # provide atomselection-style text that defines what bead(s) should be centered and wrapped around
@@ -40,7 +40,7 @@ wrap_sel = resname $species
 
 
 #reference_point = name BB and resid 15
-reference_point = index 0
+reference_point = NULL
 
 # provide the beadnames that you consider to form the surface of your membrane
 # we chose the top tail beads because they are what form the 'hydrophobic surface'
