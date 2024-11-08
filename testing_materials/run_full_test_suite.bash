@@ -64,7 +64,7 @@ python3 -m pytest tcltest/Unit_Test.py 2>&1 | tee -a pyunittest.log
 if grep -q "No module named" pyunittest.log
 then
 	echo "pytest unit testing failed :("
-	echo "You need to install pytest before proceeding"
+	echo "Something is wrong with your imports."
 	echo "Do you want to continue with acceptance testing anyway?"
 	echo "(Choose the number that corresponds to your choice)"
 	select yn in "Yes, Continue" "No, Exit"; do

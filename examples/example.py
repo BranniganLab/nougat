@@ -11,7 +11,7 @@ import argparse
 import sys
 import os
 import matplotlib.pyplot as plt
-sys.path.append(os.path.abspath('../plotting/'))
+sys.path.append(os.path.abspath('../python/'))
 from nougat import Membrane
 from curvature import calculate_curvature
 
