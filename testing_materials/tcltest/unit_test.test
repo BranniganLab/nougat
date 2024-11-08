@@ -4,9 +4,9 @@ namespace import ::tcltest::*
 configure -verbose pbt -skip "Avgtiltord Avgdensity"
 # Software under test
 
-source ../utilities/helper_procs.tcl
-source ../nougat.tcl
-load ../utilities/vecexpr.so
+source ../../tcl/utilities/helper_procs.tcl
+source ../../tcl/nougat.tcl
+load ../../tcl/utilities/vecexpr.so
 
 test tailtiltA {
     Test: fitVecsToSel
