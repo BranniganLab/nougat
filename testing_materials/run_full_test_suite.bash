@@ -93,6 +93,21 @@ fi
 echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
 
+# Check to make sure testing did not fail
+if grep -q "can't" nougat_test_outputs.log
+then
+        echo "VMD didn't run the acceptance testing properly and it failed :("
+        echo "Do you want to continue with acceptance testing anyway?"
+        echo "(Choose the number that corresponds to your choice)"
+        select yn in "Yes, Continue" "No, Exit"; do
+        case $yn in
+                "Yes, Continue" ) break;;
+                "No, Exit" ) exit;;
+        esac
+        done
+fi
+
+
 # Run acceptance tests on resulting files
 python3 -m pytest -rx tests/ 2>&1 | tee -a pytest.log
 
