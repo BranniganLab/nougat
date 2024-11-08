@@ -18,11 +18,11 @@ proc load_and_run_test {trajpath groname xtcname test_name config d1 d2 polar ho
 
 ;# E protein cartesian
 set path "${script_path}/E-protein_trajectory"
-load_and_run_test $path DT_test.gro DT_test.xtc test ${path}/nougat_config_test_E-protein.txt 5 5 0 $script_path
+load_and_run_test $path DT_test.pdb DT_test.xtc test ${path}/nougat_config_test_E-protein.txt 5 5 0 $script_path
 
 ;# E protein polar
 set path "${script_path}/E-protein_trajectory"
-load_and_run_test $path DT_test.gro DT_test.xtc test ${path}/nougat_config_test_E-protein.txt 3 12 1 $script_path
+load_and_run_test $path DT_test.pdb DT_test.xtc test ${path}/nougat_config_test_E-protein.txt 3 12 1 $script_path
 
 ;# Molecularly flat membrane cartesian
 set path "${script_path}/flat_surface_test"
