@@ -82,8 +82,8 @@ proc cell_prep {config_path leaf_check} {
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy] && ([dict get $config_dict custom_occupancy] != "NULL")} {
-        separate_chains top 15
-        set_occupancy top 
+        separate_chains top 10
+        set_occupancy top
     }
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet

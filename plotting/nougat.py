@@ -37,6 +37,8 @@ class Membrane:
         are composition percentages.
     t0  :  float
         The equilibrium thickness of the membrane.
+    helix_locations  :  dict
+        Contains any protein helix coordinates needed for plotting.
     """
 
     def __init__(self, polar):
@@ -59,7 +61,12 @@ class Membrane:
             "d1": None,
             "d2": None
         }
-        self.helix_locations = None
+        self.helix_locations = {
+            "zone": [],
+            "ztwo": [],
+            "zplus": [],
+            "zzero": []
+        }
 
     def __iter__(self):
         """Iterate through children."""
@@ -155,7 +162,7 @@ class Membrane:
 
         """
         if helix_surface:
-            assert self.helix_positions, "This Membrane does not have helix coordinates saved. Make sure to use Protein_Position in nougat.tcl and add_protein_helices in nougat.py."
+            assert len(self.helix_locations[helix_surface]) > 0, "This Membrane does not have helix coordinates saved. Make sure to use Protein_Position in nougat.tcl and add_protein_helices in nougat.py."
 
         if isinstance(obj, Field):
             data = obj.traj.avg()
@@ -180,9 +187,9 @@ class Membrane:
         hmap_dims = bin_prep(self.grid_dims, self.polar)
 
         if helix_surface:
-            fig,ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin, self.helix_positions[helix_surface])
+            fig, ax = plot_maker(hmap_dims, data, self.polar, vmax, vmin, self.helix_locations[helix_surface])
         else:
-            fig, ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin)
+            fig, ax = plot_maker(hmap_dims, data, self.polar, vmax, vmin)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
@@ -283,7 +290,7 @@ class Membrane:
         helix_locations = {}
         for surface in ["zone", "ztwo", "zplus", "zzero"]:
             filename = f"helcoords_{surface}.dat"
-            helix_array = np.genfromtxt(root_path.joinpath("tcl_outputs", filename), comments='#', skip_footer=1, delimiter=' ')
+            helix_array = np.genfromtxt(root_path.joinpath("tcl_output", filename), comments='#', delimiter=' ')
             helix_locations[surface] = list(helix_array)
         self.helix_locations = helix_locations
 

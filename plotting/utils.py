@@ -438,7 +438,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
             plt.close()
 
 
-def plot_maker(dims, data, protein, polar, vmax, vmin, protein=False):
+def plot_maker(dims, data, polar, vmax, vmin, protein=False):
     """
     Create and save 2D heatmaps.
 
@@ -448,14 +448,14 @@ def plot_maker(dims, data, protein, polar, vmax, vmin, protein=False):
         np.meshgrid output
     data : array
         the 2d array/matrix of values to be heatmapped
-    protein : list or False
-        if --inclusion turned on, list of helix coordinates; if no protein, False
     polar : bool
         Whether or not to use polar coordinates
     vmax : float
         The maximum value for your colorbar
     vmin : float
         The minimum value for your colorbar
+    protein : list or False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
 
     Returns
     -------
@@ -525,8 +525,8 @@ def draw_protein(protein, polar):
 
     Parameters
     ----------
-    protein : list or False
-        if --inclusion turned on, list of helix coordinates; if no protein, False
+    protein : list
+        List of helix coordinates
     polar : bool
         Whether or not to use polar coordinates
 

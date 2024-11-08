@@ -1539,7 +1539,7 @@ proc separate_chains {molid cutoff} {
 
     for {set i $indmin} {$i < $indmax} {incr i} {
         set sel1 [atomselect $molid "index $i"]
-        set sel2 [atomselect $molid "residue [expr $i+1]"]
+        set sel2 [atomselect $molid "index [expr $i+1]"]
 
         set loc1 [lindex [$sel1 get {x y z}] 0]
         set loc2 [lindex [$sel2 get {x y z}] 0]
@@ -1554,12 +1554,13 @@ proc separate_chains {molid cutoff} {
         $sel2 delete
     }
 
+    puts "test"
     set chars [list A B C D E]
     set k 0
     lappend list1 $indmax
-
+    puts $list1
     foreach {i j} $list1 {
-        set sel [atomselect $molid "index $i to $j"]
+        set sel [atomselect $molid "same residue as index $i to $j"]
         $sel set chain [lindex $chars $k]
         $sel delete
         set k [expr $k+1]
@@ -1569,16 +1570,12 @@ proc separate_chains {molid cutoff} {
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
-    set sel [atomselect $molid "resid 0 to 39"]
+    set sel [atomselect $molid "name BB SC1 to SC4"]
+    $sel set occupancy 0
+    $sel delete
+    set sel [atomselect $molid "resid 0 to 31"]
     $sel set occupancy 1
     $sel delete
-    set sel [atomselect $molid "resid 40 to 51"]
-    $sel set occupancy 2
-    $sel delete
-    set sel [atomselect $molid "resid 52 to 65"]
-    $sel set occupancy 3
-    $sel delete
-
 }
 
 ;# gets theta value from x and y pair
@@ -1639,18 +1636,18 @@ proc Protein_Position {name hnames chainNames folderName} {
         set fout [open "${folderName}/tcl_output/helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chainNames {
-                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
-                set com [measure center $sel weight mass]
-                $sel delete
-                set x [lindex $com 0]
-                set y [lindex $com 1]
-                set r [expr sqrt($x*$x+$y*$y)]
-                set theta [get_theta $x $y]
-                puts "chain ${chnm} and $r $theta"
+            set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
+            set com [measure center $sel weight mass]
+            $sel delete
+            set x [lindex $com 0]
+            set y [lindex $com 1]
+            set r [expr sqrt($x*$x+$y*$y)]
+            set theta [get_theta $x $y]
+            puts "chain ${chnm} and $r $theta"
 
-                puts -nonewline $fout "$r $theta "
-            }
-            puts $fout ""
+            puts -nonewline $fout "$r $theta "
+        }
+        puts $fout ""
         close $fout
     }
 }

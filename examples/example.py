@@ -114,6 +114,7 @@ def run_nougat(path, polar, quantities):
     todo_list = make_todo_list(quantities)
 
     m = Membrane(polar)
+
     if "height" in todo_list:
         zone = m.create_Field(path, "z_one", "height", "zone")
         ztwo = m.create_Field(path, "z_two", "height", "ztwo")
@@ -156,16 +157,21 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
     parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
     parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
-    # parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
+    parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
 
     args = parser.parse_args()
     path = Path(args.path)
 
     m = run_nougat(path, args.polar, args.quantities)
 
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15)
+    if args.inclusion:
+        m.add_protein_helices(path)
+    
+    print(m.helix_locations['zone'])
 
-    # plt.show()
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
+
+    plt.show()
 
     if args.dump:
         m.dump(path)
