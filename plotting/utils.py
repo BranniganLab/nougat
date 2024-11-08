@@ -9,50 +9,6 @@ import numpy as np
 import warnings
 
 
-def make_todo_list(quantities):
-    """
-    Make the todo_list for the Membrane object.
-
-    Parameters
-    ----------
-    quantities : str
-        A string specifying which quantities should be analyzed by nougat.py.
-
-    Raises
-    ------
-    ValueError
-        The user must specify a valid nougat quantity.
-
-    Returns
-    -------
-    todo_list  :  list
-        A list of nougat Field_sets to be computed.
-
-    """
-    if quantities is None:
-        todo_list = ["height", "curvature", "thickness", "order"]
-    else:
-        todo_list = []
-        for letter in quantities:
-            if letter == "h":
-                todo_list.append("height")
-            elif letter == "c":
-                todo_list.append("curvature")
-            elif letter == "t":
-                todo_list.append("thickness")
-            elif letter == "o":
-                todo_list.append("order")
-            elif letter == "n":
-                return NotImplemented
-                # todo_list.append("tilt")
-            elif letter == "d":
-                return NotImplemented
-                # todo_list.append("density")
-            else:
-                raise ValueError("Must specify a valid nougat quantity")
-    return todo_list
-
-
 def strip_blank_lines(file):
     """
     Remove any lines that are empty when reading a file.
@@ -482,7 +438,7 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
             plt.close()
 
 
-def plot_maker(dims, data, protein, polar):
+def plot_maker(dims, data, protein, polar, vmax, vmin, protein=False):
     """
     Create and save 2D heatmaps.
 
@@ -496,6 +452,10 @@ def plot_maker(dims, data, protein, polar):
         if --inclusion turned on, list of helix coordinates; if no protein, False
     polar : bool
         Whether or not to use polar coordinates
+    vmax : float
+        The maximum value for your colorbar
+    vmin : float
+        The minimum value for your colorbar
 
     Returns
     -------
@@ -503,7 +463,6 @@ def plot_maker(dims, data, protein, polar):
 
     """
     dim1vals, dim2vals = dims
-    Vmin, Vmax = "auto", "auto"
 
     fig = plt.figure()
     if polar:
@@ -512,7 +471,7 @@ def plot_maker(dims, data, protein, polar):
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True)
+    create_heatmap(polar, dim1vals, dim2vals, data, vmax, vmin, True)
     if protein:
         draw_protein(protein, polar)
     return fig, ax

@@ -4,12 +4,10 @@ Created on Mon Jul 17 10:54:23 2023.
 @author: js2746
 """
 
-import argparse
 from pathlib import Path
 import numpy as np
 import warnings
-from utils import calc_avg_over_time, make_todo_list, bin_prep, plot_maker, mostly_empty, read_log
-from curvature import calculate_curvature
+from utils import calc_avg_over_time, bin_prep, plot_maker, mostly_empty, read_log
 
 
 class Membrane:
@@ -133,7 +131,7 @@ class Membrane:
         self.children[name] = new_Field
         return new_Field
 
-    def plot2d(self, obj, helix_surface=None):
+    def plot2d(self, obj, vmax, vmin, helix_surface=None):
         """
         Plot a two-dimensional heatmap. If Frame supplied, plots Frame values.\
         If Field or Trajectory supplied, plots average over time.
@@ -142,14 +140,18 @@ class Membrane:
         ----------
         obj : Field, Trajectory, Frame
             The object whose data you want to plot.
-        helix_positions : None or str
+        vmax : float
+            The maximum value to appear in your colorbar.
+        vmin : float
+            The minimum value to appear in your colorbar.
+        helix_surface : None or str
             If you would like to plot helix positions and have helix positions\
             stored in this membrane object, use one of the four surface names \
             'zone', 'ztwo', 'zplus', or 'zzero'.
 
         Returns
         -------
-        None.
+        Matplotlib.pyplot Figure and Axes objects.
 
         """
         if helix_surface:
@@ -163,12 +165,12 @@ class Membrane:
             data = obj.bins
         elif isinstance(obj, np.ndarray):
             if len(np.shape(obj)) == 3:
-                assert np.shape(obj)[1] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[2] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[2] == self.grid_dims["N2"], "unexpected array size"
                 data = calc_avg_over_time(obj)
             elif len(np.shape(obj)) == 2:
-                assert np.shape(obj)[0] == m.grid_dims["N1"], "unexpected array size"
-                assert np.shape(obj)[1] == m.grid_dims["N2"], "unexpected array size"
+                assert np.shape(obj)[0] == self.grid_dims["N1"], "unexpected array size"
+                assert np.shape(obj)[1] == self.grid_dims["N2"], "unexpected array size"
                 data = obj
             else:
                 raise Exception("This is not a 2D or 3D array.")
@@ -176,10 +178,11 @@ class Membrane:
             raise Exception("I don't recognize this dtype")
 
         hmap_dims = bin_prep(self.grid_dims, self.polar)
+
         if helix_surface:
-            fig, ax = plot_maker(hmap_dims, data, self.helix_positions[helix_surface], self.polar)
+            fig,ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin, self.helix_positions[helix_surface])
         else:
-            fig, ax = plot_maker(hmap_dims, data, False, self.polar)
+            fig, ax = plot_maker(hmap_dims, data, False, self.polar, vmax, vmin)
         return fig, ax
 
     def measure_correlation(self, field1, field2):
@@ -554,6 +557,7 @@ class Trajectory:
             self.frames = np.empty(np.shape(frames)[0], dtype=Frame)
             for f in range(np.shape(frames)[0]):
                 self.frames[f] = Frame(f, frames[f, :, :])
+        self.polar = polar
 
     def __len__(self):
         """Trajectory length = number of frames in trajectory."""
@@ -879,119 +883,3 @@ class Field_set:
     def __repr__(self):
         """Say your name, rather than your address."""
         return self.name
-
-
-def run_nougat(path, polar, quantities, inclusion=False):
-    """
-    Run nougat's averaging and image processing routines.
-
-    Parameters
-    ----------
-    path : Path or str
-        The path to your nougat results.
-    polar : boolean
-        True for cylindrical coordinate system, False for Cartesian.
-    quantities : str
-        A string that specifies which quantities to carry out analysis on. If\
-        None, assume all quantities should be analyzed.
-    inclusion : bool
-        If True, nougat will find and load a list of the protein helix \
-        coordinates for use in plot2d.
-
-    Returns
-    -------
-    None.
-
-    List of all default Fields and Field_sets
-    ----------
-    height  :  Field_set
-        The height (in z) of the outer and inner leaflets, as well as the\
-        symmetric/antisymmetric variables "z plus" and "z minus". Z plus is\
-        the bilayer midplane. Z minus is the bilayer thickness. Heights may be\
-        relative to some reference point on a protein or could be the absolute\
-        height of the membrane in VMD.
-    zzero  :  Field
-        The height (in z) of the interface between the outer and inner\
-        leaflet. "Z zero" is commonly thought to be equal to the bilayer\
-        midplane but this is not always the case, especially around inclusions.
-    thickness  :  Field_set
-        The thickness of the outer and inner leaflets, as well as the\
-        symmetric and anti-symmetric variables "t plus" and "t minus." T plus\
-        is the average leaflet thickness and t minus is the leaflet thickness\
-        asymmetry.
-    epsilon  :  Field
-        An alternative measurement of leaflet thickness asymmetry, defined in\
-        [Watson & Brown, PRL, 2012].
-    mean_curvature  :  Field_set
-        The mean curvature (H) of the membrane outer and inner leaflets, as\
-        well as the symmetric/anti-symmetric variables "H plus" and "H minus".
-    gaussian_curvature  :  Field_set
-        The Gaussian curvature (K) of the membrane outer and inner leaflets,\
-        as well as the symmetric/anti-symmetric variables "K plus" and "K\
-        minus".
-    """
-    if isinstance(path, str):
-        path = Path(path)
-    elif not isinstance(path, Path):
-        raise Exception("path must be a Path object or a string.")
-
-    todo_list = make_todo_list(quantities)
-
-    m = Membrane(polar)
-
-    if inclusion:
-        m.add_protein_helices()
-
-    if "height" in todo_list:
-        zone = m.create_Field(path, "z_one", "height", "zone")
-        ztwo = m.create_Field(path, "z_two", "height", "ztwo")
-        zzero = m.create_Field(path, "z_zero", "height", "zzero")
-        height = m.create_Field_set(zone, ztwo, "z")
-    if "thickness" in todo_list:
-        tone = m.create_Field(zone - zzero, "t_one")
-        ttwo = m.create_Field(zzero - ztwo, "t_two")
-        thickness = m.create_Field_set(tone, ttwo, "t")
-    if "curvature" in todo_list:
-        hone, kone, _ = calculate_curvature(zone, m.polar, m.grid_dims)
-        htwo, ktwo, _ = calculate_curvature(ztwo, m.polar, m.grid_dims)
-        hzero, kzero, _ = calculate_curvature(zzero, m.polar, m.grid_dims)
-
-        hone = m.create_Field(hone, "h_one")
-        kone = m.create_Field(kone, "k_one")
-        htwo = m.create_Field(htwo, "h_two")
-        ktwo = m.create_Field(ktwo, "k_two")
-
-        mean_curv = m.create_Field_set(hone, htwo, "H")
-        gauss_curv = m.create_Field_set(kone, ktwo, "K")
-
-        hzero = m.create_Field(hzero, "h_zero")
-        kzero = m.create_Field(kzero, "k_zero")
-
-        # gaussian curvature of height.plus is not the same as gauss_curv.plus!
-        _, kplus, _ = calculate_curvature(height.plus, m.polar, m.grid_dims)
-        kplus = m.create_Field(kplus, "k_plus")
-
-        # gaussian curvature of height.minus is not the same as gauss_curv.minus!
-        _, kminus, _ = calculate_curvature(height.minus, m.polar, m.grid_dims)
-        kminus = m.create_Field(kminus, "k_minus")
-
-    return m
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
-    parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
-    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
-    parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
-    parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
-    parser.add_argument("-i", "--inclusion", action='store_true', help="add this flag if you ran nougat.tcl with Protein_Position turned on")
-
-    args = parser.parse_args()
-    path = Path(args.path)
-
-    m = run_nougat(path, args.polar, args.quantities, args.inclusion)
-
-    if args.dump:
-        m.dump(path)
-
-    print("Thank you for using nougat!")

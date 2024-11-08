@@ -1599,6 +1599,18 @@ proc get_theta {x y} {
     return [convertRadianToDegree $theta]
 }
 
+;# Centers system at origin
+proc center_system {end} {
+    set sel [atomselect top all]
+    for {set i 0} {$i<$end} {incr i} {
+        $sel frame $i
+        $sel update
+        set center [measure center $sel]
+        $sel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] 0"
+    }
+    $sel delete
+}
+
 ;# Ouputs position of the centered protein in a membrane
 ;# accross both leaflets
 ;# only useful for analysis later - doesn't impact your polar density script
