@@ -26,11 +26,11 @@ load_and_run_test $path DT_test.gro DT_test.xtc test ${path}/nougat_config_test_
 
 ;# Molecularly flat membrane cartesian
 set path "${script_path}/flat_surface_test"
-load_and_run_test $path flat.gro 0 test ${script_path}/E-protein_trajectory/nougat_config_test_E-protein.txt 5 5 0 $script_path
+load_and_run_test $path flat.gro 0 test ${path}/nougat_config_test_flat.txt 5 5 0 $script_path
 
 ;# Molecularly flat membrane polar
 set path "${script_path}/flat_surface_test"
-load_and_run_test $path flat.gro 0 test ${script_path}/E-protein_trajectory/nougat_config_test_E-protein.txt 3 12 1 $script_path
+load_and_run_test $path flat.gro 0 test ${path}/nougat_config_test_flat.txt 3 12 1 $script_path
 
 ;# exit
 exit
