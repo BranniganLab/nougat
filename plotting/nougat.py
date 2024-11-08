@@ -290,7 +290,7 @@ class Membrane:
         helix_locations = {}
         for surface in ["zone", "ztwo", "zplus", "zzero"]:
             filename = f"helcoords_{surface}.dat"
-            helix_array = np.genfromtxt(root_path.joinpath("tcl_outputs", filename), comments='#', skip_footer=1, delimiter=' ')
+            helix_array = np.genfromtxt(root_path.joinpath("tcl_output", filename), comments='#', skip_footer=1, delimiter=' ')
             helix_locations[surface] = list(helix_array)
         self.helix_locations = helix_locations
 
