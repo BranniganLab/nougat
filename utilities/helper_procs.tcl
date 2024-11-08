@@ -1636,18 +1636,18 @@ proc Protein_Position {name hnames chainNames folderName} {
         set fout [open "${folderName}/tcl_output/helcoords_${eqtxt}.dat" w]
         puts $fout  "#These are the positions of your TMD helices in polar coords"
         foreach chnm $chainNames {
-                set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
-                set com [measure center $sel weight mass]
-                $sel delete
-                set x [lindex $com 0]
-                set y [lindex $com 1]
-                set r [expr sqrt($x*$x+$y*$y)]
-                set theta [get_theta $x $y]
-                puts "chain ${chnm} and $r $theta"
+            set sel [atomselect top "(chain ${chnm} and name BB and occupancy 1) and (z < [expr $ht+5] and z > [expr $ht-5])" frame $lastframe]
+            set com [measure center $sel weight mass]
+            $sel delete
+            set x [lindex $com 0]
+            set y [lindex $com 1]
+            set r [expr sqrt($x*$x+$y*$y)]
+            set theta [get_theta $x $y]
+            puts "chain ${chnm} and $r $theta"
 
-                puts -nonewline $fout "$r $theta "
-            }
-            puts $fout ""
+            puts -nonewline $fout "$r $theta "
+        }
+        puts $fout ""
         close $fout
     }
 }
