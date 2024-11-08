@@ -96,7 +96,7 @@ echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
 
 # Check to make sure testing did not fail
-if grep -q "can't" nougat_test_outputs.log
+if grep -q -e "can't" -e "couldn't" nougat_test_outputs.log
 then
         echo "VMD didn't run the acceptance testing properly and it failed :("
         echo "Do you want to continue with acceptance testing anyway?"
