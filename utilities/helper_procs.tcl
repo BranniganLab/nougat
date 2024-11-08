@@ -1569,16 +1569,12 @@ proc separate_chains {molid cutoff} {
 ;# THIS IS FOR 5X29!
 proc set_occupancy {molid} {
 
-    set sel [atomselect $molid "resid 0 to 39"]
+    set sel [atomselect $molid "name BB SC1 to SC4"]
+    $sel set occupancy 0
+    $sel delete
+    set sel [atomselect $molid "resid 0 to 31"]
     $sel set occupancy 1
     $sel delete
-    set sel [atomselect $molid "resid 40 to 51"]
-    $sel set occupancy 2
-    $sel delete
-    set sel [atomselect $molid "resid 52 to 65"]
-    $sel set occupancy 3
-    $sel delete
-
 }
 
 ;# gets theta value from x and y pair
