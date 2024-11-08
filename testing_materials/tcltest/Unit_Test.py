@@ -12,7 +12,7 @@ import pytest
 import sys
 import os
 import numpy as np
-sys.path.insert(0, '../plotting/')
+sys.path.insert(0, '../../python/')
 import utils
 
 def test_multiple_lines_with_text():

@@ -9,7 +9,7 @@ Created on Fri May 10 09:07:30 2024
 import pytest
 import sys
 import numpy as np
-sys.path.insert(0, '../plotting/')
+sys.path.insert(0, '../../python/')
 from nougat import *
 import utils
 
