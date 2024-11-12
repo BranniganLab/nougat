@@ -467,63 +467,63 @@ class Field:
     def __add__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, Field):
-            return self.traj + other.traj
+            return self.traj._traj_to_3darray() + other.traj._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.traj + other
+            return self.traj._traj_to_3darray() + other
         else:
             return NotImplemented
 
     def __radd__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.traj + other
+            return self.traj._traj_to_3darray() + other
         else:
             return NotImplemented
 
     def __sub__(self, other):
         """Use numpy to subtract things."""
         if isinstance(other, Field):
-            return self.traj - other.traj
+            return self.traj._traj_to_3darray() - other.traj._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.traj - other
+            return self.traj._traj_to_3darray() - other
         else:
             return NotImplemented
 
     def __rsub__(self, other):
         """Use numpy to subtract things."""
         if isinstance(other, (np.ndarray, int, float)):
-            return other - self.traj
+            return other - self.traj._traj_to_3darray()
         else:
             return NotImplemented
 
     def __mul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, Field):
-            return self.traj * other.traj
+            return self.traj._traj_to_3darray() * other.traj._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.traj * other
+            return self.traj._traj_to_3darray() * other
         else:
             return NotImplemented
 
     def __rmul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.traj * other
+            return self.traj._traj_to_3darray() * other
         else:
             return NotImplemented
 
     def __div__(self, other):
         """Use numpy to divide things."""
         if isinstance(other, Field):
-            return self.traj / other.traj
+            return self.traj._traj_to_3darray() / other.traj._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.traj / other
+            return self.traj._traj_to_3darray() / other
         else:
             return NotImplemented
 
     def __pow__(self, exponent):
         """Use numpy's power() on the array stored in this Field."""
-        return np.power(self.traj, exponent)
+        return np.power(self.traj._traj_to_3darray(), exponent)
 
 
 class Trajectory:
@@ -649,65 +649,65 @@ class Trajectory:
     def __add__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, Trajectory):
-            return self.frames + other.frames
+            return self._traj_to_3darray() + other._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.frames + other
+            return self._traj_to_3darray() + other
         else:
             return NotImplemented
 
     def __radd__(self, other):
         """Use numpy to add things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.frames + other
+            return self._traj_to_3darray() + other
         else:
             return NotImplemented
 
     def __sub__(self, other):
         """Use numpy to subtract things."""
         if isinstance(other, Trajectory):
-            return self.frames - other.frames
+            return self._traj_to_3darray() - other._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.frames - other
+            return self._traj_to_3darray() - other
         else:
             return NotImplemented
 
     def __rsub__(self, other):
         """Use numpy to subtract things."""
         if isinstance(other, Trajectory):
-            return other.frames - self.frames
+            return other._traj_to_3darray() - self._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return other - self.frames
+            return other - self._traj_to_3darray()
         else:
             return NotImplemented
 
     def __mul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, Trajectory):
-            return self.frames * other.frames
+            return self._traj_to_3darray() * other._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.frames * other
+            return self._traj_to_3darray() * other
         else:
             return NotImplemented
 
     def __rmul__(self, other):
         """Use numpy to multiply things together."""
         if isinstance(other, (np.ndarray, int, float)):
-            return self.frames * other
+            return self._traj_to_3darray() * other
         else:
             return NotImplemented
 
     def __div__(self, other):
         """Use numpy to divide things."""
         if isinstance(other, Trajectory):
-            return self.frames / other.frames
+            return self._traj_to_3darray() / other._traj_to_3darray()
         elif isinstance(other, (np.ndarray, int, float)):
-            return self.frames / other
+            return self._traj_to_3darray() / other
         else:
             return NotImplemented
 
     def __pow__(self, exponent):
         """Use numpy's power() on the array stored in this Field."""
-        return np.power(self.frames, exponent)
+        return np.power(self._traj_to_3darray(), exponent)
 
 
 class Frame:
