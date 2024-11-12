@@ -30,7 +30,7 @@ proc cell_prep {config_path leaf_check} {
 
     set config_dict [read_config_file $config_path]
 
-    source [dict get $config_dict utilities_path]/helper_procs.tcl 
+    source [dict get $config_dict utilities_path]/helper_procs.tcl
     
     if {[dict get $config_dict use_qwrap] == "yes"} {
         load [dict get $config_dict qwrap_path]/qwrap.so
@@ -64,19 +64,14 @@ proc cell_prep {config_path leaf_check} {
 
     set end [molinfo top get numframes]
 
-    ;# center, wrap, and align the system
+    ;# wrap and center the system
     if {[dict get $config_dict use_qwrap] == "yes"} {
         run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
-    } else {
+    } elseif {[dict get $config_dict inclusion_sel] != "NULL"} {
         pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
-        set sel [atomselect top all]
-        for {set i 0} {$i<$end} {incr i} {
-            $sel frame $i
-            $sel update
-            set center [measure center $sel]
-            $sel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] 0"
-        }
-        $sel delete
+        center_system $end
+    } else {
+        center_system $end
     }
 
     # align the system, removing xy rotation
@@ -87,8 +82,8 @@ proc cell_prep {config_path leaf_check} {
     ;# custom proc to set my TMD helices to occupancy 1
     ;# this allows Protein_Position to work
     if {[dict exists $config_dict custom_occupancy] && ([dict get $config_dict custom_occupancy] != "NULL")} {
-        separate_chains top 15
-        set_occupancy top 
+        separate_chains top 10
+        set_occupancy top
     }
 
     ;# sets user to 1 or 2 depending on if the lipid is in the outer or inner leaflet

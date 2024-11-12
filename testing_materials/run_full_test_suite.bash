@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Allow bash aliases (specifically 'vmd')
+shopt -s expand_aliases
+source ~/.bashrc
+
 # Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
 rm -f nougpy.log
@@ -10,7 +14,16 @@ rm -f nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
 echo "Starting TCL unit testing"
-vmd -dispdev none -eofexit < ../test/unit_test.test > ./tcl_unit_test.log
+cd tcltest
+vmd -dispdev none -eofexit < unit_test.test > ../tcl_unit_test.log
+cd ..
+
+# Check to make sure VMD exists
+if [ ! -s tcl_unit_test.log ]
+then
+	echo "VMD is not recognized or not installed."
+	exit
+fi
 
 # Check to make sure VMD didn't error
 if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' tcl_unit_test.log
@@ -45,7 +58,22 @@ fi
 
 # Run python unit tests and divert output to file and terminal.
 echo "Starting pytest unit testing"
-python3 -m pytest ../test/Unit_Test.py 2>&1 | tee -a pyunittest.log
+python3 -m pytest tcltest/Unit_Test.py 2>&1 | tee -a pyunittest.log
+
+# Check to make sure testing did not fail
+if grep -q "No module named" pyunittest.log
+then
+	echo "pytest unit testing failed :("
+	echo "Something is wrong with your imports."
+	echo "Do you want to continue with acceptance testing anyway?"
+	echo "(Choose the number that corresponds to your choice)"
+	select yn in "Yes, Continue" "No, Exit"; do
+    	case $yn in
+        	"Yes, Continue" ) break;;
+        	"No, Exit" ) exit;;
+    	esac
+	done
+fi
 
 # Check to make sure tests all passed
 if grep -q FAILED pyunittest.log
@@ -66,10 +94,24 @@ fi
 # Run nougat.tcl and nougat.py on test systems
 echo "Starting acceptance testing"
 vmd -dispdev none -e ./run_nougat_test.tcl > nougat_test_outputs.log
-bash ./run_nougat_py_test.sh 2>&1 | tee -a nougpy.log
+
+# Check to make sure testing did not fail
+if grep -q -e "can't" -e "couldn't" nougat_test_outputs.log
+then
+        echo "VMD didn't run the acceptance testing properly and it failed :("
+        echo "Do you want to continue with acceptance testing anyway?"
+        echo "(Choose the number that corresponds to your choice)"
+        select yn in "Yes, Continue" "No, Exit"; do
+        case $yn in
+                "Yes, Continue" ) break;;
+                "No, Exit" ) exit;;
+        esac
+        done
+fi
+
 
 # Run acceptance tests on resulting files
-python3 -m pytest tests/ 2>&1 | tee -a pytest.log
+python3 -m pytest -rx tests/ 2>&1 | tee -a pytest.log
 
 # Sound the all clear
 echo "Acceptance testing finished"

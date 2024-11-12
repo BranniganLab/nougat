@@ -7,7 +7,6 @@ Created on Mon Jul 17 10:54:23 2023.
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-from pathlib import Path
 
 
 def strip_blank_lines(file):
@@ -82,33 +81,6 @@ def find_first_val(in_list):
         else:
             return value
     return np.nan
-
-
-def create_outfile_directories(cwd):
-    """
-    Create the preliminary directory hierarchy for nougat.py outputs.
-
-    Parameters
-    ----------
-    cwd  :  Path object
-        the path to the current working directory.
-
-    Returns
-    -------
-    None.
-
-    """
-    #quantities = ["height", "density", "curvature", "thickness", "order", "tilt", "misc"]
-    quantities = ["height", "curvature", "thickness", "misc"]
-    for filetype in ["trajectory", "average", "figures"]:
-        for quantity in quantities:
-            if quantity == "curvature":
-                for curv in ["mean", "gaussian", "normal_vectors"]:
-                    dirname = cwd.joinpath(filetype, quantity, curv)
-                    dirname.mkdir(parents=True, exist_ok=True)
-            else:
-                dirname = cwd.joinpath(filetype, quantity)
-                dirname.mkdir(parents=True, exist_ok=True)
 
 
 def parse_dat_file(path, bin_info, quant):
@@ -369,13 +341,14 @@ def mostly_empty(data_array):
     return data_array
 
 
-def read_log():
+def read_log(input_path):
     """
     Read log file output by nougat.tcl and save important info for later.
 
     Parameters
     ----------
-    None.
+    input_path  :  Path or str
+        The Path object or string path to your nougat.log file.
 
     Returns
     -------
@@ -388,7 +361,7 @@ def read_log():
     system_dict = {}
 
     # open log file
-    with open("tcl_output/nougat.log", "r+") as log_file:
+    with open(input_path, "r+") as log_file:
         lines = [line.rstrip('\n') for line in log_file]
 
         system_dict["sysname"] = lines[1]
@@ -455,29 +428,17 @@ def plot_all_quantities(polar, system_dict, cwd, inclusion):
         for field in ["zone", "ztwo", "zzero", "zplus"]:
             for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
                 hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, quantity, polar)
+                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
                 plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
                 plt.close()
-        for field in ["zone", "ztwo", "whole"]:
+        for field in ["zone", "ztwo"]:
             hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "thickness", polar)
+            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
             plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
             plt.close()
-        """
-        for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "density", species, field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "density", polar)
-            plt.savefig(cwd.joinpath("figures", "density", species, field + ".pdf"))
-            plt.close()
-            for tail in range(system_dict['ntails'][species]):
-                hmap_data = np.genfromtxt(cwd.joinpath("average", "order", species, "tail" + str(tail), field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, "order", polar)
-                plt.savefig(cwd.joinpath("figures", "order", species, "tail" + str(tail), field + ".pdf"))
-                plt.close()
-        """
 
 
-def plot_maker(dims, data, protein, quant, polar):
+def plot_maker(dims, data, polar, vmax, vmin, protein=False):
     """
     Create and save 2D heatmaps.
 
@@ -487,28 +448,21 @@ def plot_maker(dims, data, protein, quant, polar):
         np.meshgrid output
     data : array
         the 2d array/matrix of values to be heatmapped
-    protein : list or False
-        if --inclusion turned on, list of helix coordinates; if no protein, False
-    quant : str
-        The quantity being plotted.
     polar : bool
         Whether or not to use polar coordinates
+    vmax : float
+        The maximum value for your colorbar
+    vmin : float
+        The minimum value for your colorbar
+    protein : list or False
+        if --inclusion turned on, list of helix coordinates; if no protein, False
 
     Returns
     -------
-    None.
+    matplotlib figure and axes objects.
 
     """
     dim1vals, dim2vals = dims
-
-    if quant == "density":
-        Vmin = 0
-        Vmax = 2
-    elif quant == "height":
-        Vmin = -60
-        Vmax = 60
-    else:
-        Vmin, Vmax = "auto", "auto"
 
     fig = plt.figure()
     if polar:
@@ -517,7 +471,7 @@ def plot_maker(dims, data, protein, quant, polar):
         ax = plt.subplot()
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    create_heatmap(polar, dim1vals, dim2vals, data, Vmax, Vmin, True)
+    create_heatmap(polar, dim1vals, dim2vals, data, vmax, vmin, True)
     if protein:
         draw_protein(protein, polar)
     return fig, ax
@@ -571,8 +525,8 @@ def draw_protein(protein, polar):
 
     Parameters
     ----------
-    protein : list or False
-        if --inclusion turned on, list of helix coordinates; if no protein, False
+    protein : list
+        List of helix coordinates
     polar : bool
         Whether or not to use polar coordinates
 
@@ -586,11 +540,6 @@ def draw_protein(protein, polar):
         if polar is False:
             protein[i], protein[i + 1] = convert_to_cart(protein[i], protein[i + 1])
         plt.scatter(protein[i + 1], protein[i], c="black", linewidth=4, zorder=2)
-
-    # This circle is a custom E protein thing and should be removed
-    # circle1 = plt.Circle((0, 0), 28.116, transform=ax.transData._b, color='black', linestyle='dashed', linewidth=4, fill=False)
-    # if field == "zone":
-    #    ax.add_artist(circle1)
 
 
 def convert_to_cart(rval, thetaval):
