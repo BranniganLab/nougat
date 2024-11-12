@@ -166,12 +166,10 @@ if __name__ == "__main__":
 
     if args.inclusion:
         m.add_protein_helices(path)
-    
+
     print(m.helix_locations['zone'])
 
     fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
-
-    plt.show()
 
     if args.dump:
         m.dump(path)
