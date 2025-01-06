@@ -4,7 +4,7 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-# Resolve location of this script
+# Resolve location of this script; stolen from stackoverflow: https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script
 SOURCE=${BASH_SOURCE[0]}
 while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
