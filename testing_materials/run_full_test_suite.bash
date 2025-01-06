@@ -15,11 +15,11 @@ DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
 # Remove old log files to prevent accidental appending. -f is to suppress
 # error if no such file exists.
-rm -f nougpy.log
-rm -f pyunittest.log
-rm -f pytest.log
-rm -f tcl_unit_test.log
-rm -f nougat_test_outputs.log
+rm -f ${DIR}/nougpy.log
+rm -f ${DIR}/pyunittest.log
+rm -f ${DIR}/pytest.log
+rm -f ${DIR}/tcl_unit_test.log
+rm -f ${DIR}/nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
 echo "Starting TCL unit testing"
