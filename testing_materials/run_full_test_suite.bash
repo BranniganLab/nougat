@@ -25,7 +25,7 @@ rm -f ${DIR}/nougat_test_outputs.log
 
 # Run tcl unit tests and divert output to file
 echo "Starting TCL unit testing"
-vmd -dispdev none -eofexit < ${DIR}/tcltest/unit_test.test > ${DIR}/tcl_unit_test.log
+vmd -dispdev none -eofexit < ${DIR}/tcltest/unit_test.test -args ${DIR} > ${DIR}/tcl_unit_test.log
 
 # Check to make sure VMD exists
 if [ ! -s ${DIR}/tcl_unit_test.log ]
