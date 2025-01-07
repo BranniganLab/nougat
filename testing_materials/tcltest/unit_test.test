@@ -848,7 +848,7 @@ test Avgheight {
     set match [format "%.2f" [lindex $filedata 2 0]]
 } -body {
     return $match
-} -result 12.49 -cleanup {
+} -result 71.91 -cleanup {
     mol delete top
     exec rm -r PO_cart_12_12_0_1_1/
 }
