@@ -3,7 +3,7 @@ qwrap_path = ../../tcl/utilities
 vecexpr_path = ../../tcl/utilities
 utilities_path = ../../tcl/utilities
 
-use_qwrap = yes
+use_qwrap = no
 use_vecexpr = no
 
 # provide atomselection-style text that defines what is in your inclusion 
