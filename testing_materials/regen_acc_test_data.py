@@ -11,8 +11,8 @@ from shutil import rmtree
 import os
 import sys
 
-sys.path.append(os.path.abspath('../plotting/'))
-from nougat import run_nougat
+sys.path.append(os.path.abspath('../examples/'))
+from example import run_nougat
 
 
 def regenerate_ref_data(path, polar):

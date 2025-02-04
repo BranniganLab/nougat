@@ -69,9 +69,9 @@ proc cell_prep {config_path leaf_check} {
         run_qwrap [dict get $config_dict wrap_sel] [dict get $config_dict inclusion_sel]
     } elseif {[dict get $config_dict inclusion_sel] != "NULL"} {
         pbc wrap -all -center bb -centersel [dict get $config_dict inclusion_sel] 
-        center_system $end
+        center_system [dict get $config_dict inclusion_sel] [dict get $config_dict wrap_sel] $end
     } else {
-        center_system $end
+        center_system [dict get $config_dict inclusion_sel] [dict get $config_dict wrap_sel] $end
     }
 
     # align the system, removing xy rotation

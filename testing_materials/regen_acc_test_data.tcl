@@ -1,5 +1,5 @@
 set script_path [pwd]
-source $script_path/../nougat.tcl
+source $script_path/../tcl/nougat.tcl
 
 
 proc load_and_run_test {trajpath groname xtcname test_name config d1 d2 polar home} {
