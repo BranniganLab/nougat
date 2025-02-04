@@ -11,7 +11,7 @@ from shutil import rmtree
 import os
 import sys
 
-sys.path.append(os.path.abspath('../example/'))
+sys.path.append(os.path.abspath('../examples/'))
 from example import run_nougat
 
 
