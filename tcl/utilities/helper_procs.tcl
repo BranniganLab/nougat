@@ -1597,15 +1597,31 @@ proc get_theta {x y} {
 }
 
 ;# Centers system at origin
-proc center_system {end} {
-    set sel [atomselect top all]
-    for {set i 0} {$i<$end} {incr i} {
-        $sel frame $i
-        $sel update
-        set center [measure center $sel]
-        $sel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] 0"
+proc center_system {inclusion_sel wrap_sel end} {
+    set center_list []
+    if {$inclusion_sel != "NULL"} {
+        lappend center_list $inclusion_sel
     }
-    $sel delete
+    if {$wrap_sel != "NULL"} {
+        lappend center_list $wrap_sel
+    }
+    if {[llength $center_list] == 0} {
+        lappend center_list "all"
+    }
+    foreach seltext $center_list {
+        set fitsel [atomselect top $seltext]
+        set syssel [atomselect top "all"]
+        for {set i 0} {$i<$end} {incr i} {
+            $fitsel frame $i
+            $fitsel update
+            $syssel frame $i
+            $syssel update
+            set center [measure center $fitsel]
+            $syssel moveby "[expr -1*[lindex $center 0]] [expr -1*[lindex $center 1]] [expr -1*[lindex $center 2]]"
+        }
+        $fitsel delete
+        $syssel delete
+    }
 }
 
 ;# Ouputs position of the centered protein in a membrane
