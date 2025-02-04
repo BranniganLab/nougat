@@ -1,7 +1,9 @@
 package require tcltest
 namespace import ::tcltest::*
 
+cd ${argv}/tcltest/
 configure -verbose pbt -skip "Avgtiltord Avgdensity POPCbins"
+
 # Software under test
 
 source ../../tcl/utilities/helper_procs.tcl
