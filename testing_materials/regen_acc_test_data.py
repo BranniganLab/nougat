@@ -11,7 +11,7 @@ from shutil import rmtree
 import os
 import sys
 
-sys.path.append(os.path.abspath('../plotting/'))
+sys.path.append(os.path.abspath('../python/'))
 from nougat import run_nougat
 
 
