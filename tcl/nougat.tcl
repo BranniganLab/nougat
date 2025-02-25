@@ -161,7 +161,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
     set outfiles [createOutfiles $quantity_of_interest [dict get $config_dict species] [dict get $config_dict acyl_names] $foldername]
     set selections [createAtomSelections $quantity_of_interest $config_dict]
     set files [open "full_file.dat" w+]
-    
+    writeHeader $files  
 
     puts "Setup complete. Starting frame analysis now."   
 
@@ -198,10 +198,10 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             
             if {$switch == "B" && $selex == "z1z2"} {
             puts $selex
-            puts $files [lrange [$sel get x] 0 10] 
-            puts $files [lrange [$sel get y] 0 10]
-            puts $files [lrange [$sel get z] 0 10] 
-            puts $files [lrange [$sel get resid] 0 10]
+            puts $files [$sel get x] 
+            puts $files [$sel get y]
+            puts $files [$sel get z] 
+            puts $files [$sel get resid]
             #puts $files ";\n"
             #puts $files [$sel get index]
 
