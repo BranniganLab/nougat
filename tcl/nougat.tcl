@@ -155,17 +155,18 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar} {
 
 }
 
-proc run_nougat {system config_dict bindims polar quantity_of_interest foldername} {  
+proc run_nougat {system config_dict bindims polar quantity_of_interest foldername {switch "B"}} {  
     
     set coordsys [readPolar $polar]
     set outfiles [createOutfiles $quantity_of_interest [dict get $config_dict species] [dict get $config_dict acyl_names] $foldername]
     set selections [createAtomSelections $quantity_of_interest $config_dict]
+    set files [open "full_file.dat" w+]
+    
 
     puts "Setup complete. Starting frame analysis now."   
 
     ;# start frame looping here
     for {set frm [dict get $config_dict start]} {$frm <= [dict get $config_dict nframes]} {incr frm [dict get $config_dict step]} {
-
         if {$polar == 0} {
             set bindims [updateDimensions $bindims $frm]
             
@@ -184,8 +185,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         ;# tilt_order has different selections, one for each tail length present
         ;# in the system, so this will execute as many times as there are
         ;# unique tail lengths.
-
-        foreach selex [dict keys $selections] {
+        foreach selex [dict keys $selections] { 
 
             ;# $selex is a dict key that holds an atomselection as its value
             set sel [dict get $selections $selex]
@@ -195,6 +195,22 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             ;# assemble all data (x,y,z,user, etc) into a dict of lists
             set sel_info [getSelInfo $sel $ref_height]
+            
+            if {$switch == "B" && $selex == "z1z2"} {
+            puts $selex
+            puts $files [lrange [$sel get x] 0 10] 
+            puts $files [lrange [$sel get y] 0 10]
+            puts $files [lrange [$sel get z] 0 10] 
+            puts $files [lrange [$sel get resid] 0 10]
+            #puts $files ";\n"
+            #puts $files [$sel get index]
+
+
+            } else {
+
+
+            
+            #### This is where binning happens, straddle here ####
 
             ;# calculate which bins each bead belongs in along both axes
             ;# and return as two lists of same length as the lists above
@@ -206,6 +222,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             ;# Creates a dict that contains the bin and leaflet information linked to
             ;# a resid and index number. Facilitates easy binning later. 
             set res_dict [createResidueDictionaries [dict get $config_dict species] [dict get $config_dict headnames] [dict get $sel_info lipid_list] [dict get $sel_info name_list] $dim1_bins_list $dim2_bins_list [dict get $sel_info leaflet_list] $selex]
+
 
             ;# Make necessary calculations (if any), then bin and average them
             if {$quantity_of_interest eq "height"} {
@@ -230,9 +247,10 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             ;# cleanup before next step
             dict remove $res_dict [dict keys $res_dict]
             dict remove $sel_info [dict keys $sel_info]
+            }
         }
     }
-
+    close $files
     ;# output log info that nougat.py can read later 
     if {$quantity_of_interest eq "height"} {
         outputNougatLog [dict get $config_dict start] [dict get $config_dict nframes] [dict get $config_dict step] [dict get $config_dict species] [dict get $config_dict acyl_names] $system [dict get $config_dict headnames] $coordsys $foldername [dict get $bindims N1] [dict get $bindims N2] [dict get $bindims d1] [dict get $bindims d2]
@@ -249,7 +267,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
     ;# close all outfiles
     foreach channel [file channels "file*"] {
         close $channel
-    }
+    } 
 
     ;# delete all atomselections in scope.
     ;# if the user has previously defined atomselections in their VMD session,
