@@ -611,7 +611,7 @@ class Trajectory:
         data_array = self._traj_to_3darray()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            stdev = np.nanstd(data_array, axis=0)
+            stdev = np.nanstd(data_array, axis=0, ddof=1)
             return stdev
 
     def avg_over_theta(self):
