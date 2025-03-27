@@ -625,10 +625,10 @@ class Trajectory:
     def stdev_over_theta(self):
         """Calculate standard deviation of time averages, averaged over theta."""
         assert self.polar, "Trajectory must be polar in order to average over theta."
-        time_avg = self.avg()
+        time_avg_2d = self.avg()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            stdev_over_theta = np.nanstd(time_avg, axis=1, ddof=1)
+            stdev_over_theta = np.nanstd(time_avg_2d, axis=1, ddof=1)
             return stdev_over_theta
 
     def __getitem__(self, item):
