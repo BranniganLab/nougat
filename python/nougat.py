@@ -611,7 +611,7 @@ class Trajectory:
         data_array = self._traj_to_3darray()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            stdev = np.nanstd(data_array, axis=0)
+            stdev = np.nanstd(data_array, axis=0, ddof=1)
             return stdev
 
     def avg_over_theta(self):
@@ -625,15 +625,11 @@ class Trajectory:
     def stdev_over_theta(self):
         """Calculate standard deviation of time averages, averaged over theta."""
         assert self.polar, "Trajectory must be polar in order to average over theta."
-        stdev2 = np.square(self.stdev())
-        num_samples = np.sum(~np.isnan(stdev2), axis=1)
-        num_samples[num_samples == 0] = np.nan
+        time_avg_2d = self.avg()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            sums_over_theta = np.nansum(stdev2, axis=1)
-            sqrt_over_theta = np.sqrt(sums_over_theta)
-            avg_stdev_over_theta = sqrt_over_theta / num_samples
-            return avg_stdev_over_theta
+            stdev_over_theta = np.nanstd(time_avg_2d, axis=1, ddof=1)
+            return stdev_over_theta
 
     def __getitem__(self, item):
         """Make Trajectory object subscriptable."""
