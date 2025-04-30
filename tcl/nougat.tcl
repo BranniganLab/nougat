@@ -206,6 +206,8 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
                 puts $files [$sel get resid]
                 puts $files [$sel get index]
                 puts $files [$sel get user]
+                puts $files [$sel get name]
+                puts $files [$sel get resname]
 
             } else { 
             
