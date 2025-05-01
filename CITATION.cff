@@ -1,0 +1,23 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: nougat
+message: 'If you use this software, please cite it as below.'
+type: software
+authors:
+  - family-names: Sandberg
+    given-names: Jesse W.
+    orcid: 'https://orcid.org/0000-0001-7466-8466'
+  - family-names: Ennis
+    given-names: Jahmal J.
+    orcid: 'https://orcid.org/0000-0003-1291-8970'
+  - family-names: Santiago-McRae
+    given-names: Ezry
+  - orcid: 'https://orcid.org/0000-0002-0930-8277'
+  - family-names: Brannigan
+    given-names: Grace
+    orcid: 'https://orcid.org/0000-0001-8949-2694'
+repository-code: 'https://github.com/BranniganLab/nougat'
+version: v002
+date-released: '2024-12-24'
