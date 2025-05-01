@@ -13,11 +13,11 @@ import os
 
 def run_pytests_and_log(target_path, output_file):
     """
-    Runs pytest on a specified file or directory, prints output to screen,
-    and saves output to a file.
+    Run pytest on a specified file or directory, prints output to screen \
+    and save output to a file.
 
-    :param target_path: Path to the test file or directory
-    :param output_file: Path to the output log file
+    :param target_path: Path to the test file or directory (str or Path)
+    :param output_file: Path to the output log file (str or Path)
     """
     if not os.path.exists(target_path):
         print(f"Error: The path '{target_path}' does not exist.")
@@ -46,7 +46,7 @@ def run_pytests_and_log(target_path, output_file):
 
 def run_vmd_and_log_output(vmd_alias, args, output_file, windows, command_desc):
     """
-    Runs vmd with arguments and redirects output to a file.
+    Run vmd with arguments and redirects output to a file.
 
     :param vmd_alias: The command to run VMD on your computer (str or Path)
     :param args: List of command-line arguments (list of str)
@@ -82,6 +82,12 @@ def run_vmd_and_log_output(vmd_alias, args, output_file, windows, command_desc):
 
 
 def search_for_keywords(file_path, keywords):
+    """
+    Search file for instances of keywords. Count the instances.
+
+    :param file_path: Path to the file (str or Path)
+    :param keywords: List of keywords (list of str)
+    """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             contents = file.read()
