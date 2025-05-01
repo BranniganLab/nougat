@@ -200,6 +200,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             ;# assemble all data (x,y,z,user, etc) into a dict of lists
             set sel_info [getSelInfo $sel $ref_height]
             
+
             if {$write_info_to_file == 0 || $write_info_to_file == 2 && $selex == "z1z2"} {
                 puts $files "#x [$sel get x]" 
                 puts $files "#y [$sel get y]"
