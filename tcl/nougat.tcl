@@ -115,7 +115,7 @@ proc cell_prep {config_path leaf_check} {
 ;########################################################################################
 ;# nougat main functions
 
-proc start_nougat {system config_path dr_N1 N2 start end step polar {switch 0}} {
+proc start_nougat {system config_path dr_N1 N2 start end step polar {write_info_to_file 1}} {
     ;# running cell_prep will do some important initial configuration based on user input. 
     set config_dict [cell_prep $config_path 0]
 
@@ -150,20 +150,21 @@ proc start_nougat {system config_path dr_N1 N2 start end step polar {switch 0}} 
     ;# run nougat twice, once to compute height and density and once to compute
     ;# lipid tail vectors and order parameters
     
-    run_nougat $system $config_dict $bindims $polar "height" $foldername $switch
+    run_nougat $system $config_dict $bindims $polar "height" $foldername $write_info_to_file
     #run_nougat $system $config_dict $bindims $polar "tilt_order" $foldername
 
 }
 
-proc run_nougat {system config_dict bindims polar quantity_of_interest foldername {switch 0}} {  
+proc run_nougat {system config_dict bindims polar quantity_of_interest foldername {write_info_to_file 1}} {  
     
     set coordsys [readPolar $polar]
     set outfiles [createOutfiles $quantity_of_interest [dict get $config_dict species] [dict get $config_dict acyl_names] $foldername]
     set selections [createAtomSelections $quantity_of_interest $config_dict]
-    if {$switch == 0} {
+    
+    if {$write_info_to_file == 0 || $write_info_to_file == 2} {
         puts "#### Writing Coordinates To File ####"
         set files [open "full_file.dat" w]
-        writeHeader $files 
+        #writeHeader $files 
     } 
 
     puts "Setup complete. Starting frame analysis now."   
@@ -199,17 +200,18 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             ;# assemble all data (x,y,z,user, etc) into a dict of lists
             set sel_info [getSelInfo $sel $ref_height]
             
-            if {$switch == 0 && $selex == "z1z2"} {
-                puts $files [$sel get x] 
-                puts $files [$sel get y]
-                puts $files [$sel get z] 
-                puts $files [$sel get resid]
-                puts $files [$sel get index]
-                puts $files [$sel get user]
-                puts $files [$sel get name]
-                puts $files [$sel get resname]
 
-            } else { 
+            if {$write_info_to_file == 0 || $write_info_to_file == 2 && $selex == "z1z2"} {
+                puts $files "#x [$sel get x]" 
+                puts $files "#y [$sel get y]"
+                puts $files "#z [$sel get z]" 
+                puts $files "#resid: [$sel get resid]"
+                puts $files "#index: [$sel get index]"
+                puts $files "#leaflet: [$sel get user]"
+
+            } 
+
+            if {$write_info_to_file == 1 || $write_info_to_file == 2} { 
             
             #### This is where binning happens, straddle here ####
 
@@ -251,7 +253,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             }
         }
     }
-    if {$switch == 0} {
+    if {$write_info_to_file == 0 || $write_info_to_file == 2} {
         close $files
     }
     ;# output log info that nougat.py can read later 
@@ -280,3 +282,4 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
         catch {$selection delete}
     }
 }
+
