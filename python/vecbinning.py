@@ -29,7 +29,7 @@ def convert_cartesian_to_polar(xvalues:[list],yvalues:[list]):
     yval = np.array(yvalues)
     
     r = np.sqrt(xval**2 + yval**2)
-    theta = np.arctan(np.divide(yval,xval))
+    theta = np.arctan2(yval,xval)
     return [r, theta]
 
 def convert_radians_and_degrees(values:[list], specifier:str="rad_to_deg"):
@@ -175,16 +175,4 @@ class Multibinner:
                 self.multi_bin_dictionary[bindata].append(self.raw_binning_data[:,i])
             else:
                 self.multi_bin_dictionary[bindata] = [self.raw_binning_data[:,i]]
-            
-data = [[1, 5, 2, 8, 12, 6, 15],[1, 5, 2, 8, 12, 6, 15],[1, 5, 2, 8, 12, 6, 15]]
-
-#l = Multibinner(data, [5,10,6])
-#l.do_multi_binning()
-data[0],data[1]=convert_cartesian_to_polar(data[0], convert_radians_and_degrees(data[1]))
-
-l = Multibinner(data, [5,10,6], theta=[None,"theta",None])
-l.do_multi_binning()
-print(l.multi_bin_dictionary)
-print(l.raw_data[1].bins)
-        
     
