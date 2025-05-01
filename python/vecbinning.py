@@ -175,4 +175,49 @@ class Multibinner:
                 self.multi_bin_dictionary[bindata].append(self.raw_binning_data[:,i])
             else:
                 self.multi_bin_dictionary[bindata] = [self.raw_binning_data[:,i]]
-    
+                
+class SimultaneousXYZBinner():
+    """
+    Class for doing binning soley along the XYZ axis 
+    """
+    def __init__(self, multi_bin_data:[[list], [list], [list]], N_bins:[list], theta:[list]=None):
+        self.multi_bin_data = multi_bin_data
+        self.N_bins = N_bins
+        if theta == None:
+            self.theta = [None] * len(self.multi_bin_data)
+        else:
+            self.theta = theta
+        self.xbin_indicies = None
+        self.ybin_indicies = None
+        self.zbin_indicies = None
+        
+        self.xbins = None
+        self.ybins = None
+        self.zbins = None
+        
+    def do_xyz_binning(self):
+        """
+        Does the binning for multi arrays, 
+        the data is thought of as x y z and 
+        class is the container
+
+        Returns
+        -------
+        None.
+
+        """
+        for i, pre_binned_data in enumerate(self.multi_bin_data):
+            if i == 0:
+                vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
+                self.xbin_indicies = vec_bin.bin_indicies
+                self.xbins = vec_bin.bins
+            if i == 1:
+                vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
+                self.ybin_indicies = vec_bin.bin_indicies
+                self.ybins = vec_bin.bins
+            if i == 2:
+                vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
+                self.zbin_indicies = vec_bin.bin_indicies
+                self.zbins = vec_bin.bins
+            
+            
