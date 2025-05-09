@@ -794,7 +794,7 @@ test checkingselectinfo2 {
     set sel_info [getSelInfo $sel $height]
 } -body {
     return [format "%.2f" [lindex [dict get $sel_info tail_list] 0]]
-} -result 0.00 -cleanup {
+} -result {0.00} -cleanup {
 mol delete top
 }
 
@@ -834,7 +834,7 @@ test Avgheight {
     set match [format "%.2f" [lindex $filedata 2 0]]
 } -body {
     return $match
-} -result 12.49 -cleanup {
+} -result {12.49} -cleanup {
     mol delete top
     exec rm -r PO_cart_12_12_0_1_1/
 }
@@ -883,7 +883,9 @@ test Avgdensity {
     set match [format "%.2f" [lindex $filedata 2 0]]
 } -body {
     return $match
-} -result 12.49 -cleanup {
+} -result {12.49} -cleanup {
     mol delete top
     exec rm -r PO_cart_12_12_0_1_1/
 }
+
+exit
