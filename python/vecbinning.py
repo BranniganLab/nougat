@@ -176,11 +176,13 @@ class Multibinner:
             else:
                 self.multi_bin_dictionary[bindata] = [self.raw_binning_data[:,i]]
                 
-class SimultaneousXYZBinner():
+class XYZBinner():
     """
     Class for doing binning soley along the XYZ axis 
     """
     def __init__(self, multi_bin_data:[[list], [list], [list]], N_bins:[list], theta:[list]=None):
+        if len(multi_bin_data) != 3:
+            raise ValueError("Data must only have an X,Y, and Z components")
         self.multi_bin_data = multi_bin_data
         self.N_bins = N_bins
         if theta == None:

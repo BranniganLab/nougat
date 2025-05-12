@@ -2,7 +2,7 @@ import pytest
 import sys
 import os
 sys.path.append(os.path.abspath('../python/'))
-from vecbinning import VectorBinning, Multibinner, convert_cartesian_to_polar, convert_radians_and_degrees
+from vecbinning import VectorBinning, Multibinner, convert_cartesian_to_polar, convert_radians_and_degrees, XYZBinner
 import numpy as np
 
 # Converting positive x and y values to polar coordinates
@@ -175,3 +175,47 @@ def test_initialize_with_empty_arrays():
     assert binner.raw_bin_indicies == []
     assert binner.raw_binning_data == []
     assert binner.multi_bin_dictionary == {}
+
+    # Initialize XYZBinner with valid 3D data and N_bins
+def test_initialize_with_valid_data():
+        # Arrange
+    
+    x_data = [1.0, 2.0, 3.0]
+    y_data = [4.0, 5.0, 6.0]
+    z_data = [7.0, 8.0, 9.0]
+    multi_bin_data = [x_data, y_data, z_data]
+    n_bins = [10, 15, 20]
+    
+        # Act
+    binner = XYZBinner(multi_bin_data, n_bins)
+    
+        # Assert
+    assert binner.multi_bin_data == multi_bin_data
+    assert binner.N_bins == n_bins
+    assert binner.theta == [None, None, None]
+    assert binner.xbin_indicies is None
+    assert binner.ybin_indicies is None
+    assert binner.zbin_indicies is None
+    assert binner.xbins is None
+    assert binner.ybins is None
+    assert binner.zbins is None
+
+    # Verify that initializing with data that doesn't have exactly 3 components raises a ValueError.
+def test_initialize_with_invalid_data_components():
+        # Arrange
+
+        # Test case 1: Data with only 2 components
+    invalid_data = [[1.0, 2.0], [3.0, 4.0]]
+    n_bins = [10, 10]
+
+        # Act & Assert
+    with pytest.raises(ValueError, match="Data must only have an X,Y, and Z components"):
+        XYZBinner(invalid_data, n_bins)
+
+        # Test case 2: Data with 4 components
+    invalid_data = [[1.0], [2.0], [3.0], [4.0]]
+    n_bins = [10, 10, 10, 10]
+
+        # Act & Assert
+    with pytest.raises(ValueError, match="Data must only have an X,Y, and Z components"):
+        XYZBinner(invalid_data, n_bins)
