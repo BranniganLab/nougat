@@ -59,7 +59,7 @@ def run_vmd_and_log_output(vmd_alias, args, output_file, windows, command_desc):
 
     cmd = [str(vmd_alias)] + args
     if windows:
-        cmd = ["start"] + cmd
+        cmd = ["start "] + cmd
     print(f"Starting {command_desc}")
 
     try:
