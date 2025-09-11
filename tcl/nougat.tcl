@@ -164,7 +164,6 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
     if {$write_info_to_file == 0 || $write_info_to_file == 2} {
         puts "#### Writing Coordinates To File ####"
         set files [open "full_file.dat" w]
-        #writeHeader $files 
     } 
 
     puts "Setup complete. Starting frame analysis now."   
@@ -202,12 +201,21 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
             
 
             if {$write_info_to_file == 0 || $write_info_to_file == 2 && $selex == "z1z2"} {
-                puts $files "#x [$sel get x]" 
-                puts $files "#y [$sel get y]"
-                puts $files "#z [$sel get z]" 
-                puts $files "#resid: [$sel get resid]"
-                puts $files "#index: [$sel get index]"
-                puts $files "#leaflet: [$sel get user]"
+                set listlen [llength [$sel get x]]
+                set xyzformat [lrepeat $listlen % 07.3f]
+                set rid_indexformat [lrepeat $listlen %7d]
+                puts $files "# x"
+                puts $files " [format $xyzformat {*}[$sel get x]]" 
+                puts $files "# y"
+                puts $files " [format $xyzformat {*}[$sel get y]]"
+                puts $files "# z"
+                puts $files " [format $xyzformat {*}[$sel get z]]" 
+                puts $files "# resid"
+                puts $files " [format $rid_indexformat {*}[$sel get resid]]"
+                puts $files "# index"
+                puts $files " [format $rid_indexformat {*}[$sel get index]]"
+                puts $files "# index"
+                puts $files " [format $xyzformat {*}[$sel get user]]"
 
             } 
 

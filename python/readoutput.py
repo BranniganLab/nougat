@@ -9,6 +9,7 @@ Created on Tue Feb 25 16:42:51 2025
 import numpy as np
 import argparse
 import os
+from pathlib import Path
 
 def read_nougat_data(filepath,filename, seclen):
     """
@@ -29,9 +30,9 @@ def read_nougat_data(filepath,filename, seclen):
         Nougat text document converted to a numpy array.
 
     """
-    fullpath = filepath+"/"+filename
+    fullpath = Path(filepath+"/"+filename)
     loadFile = np.genfromtxt(fullpath,dtype='str')
-    systemArray = loadFile.reshape(int(loadFile.shape[0]/seclen), seclen,int(loadFile.shape[1]))
+    systemArray = loadFile.reshape(int(loadFile.shape[0]/seclen), seclen, int(loadFile.shape[1]))
     return systemArray
 
 def save_nougat_data(filepath, nparry, boole):
@@ -53,7 +54,7 @@ def save_nougat_data(filepath, nparry, boole):
 
     """
     if boole:
-        np.save(filepath+"/"+"NGArrayData.npy", nparry)
+        np.save(Path(filepath+"/"+"NGArrayData.npy"), nparry)
     
 
 if __name__=='__main__':

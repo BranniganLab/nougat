@@ -54,6 +54,8 @@ def convert_radians_and_degrees(values:[list], specifier:str="rad_to_deg"):
         return np.array(values)*(np.pi/180)
     elif specifier == "rad_to_deg":
         return np.array(values)*(180/np.pi)
+    else: 
+        ValueError("incorrect input for specifier put 'deg_to_rad' or 'rad_to_deg'")
         
 class VectorBinning:
     """
@@ -75,7 +77,7 @@ class VectorBinning:
         None.
 
         """
-        self.prebinneddata = np.array(binningdata)
+        self.unbinneddata = np.array(binningdata)
         self.N_bins = N_bins
         
         # Calculate Bins
@@ -87,8 +89,8 @@ class VectorBinning:
             self.calculate_bins()
         
         # Update Binning
-        self.bin_indicies = None
-        self.update_bin_indicies()
+        self.bin_indices = None
+        self.update_bin_indices()
         
     def calculate_bins(self):
         """
@@ -100,8 +102,8 @@ class VectorBinning:
         None.
 
         """
-        max_bin_interval = np.ceil(max(self.prebinneddata))
-        min_bin_interval = np.floor(min(self.prebinneddata))
+        max_bin_interval = np.ceil(max(self.unbinneddata))
+        min_bin_interval = np.floor(min(self.unbinneddata))
         self.bin_interval = [min_bin_interval, max_bin_interval]
         self.bins = np.linspace(min_bin_interval, max_bin_interval, self.N_bins)
         
@@ -110,7 +112,7 @@ class VectorBinning:
         self.bins = np.linspace(0, 360, self.N_bins)
         
         
-    def update_bin_indicies(self):
+    def update_bin_indices(self):
         """
         Determines which bin each of 
         the values falls into and assigns 
@@ -121,61 +123,9 @@ class VectorBinning:
         None.
 
         """
-        self.bin_indicies = np.digitize(self.prebinneddata, self.bins)
+        self.bin_indices = np.digitize(self.unbinneddata, self.bins)
 
-class Multibinner:
-    """
-    Class for doing binning along multiple axis 
-    """
-    def __init__(self, multi_bin_data:[list [list]], N_bins:[list], theta:[list]=None):
-        """
-        Data for initializing class attributes
 
-        Parameters
-        ----------
-        multi_bin_data : [list [list]]
-            list of list of floats of ints to bin.
-        N_bins : [list]
-            list of the number of bins to be created.
-
-        Returns
-        -------
-        None.
-
-        """
-        self.multi_bin_data = multi_bin_data
-        self.N_bins = N_bins
-        if theta == None:
-            self.theta = [None] * len(self.multi_bin_data)
-        else:
-            self.theta = theta
-        self.raw_data = []
-        self.raw_bin_indicies = []
-        self.raw_binning_data = []
-        self.multi_bin_dictionary = {}
-
-    def do_multi_binning(self):
-        """
-        Does the binning for multi arrays, 
-        the data is thought of as multiple coordinates to bin 
-
-        Returns
-        -------
-        None.
-
-        """
-        for i, data_array in enumerate(self.multi_bin_data):
-            vec_bin = VectorBinning(data_array, self.N_bins[i], calc_theta = self.theta[i])
-            self.raw_data.append(vec_bin)
-            self.raw_bin_indicies.append(vec_bin.bin_indicies)
-            self.raw_binning_data.append(vec_bin.prebinneddata)
-        self.raw_binning_data = np.stack(self.raw_binning_data)
-        for i, bindata in enumerate(zip(*self.raw_bin_indicies)):
-            if bindata in self.multi_bin_dictionary:
-                self.multi_bin_dictionary[bindata].append(self.raw_binning_data[:,i])
-            else:
-                self.multi_bin_dictionary[bindata] = [self.raw_binning_data[:,i]]
-                
 class XYZBinner():
     """
     Class for doing binning soley along the XYZ axis 
@@ -189,9 +139,9 @@ class XYZBinner():
             self.theta = [None] * len(self.multi_bin_data)
         else:
             self.theta = theta
-        self.xbin_indicies = None
-        self.ybin_indicies = None
-        self.zbin_indicies = None
+        self.xbin_indices = None
+        self.ybin_indices = None
+        self.zbin_indices = None
         
         self.xbins = None
         self.ybins = None
@@ -211,15 +161,15 @@ class XYZBinner():
         for i, pre_binned_data in enumerate(self.multi_bin_data):
             if i == 0:
                 vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
-                self.xbin_indicies = vec_bin.bin_indicies
+                self.xbin_indices = vec_bin.bin_indices
                 self.xbins = vec_bin.bins
             if i == 1:
                 vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
-                self.ybin_indicies = vec_bin.bin_indicies
+                self.ybin_indices = vec_bin.bin_indices
                 self.ybins = vec_bin.bins
             if i == 2:
                 vec_bin = VectorBinning(pre_binned_data, self.N_bins[i], calc_theta = self.theta[i])
-                self.zbin_indicies = vec_bin.bin_indicies
+                self.zbin_indices = vec_bin.bin_indices
                 self.zbins = vec_bin.bins
             
             

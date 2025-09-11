@@ -1516,25 +1516,6 @@ proc Align { align_seltext {tilt_flag 1} {molid top}} {
     puts "Align end"
 }
 
-# writeHeader --
-#
-#       Writes the headers in a list to a file 
-#
-# Arguments:
-#       file       {file}      Takes an open writtable file 
-#       labels     {list}      list of labels
-#
-# Results:
-#       
-#       writes headers to a file 
-
-proc writeHeader {file { labels "x y z resid index ~~~#" }} {
-    foreach label $labels {
-        puts $file "#$label"
-    }
-}
-
-
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
