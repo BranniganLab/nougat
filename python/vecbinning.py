@@ -30,6 +30,8 @@ def convert_cartesian_to_polar(xvalues:[list],yvalues:[list]):
     
     r = np.sqrt(xval**2 + yval**2)
     theta = np.arctan2(yval,xval)
+    mask = theta < 0
+    theta[mask] += 2*np.pi
     return [r, theta]
 
 def convert_radians_and_degrees(values:[list], specifier:str="rad_to_deg"):
@@ -61,7 +63,7 @@ class VectorBinning:
     """
     Class for doing binning along a single axis 
     """
-    def __init__(self, binningdata:[list], N_bins:int, calc_theta:str=None):
+    def __init__(self, binningdata:[list], N_bins:int, calc_theta:bool=False):
         """
         Data for initializing class attributes
 
@@ -81,35 +83,18 @@ class VectorBinning:
         self.N_bins = N_bins
         
         # Calculate Bins
-        self.bin_interval = None
-        self.bins = None
-        if calc_theta == "theta":
-            self.calculate_theta_bins()
+        if calc_theta:
+            self.bin_interval = [0, 360]
+            self.bins = np.linspace(0, 360, self.N_bins)
         else:
-            self.calculate_bins()
+            max_bin_interval = np.ceil(max(self.unbinneddata))
+            min_bin_interval = np.floor(min(self.unbinneddata))
+            self.bin_interval = [min_bin_interval, max_bin_interval]
+            self.bins = np.linspace(min_bin_interval, max_bin_interval, self.N_bins)
         
         # Update Binning
         self.bin_indices = None
         self.update_bin_indices()
-        
-    def calculate_bins(self):
-        """
-        Calulates the approiate bin spacing for 
-        the specified number of bins 
-
-        Returns
-        -------
-        None.
-
-        """
-        max_bin_interval = np.ceil(max(self.unbinneddata))
-        min_bin_interval = np.floor(min(self.unbinneddata))
-        self.bin_interval = [min_bin_interval, max_bin_interval]
-        self.bins = np.linspace(min_bin_interval, max_bin_interval, self.N_bins)
-        
-    def calculate_theta_bins(self):
-        self.bin_interval = [0, 360]
-        self.bins = np.linspace(0, 360, self.N_bins)
         
         
     def update_bin_indices(self):

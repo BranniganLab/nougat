@@ -2,7 +2,7 @@ import pytest
 import sys
 import os
 sys.path.append(os.path.abspath('../python/'))
-from vecbinning import VectorBinning, Multibinner, convert_cartesian_to_polar, convert_radians_and_degrees, XYZBinner
+from vecbinning import VectorBinning, convert_cartesian_to_polar, convert_radians_and_degrees, XYZBinner
 import numpy as np
 
 # Converting positive x and y values to polar coordinates
@@ -18,8 +18,8 @@ def test_positive_values_conversion():
     expected_r = np.sqrt(np.array(x_values)**2 + np.array(y_values)**2)
     expected_theta = np.arctan(np.divide(np.array(y_values), np.array(x_values)))
 
-    np.testing.assert_array_almost_equal(result[0], expected_r)
-    np.testing.assert_array_almost_equal(result[1], expected_theta)
+    np.testing.assert_allclose(result[0], expected_r)
+    np.testing.assert_allclose(result[1], expected_theta)
 
 
 # Converting a list of radian values to degrees using default parameter
@@ -32,7 +32,7 @@ def test_radians_to_degrees_default_parameter():
     result = convert_radians_and_degrees(radian_values)
     
     # Assert
-    np.testing.assert_array_almost_equal(result, expected_degrees, decimal=10)
+    np.testing.assert_allclose(result, expected_degrees)
 
 # Handling very large values that might cause precision issues
 def test_large_values_precision():
@@ -62,15 +62,15 @@ def test_initialization_with_regular_data():
     binning = VectorBinning(data, n_bins)
     
     # Assert
-    assert binning.prebinneddata.tolist() == data
+    assert binning.unbinneddata.tolist() == data
     assert binning.N_bins == n_bins
     assert binning.bin_interval[0] == 1.0  # floor of min
     assert binning.bin_interval[1] == 10.0  # ceil of max
     assert len(binning.bins) == n_bins
     assert binning.bins[0] == 1.0
     assert binning.bins[-1] == 10.0
-    assert binning.bin_indicies is not None
-    assert len(binning.bin_indicies) == len(data)
+    assert binning.bin_indices is not None
+    assert len(binning.bin_indices) == len(data)
 
 # Correctly calculates bin intervals using floor of min and ceil of max values
 def test_bin_intervals_calculation():
@@ -80,7 +80,6 @@ def test_bin_intervals_calculation():
 
     # Act
     binning = VectorBinning(test_data, n_bins)  # Use the correct class name
-    binning.calculate_bins()
 
     # Assert
     assert binning.bin_interval[0] == np.floor(min(test_data))
@@ -111,14 +110,14 @@ def test_assigns_correct_bin_indices():
 
     # Override the bins for controlled testing
     binning.bins = bins
-    binning.prebinneddata = test_data
+    binning.unbinneddata = test_data
 
     # Act
-    binning.update_bin_indicies()
+    binning.update_bin_indices()
 
     # Assert
     expected_indices = np.array([1, 2, 2, 3])  # Based on np.digitize behavior
-    np.testing.assert_array_equal(binning.bin_indicies, expected_indices)
+    np.testing.assert_array_equal(binning.bin_indices, expected_indices)
 
 
 # Handles empty prebinneddata array
@@ -130,53 +129,17 @@ def test_handles_empty_data():
     # Override the data and bins for controlled testing
     empty_data = np.array([])
     bins = np.array([0.0, 2.0, 4.0, 6.0])
-    binning.prebinneddata = empty_data
+    binning.unbinneddata = empty_data
     binning.bins = bins
 
     # Act
-    binning.update_bin_indicies()
+    binning.update_bin_indices()
 
     # Assert
-    assert isinstance(binning.bin_indicies, np.ndarray)
-    assert len(binning.bin_indicies) == 0
+    assert isinstance(binning.bin_indices, np.ndarray)
+    assert len(binning.bin_indices) == 0
 
-# Initialize Multibinner with valid multi-dimensional data and matching N_bins
-def test_initialize_with_valid_data():
-    # Arrange
-    multi_bin_data = [[1, 2, 3, 4], [5, 6, 7, 8]]
-    n_bins = [3, 4]
-    
-    # Act
-    binner = Multibinner(multi_bin_data, n_bins)
-    
-    # Assert
-    assert binner.multi_bin_data == multi_bin_data
-    assert binner.N_bins == n_bins
-    assert binner.theta == [None, None]
-    assert binner.raw_data == []
-    assert binner.raw_bin_indicies == []
-    assert binner.raw_binning_data == []
-    assert binner.multi_bin_dictionary == {}
 
-# Initialize with empty data arrays
-def test_initialize_with_empty_arrays():
-    # Arrange
-    multi_bin_data = [[], []]
-    n_bins = [3, 4]
-    
-    # Act
-    binner = Multibinner(multi_bin_data, n_bins)
-    
-    # Assert
-    assert binner.multi_bin_data == [[], []]
-    assert binner.N_bins == [3, 4]
-    assert binner.theta == [None, None]
-    assert binner.raw_data == []
-    assert binner.raw_bin_indicies == []
-    assert binner.raw_binning_data == []
-    assert binner.multi_bin_dictionary == {}
-
-    # Initialize XYZBinner with valid 3D data and N_bins
 def test_initialize_with_valid_data():
         # Arrange
     
@@ -193,9 +156,9 @@ def test_initialize_with_valid_data():
     assert binner.multi_bin_data == multi_bin_data
     assert binner.N_bins == n_bins
     assert binner.theta == [None, None, None]
-    assert binner.xbin_indicies is None
-    assert binner.ybin_indicies is None
-    assert binner.zbin_indicies is None
+    assert binner.xbin_indices is None
+    assert binner.ybin_indices is None
+    assert binner.zbin_indices is None
     assert binner.xbins is None
     assert binner.ybins is None
     assert binner.zbins is None
