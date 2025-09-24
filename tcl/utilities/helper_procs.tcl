@@ -1516,7 +1516,6 @@ proc Align { align_seltext {tilt_flag 1} {molid top}} {
     puts "Align end"
 }
 
-
 ;#********************************;#
 ;# Liam scripts or custom scripts ;#
 ;#********************************;#
