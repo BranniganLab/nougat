@@ -393,34 +393,3 @@ def bin_format(value):
     length = len(strval)
     final_value = (' ' * (3 - length)) + strval + '.00'
     return final_value
-
-
-def measure_quant_in_empty_sys(path, system, polar, quantity):
-    """
-    Measure the average thickness of a membrane.
-
-    Parameters
-    ----------
-    path : string
-        path to the directory where your nougat outputs are
-    system : string
-        name of the system you gave nougat
-    polar : bool
-        Whether or not to use polar coordinates\
-            if polar, will ignore small r bins (area too small)
-    quantity : string
-        The quantity you want to take the average of
-
-    Returns
-    -------
-    avg : float
-        the average quantity of the membrane
-
-    """
-    data = np.load(path + '/npy/' + system + '.' + quantity + '.npy')
-    if polar:
-        data = data[:, 4:, :]  # this could be smarter
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=RuntimeWarning)
-        avg = np.nanmean(data)
-    return avg
