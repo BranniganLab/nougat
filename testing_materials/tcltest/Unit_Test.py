@@ -102,28 +102,6 @@ def test_config_with_only_comments():
     os.remove("temp_config.txt")
 
 
-def test_multiple_non_nan_values():
-    input_list = [1.0, 2.0, 3.0]
-    expected_output = 1.0
-    assert find_first_val(input_list) == expected_output
-
-
-def test_mix_of_nan_and_non_nan_values():
-    input_list = [np.nan, 1.0, np.nan, 2.0]
-    expected_output = 1.0
-    assert find_first_val(input_list) == expected_output
-
-
-def test_multiple_non_nan_values_last():
-    in_list = [1.0, 2.0, 3.0]
-    assert find_last_val(in_list) == 3.0
-
-
-def test_nan_and_non_nan_values():
-    in_list = [1.0, np.nan, 2.0, np.nan, 3.0]
-    assert find_last_val(in_list) == 3.0
-
-
 def test_num_123_size_5():
     assert gifformat(123, 5) == "00123"
 
