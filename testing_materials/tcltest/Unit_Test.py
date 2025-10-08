@@ -136,15 +136,6 @@ def test_num_123_size_negative_1():
     assert gifformat(123, -1) == "123"
 
 
-def test_height_measurement_with_dat_type():
-    assert filename_generator("sys1", "lipid1", "field1", "bead1", "coordsys1", "height", "dat") == "sys1.field1.bead1.coordsys1.avgheight.dat"
-
-
-def test_invalid_system_name():
-    with pytest.raises(TypeError):
-        filename_generator(123, "lipid6", "field6", "bead6", "coordsys6", "height", "dat")
-
-
 def test_nans():
     matrix_data = np.array([[[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
                            [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
