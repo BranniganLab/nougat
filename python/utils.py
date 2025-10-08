@@ -166,67 +166,6 @@ def gifformat(num, size):
     return padded_val
 
 
-def filename_generator(sys_name, lipid_name, field, beadname, coordsys, measure, dtype):
-    """
-    Generate old filenames for legacy uses.
-
-    Parameters
-    ----------
-    sys_name : str
-        System name provided to nougat.tcl.
-    lipid_name : str
-        The lipid species present.
-    field : str
-        The surface being analyzed.
-    beadname : str
-        The beads specified as headnames.
-    coordsys : str
-        "polar" or "cart".
-    measure : str
-        That quantity being measured.
-    dtype : str
-        The file suffix (npy or dat, for example).
-
-    Raises
-    ------
-    RuntimeWarning
-        Raised if wrong str supplied as measure.
-
-    Returns
-    -------
-    filename : str
-        Complete legacy filename.
-
-    """
-    if measure == "height" or measure == "curvature" or measure == "Kcurvature" or measure == "thickness":
-        if dtype == "dat":
-            if measure == "thickness":
-                fullmeasure = "normthickness"
-            else:
-                fullmeasure = "avg" + measure
-        elif dtype == "npy":
-            if measure == "curvature":
-                fullmeasure = "meancurvature"
-            elif measure == "Kcurvature":
-                fullmeasure = "gausscurvature"
-            else:
-                fullmeasure = measure
-        filename = sys_name + "." + field + "." + beadname + "." + coordsys + "." + fullmeasure + "." + dtype
-    elif measure == "density":
-        if dtype == "dat":
-            filename = sys_name + "." + lipid_name + "." + field + "." + coordsys + ".avg" + measure + "." + dtype
-        elif dtype == "npy":
-            filename = sys_name + "." + lipid_name + "." + field + "." + coordsys + "." + measure + "." + dtype
-    elif measure == "tail1" or measure == "tail0":
-        if dtype == "dat":
-            filename = sys_name + "." + lipid_name + "." + measure + "." + field + "." + coordsys + ".avgOrder." + dtype
-        elif dtype == "npy":
-            filename = sys_name + "." + lipid_name + "." + measure + "." + field + "." + coordsys + ".order." + dtype
-    if measure not in ["height", "curvature", "Kcurvature", "thickness", "density", "tail1", "tail0"]:
-        raise RuntimeWarning('You used \"' + measure + '\" but that is not an allowed measurement')
-    return filename
-
-
 def calc_avg_over_time(matrix_data):
     """
     Calculate mean over 3rd axis (time, in nougat terms) of an array. np.nanmean \
