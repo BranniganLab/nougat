@@ -132,42 +132,6 @@ def bin_prep(bin_info, polar):
     return [dim1vals, dim2vals]
 
 
-def save_areas(bin_info, min_val, polar):
-    """
-    Calculate area of each bin and save to file.
-
-    Parameters
-    ----------
-    bin_info : dict
-        Dict containing bin sizes.
-    min_val : float
-        Distance from origin that first radial bin starts. Only used in polar \
-            coordinate systems. Default is zero.
-    polar : bool
-        Whether to use polar coordinates or cartesian.
-
-    Returns
-    -------
-    None.
-
-    """
-    N1_bins = bin_info["N1"]
-    N2_bins = bin_info["N2"]
-    d1 = bin_info["d1"]
-    d2 = bin_info["d2"]
-
-    areas = np.ones([N1_bins, N2_bins])
-
-    areas = areas * d1 * d2
-
-    if polar:
-        for row in range(N1_bins):
-            dist_to_center = min_val + row * d1 + d1 / 2.0
-            areas[row, :] = areas[row, :] * dist_to_center
-
-    np.save('trajectory/density/areas.npy', areas)
-
-
 def mostly_empty(data_array):
     """
     Replace bin values with np.nan if that bin has lipids in it less than 10% \
@@ -251,45 +215,6 @@ def read_log(input_path):
         system_dict['bin_info'] = {"N1": N1, "N2": N2, "d1": d1, "d2": d2}
 
     return system_dict
-
-
-def plot_all_quantities(polar, system_dict, cwd, inclusion):
-    """
-    Plot all heatmaps for height, curvature, thickness, density, and order.
-
-    Parameters
-    ----------
-    polar : bool
-        Whether or not to use polar coordinates instead of cartesian.
-    system_dict : dict
-        Dictionary containing list of species, bin sizes, and normalization \
-            constants.
-    cwd : Pathlib Path object
-        Path to current working directory.
-    inclusion : False or list
-        If no inclusion, False. Else, contains list of coordinates to be plotted. \
-        This feature not fully implemented.
-
-    Returns
-    -------
-    None.
-
-    """
-    # prep heatmap plot dimensions
-    hmap_dims = bin_prep(system_dict['bin_info'], polar)
-
-    for species in system_dict['species']:
-        for field in ["zone", "ztwo", "zzero", "zplus"]:
-            for quantity in ['height', 'curvature/gaussian', 'curvature/mean']:
-                hmap_data = np.genfromtxt(cwd.joinpath("average", quantity, field + ".dat"), delimiter=",")
-                fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
-                plt.savefig(cwd.joinpath("figures", quantity, field + ".pdf"))
-                plt.close()
-        for field in ["zone", "ztwo"]:
-            hmap_data = np.genfromtxt(cwd.joinpath("average", "thickness", field + ".dat"), delimiter=",")
-            fig, ax = plot_maker(hmap_dims, hmap_data, inclusion, polar)
-            plt.savefig(cwd.joinpath("figures", "thickness", field + ".pdf"))
-            plt.close()
 
 
 def plot_maker(dims, data, polar, vmax, vmin, protein=False):
