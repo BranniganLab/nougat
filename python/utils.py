@@ -395,29 +395,6 @@ def bin_format(value):
     return final_value
 
 
-def avg_over_theta(path):
-    """
-    Compute average of the quantity in question over the theta dimension.
-
-    Parameters
-    ----------
-    path : string
-        The directory in which nougat npy outputs are located
-
-    Returns
-    -------
-    None.
-
-    """
-    data = np.load(path.with_suffix(".npy"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=RuntimeWarning)
-        avg_vals = np.nanmean(data, axis=1)
-        std = np.nanstd(data, axis=1)
-    np.save(path.with_suffix(".avg_over_theta.npy"), avg_vals)
-    np.save(path.with_suffix(".avg_over_theta.std.npy"), std)
-
-
 def bad_measure_t0(zone, ztwo, polar):
     """
     Compute average bulk membrane thickness by measuring thickness at the box \
