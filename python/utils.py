@@ -395,45 +395,6 @@ def bin_format(value):
     return final_value
 
 
-def bad_measure_t0(zone, ztwo, polar):
-    """
-    Compute average bulk membrane thickness by measuring thickness at the box \
-    border. This is not a good way of doing things and will be deprecated in \
-    favor of measuring average thickness of an empty membrane.
-
-    Parameters
-    ----------
-    zone : numpy array
-        data for outer leaflet height
-    ztwo : numpy array
-        data for inner leaflet height
-    polar : bool
-        Whether or not to use polar coordinates
-
-    Returns
-    -------
-    avgt0 : float
-        the average thickness of the membrane at the borders of the box
-
-    """
-    thickness = zone - ztwo
-
-    avgthickness = calc_avg_over_time(thickness)
-
-    if polar is False:
-        leftcol = np.mean(avgthickness[:, 0])
-        rightcol = np.mean(avgthickness[:, -1])
-        toprow = np.mean(avgthickness[0, :])
-        botrow = np.mean(avgthickness[-1, :])
-        avgt0 = (leftcol + rightcol + toprow + botrow) / 4.0
-    elif polar is True:
-        avgt0 = np.mean(avgthickness[-1:])
-
-    avgt0 = avgt0 / 2.0
-
-    return avgt0
-
-
 def measure_quant_in_empty_sys(path, system, polar, quantity):
     """
     Measure the average thickness of a membrane.
