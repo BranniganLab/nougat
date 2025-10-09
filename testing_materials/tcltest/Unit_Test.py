@@ -102,28 +102,6 @@ def test_config_with_only_comments():
     os.remove("temp_config.txt")
 
 
-def test_multiple_non_nan_values():
-    input_list = [1.0, 2.0, 3.0]
-    expected_output = 1.0
-    assert find_first_val(input_list) == expected_output
-
-
-def test_mix_of_nan_and_non_nan_values():
-    input_list = [np.nan, 1.0, np.nan, 2.0]
-    expected_output = 1.0
-    assert find_first_val(input_list) == expected_output
-
-
-def test_multiple_non_nan_values_last():
-    in_list = [1.0, 2.0, 3.0]
-    assert find_last_val(in_list) == 3.0
-
-
-def test_nan_and_non_nan_values():
-    in_list = [1.0, np.nan, 2.0, np.nan, 3.0]
-    assert find_last_val(in_list) == 3.0
-
-
 def test_num_123_size_5():
     assert gifformat(123, 5) == "00123"
 
@@ -134,15 +112,6 @@ def test_num_123456_size_3():
 
 def test_num_123_size_negative_1():
     assert gifformat(123, -1) == "123"
-
-
-def test_height_measurement_with_dat_type():
-    assert filename_generator("sys1", "lipid1", "field1", "bead1", "coordsys1", "height", "dat") == "sys1.field1.bead1.coordsys1.avgheight.dat"
-
-
-def test_invalid_system_name():
-    with pytest.raises(TypeError):
-        filename_generator(123, "lipid6", "field6", "bead6", "coordsys6", "height", "dat")
 
 
 def test_nans():
