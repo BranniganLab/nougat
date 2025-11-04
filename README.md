@@ -27,7 +27,7 @@ github.com/jhenin/vecexpr
 ```
 
 ## What will it do?
-nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average height per bin per frame. nougat.py will read in those .dat files to extract features such as: 
+nougat.tcl will analyze your trajectory in VMD and output .dat files that contain the average height per bin per frame. nougat.py will read in those .dat files to extract the following features: 
 - leaflet/bilayer thickness
 - mean curvature
 - gaussian curvature 
