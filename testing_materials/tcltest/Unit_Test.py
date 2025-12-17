@@ -12,8 +12,7 @@ import pytest
 import sys
 import os
 import numpy as np
-sys.path.append(os.path.abspath('../python/'))
-from utils import *
+from nougat.utils import *
 
 def test_multiple_lines_with_text():
     file = ["line 1", "line 2", "line 3"]
