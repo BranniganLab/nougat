@@ -9,7 +9,7 @@ Created on Fri Aug  4 11:30:26 2023.
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from utils import bin_prep, gifformat, read_log, calc_avg_over_time
+from nougat.utils import bin_prep, gifformat, read_log, calc_avg_over_time
 import os
 from PIL import Image
 

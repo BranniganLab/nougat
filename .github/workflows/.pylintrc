@@ -1,0 +1,7 @@
+[MAIN]
+#disable=line-too-long,duplicate-code
+
+[BASIC]
+
+# to update: add a name to this list without spaces or new lines
+#good-names=

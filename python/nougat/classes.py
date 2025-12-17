@@ -7,7 +7,7 @@ Created on Mon Jul 17 10:54:23 2023.
 from pathlib import Path
 import numpy as np
 import warnings
-from utils import calc_avg_over_time, bin_prep, plot_maker, mostly_empty, read_log
+from nougat.utils import calc_avg_over_time, bin_prep, plot_maker, mostly_empty, read_log
 
 
 class Membrane:
