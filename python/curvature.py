@@ -265,7 +265,7 @@ def measure_normal_vectors(finite_differences, system_dict, r, polar):
         Nz = N**(-1)
 
     else:
-        # normal vector: [-h_r/N, -h_y/N, 1/N]
+        # normal vector: [-h_x/N, -h_y/N, 1/N]
         # N = normalization constant = sqrt(h_x^2 + h_y^2 + 1)
         N = np.sqrt(h_2**2 + h_1**2 + 1)
         Nx = -1 * h_2 * N**(-1)
