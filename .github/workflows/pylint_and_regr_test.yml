@@ -1,0 +1,32 @@
+name: Pylint and regression test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        pip install numpy==2.2.6
+        pip install scipy
+        pip install matplotlib
+        pip install pytest
+        pip install ./python/
+    - name: Analysing the code with pylint
+      run: |
+        export PYLINTRC=./.github/workflows/.pylintrc
+        pylint $(find ./python/DTA/ -name '*.py') --fail-under=8
+    - name: Running regression test with pytest
+      run: |
+        python -m pytest ./test_files/test_file.py

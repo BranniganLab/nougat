@@ -1,0 +1,102 @@
+name: Fetch, Build, Cache, and Verify VMD
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build-vmd:
+    runs-on: ubuntu-latest
+    env:
+        VMDINSTALLBINDIR: "${{ github.workspace }}/.cache/vmd-install/bin"
+        VMDINSTALLLIBRARYDIR: "${{ github.workspace }}/.cache/vmd-install/lib"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libx11-dev \
+            libglu1-mesa-dev \
+            libxi-dev \
+            libxext-dev \
+            libxmu-dev \
+            libjpeg-dev \
+            libpng-dev \
+            tcl-dev \
+            tk-dev \
+            python3-dev \
+            flex \
+            bison \
+            git
+
+      # Step 1: Generate GitHub App token
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+
+      # Step 2: Get tarball SHA for cache key
+      - name: Get tarball SHA
+        id: commit-sha
+        run: |
+          SHA=$(curl -s -H "Authorization: Bearer ${{ steps.app-token.outputs.token }}" \
+              https://api.github.com/repos/BranniganLab/vmd_for_testing/contents/vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar.gz \
+              | jq -r '.sha')
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+      # Step 3: Cache the installed VMD
+      - name: Cache VMD installation
+        id: cache-install
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/.cache/vmd-install
+          key: vmd-install-${{ steps.commit-sha.outputs.sha }}-${{ runner.os }}
+
+      # Step 4: Download tarball if cache miss
+      - name: Download VMD tarball
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .github/vmd_src
+          curl -L -H "Authorization: Bearer ${{ steps.app-token.outputs.token }}" \
+               -H "Accept: application/vnd.github.v3.raw" \
+               -o .github/vmd_src/vmd.tar.gz \
+               https://api.github.com/repos/BranniganLab/vmd_for_testing/contents/vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar.gz
+
+      # Step 5: Build and install VMD if cache miss
+      - name: Build and install VMD
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        run: |
+          echo "No cache hit — compiling VMD..."
+          mkdir -p $GITHUB_WORKSPACE/.cache/vmd-install
+          tar xzf ./.github/vmd_src/vmd.tar.gz
+          cd vmd-1.9.4a57
+          ./configure
+          cd src
+          make install
+          cd $GITHUB_WORKSPACE/.cache/vmd-install
+          ls
+
+      # Step 6: Add VMD to PATH
+      - name: Add VMD to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/.cache/vmd-install" >> $GITHUB_PATH
+
+      # Step 7: Verify installation
+      - name: Verify VMD installation
+        run: |
+          echo "Testing VMD installation..."
+          vmd -dispdev text -e <<<'quit'
+          if [ $? -ne 0 ]; then
+            echo "VMD failed to run!"
+            exit 1
+          else
+            echo "VMD installation verified successfully."
+          fi

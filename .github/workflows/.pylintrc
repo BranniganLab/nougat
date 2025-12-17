@@ -1,0 +1,7 @@
+[MAIN]
+disable=line-too-long,duplicate-code
+
+[BASIC]
+
+# to update: add a name to this list without spaces or new lines
+good-names=dG,dGs,deltaG,Nr,_Ntheta,Ntheta,dG_site,dG_ref,dG_std,minus_RT,P_unocc,P_occ,total_N,RT,NB,NL,BoxArea,ExpBeadDensity,DrDtheta,sysInfo,delta_G,valid_Dimensions,calculate_P_unocc,calculate_dG,list_of_Dimensions_objs,deltaG_std,DTA,SiteAcrossReplicas,Site,SymmetricSite
