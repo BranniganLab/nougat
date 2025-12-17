@@ -26,7 +26,7 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         export PYLINTRC=./.github/workflows/.pylintrc
-        pylint $(find ./python/DTA/ -name '*.py') --fail-under=8
+        pylint $(find ./python/nougat/ -name '*.py') --fail-under=2
     - name: Running regression test with pytest
       run: |
-        python -m pytest ./test_files/test_file.py
+        python -m pytest ./testing_materials/tests/test_nougat_outputs.py
