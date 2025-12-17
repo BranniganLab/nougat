@@ -1,4 +1,4 @@
-name: Pylint and regression test
+name: Pylint and python unit tests
 
 on: [push]
 
@@ -27,6 +27,6 @@ jobs:
       run: |
         export PYLINTRC=./.github/workflows/.pylintrc
         pylint $(find ./python/nougat/ -name '*.py') --fail-under=2
-    - name: Running regression test with pytest
+    - name: Running unit tests with pytest
       run: |
         python -m pytest ./testing_materials/tcltest/Unit_Test.py
