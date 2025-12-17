@@ -1,3 +1,4 @@
 shopt -q globstar
 **/__pycache__
 *.log
+python/nougat.egg-info/
