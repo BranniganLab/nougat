@@ -29,4 +29,4 @@ jobs:
         pylint $(find ./python/nougat/ -name '*.py') --fail-under=2
     - name: Running regression test with pytest
       run: |
-        python -m pytest ./testing_materials/tests/test_nougat_outputs.py
+        python -m pytest ./testing_materials/tcltest/Unit_Test.py
