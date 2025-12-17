@@ -9,11 +9,9 @@ __author__ = 'Brannigan Lab'
 __credits__ = 'Rutgers University - Camden'
 __all__=['classes',
         'curvature',
-        'gifmaker',
         'utils']
 
 
 from .classes import *
 from .utils import *
 from .curvature import *
-from .gifmaker import *
