@@ -37,11 +37,13 @@ jobs:
       # Step 1: Generate GitHub App token
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          installation-id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+          owner: BranniganLab
+          repositories: |
+            vmd_for_testing
 
       # Step 2: Get tarball SHA for cache key
       - name: Get tarball SHA
@@ -81,19 +83,17 @@ jobs:
           ./configure
           cd src
           make install
-          cd $GITHUB_WORKSPACE/.cache/vmd-install
-          ls
 
       # Step 6: Add VMD to PATH
       - name: Add VMD to PATH
         run: |
-          echo "$GITHUB_WORKSPACE/.cache/vmd-install" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/.cache/vmd-install/bin" >> $GITHUB_PATH
 
       # Step 7: Verify installation
       - name: Verify VMD installation
         run: |
           echo "Testing VMD installation..."
-          vmd -dispdev text -e <<<'quit'
+          vmd -dispdev text -e /dev/null
           if [ $? -ne 0 ]; then
             echo "VMD failed to run!"
             exit 1
