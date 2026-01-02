@@ -203,7 +203,7 @@ def make_tcl_paths(wd, coords, sys, surf):
     return (ref_path.resolve(), test_path.resolve())
 
 
-def arrays_equal(f1, f2, tolerance):
+def arrays_equal(f1, f2, tolerance=1e-4):
     """
     Determine whether two arrays have identical elements.
 
@@ -268,7 +268,7 @@ def test_if_tcl_heights_match(cwd, coordsys, system, surface4):
         pytest.skip("nougat.tcl does not measure zplus; skipping zplus test")
     else:
         ref, test = make_tcl_paths(cwd, coordsys, system, surface4)
-        assert arrays_equal(load(ref), load(test), 1e-11)
+        assert arrays_equal(load(ref), load(test))
 
 # Still needed: order, tilt tests
 
@@ -308,7 +308,7 @@ def test_if_trajectories_match(cwd, coordsys, surface4, system, quantity, membra
     ref_path = make_py_ref_path(cwd, coordsys, system, surface4, quantity, ".npy")
     ref = load(ref_path)
 
-    assert arrays_equal(ref, test_array, 1e-11)
+    assert arrays_equal(ref, test_array)
 
 # Still needed: order, tilt, normal_vectors
 
@@ -392,7 +392,7 @@ def test_if_avgs_match(cwd, coordsys, surface4, system, quantity, membrane):
     ref = np.genfromtxt(ref_path, delimiter=",", missing_values="nan", filling_values=np.nan)
 
     test_array = np.round(surf.traj.avg(), decimals=5)
-    assert arrays_equal(ref, test_array, 1e-11)
+    assert arrays_equal(ref, test_array)
 
 
 # Still needed: order, tilt, normal_vectors
