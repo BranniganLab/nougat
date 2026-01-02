@@ -104,12 +104,9 @@ jobs:
       # Step 8: Run nougat.tcl unit tests
       - name: Run nougat.tcl unit tests
         run: |
-          echo "Starting nougat.tcl unit tests"
-          echo "Deleting old log files, if any"
           cd $GITHUB_WORKSPACE/testing_materials/
-          rm -f nougpy.log pyunittest.log pytest.log tcl_unit_test.log nougat_test_outputs.log
           echo "Starting nougat.tcl unit testing"
-          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args . > ./tcl_unit_test.log
+          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args .
           if [ ! -s ./tcl_unit_test.log ]
           then
             echo "Something went wrong. Testing never ran."
