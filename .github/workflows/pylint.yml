@@ -25,4 +25,4 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         export PYLINTRC=./.github/workflows/.pylintrc
-        pylint $(find ./python/nougat/ -name '*.py') --fail-under=7.77
+        pylint $(find ./python/nougat/ -name '*.py') --fail-under=8.11
