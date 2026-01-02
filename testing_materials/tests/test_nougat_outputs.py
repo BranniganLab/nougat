@@ -8,9 +8,6 @@ Created on Fri Jul 21 11:18:40 2023.
 import pytest
 import numpy as np
 from pathlib import Path
-import os
-import sys
-
 from nougat.example_script import run_nougat
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
