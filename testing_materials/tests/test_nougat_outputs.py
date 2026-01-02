@@ -11,8 +11,7 @@ from pathlib import Path
 import os
 import sys
 
-sys.path.append(os.path.abspath('../examples/'))
-from example import run_nougat
+from nougat.example_script import run_nougat
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIXTURES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
