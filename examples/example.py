@@ -11,7 +11,7 @@ import argparse
 import sys
 import os
 import matplotlib.pyplot as plt
-from nougat import Membrane
+from nougat.classes import Membrane
 from nougat.curvature import calculate_curvature
 
 
