@@ -33,6 +33,10 @@ jobs:
             flex \
             bison \
             git
+          python -m pip install --upgrade pip
+          pip install numpy scipy matplotlib
+          pip install pytest
+          pip install ./python/
 
       # Step 1: Generate GitHub App token
       - name: Generate GitHub App token
@@ -135,4 +139,17 @@ jobs:
       # Step 10: Generate new values for regression testing
       - name: Generate new values for regression testing
         run: |
-          
+          cd $GITHUB_WORKSPACE/testing/
+          echo "Running nougat.tcl on test systems in preparation for regression testing."
+          vmd -dispdev none -e ./run_nougat_test.tcl 2>&1 | tee ./nougat_test_outputs.log
+          if grep -q -e "can't" -e "couldn't" ./nougat_test_outputs.log
+          then
+            echo "An error occurred when running nougat.tcl on the test systems"
+            exit 1
+          fi
+
+      # Step 11: Regression testing
+      - name: Regression testing
+        run: |
+          echo "Regression testing start"
+          python3 -m pytest ./tests/
