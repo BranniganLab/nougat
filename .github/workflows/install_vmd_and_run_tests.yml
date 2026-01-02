@@ -1,4 +1,4 @@
-name: Fetch, Build, Cache, and Verify VMD
+name: VMD installation and nougat testing
 
 on:
   push:
@@ -106,13 +106,13 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/testing_materials/
           echo "Starting nougat.tcl unit testing"
-          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args .
+          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args . > >(tcl_unit_test.log) 2> >(tcl_unit_test.err)
           if [ ! -s ./tcl_unit_test.log ]
           then
             echo "Something went wrong. Testing never ran."
             exit 1
           fi
-          if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' ./tcl_unit_test.log
+          if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' ./tcl_unit_test.err
           then
             echo "Errors occurred when attempting to perform the test."
             echo "Review tcl_unit_test.log for details."
