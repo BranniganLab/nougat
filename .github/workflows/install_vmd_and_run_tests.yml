@@ -140,12 +140,14 @@ jobs:
       # Step 9: Run nougat.py unit tests
       - name: Run nougat.py unit tests
         run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
           echo "Starting nougat.py unit testing"
           python -m pytest ./tcltest/Unit_Test.py
 
       # Step 10: Generate new values for regression testing
       - name: Generate new values for regression testing
         run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
           echo "Running nougat.tcl on test systems in preparation for regression testing."
           vmd -dispdev none -e ./run_nougat_test.tcl 2>&1 | tee ./nougat_test_outputs.log
           if grep -q -e "can't" -e "couldn't" ./nougat_test_outputs.log
@@ -157,5 +159,6 @@ jobs:
       # Step 11: Regression testing
       - name: Regression testing
         run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
           echo "Regression testing start"
           python3 -m pytest ./tests/
