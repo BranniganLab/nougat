@@ -100,3 +100,30 @@ jobs:
           else
             echo "VMD installation verified successfully."
           fi
+
+      # Step 8: Run nougat.tcl unit tests
+      - name: Run nougat.tcl unit tests
+        run: |
+          echo "Starting nougat.tcl unit tests"
+          echo "Deleting old log files, if any"
+          cd $GITHUB_WORKSPACE/testing_materials/
+          rm -f nougpy.log pyunittest.log pytest.log tcl_unit_test.log nougat_test_outputs.log
+          echo "Starting nougat.tcl unit testing"
+          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args . > ./tcl_unit_test.log
+          if [ ! -s ./tcl_unit_test.log ]
+          then
+            echo "Something went wrong. Testing never ran."
+            exit 1
+          fi
+          if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' ./tcl_unit_test.log
+          then
+            echo "Errors occurred when attempting to perform the test."
+            echo "Review tcl_unit_test.log for details."
+            exit 1
+          fi
+          if grep FAILED ./tcl_unit_test.log
+          then
+            echo "One or more tests failed."
+            echo "Review tcl_unit_test.log for details."
+            exit 1
+          fi
