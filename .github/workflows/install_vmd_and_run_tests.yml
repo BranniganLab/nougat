@@ -124,3 +124,15 @@ jobs:
             echo "Review tcl_unit_test.log for details."
             exit 1
           fi
+
+      # Step 9: Run nougat.py unit tests
+      - name: Run nougat.py unit tests
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "Starting nougat.py unit testing"
+          python -m pytest ./testing_materials/tcltest/Unit_Test.py
+
+      # Step 10: Generate new values for regression testing
+      - name: Generate new values for regression testing
+        run: |
+          
