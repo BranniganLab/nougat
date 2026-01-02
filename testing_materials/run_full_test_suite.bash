@@ -120,7 +120,7 @@ fi
 
 
 # Run acceptance tests on resulting files
-python3 -m pytest -rx ${DIR}/tests/ 2>&1 | tee -a ${DIR}/pytest.log
+python3 -m pytest ${DIR}/tests/ 2>&1 | tee -a ${DIR}/pytest.log
 
 # Sound the all clear
 echo "Acceptance testing finished"

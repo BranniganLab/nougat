@@ -1,4 +1,4 @@
-name: Fetch, Build, Cache, and Verify VMD
+name: VMD installation and nougat testing
 
 on:
   push:
@@ -33,6 +33,18 @@ jobs:
             flex \
             bison \
             git
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy matplotlib
+          pip install pytest
+          pip install ./python/
 
       # Step 1: Generate GitHub App token
       - name: Generate GitHub App token
@@ -100,3 +112,53 @@ jobs:
           else
             echo "VMD installation verified successfully."
           fi
+
+      # Step 8: Run nougat.tcl unit tests
+      - name: Run nougat.tcl unit tests
+        run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
+          echo "Starting nougat.tcl unit testing"
+          vmd -dispdev none -eofexit < ./tcltest/unit_test.test -args . 2>&1 | tee ./tcl_unit_test.log
+          if [ ! -s ./tcl_unit_test.log ]
+          then
+            echo "Something went wrong. Testing never ran."
+            exit 1
+          fi
+          if grep -E 'invalid \command|bad \option|nt \load \file|unknown \option' ./tcl_unit_test.log
+          then
+            echo "Errors occurred when attempting to perform the test."
+            echo "Review tcl_unit_test.log for details."
+            exit 1
+          fi
+          if grep FAILED ./tcl_unit_test.log
+          then
+            echo "One or more tests failed."
+            echo "Review tcl_unit_test.log for details."
+            exit 1
+          fi
+
+      # Step 9: Run nougat.py unit tests
+      - name: Run nougat.py unit tests
+        run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
+          echo "Starting nougat.py unit testing"
+          python -m pytest ./tcltest/Unit_Test.py
+
+      # Step 10: Generate new values for regression testing
+      - name: Generate new values for regression testing
+        run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
+          echo "Running nougat.tcl on test systems in preparation for regression testing."
+          vmd -dispdev none -e ./run_nougat_test.tcl 2>&1 | tee ./nougat_test_outputs.log
+          if grep -q -e "can't" -e "couldn't" ./nougat_test_outputs.log
+          then
+            echo "An error occurred when running nougat.tcl on the test systems"
+            exit 1
+          fi
+
+      # Step 11: Regression testing
+      - name: Regression testing
+        run: |
+          cd $GITHUB_WORKSPACE/testing_materials/
+          echo "Regression testing start"
+          python3 -m pytest ./tests/

@@ -1,4 +1,4 @@
-name: Pylint and python unit tests
+name: Pylint
 
 on: [push]
 
@@ -21,12 +21,8 @@ jobs:
         pip install numpy==2.2.6
         pip install scipy
         pip install matplotlib
-        pip install pytest
         pip install ./python/
     - name: Analysing the code with pylint
       run: |
         export PYLINTRC=./.github/workflows/.pylintrc
-        pylint $(find ./python/nougat/ -name '*.py') --fail-under=2
-    - name: Running unit tests with pytest
-      run: |
-        python -m pytest ./testing_materials/tcltest/Unit_Test.py
+        pylint $(find ./python/nougat/ -name '*.py') --fail-under=8.11
