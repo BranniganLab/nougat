@@ -17,4 +17,4 @@ from .classes import *
 from .utils import *
 from .curvature import *
 from .example_script import *
-from .make_pdb_of_field import *
+from .make_surface_pdb import *
