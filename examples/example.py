@@ -11,8 +11,13 @@ import argparse
 import sys
 import os
 import matplotlib.pyplot as plt
+from collections import namedtuple
 from nougat.classes import Membrane
 from nougat.curvature import calculate_curvature
+from nougat.make_surface_pdb import make_pdb
+
+
+Bin_Info = namedtuple('Bin_Info', ['d1', 'N1', 'd2', 'N2', 'coordsys'])
 
 
 def make_todo_list(quantities):
@@ -166,11 +171,18 @@ if __name__ == "__main__":
     if args.inclusion:
         m.add_protein_helices(path)
 
-    print(m.helix_locations['zone'])
+    if args.polar:
+        bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], "polar")
+    else:
+        bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], "cart")
 
     fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
 
     if args.dump:
         m.dump(path)
+
+    list_of_surfaces = [m.children['z_zero'].traj.avg(), getattr(m.children['z'], 'outer').traj.avg(), getattr(m.children['z'], 'inner').traj.avg(), getattr(m.children['z'], 'plus').traj.avg()]
+    list_of_names = ['zero', 'one', 'two', 'plus']
+    make_pdb(path.joinpath('membrane_heights.pdb'), list_of_surfaces, list_of_names, bin_info)
 
     print("Thank you for using nougat!")
