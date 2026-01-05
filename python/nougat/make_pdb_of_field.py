@@ -8,7 +8,7 @@ Created on Mon Jan  5 09:28:42 2026.
 import numpy as np
 
 
-def print_surface_to_pdb(data, d1, d2, f, index_num, field_name, coordsys):
+def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
     """
     Add HETATOM records to a .pdb file for each bin in a nougat height Field.
 
@@ -16,19 +16,14 @@ def print_surface_to_pdb(data, d1, d2, f, index_num, field_name, coordsys):
     ----------
     data : numpy ndarray
         2D array containing heights from a nougat Field (e.g. z1, z2, etc).
-    d1 : float
-        The bin width in x or r.
-    d2 : float
-        The bin width in y or theta.
+    bin_info : named tuple
+        The bin widths and numbers.
     f : file
         An open .pdb file you wish to add these lines to.
     index_num : int
         The index number for the first row you wish to print.
     field_name : str
         The name to be recorded in segname.
-    coordsys : str
-        The coordinate system nougat used for your analysis. Must be "polar" or
-        "cartesian".
 
     Returns
     -------
@@ -37,40 +32,63 @@ def print_surface_to_pdb(data, d1, d2, f, index_num, field_name, coordsys):
 
     """
     resid_num = 1
-    chain = 'S'
-    name = 'SURF '
-    resname = pad_str_with_spaces(field_name, 4, left_pad=False)
-    segname = '      ' + field_name[:4] + '  '
 
-    row, col = data.shape
-    for d1bin in range(row):
-        for d2bin in range(col):
+    for d1bin in range(bin_info.N1):
+        for d2bin in range(bin_info.N2):
             if str(data[d1bin][d2bin]) != "nan":
                 # calculate bin center in x and y
-                if coordsys == "polar":
-                    x = (d1 * d1bin + .5 * d1) * (np.cos(d2bin * d2 + 0.5 * d2))
-                    y = (d1 * d1bin + .5 * d1) * (np.sin(d2bin * d2 + 0.5 * d2))
+                if bin_info.coordsys == "polar":
+                    x = (
+                        (bin_info.d1 * d1bin + 0.5 * bin_info.d1)
+                        * np.cos(d2bin * bin_info.d2 + 0.5 * bin_info.d2)
+                    )
+                    y = (
+                        (bin_info.d1 * d1bin + .5 * bin_info.d1)
+                        * (np.sin(d2bin * bin_info.d2 + 0.5 * bin_info.d2)
+                    )
                 else:
-                    L1 = d1 * row
-                    L2 = d2 * col
-                    x = (d1 * d1bin + .5 * d1) - L1 / 2
-                    y = (d2 * d2bin + .5 * d2) - L2 / 2
-
-                # compile mis en place
-                index = pad_str_with_spaces(index_num, 5) + ' '
-                resid = pad_str_with_spaces(resid_num, 5) + '    '
-                x = format_coordinate(x)
-                y = format_coordinate(y)
-                z = format_coordinate(data[d1bin][d2bin])
-                occupancy = pad_str_with_spaces(d1bin, 3) + '.00'
-                beta = pad_str_with_spaces(d2bin, 3) + '.00'
+                    # cartesian systems are centered around the origin
+                    x = (bin_info.d1 * d1bin + .5 * bin_info.d1) - bin_info.d1 * bin_info.N1 / 2
+                    y = (bin_info.d2 * d2bin + .5 * bin_info.d2) - bin_info.d2 * bin_info.N2 / 2
 
                 # print row of .pdb file
-                print('HETATM' + index + name + resname + chain + resid + x + y + z + occupancy + beta + segname, file=f)
+                print(
+                    'HETATM'
+                    f'{pad_str_with_spaces(index_num, 5)} '
+                    'SURF '
+                    f'{pad_str_with_spaces(field_name, 4, left_pad=False)}'
+                    'S'
+                    f'{pad_str_with_spaces(resid_num, 5)}    '
+                    f'{format_coordinate(x)}'
+                    f'{format_coordinate(y)}'
+                    f'{format_coordinate(data[d1bin][d2bin])}'
+                    f'{pad_str_with_spaces(d1bin, 3)}.00'
+                    f'{pad_str_with_spaces(d2bin, 3)}.00'
+                    f'      {field_name[:4]}  ',
+                    file=f,
+                )
 
                 index_num += 1
                 resid_num += 1
     return index_num
+
+
+def print_row_to_pdb():
+    print(
+        'HETATM'
+        f'{index}'
+        f'{name}'
+        f'{resname}'
+        f'{chain}'
+        f'{resid}'
+        f'{x}'
+        f'{y}'
+        f'{z}'
+        f'{occupancy}'
+        f'{beta}'
+        f'{segname}',
+        file=f,
+    )
 
 
 def pad_str_with_spaces(inp, desired_len, left_pad=True):
