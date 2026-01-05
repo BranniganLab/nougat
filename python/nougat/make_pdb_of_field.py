@@ -38,18 +38,17 @@ def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
             if str(data[d1bin][d2bin]) != "nan":
                 # calculate bin center in x and y
                 if bin_info.coordsys == "polar":
-                    x = (
-                        (bin_info.d1 * d1bin + 0.5 * bin_info.d1)
-                        * np.cos(d2bin * bin_info.d2 + 0.5 * bin_info.d2)
-                    )
-                    y = (
-                        (bin_info.d1 * d1bin + .5 * bin_info.d1)
-                        * (np.sin(d2bin * bin_info.d2 + 0.5 * bin_info.d2)
-                    )
+                    r = bin_info.d1 * d1bin + 0.5 * bin_info.d1
+                    theta = d2bin * bin_info.d2 + 0.5 * bin_info.d2
+                    # x = rcos(theta); y = rsin(theta)
+                    x = r * np.cos(theta)
+                    y = r * np.sin(theta)
                 else:
+                    x = bin_info.d1 * d1bin + .5 * bin_info.d1
+                    y = bin_info.d2 * d2bin + .5 * bin_info.d2
                     # cartesian systems are centered around the origin
-                    x = (bin_info.d1 * d1bin + .5 * bin_info.d1) - bin_info.d1 * bin_info.N1 / 2
-                    y = (bin_info.d2 * d2bin + .5 * bin_info.d2) - bin_info.d2 * bin_info.N2 / 2
+                    x = x - bin_info.d1 * bin_info.N1 / 2
+                    y = y - bin_info.d2 * bin_info.N2 / 2
 
                 # print row of .pdb file
                 print(
@@ -71,24 +70,6 @@ def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
                 index_num += 1
                 resid_num += 1
     return index_num
-
-
-def print_row_to_pdb():
-    print(
-        'HETATM'
-        f'{index}'
-        f'{name}'
-        f'{resname}'
-        f'{chain}'
-        f'{resid}'
-        f'{x}'
-        f'{y}'
-        f'{z}'
-        f'{occupancy}'
-        f'{beta}'
-        f'{segname}',
-        file=f,
-    )
 
 
 def pad_str_with_spaces(inp, desired_len, left_pad=True):
