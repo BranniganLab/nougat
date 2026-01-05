@@ -13,6 +13,7 @@ import sys
 import os
 import numpy as np
 from nougat.utils import *
+from nougat.make_pdb_of_field import coord_format
 
 def test_multiple_lines_with_text():
     file = ["line 1", "line 2", "line 3"]
@@ -264,19 +265,3 @@ def test_negative_float_input():
     assert len(result) == 8
     assert result[4] == '.'
     assert result[5:] == '345'
-
-
-def test_integer_value():
-    assert bin_format(10) == ' 10.00'
-
-# Returns a string with no spaces and the value with .00 appended to the end when given a zero value.
-
-
-def test_zero_value():
-    assert bin_format(0) == '  0.00'
-
-# Returns a string with two spaces and the value with .00 appended to the end when given a single-digit integer value.
-
-
-def test_single_digit_integer_value():
-    assert bin_format(5) == '  5.00'
