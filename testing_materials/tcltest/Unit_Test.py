@@ -13,7 +13,7 @@ import sys
 import os
 import numpy as np
 from nougat.utils import *
-from nougat.make_pdb_of_field import format_coordinate
+from nougat.make_surface_pdb import format_coordinate
 
 def test_multiple_lines_with_text():
     file = ["line 1", "line 2", "line 3"]
