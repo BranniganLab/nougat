@@ -32,8 +32,14 @@ def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_dims=(200,
 
     """
     index = 1
-    with open(filename, "w") as pdb:
-        print(f'CRYST1  {box_dims[0]}.000  {box_dims[1]}.000  {box_dims[2]}.000  90.00  90.00  90.00 P 1           1', file=pdb)
+    with open(filename, "w", encoding='utf-8') as pdb:
+        print(
+            f"CRYST1  {box_dims[0]}.000  "
+            f"{box_dims[1]}.000  "
+            f"{box_dims[2]}.000  "
+            "90.00  90.00  90.00 P 1           1",
+            file=pdb,
+        )
         for surface, name in zip(list_of_surfaces, list_of_names):
             index = print_surface_to_pdb(surface, bin_info, pdb, index, name)
         print("END", file=pdb)
