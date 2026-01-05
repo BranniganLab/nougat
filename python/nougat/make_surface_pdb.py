@@ -8,7 +8,7 @@ Created on Mon Jan  5 09:28:42 2026.
 from nougat.utils import compute_bin_centers
 
 
-def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_z=' 200.000'):
+def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_dims=(200, 200, 200)):
     """
     Make a pdb file from average height surfaces.
 
@@ -23,8 +23,8 @@ def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_z=' 200.00
         The names of each surface. Limit 4 characters per name.
     bin_info : named tuple
         The lattice information (bin widths, number, coordinate system, etc).
-    box_z : str, OPTIONAL
-        The height in z of the box. Default is 200 A.
+    box_dims : tuple, OPTIONAL
+        The dimensions of the box in Angstroms (x, y, z). Default is 200x200x200.
 
     Returns
     -------
@@ -33,7 +33,7 @@ def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_z=' 200.00
     """
     index = 1
     with open(filename, "w") as pdb:
-        print(f'CRYST1  200.000  200.000  200.000  90.00  90.00  90.00 P 1           1', file=pdb)
+        print(f'CRYST1  {box_dims[0]}.000  {box_dims[1]}.000  {box_dims[2]}.000  90.00  90.00  90.00 P 1           1', file=pdb)
         for surface, name in zip(list_of_surfaces, list_of_names):
             index = print_surface_to_pdb(surface, bin_info, pdb, index, name)
         print("END", file=pdb)
