@@ -71,24 +71,21 @@ def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
             if str(data[d1bin][d2bin]) != "nan":
                 x = x_centers[d1bin][d2bin]
                 y = y_centers[d1bin][d2bin]
-
-                # print row of .pdb file
                 print(
                     'HETATM'
-                    f'{pad_str_with_spaces(index_num, 5)} '
-                    'SURF '
-                    f'{pad_str_with_spaces(field_name, 4, left_pad=False)}'
-                    'S'
-                    f'{pad_str_with_spaces(resid_num, 5)}    '
-                    f'{format_coordinate(x)}'
-                    f'{format_coordinate(y)}'
-                    f'{format_coordinate(data[d1bin][d2bin])}'
-                    f'{pad_str_with_spaces(d1bin, 3)}.00'
-                    f'{pad_str_with_spaces(d2bin, 3)}.00'
-                    f'      {field_name[:4]}  ',
+                    f'{pad_str_with_spaces(index_num, 5)} '         # index
+                    'SURF '                                         # name
+                    f'{pad_str_with_spaces(field_name, 4, False)}'  # resname
+                    'S'                                             # chain
+                    f'{pad_str_with_spaces(resid_num, 5)}    '      # resid
+                    f'{format_coordinate(x)}'                       # x
+                    f'{format_coordinate(y)}'                       # y
+                    f'{format_coordinate(data[d1bin][d2bin])}'      # z
+                    f'{pad_str_with_spaces(d1bin, 3)}.00'           # occupancy
+                    f'{pad_str_with_spaces(d2bin, 3)}.00'           # beta
+                    f'      {field_name[:4]}  ',                    # segname
                     file=f,
                 )
-
                 index_num += 1
                 resid_num += 1
     return index_num
