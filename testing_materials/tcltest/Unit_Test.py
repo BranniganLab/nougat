@@ -13,7 +13,7 @@ import sys
 import os
 import numpy as np
 from nougat.utils import *
-from nougat.make_pdb_of_field import coord_format
+from nougat.make_pdb_of_field import format_coordinate
 
 def test_multiple_lines_with_text():
     file = ["line 1", "line 2", "line 3"]
@@ -252,7 +252,7 @@ def test_convert_to_cart_type_error():
 
 
 def test_positive_float_input():
-    result = coord_format(12.345)
+    result = format_coordinate(12.345)
     assert isinstance(result, str)
     assert len(result) == 8
     assert result[4] == '.'
@@ -260,7 +260,7 @@ def test_positive_float_input():
 
 
 def test_negative_float_input():
-    result = coord_format(-12.345)
+    result = format_coordinate(-12.345)
     assert isinstance(result, str)
     assert len(result) == 8
     assert result[4] == '.'

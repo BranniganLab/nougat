@@ -343,3 +343,48 @@ def convert_to_cart(rval, thetaval):
     xval = rval * np.cos(thetaval)
     yval = rval * np.sin(thetaval)
     return xval, yval
+
+
+def compute_bin_centers(bin_info):
+    """
+    Compute the bin centers of a lattice in cartesian coordinates.
+
+    Parameters
+    ----------
+    bin_info : named tuple
+        The named tuple containing bin sizing and number as well as the coord-
+        inate system of the lattice..
+
+    Returns
+    -------
+    numpy darray
+        A 2D numpy array of the x coordinates for each bin center in the lattice.
+    numpy darray
+        A 2D numpy array of the y coordinates for each bin center in the lattice.
+
+    """
+    row_centers = np.zeros((bin_info.N1, bin_info.N2))
+    col_centers = np.zeros_like(row_centers)
+
+    # Determine 1D array of values
+    row_vals = np.linspace(0, bin_info.N1 - 1, bin_info.N1) * bin_info.d1 + bin_info.d1 / 2
+    if bin_info.coordsys == "cart":
+        col_vals = np.linspace(0, bin_info.N2 - 1, bin_info.N2) * bin_info.d2 + bin_info.d2 / 2
+        # shift cartesian coordinate system to center around origin
+        row_vals = row_vals - bin_info.d1 * bin_info.N1 / 2
+        col_vals = col_vals - bin_info.d2 * bin_info.N2 / 2
+    elif bin_info.coordsys == "polar":
+        col_vals = np.linspace(0, 2 * np.pi, bin_info.N2, endpoint=False) + bin_info.d2 / 2
+    else:
+        raise ValueError("bin_info.coordsys must be 'cart' or 'polar'")
+
+    # Create 2D array by pasting values in correct col/row orientation
+    for i in range(bin_info.N1):
+        row_centers[i, :] = row_vals[i]
+    for i in range(bin_info.N2):
+        col_centers[:, i] = col_vals[i]
+
+    if bin_info.coordsys == "polar":
+        row_centers, col_centers = convert_to_cart(row_centers, col_centers)
+
+    return row_centers, col_centers

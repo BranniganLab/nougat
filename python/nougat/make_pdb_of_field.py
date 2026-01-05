@@ -6,6 +6,7 @@ Created on Mon Jan  5 09:28:42 2026.
 @author: js2746
 """
 import numpy as np
+from nougat.utils import compute_bin_centers
 
 
 def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
