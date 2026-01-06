@@ -173,7 +173,7 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
         ;# update leaflets in case lipids have flip-flopped
 
-        assignLeaflet $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0 [dict get $config_dict pore_sorter]
+        assignLeaflet $frm [dict get $config_dict species] [dict get $config_dict heads_and_tails] 1.0
 
         puts "$system $quantity_of_interest $frm"
 
