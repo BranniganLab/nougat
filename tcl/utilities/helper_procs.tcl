@@ -263,7 +263,7 @@ proc assignLeaflet {frm species tailTopsAndBottoms threshold} {
             ;# assign user value accordingly
             if {$heightDiff > $threshold} {
                 lappend userList [lrepeat $speciesBeadNum 1.0]
-            } elseif {$heightDiff < - $threshold} {
+            } elseif {$heightDiff < -$threshold} {
                 lappend userList [lrepeat $speciesBeadNum 2.0]
             } else {
                 lappend userList [lrepeat $speciesBeadNum 3.0]
