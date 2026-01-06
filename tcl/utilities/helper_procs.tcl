@@ -228,6 +228,7 @@ proc rotateSystem {axis degree start stop} {
 #       species             {list}      list of lipid species in system
 #       tailTopsAndBottoms  {list}      list of first and last beads in each lipid tail
 #       threshold           {float}     If height difference is less than threshold, cannot determine leaflet
+#       poreSort            {str}       use custom pore sorter?
 #
 # Results:
 #       
