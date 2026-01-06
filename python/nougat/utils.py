@@ -327,10 +327,10 @@ def convert_to_cart(rval, thetaval):
 
     Parameters
     ----------
-    rval : float
-        The r coordinate value.
-    thetaval : float
-        The theta coordinate value.
+    rval : float, numpy ndarray
+        The r coordinate value(s).
+    thetaval : float, numpy ndarray
+        The theta coordinate value(s).
 
     Returns
     -------
