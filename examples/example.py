@@ -171,18 +171,19 @@ if __name__ == "__main__":
     if args.inclusion:
         m.add_protein_helices(path)
 
+    if args.dump:
+        m.dump(path)
+
+    # Example of plot2d to make a figure
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
+    plt.savefig(path.joinpath('example_image.pdf'))
+
+    # Example of pdb writer function
     if args.polar:
         coordsys = 'polar'
     else:
         coordsys = 'cart'
     bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], coordsys)
-
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
-    plt.savefig(path.suffix('.pdf'))
-
-    if args.dump:
-        m.dump(path)
-
     list_of_surfaces = [m.children['z_zero'].traj.avg(), getattr(m.children['z'], 'outer').traj.avg(), getattr(m.children['z'], 'inner').traj.avg(), getattr(m.children['z'], 'plus').traj.avg()]
     list_of_names = ['zero', 'one', 'two', 'plus']
     make_pdb(path.joinpath('membrane_heights.pdb'), list_of_surfaces, list_of_names, bin_info)
