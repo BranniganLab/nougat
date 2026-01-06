@@ -233,6 +233,10 @@ proc rotateSystem {axis degree start stop} {
 #       
 #       Each lipid will contain a user value corresponding to upper (1) or lower (2) leaflet
 #       or will be too sideways to tell which leaflet it's in (3)
+#
+# Necessary Revisions:
+#       - Needs to be revised to just take the 'top' bead in a lipid
+#       rather than hard-code PO4
 
 proc assignLeaflet {frm species tailTopsAndBottoms threshold poreSort} {
     foreach lipidType $species tailTipBeads [lindex $tailTopsAndBottoms 1] {
