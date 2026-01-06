@@ -234,7 +234,7 @@ proc rotateSystem {axis degree start stop} {
 #       Each lipid will contain a user value corresponding to upper (1) or lower (2) leaflet
 #       or will be too sideways to tell which leaflet it's in (3)
 
-proc assignLeaflet {frm species tailTopsAndBottoms threshold poreSort} {
+proc assignLeaflet {frm species tailTopsAndBottoms threshold} {
     foreach lipidType $species tailTipBeads [lindex $tailTopsAndBottoms 1] {
         set totalSel [atomselect top "resname $lipidType" frame $frm]
 
@@ -276,10 +276,6 @@ proc assignLeaflet {frm species tailTopsAndBottoms threshold poreSort} {
         
         $totalSel set user $userVals
         $totalSel delete
-    }
-    if {$poreSort ne "NULL"} {
-        ;# custom pore sorting proc for 5x29 and 7k3g
-        pore_sorter_custom $frm $species $poreSort
     }
 }
 
