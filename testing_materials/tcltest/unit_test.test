@@ -189,7 +189,7 @@ test basicleaflettop {
     Test: assignLeaflet
 } -setup {
    mol new ../lipid_membrane/insane2.gro
-   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 "NULL"
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL
    set sel [atomselect top "resname POPC and z > 100"]
    set num [lsort -unique [$sel get user]]
 } -body {
@@ -202,7 +202,7 @@ test basicleafletbottom {
     Test: assignLeaflet
 } -setup {
    mol new ../lipid_membrane/insane2.gro
-   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 "NULL"
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 1 NULL
    set sel [atomselect top "resname POPC and z < 100"]
    set num [lsort -unique [$sel get user]]
 } -body {
@@ -215,7 +215,7 @@ test Singlelipidturned {
     Test: assignLeaflet
 } -setup {
    mol new ../lipid_membrane/fullmemsingletilt.gro
-   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 8 "NULL"
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 8 NULL
    set sel [atomselect top "resname POPC and resid 1000"]
    set num [lsort -unique [$sel get user]]
 } -body {
@@ -228,7 +228,7 @@ test Singlelipidturnedminwindow {
     Test: assignLeaflet
 } -setup {
    mol new ../lipid_membrane/fullmemsingletilt.gro
-   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 2 "NULL"
+   assignLeaflet 0 {POPC} {{{C1A C1B}} {{C4A C4B}}} 2 NULL
    set sel [atomselect top "resname POPC and resid 1000"]
    set num [lsort -unique [$sel get user]]
 } -body {
