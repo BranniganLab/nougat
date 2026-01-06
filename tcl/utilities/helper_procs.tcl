@@ -244,7 +244,7 @@ proc assignLeaflet {frm species tailTopsAndBottoms threshold} {
         set numTails [llength $tailTipBeads]
 
         set topBeadSel [atomselect top "resname $lipidType and name $topBead" frame $frm]
-        set bottomBeadSel [atomselect top "resname $lipidType and name $tailTips" frame $frm]
+        set bottomBeadSel [atomselect top "resname $lipidType and name $tailTipBeads" frame $frm]
         set topBeadZ [$topBeadSel get z]
         set bottomBeadZ [$bottomBeadSel get z]
         $topBeadSel delete
