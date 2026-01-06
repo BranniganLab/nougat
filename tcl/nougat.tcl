@@ -92,7 +92,7 @@ proc cell_prep {config_path leaf_check} {
     if {$leaf_check == 1} {
         for {set i 0} {$i < $end} {incr i} {
             puts "leaflet check frame $i"
-            assignLeaflet $i $species $heads_and_tails 1.0 [dict get $config_dict pore_sorter]
+            assignLeaflet $i $species $heads_and_tails 1.0
         }
     }
 
