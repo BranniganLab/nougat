@@ -172,11 +172,13 @@ if __name__ == "__main__":
         m.add_protein_helices(path)
 
     if args.polar:
-        bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], "polar")
+        coordsys = 'polar'
     else:
-        bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], "cart")
+        coordsys = 'cart'
+    bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], coordsys)
 
     fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
+    plt.savefig(path.suffix('.pdf'))
 
     if args.dump:
         m.dump(path)
