@@ -226,56 +226,44 @@ proc rotateSystem {axis degree start stop} {
 # Arguments:
 #       frm                 {int}       frame to be evaluated 
 #       species             {list}      list of lipid species in system
-#       findHeadsAndTails   {list}      list of first and last beads in lipid tail
-#       window              {int}       Window size of tilted lipids 
-#       poreSort            {str}       lipids Excluded From analysis
+#       tailTopsAndBottoms  {list}      list of first and last beads in each lipid tail
+#       threshold           {float}     If height difference is less than threshold, cannot determine leaflet
 #
 # Results:
 #       
-#       all lipids will contain a user value corresponding to upper or lower leaflet
-#
-# Necessary Revisions:
-#       - Needs to be revised to just take the 'top' bead in a lipid
-#       rather than hard-code PO4
+#       Each lipid will contain a user value corresponding to upper (1) or lower (2) leaflet
+#       or will be too sideways to tell which leaflet it's in (3)
 
-proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
-    set starts [lindex $findHeadsAndTails 0]
-    set ends [lindex $findHeadsAndTails 1]
-
-    ;# does leaflet check for different lipid species separately
-    ;# because bead names may conflict between species
-    for {set i 0} {$i < [llength $species]} {incr i} {
-        set lipidType [lindex $species $i]
+proc assignLeaflet {frm species tailTopsAndBottoms threshold} {
+    foreach lipidType $species tailTipBeads [lindex $tailTopsAndBottoms 1] {
         set totalSel [atomselect top "resname $lipidType" frame $frm]
-        set endNames [lindex $ends $i]
 
-        ;# how many beads are in the given lipid species?
-        set speciesBeadNum [llength [lsort -unique [$totalSel get name]]]
-        
-        ;# how many tails are in this lipid species?
-        set numTails [llength $endNames]
+        set beadNames [lsort -unique [$totalSel get name]]
+        set topBead [lindex $beadNames 0]
+        set speciesBeadNum [llength $beadNames]
+        set numTails [llength $tailTipBeads]
 
-        set startSel [atomselect top "resname $lipidType and name PO4" frame $frm]
-        set endSel [atomselect top "resname $lipidType and name $endNames" frame $frm]
-        set startZ [$startSel get z]
-        set endZ [$endSel get z]
-        $startSel delete
-        $endSel delete
+        set topBeadSel [atomselect top "resname $lipidType and name $topBead" frame $frm]
+        set bottomBeadSel [atomselect top "resname $lipidType and name $tailTips" frame $frm]
+        set topBeadZ [$topBeadSel get z]
+        set bottomBeadZ [$bottomBeadSel get z]
+        $topBeadSel delete
+        $bottomBeadSel delete
         
         set userList []
         set counter 0
 
         ;# iterate through each lipid in the system and calc average height of the endbeads
-        for {set j 0} {$j < [llength $endZ]} {set j [expr $j+$numTails]} {
-            set avgEndHeight [vecmean [lrange $endZ $j [expr $j+$numTails-1]]] 
+        for {set j 0} {$j < [llength $bottomBeadZ]} {set j [expr $j+$numTails]} {
+            set avgEndHeight [vecmean [lrange $bottomBeadZ $j [expr $j+$numTails-1]]] 
 
             ;# subtract $avgendheight from the PO4 bead's height
-            set avgHeight [expr [lindex $startZ $counter]-$avgEndHeight]
+            set heightDiff [expr [lindex $topBeadZ $counter]-$avgEndHeight]
 
             ;# assign user value accordingly
-            if {$avgHeight > $window} {
+            if {$heightDiff > $window} {
                 lappend userList [lrepeat $speciesBeadNum 1.0]
-            } elseif {$avgHeight < -$window} {
+            } elseif {$heightDiff < -$window} {
                 lappend userList [lrepeat $speciesBeadNum 2.0]
             } else {
                 lappend userList [lrepeat $speciesBeadNum 3.0]
@@ -288,11 +276,6 @@ proc assignLeaflet {frm species findHeadsAndTails window poreSort} {
         
         $totalSel set user $userVals
         $totalSel delete
-    }
-
-    if {$poreSort ne "NULL"} {
-        ;# custom pore sorting proc for 5x29 and 7k3g
-        pore_sorter_custom $frm $species $poreSort
     }
 }
 
@@ -404,6 +387,7 @@ proc printFrame {N1 outfiles key d1 min N2 polar selex} {
 proc analyzeTails { species } {
     set taillist []
     set letters "A B C D E F G H I J"
+    set fatty_acids "ACA ACN UCA UCN LCA LCN PCA PCN BCA BCN XCA XCN"
     foreach lipidtype $species {
         set tails []
         set sel [atomselect top "resname $lipidtype"]
@@ -412,19 +396,25 @@ proc analyzeTails { species } {
         set sel [atomselect top "resname $lipidtype and resid [lindex $res 0]"]
         set names [$sel get name]
         $sel delete
-        foreach letter $letters {
-            set tail []
-            foreach nm $names {
-                if {[string match ??${letter} $nm]} {
-                    lappend tail $nm
+        if {[lsearch $fatty_acids $lipidtype] != -1} {
+            # Just remove the headgroup
+            set tail [list [lrange $names 1 end] ]
+            lappend taillist $tail
+        } else {
+            foreach letter $letters {
+                set tail []
+                foreach nm $names {
+                    if {[string match ??${letter} $nm]} {
+                        lappend tail $nm
+                    }
+                }
+                if {[llength $tail] != 0} {
+                    lappend tails $tail
                 }
             }
-            if {[llength $tail] != 0} {
-                lappend tails $tail
+            if {[llength $tails] != 0} {
+                lappend taillist $tails
             }
-        }
-        if {[llength $tails] != 0} {
-            lappend taillist $tails
         }
     }
     ;# returns top/bottom beads in lipid tails for leaflet sorting
