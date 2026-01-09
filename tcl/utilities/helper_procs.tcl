@@ -397,6 +397,7 @@ proc analyzeTails { species } {
     set taillist []
     set letters "A B C D E F G H I J"
     set fatty_acids "ACA ACN UCA UCN LCA LCN PCA PCN BCA BCN XCA XCN"
+    set cardiolipins "CDL0 CDL1 CDL2"
     foreach lipidtype $species {
         set tails []
         set sel [atomselect top "resname $lipidtype"]
@@ -408,6 +409,9 @@ proc analyzeTails { species } {
         if {[lsearch $fatty_acids $lipidtype] != -1} {
             # Just remove the headgroup
             set tail [list [lrange $names 1 end] ]
+            lappend taillist $tail
+        } elseif {[lsearch $cardiolipins $lipidtype] != -1} {
+            set tail [list [list "C1A1 C2A1 D3A1 C4A1 C5A1"] [list "C1B1 C2B1 D3B1 C4B1 C5B1"] [list "C1A2 C2A2 D3A2 C4A2 C5A2"] [list "C1B2 C2B2 D3B2 C4B2 C5B2"] ]
             lappend taillist $tail
         } else {
             foreach letter $letters {
