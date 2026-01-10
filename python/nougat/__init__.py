@@ -9,9 +9,12 @@ __author__ = 'Brannigan Lab'
 __credits__ = 'Rutgers University - Camden'
 __all__=['classes',
         'curvature',
-        'utils']
+        'utils',
+	'example_script']
 
 
 from .classes import *
 from .utils import *
 from .curvature import *
+from .example_script import *
+from .make_surface_pdb import *

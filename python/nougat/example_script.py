@@ -11,13 +11,8 @@ import argparse
 import sys
 import os
 import matplotlib.pyplot as plt
-from collections import namedtuple
 from nougat.classes import Membrane
 from nougat.curvature import calculate_curvature
-from nougat.make_surface_pdb import make_pdb
-
-
-Bin_Info = namedtuple('Bin_Info', ['d1', 'N1', 'd2', 'N2', 'coordsys'])
 
 
 def make_todo_list(quantities):
@@ -64,9 +59,9 @@ def make_todo_list(quantities):
     return todo_list
 
 
-def run_nougat(path, polar, quantities):
+def run_nougat(path, polar, quantities=None):
     """
-    Run nougat's averaging and image processing routines.
+    Run nougat's averaging routines.
 
     Parameters
     ----------
@@ -153,39 +148,3 @@ def run_nougat(path, polar, quantities):
         kminus = m.create_Field(kminus, "k_minus")
 
     return m
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze output from nougat.tcl")
-    parser.add_argument("path", default=".", help="the path to your nougat outputs folder")
-    parser.add_argument("-p", "--polar", action="store_true", help="add this flag if you ran nougat.tcl with polar coordinates")
-    parser.add_argument("-q", "--quantities", help="Specify the quantities you want to calculate: height=h, thickness=t, curvature=c, order=o")
-    parser.add_argument("-d", "--dump", action="store_true", help="Print all fields to file")
-    parser.add_argument("-i", "--inclusion", action="store_true", help="add this flag if you ran nougat.tcl with Protein_Position turned on")
-
-    args = parser.parse_args()
-    path = Path(args.path)
-
-    m = run_nougat(path, args.polar, args.quantities)
-
-    if args.inclusion:
-        m.add_protein_helices(path)
-
-    if args.dump:
-        m.dump(path)
-
-    # Example of plot2d to make a figure
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
-    plt.savefig(path.joinpath('example_image.pdf'))
-
-    # Example of pdb writer function
-    if args.polar:
-        coordsys = 'polar'
-    else:
-        coordsys = 'cart'
-    bin_info = Bin_Info(m.grid_dims['d1'], m.grid_dims['N1'], m.grid_dims['d2'], m.grid_dims['N2'], coordsys)
-    list_of_surfaces = [m.children['z_zero'].traj.avg(), getattr(m.children['z'], 'outer').traj.avg(), getattr(m.children['z'], 'inner').traj.avg(), getattr(m.children['z'], 'plus').traj.avg()]
-    list_of_names = ['zero', 'one', 'two', 'plus']
-    make_pdb(path.joinpath('membrane_heights.pdb'), list_of_surfaces, list_of_names, bin_info)
-
-    print("Thank you for using nougat!")

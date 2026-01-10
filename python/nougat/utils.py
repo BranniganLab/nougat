@@ -327,10 +327,10 @@ def convert_to_cart(rval, thetaval):
 
     Parameters
     ----------
-    rval : float
-        The r coordinate value.
-    thetaval : float
-        The theta coordinate value.
+    rval : float, numpy ndarray
+        The r coordinate value(s).
+    thetaval : float, numpy ndarray
+        The theta coordinate value(s).
 
     Returns
     -------
@@ -345,51 +345,46 @@ def convert_to_cart(rval, thetaval):
     return xval, yval
 
 
-def coord_format(value):
+def compute_bin_centers(bin_info):
     """
-    Round an x/y coordinate and/or pad it with blank spaces so that it is the \
-        correct number of chars to fit in a pdb.
+    Compute the bin centers of a lattice in cartesian coordinates.
 
     Parameters
     ----------
-    value : float
-        A number.
+    bin_info : named tuple
+        The named tuple containing bin sizing and number as well as the coord-
+        inate system of the lattice..
 
     Returns
     -------
-    final_value : float
-        The same number, rounded and with blank spaces added to make it fit in \
-            a pdb file coordinate column.
+    numpy darray
+        A 2D numpy array of the x coordinates for each bin center in the lattice.
+    numpy darray
+        A 2D numpy array of the y coordinates for each bin center in the lattice.
 
     """
-    rounded = round(value, 3)
-    leftside, rightside = str(rounded).split('.')
-    if len(rightside) < 3:
-        rightside = rightside + (' ' * (3 - len(rightside)))
-    if len(leftside) < 4:
-        leftside = (' ' * (4 - len(leftside))) + leftside
-    final_value = leftside + '.' + rightside
-    return final_value
+    row_centers = np.zeros((bin_info.N1, bin_info.N2))
+    col_centers = np.zeros_like(row_centers)
 
+    # Determine 1D array of values
+    row_vals = np.linspace(0, bin_info.N1 - 1, bin_info.N1) * bin_info.d1 + bin_info.d1 / 2
+    if bin_info.coordsys == "cart":
+        col_vals = np.linspace(0, bin_info.N2 - 1, bin_info.N2) * bin_info.d2 + bin_info.d2 / 2
+        # shift cartesian coordinate system to center around origin
+        row_vals = row_vals - bin_info.d1 * bin_info.N1 / 2
+        col_vals = col_vals - bin_info.d2 * bin_info.N2 / 2
+    elif bin_info.coordsys == "polar":
+        col_vals = np.linspace(0, 2 * np.pi, bin_info.N2, endpoint=False) + bin_info.d2 / 2
+    else:
+        raise ValueError("bin_info.coordsys must be 'cart' or 'polar'")
 
-def bin_format(value):
-    """
-    Round a bin number and/or pad it with blank spaces so that it is the \
-        correct number of chars to fit in a pdb.
+    # Create 2D array by pasting values in correct col/row orientation
+    for i in range(bin_info.N1):
+        row_centers[i, :] = row_vals[i]
+    for i in range(bin_info.N2):
+        col_centers[:, i] = col_vals[i]
 
-    Parameters
-    ----------
-    value : int
-        The number of the bin.
+    if bin_info.coordsys == "polar":
+        row_centers, col_centers = convert_to_cart(row_centers, col_centers)
 
-    Returns
-    -------
-    final_value : string
-        The same number, with .00 appended to the end and the correct number \
-            of blank spaces in front to fit in the pdb column.
-
-    """
-    strval = str(value)
-    length = len(strval)
-    final_value = (' ' * (3 - length)) + strval + '.00'
-    return final_value
+    return row_centers, col_centers
