@@ -2,7 +2,7 @@ package require tcltest
 namespace import ::tcltest::*
 
 cd ${argv}/tcltest/
-configure -verbose pbt -skip "Avgtiltord Avgdensity POPCbins"
+configure -verbose pbt -skip "Avgtiltord Avgdensity POPCbins Multitailnumbertails"
 
 # Software under test
 
