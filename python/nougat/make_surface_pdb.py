@@ -6,6 +6,8 @@ Created on Mon Jan  5 09:28:42 2026.
 @author: js2746
 """
 from nougat.utils import compute_bin_centers
+from scipy.spatial import Delaunay
+import numpy as np
 
 
 def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_dims=(200, 200, 200)):
@@ -148,3 +150,30 @@ def format_coordinate_for_pdb(value):
     leftside = pad_str_with_spaces(leftside, 4)
     rightside = pad_str_with_spaces(rightside, 3, left_pad=False)
     return leftside + '.' + rightside
+
+
+def make_triangle_coordinates_file(points, values, path):
+    triangles = Delaunay(points)
+    with open(path, 'w') as f:
+        for simplex in triangles.simplices:
+            for index in simplex:
+                print(points[index][0], points[index][1], values[index], file=f)
+
+
+def format_triangle_points_and_values(surface_values, x_centers, y_centers):
+    N1, N2 = x_centers.shape
+    points_list = []
+    values_list = []
+    for row_i in range(N1):
+        for col_j in range(N2):
+            if not np.isnan(surface_values[row_i, col_j]):
+                point = [x_centers[row_i, col_j], y_centers[row_i, col_j]]
+                points_list.append(point)
+                values_list.append(surface_values[row_i, col_j])
+    return np.array(points_list), values_list
+
+
+def save_surface_triangle_coordinates(path, surface, bin_info):
+    x_centers, y_centers = compute_bin_centers(bin_info)
+    points, values = format_triangle_points_and_values(surface, x_centers, y_centers)
+    make_triangle_coordinates_file(points, values, path)
