@@ -77,17 +77,17 @@ def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
                 y = y_centers[d1bin][d2bin]
                 print(
                     'HETATM'
-                    f'{pad_str_with_spaces(index_num, 5)} '         # index
-                    'SURF '                                         # name
-                    f'{pad_str_with_spaces(field_name, 3, False)}'  # resname
-                    ' S'                                             # chain
-                    f'{pad_str_with_spaces(resid_num, 4)}    '      # resid
-                    f'{format_coordinate(x)}'                       # x
-                    f'{format_coordinate(y)}'                       # y
-                    f'{format_coordinate(data[d1bin][d2bin])}'      # z
+                    f'{pad_str_with_spaces(index_num, 5)} '             # index
+                    'SURF '                                              # name
+                    f'{pad_str_with_spaces(field_name, 3, False)}'    # resname
+                    ' S'                                                # chain
+                    f'{pad_str_with_spaces(resid_num, 4)}    '          # resid
+                    f'{format_coordinate_for_pdb(x)}'                       # x
+                    f'{format_coordinate_for_pdb(y)}'                       # y
+                    f'{format_coordinate_for_pdb(data[d1bin][d2bin])}'      # z
                     f'{pad_str_with_spaces(d1bin, 3)}.00'           # occupancy
-                    f'{pad_str_with_spaces(d2bin, 3)}.00'           # beta
-                    f'      {field_name[:4]} C',                    # segname and element
+                    f'{pad_str_with_spaces(d2bin, 3)}.00'                # beta
+                    f'      {field_name[:4]} C',          # segname and element
                     file=f,
                 )
                 index_num += 1
@@ -124,7 +124,7 @@ def pad_str_with_spaces(inp, desired_len, left_pad=True):
     return output_string
 
 
-def format_coordinate(value):
+def format_coordinate_for_pdb(value):
     """
     Round an x/y coordinate and/or pad it with blank spaces.
 
