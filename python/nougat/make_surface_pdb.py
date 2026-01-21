@@ -5,9 +5,9 @@ Created on Mon Jan  5 09:28:42 2026.
 
 @author: js2746
 """
-from nougat.utils import compute_bin_centers
-from scipy.spatial import Delaunay
+from scipy.spatial import Delaunay  # pylint: disable-msg=E0611
 import numpy as np
+from nougat.utils import compute_bin_centers
 
 
 def make_pdb(filename, list_of_surfaces, list_of_names, bin_info, box_dims=(200, 200, 200)):
@@ -178,7 +178,7 @@ def make_triangle_coordinates_file(xy, z, path):
     if len(z) != xy.shape[0]:
         raise IndexError("xy must have same number of entries as z")
     triangles = Delaunay(xy)
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         for simplex in triangles.simplices:
             for index in simplex:
                 print(xy[index][0], xy[index][1], z[index], file=f)
@@ -210,11 +210,11 @@ def format_triangle_points_and_values(surface_values, x_coords, y_coords):
     """
     if x_coords.shape != y_coords.shape:
         raise IndexError("x_coords and y_coords must be same shape.")
-    N1, N2 = x_coords.shape
+    num_rows, num_cols = x_coords.shape
     points_list = []
     values_list = []
-    for row_i in range(N1):
-        for col_j in range(N2):
+    for row_i in range(num_rows):
+        for col_j in range(num_cols):
             if not np.isnan(surface_values[row_i, col_j]):
                 point = [x_coords[row_i, col_j], y_coords[row_i, col_j]]
                 points_list.append(point)
