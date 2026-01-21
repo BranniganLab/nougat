@@ -152,28 +152,96 @@ def format_coordinate_for_pdb(value):
     return leftside + '.' + rightside
 
 
-def make_triangle_coordinates_file(points, values, path):
-    triangles = Delaunay(points)
+def make_triangle_coordinates_file(xy, z, path):
+    """
+    Save a file that has triangle coordinate points on each row.
+
+    Every three rows constitutes one triangle. Use nougat's drawTriangles proc
+    to load into VMD.
+
+    Parameters
+    ----------
+    xy : 2D numpy ndarray
+        An array with two columns and as many rows as there are triangle points.
+        Column 0 contains the x-coordinate and column 1 contains the y-coordinate
+        for each point. This is the format required by scipy.spatial.Delaunay.
+    z : list
+        List of z-coordinates; same length as number of rows in xy.
+    path : pathlib Path or str
+        Path (including name and suffix) to file that will be created.
+
+    Returns
+    -------
+    None.
+
+    """
+    if len(z) != xy.shape[0]:
+        raise IndexError("xy must have same number of entries as z")
+    triangles = Delaunay(xy)
     with open(path, 'w') as f:
         for simplex in triangles.simplices:
             for index in simplex:
-                print(points[index][0], points[index][1], values[index], file=f)
+                print(xy[index][0], xy[index][1], z[index], file=f)
 
 
-def format_triangle_points_and_values(surface_values, x_centers, y_centers):
-    N1, N2 = x_centers.shape
+def format_triangle_points_and_values(surface_values, x_coords, y_coords):
+    """
+    Format xy coordinates and z coordinates to be useable by Delaunay module.
+
+    Parameters
+    ----------
+    surface_values : 2D numpy ndarray
+        A 2D array of values (e.g. average height over time) that will form
+        the z component of your triangles.
+    x_coords : 2D numpy ndarray
+        The x-coordinates for every bin in the lattice.
+    y_coords : 2D numpy ndarray
+        The y-coordinates for every bin in the lattice.
+
+    Returns
+    -------
+    2D numpy ndarray
+        An array with two columns and as many rows as there are triangle points.
+        Column 0 contains the x-coordinate and column 1 contains the y-coordinate
+        for each point. This is the format required by scipy.spatial.Delaunay.
+    list
+        List of z-coordinates; same length as number of rows in xy ndarray.
+
+    """
+    if x_coords.shape != y_coords.shape:
+        raise IndexError("x_coords and y_coords must be same shape.")
+    N1, N2 = x_coords.shape
     points_list = []
     values_list = []
     for row_i in range(N1):
         for col_j in range(N2):
             if not np.isnan(surface_values[row_i, col_j]):
-                point = [x_centers[row_i, col_j], y_centers[row_i, col_j]]
+                point = [x_coords[row_i, col_j], y_coords[row_i, col_j]]
                 points_list.append(point)
                 values_list.append(surface_values[row_i, col_j])
     return np.array(points_list), values_list
 
 
 def save_surface_triangle_coordinates(path, surface, bin_info):
+    """
+    Save triangle coordinates to file to be read-in to molvis software (e.g. VMD).
+
+    Parameters
+    ----------
+    path : pathlib Path
+        The full path (including name) of the file you wish to save.
+    surface : 2D numpy ndarray
+        A 2D array of values (e.g. average height over time) that will form
+        the z component of your triangles.
+    bin_info : namedtuple
+        Contains information about number of bins, step size, and coordinate
+        system.
+
+    Returns
+    -------
+    None.
+
+    """
     x_centers, y_centers = compute_bin_centers(bin_info)
     points, values = format_triangle_points_and_values(surface, x_centers, y_centers)
     make_triangle_coordinates_file(points, values, path)
