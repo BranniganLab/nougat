@@ -173,8 +173,8 @@ if __name__ == "__main__":
         m.dump(path)
 
     # Example of plot2d to make a figure
-    #fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
-    #plt.savefig(path.joinpath('example_image.pdf'))
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15)
+    plt.savefig(path.joinpath('example_image.pdf'))
 
     # Example of pdb writer function
     if args.polar:
