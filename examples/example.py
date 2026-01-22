@@ -173,8 +173,8 @@ if __name__ == "__main__":
         m.dump(path)
 
     # Example of plot2d to make a figure
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
-    plt.savefig(path.joinpath('example_image.pdf'))
+    #fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
+    #plt.savefig(path.joinpath('example_image.pdf'))
 
     # Example of pdb writer function
     if args.polar:
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     list_of_names = ['zero', 'one', 'two', 'plus']
     make_pdb(path.joinpath('membrane_heights.pdb'), list_of_surfaces, list_of_names, bin_info)
 
-    avg_zzero_surface = m.children['z_zero'].traj.avg()
-    save_surface_triangle_coordinates(path.joinpath("z_zero_avg_surface.txt"), avg_zzero_surface, bin_info)
+    for surface, name in zip(list_of_surfaces, list_of_names):
+        save_surface_triangle_coordinates(path.joinpath(f"{name}_avg_surface.txt"), surface, bin_info)
 
     print("Thank you for using nougat!")
