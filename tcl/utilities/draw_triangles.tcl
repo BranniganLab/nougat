@@ -41,9 +41,10 @@ proc readFile {path} {
 #   drawTriangles ~/Desktop/sample_file.txt top green AOChalky
 
 proc drawTriangles {path molno {color "red"} {material "Diffuse"}} {
+	graphics $molno delete all
 	set triangles [readFile $path]
-	draw color $color
-	draw material $material
+	graphics $molno color $color
+	graphics $molno material $material
 	for {set line 0} {$line < [llength $triangles]} {set line [expr $line + 3]} {
 		set coord1 [lindex $triangles $line]
 		set coord2 [lindex $triangles [expr $line + 1]]
