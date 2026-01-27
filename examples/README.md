@@ -1,3 +1,7 @@
+This directory contains the outputs from nougat.tcl after it was run on a 
+test trajectory of a protein embedded in a membrane. The example.py file
+is intended to demonstrate some of the ways in which nougat can be used.
+
 To run the example file, please enter the following command into your terminal:
 
 > python3 ./example.py . -p
