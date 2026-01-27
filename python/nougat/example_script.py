@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 24 12:12:59 2024
+Created on Thu Oct 24 12:12:59 2024.
 
 @author: js2746
 """
 
 from pathlib import Path
-import argparse
-import sys
-import os
-import matplotlib.pyplot as plt
 from nougat.classes import Membrane
 from nougat.curvature import calculate_curvature
 
@@ -108,7 +104,7 @@ def run_nougat(path, polar, quantities=None):
     if isinstance(path, str):
         path = Path(path)
     elif not isinstance(path, Path):
-        raise Exception("path must be a Path object or a string.")
+        raise TypeError("path must be a Path object or a string.")
 
     todo_list = make_todo_list(quantities)
 

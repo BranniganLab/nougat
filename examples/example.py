@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 24 12:12:59 2024
+Created on Thu Oct 24 12:12:59 2024.
 
 @author: js2746
 """
 
 from pathlib import Path
 import argparse
-import sys
-import os
 import matplotlib.pyplot as plt
 from collections import namedtuple
 from nougat.classes import Membrane
 from nougat.curvature import calculate_curvature
-from nougat.make_surface_pdb import make_pdb
+from nougat.make_surface_pdb import make_pdb, save_surface_triangle_coordinates
 
 
 Bin_Info = namedtuple('Bin_Info', ['d1', 'N1', 'd2', 'N2', 'coordsys'])
@@ -175,7 +173,7 @@ if __name__ == "__main__":
         m.dump(path)
 
     # Example of plot2d to make a figure
-    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15, helix_surface='zone')
+    fig, ax = m.plot2d(getattr(m.children['z'], 'outer'), 15, -15)
     plt.savefig(path.joinpath('example_image.pdf'))
 
     # Example of pdb writer function
@@ -187,5 +185,8 @@ if __name__ == "__main__":
     list_of_surfaces = [m.children['z_zero'].traj.avg(), getattr(m.children['z'], 'outer').traj.avg(), getattr(m.children['z'], 'inner').traj.avg(), getattr(m.children['z'], 'plus').traj.avg()]
     list_of_names = ['zero', 'one', 'two', 'plus']
     make_pdb(path.joinpath('membrane_heights.pdb'), list_of_surfaces, list_of_names, bin_info)
+
+    for surface, name in zip(list_of_surfaces, list_of_names):
+        save_surface_triangle_coordinates(path.joinpath(f"{name}_avg_surface.txt"), surface, bin_info)
 
     print("Thank you for using nougat!")
