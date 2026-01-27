@@ -10,7 +10,7 @@ This will produce the following files:
 
 1. a 2D heatmap of the outer leaflet average height (example_image.pdf)
 2. a .pdb file containing the average height surfaces (membrane_heights.pdb)
-3. text files containing triangle coordinates for each of the surfaces (${surface}_avg_surface.txt)
+3. text files containing triangle coordinates for each of the surfaces ([surface]_avg_surface.txt)
 
 To draw the triangulated height surfaces in VMD, open VMD and load the
 membrane_heights.pdb file. Then, open the tkConsole and enter:
