@@ -82,7 +82,7 @@ An explanation of the options is as follows:
 - z+: the midplane between z1 and z2
 - z0: the _actual_ interface between z1 and z2 lipid tails; classically assumed to be equal to z+, but not always the case!
 
-###  Run nougat.py
+###  Pip install nougat.py
 ```
 cd nougat/python
 pip install .
