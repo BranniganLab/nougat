@@ -15,7 +15,7 @@ This will produce the following files:
 To draw the triangulated height surfaces in VMD, open VMD and load the
 membrane_heights.pdb file. Then, open the tkConsole and enter:
 
-> source [path to]/nougat/tcl/utilities/draw_triangles.tcl
+> source [path to]/nougat/tcl/utilities/draw_triangles.tcl  
 > drawTriangles [path to surface .txt file] top
 
 For more details, see the docstring in draw_triangles.tcl.
