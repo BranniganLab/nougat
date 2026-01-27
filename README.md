@@ -87,6 +87,5 @@ An explanation of the options is as follows:
 cd nougat/python
 pip install .
 ```
-An example script _examples/example.py_ has been provided to demonstrate how nougat.py can be used. You can also view the class diagram in the _python_ folder to learn more.
-
 ### Explore your results!
+An example script _examples/example.py_ has been provided to demonstrate how nougat.py can be used. You can also view the class diagram in the _python_ folder to learn more.
