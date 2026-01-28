@@ -5,6 +5,8 @@ Created on Mon Jan  5 09:28:42 2026.
 
 @author: js2746
 """
+from scipy.spatial import Delaunay  # pylint: disable-msg=E0611
+import numpy as np
 from nougat.utils import compute_bin_centers
 
 
@@ -77,17 +79,17 @@ def print_surface_to_pdb(data, bin_info, f, index_num, field_name):
                 y = y_centers[d1bin][d2bin]
                 print(
                     'HETATM'
-                    f'{pad_str_with_spaces(index_num, 5)} '         # index
-                    'SURF '                                         # name
-                    f'{pad_str_with_spaces(field_name, 3, False)}'  # resname
-                    ' S'                                             # chain
-                    f'{pad_str_with_spaces(resid_num, 4)}    '      # resid
-                    f'{format_coordinate(x)}'                       # x
-                    f'{format_coordinate(y)}'                       # y
-                    f'{format_coordinate(data[d1bin][d2bin])}'      # z
+                    f'{pad_str_with_spaces(index_num, 5)} '             # index
+                    'SURF '                                              # name
+                    f'{pad_str_with_spaces(field_name, 3, False)}'    # resname
+                    ' S'                                                # chain
+                    f'{pad_str_with_spaces(resid_num, 4)}    '          # resid
+                    f'{format_coordinate_for_pdb(x)}'                       # x
+                    f'{format_coordinate_for_pdb(y)}'                       # y
+                    f'{format_coordinate_for_pdb(data[d1bin][d2bin])}'      # z
                     f'{pad_str_with_spaces(d1bin, 3)}.00'           # occupancy
-                    f'{pad_str_with_spaces(d2bin, 3)}.00'           # beta
-                    f'      {field_name[:4]} C',                    # segname and element
+                    f'{pad_str_with_spaces(d2bin, 3)}.00'                # beta
+                    f'      {field_name[:4]} C',          # segname and element
                     file=f,
                 )
                 index_num += 1
@@ -124,7 +126,7 @@ def pad_str_with_spaces(inp, desired_len, left_pad=True):
     return output_string
 
 
-def format_coordinate(value):
+def format_coordinate_for_pdb(value):
     """
     Round an x/y coordinate and/or pad it with blank spaces.
 
@@ -148,3 +150,98 @@ def format_coordinate(value):
     leftside = pad_str_with_spaces(leftside, 4)
     rightside = pad_str_with_spaces(rightside, 3, left_pad=False)
     return leftside + '.' + rightside
+
+
+def make_triangle_coordinates_file(xy, z, path):
+    """
+    Save a file that has triangle coordinate points on each row.
+
+    Every three rows constitutes one triangle. Use nougat's drawTriangles proc
+    to load into VMD.
+
+    Parameters
+    ----------
+    xy : 2D numpy ndarray
+        An array with two columns and as many rows as there are triangle points.
+        Column 0 contains the x-coordinate and column 1 contains the y-coordinate
+        for each point. This is the format required by scipy.spatial.Delaunay.
+    z : list
+        List of z-coordinates; same length as number of rows in xy.
+    path : pathlib Path or str
+        Path (including name and suffix) to file that will be created.
+
+    Returns
+    -------
+    None.
+
+    """
+    if len(z) != xy.shape[0]:
+        raise IndexError("xy must have same number of entries as z")
+    triangles = Delaunay(xy)
+    with open(path, 'w', encoding='utf-8') as f:
+        for simplex in triangles.simplices:
+            for index in simplex:
+                print(xy[index][0], xy[index][1], z[index], file=f)
+
+
+def format_triangle_points_and_values(surface_values, x_coords, y_coords):
+    """
+    Format xy coordinates and z coordinates to be useable by Delaunay module.
+
+    Parameters
+    ----------
+    surface_values : 2D numpy ndarray
+        A 2D array of values (e.g. average height over time) that will form
+        the z component of your triangles.
+    x_coords : 2D numpy ndarray
+        The x-coordinates for every bin in the lattice.
+    y_coords : 2D numpy ndarray
+        The y-coordinates for every bin in the lattice.
+
+    Returns
+    -------
+    2D numpy ndarray
+        An array with two columns and as many rows as there are triangle points.
+        Column 0 contains the x-coordinate and column 1 contains the y-coordinate
+        for each point. This is the format required by scipy.spatial.Delaunay.
+    list
+        List of z-coordinates; same length as number of rows in xy ndarray.
+
+    """
+    if x_coords.shape != y_coords.shape:
+        raise IndexError("x_coords and y_coords must be same shape.")
+    num_rows, num_cols = x_coords.shape
+    points_list = []
+    values_list = []
+    for row_i in range(num_rows):
+        for col_j in range(num_cols):
+            if not np.isnan(surface_values[row_i, col_j]):
+                point = [x_coords[row_i, col_j], y_coords[row_i, col_j]]
+                points_list.append(point)
+                values_list.append(surface_values[row_i, col_j])
+    return np.array(points_list), values_list
+
+
+def save_surface_triangle_coordinates(path, surface, bin_info):
+    """
+    Save triangle coordinates to file to be read-in to molvis software (e.g. VMD).
+
+    Parameters
+    ----------
+    path : pathlib Path
+        The full path (including name) of the file you wish to save.
+    surface : 2D numpy ndarray
+        A 2D array of values (e.g. average height over time) that will form
+        the z component of your triangles.
+    bin_info : namedtuple
+        Contains information about number of bins, step size, and coordinate
+        system.
+
+    Returns
+    -------
+    None.
+
+    """
+    x_centers, y_centers = compute_bin_centers(bin_info)
+    points, values = format_triangle_points_and_values(surface, x_centers, y_centers)
+    make_triangle_coordinates_file(points, values, path)
