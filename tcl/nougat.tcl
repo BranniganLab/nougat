@@ -168,7 +168,6 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
         if {$polar == 0} {
             set bindims [updateDimensions $bindims $frm]
-            
         }
 
         ;# update leaflets in case lipids have flip-flopped
