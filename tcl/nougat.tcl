@@ -168,7 +168,6 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
         if {$polar == 0} {
             set bindims [updateDimensions $bindims $frm]
-            
         }
 
         ;# update leaflets in case lipids have flip-flopped
@@ -192,6 +191,11 @@ proc run_nougat {system config_dict bindims polar quantity_of_interest foldernam
 
             $sel frame $frm 
             $sel update
+
+            ;# error check
+            if {[$sel num] == 0} {
+                error "There are no selected atoms in ${selex} on frame ${frm}"
+            }
 
             ;# assemble all data (x,y,z,user, etc) into a dict of lists
             set sel_info [getSelInfo $sel $ref_height]
